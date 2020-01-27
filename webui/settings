@@ -1,0 +1,114 @@
+{
+    "device": {
+        "device": "nano",
+        "serial": "84b3ec",
+        "hw_version": "v1",
+        "sw_version": "v1.0.3",
+        "api_version": "1",
+        "language": "de"
+    },
+    "system": {
+        "time": "1546271847",
+        "unit": "C",
+        "ap": "NANO-AP",
+        "host": "NANO-84b3ec",
+        "language": "de",
+        "version": "v1.0.3",
+        "getupdate": "false",
+        "autoupd": true,
+        "hwversion": "V1",
+        "god": 0
+    },
+    "hardware": [
+        "V1"
+    ],
+    "api": {
+        "version": "1"
+    },
+    "sensors": [
+        "Maverick",
+        "Fantast-Neu",
+        "Fantast",
+        "iGrill2",
+        "ET-73",
+        "Perfektion",
+        "50K",
+        "Inkbird",
+        "100K6A1B",
+        "Weber_6743",
+        "Santos"
+    ],
+    "pid": [
+        {
+            "name": "SSR SousVide",
+            "id": 0,
+            "aktor": 0,
+            "Kp": 104.00,
+            "Ki": 0.20,
+            "Kd": 0.00,
+            "DCmmin": 0.00,
+            "DCmmax": 100.00,
+            "opl": 0,
+            "tune": 0,
+            "jp": 100
+        },
+        {
+            "name": "TITAN 50x50",
+            "id": 1,
+            "aktor": 1,
+            "Kp": 3.80,
+            "Ki": 0.01,
+            "Kd": 128.00,
+            "DCmmin": 25.00,
+            "DCmmax": 100.00,
+            "opl": 0,
+            "tune": 0,
+            "jp": 70
+        },
+        {
+            "name": "Kamado 50x50",
+            "id": 2,
+            "aktor": 1,
+            "Kp": 7.00,
+            "Ki": 0.02,
+            "Kd": 630.00,
+            "DCmmin": 25.00,
+            "DCmmax": 100.00,
+            "opl": 0,
+            "tune": 0,
+            "jp": 70
+        }
+    ],
+    "aktor": [
+        "SSR",
+        "FAN",
+        "SERVO"
+    ],
+    "iot": {
+        "PMQhost": "192.168.2.1",
+        "PMQport": 1883,
+        "PMQuser": "",
+        "PMQpass": "",
+        "PMQqos": 0,
+        "PMQon": false,
+        "PMQint": 30,
+        "CLon": false,
+        "CLtoken": "84b3ec0dc96c92bc",
+        "CLint": 30,
+        "CLurl": "cloud.wlanthermo.de/index.html"
+    },
+    "notes": {
+        "fcm": [ ],
+        "ext": {
+            "on": 0,
+            "token": "",
+            "id": "",
+            "repeat": 1,
+            "service": 0,
+            "services": [
+                "telegram",
+                "pushover"
+            ]
+        }
+    }
+}
