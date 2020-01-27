@@ -1,0 +1,115 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Release
+
+jobs:
+  main:
+    name: Main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup Python
+        uses: actions/setup-python@master
+        with:
+          python-version: '3.x'
+      - name: Install Platform IO
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U platformio
+      - name: Build firmware
+        run: platformio run -e miniV2 -e miniV3 -e nano
+#      - name: Build file system
+#        run: platformio run -e miniV2 -e miniV3 -e nano -t buildfs --disable-auto-clean
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - Testing Github action release
+          draft: true
+          prerelease: true
+          allowUpdates: true
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3) 
+      - name: Upload Release Asset miniV2 firmware
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./.pio/build/miniV2/firmware.bin
+          asset_name: mini_v2_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
+          asset_content_type: application/octet-stream
+#      - name: Upload Release Asset miniV2 file system
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: ./.pio/build/miniV2/spiffs.bin
+#          asset_name: miniV2_spiffs_${{ steps.get_version.outputs.version }}.bin
+#          asset_content_type: application/octet-stream
+      - name: Upload Release Asset miniV2 nextion
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/miniV2.tft
+          asset_name: mini_v2_esp32_NX3224K028_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset miniV3 firmware
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./.pio/build/miniV3/firmware.bin
+          asset_name: mini_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
+          asset_content_type: application/octet-stream
+#      - name: Upload Release Asset miniV3 file system
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: ./.pio/build/miniV3/spiffs.bin
+#          asset_name: miniV3_spiffs_${{ steps.get_version.outputs.version }}.bin
+#          asset_content_type: application/octet-stream
+      - name: Upload Release Asset miniV3 nextion
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/miniV3.tft
+          asset_name: mini_v3_esp32_NX3224K024_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset nano firmware
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./.pio/build/nano/firmware.bin
+          asset_name: nano_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
+          asset_content_type: application/octet-stream
+#      - name: Upload Release Asset nano file system
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: ./.pio/build/nano/spiffs.bin
+#          asset_name: nano_spiffs_${{ steps.get_version.outputs.version }}.bin
+#          asset_content_type: application/octet-stream
