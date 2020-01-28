@@ -1,9 +1,13 @@
 name: PlatformIO build
-on: push
+on:
+  pull_request:
+    branches: 
+      - master
+      - develop
 
 jobs:
   main:
-    name: Main
+    name: PlatformIO build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
