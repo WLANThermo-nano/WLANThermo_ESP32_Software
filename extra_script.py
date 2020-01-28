@@ -25,6 +25,14 @@ from html_utils import HTML
 
 def convert_web_ui_to_include_files():
     print("---- Convert Web UI to include files ----")
+
+    # add logo
+    if str(env["PIOENV"]).startswith("nano"):
+        shutil.copyfile(web_ui_path + "WLANThermoNano.png", web_ui_path + "WLANThermoLogo.png")
+    else:
+        shutil.copyfile(web_ui_path + "WLANThermoMini.png", web_ui_path + "WLANThermoLogo.png")
+
+    # compress html files and create a uint8_t array
     for web_ui_file in web_ui_source_files:
         web_ui_file_inlined = web_ui_file + "_inlined.html"
         web_ui_file_header_array = web_ui_file + ".gz"
@@ -43,5 +51,8 @@ def convert_web_ui_to_include_files():
         with open(target_path + web_ui_file + ".gz.h", 'w') as f:
             f.write(char_array_string)
         os.remove(web_ui_file_inlined)
+
+    #remove logo
+    os.remove(web_ui_path + "WLANThermoLogo.png")
 
 convert_web_ui_to_include_files()
