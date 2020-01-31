@@ -2584,6 +2584,7 @@
 		.btn-default {
 			border-radius: 0;
 			background: #4A4A4A;
+			cursor: pointer;
 		}		
 
 		.picker-wrapper {
@@ -2660,7 +2661,7 @@
             <h1>WLANThermo - Nano</h1>
         </div>
 		<!-- ################################################### -->
-        <div id="test" class="channel_template" style="display:none">
+        <div id="channel_template" style="display:none">
 			<div class="pure-u-1-1 pure-u-md-1-2 pure-u-xl-1-4" onclick="showSetChannel(this.dataset.channel)">
 				<div class="1-box channel">
 					<div class="chtitle"></div>
@@ -2676,7 +2677,7 @@
 		</div>
  		<!-- ################################################### -->
         <div id="index" class="content" class="hidden" style="display:none">
-            <div id="test1" class="pure-g channel_index"><!-- Dynamically channel insert --></div>
+            <div id="index_content" class="pure-g channel_index"><!-- Dynamically channel insert --></div>
 		</div> 
 		<!-- ################################################### -->
 		<div id="wlan_config" class="content" style="display:none">
@@ -3208,11 +3209,13 @@
 					<div class="1-box channel_conf">
 						<table>
 							<tr><td>&#10032;&nbsp;Armin Thinnes</td></tr>
-							<tr><td>&#10032;&nbsp;Björn Schrader</td></tr>
 							<tr><td>&#10032;&nbsp;Alexander Schäfer</td></tr>
-							<tr><td>&#10032;&nbsp;Steffen Ochs</td></tr>
+							<tr><td>&#10032;&nbsp;Björn Schrader</td></tr>
 							<tr><td onclick="touchStart();">&#10032;&nbsp;Florian Riedl</td></tr>
+							<tr><td>&#10032;&nbsp;Lukas Jedinger</td></tr>
 							<tr><td>&#10032;&nbsp;Maik Kaste</td></tr>
+							<tr><td>&#10032;&nbsp;Martin Körner</td></tr>
+							<tr><td>&#10032;&nbsp;Steffen Ochs</td></tr>
 						</table>
 					</div>
 				</div>
@@ -4060,15 +4063,15 @@
 	function addChannel(number){
 		if(debug === true){console.log('function addChannel number:' + number);}
 		for (i = 0; i < number; i++) {		
-			var parent = document.getElementById("test");
+			var parent = document.getElementById("channel_template");
 			NodeList.prototype.forEach = Array.prototype.forEach;
 			var children = parent.childNodes;
 			children.forEach(function(item){
 				var cln = item.cloneNode(true);
-				document.getElementById("test1").appendChild(cln);
+				document.getElementById("index_content").appendChild(cln);
 			});
-			document.getElementById("test1").lastElementChild.classList.add("temp_index");
-			document.getElementById("test1").lastElementChild.setAttribute('data-channel', i);
+			document.getElementById("index_content").lastElementChild.classList.add("temp_index");
+			document.getElementById("index_content").lastElementChild.setAttribute('data-channel', i);
 		}
 		channel_init = true;
 		if(debug === true){console.log('channel_init:' + channel_init );}
