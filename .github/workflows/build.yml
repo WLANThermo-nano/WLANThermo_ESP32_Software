@@ -4,6 +4,9 @@ on:
     branches: 
       - master
       - develop
+  push:
+    branches:    
+      - develop
 
 jobs:
   main:
@@ -21,3 +24,11 @@ jobs:
           pip install -U platformio
       - name: Build
         run: platformio run -e miniV2 -e miniV3 -e nano
+      - run: mkdir -p ./artifacts
+      - run: cp ./.pio/build/miniV2/firmware.bin ./artifacts/miniV2_firmware.bin
+      - run: cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3_firmware.bin
+      - run: cp ./.pio/build/nano/firmware.bin ./artifacts/nano_firmware.bin
+      - uses: actions/upload-artifact@v1
+        with:
+          name: firmware_artifacts
+          path: ./artifacts
