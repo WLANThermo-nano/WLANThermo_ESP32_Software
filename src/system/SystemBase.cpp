@@ -165,6 +165,7 @@ void SystemBase::loadConfig()
   cloud.loadConfig();
   mqtt.loadConfig();
   notification.loadConfig();
+  otaUpdate.loadConfig();
 }
 
 boolean SystemBase::isInitDone()
