@@ -61,7 +61,7 @@ SystemMiniV2::SystemMiniV2() : SystemBase()
 
 void SystemMiniV2::init()
 {
-  deviceName = "mini32-v2";
+  deviceName = "mini";
   hardwareVersion = 2u;
   wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
   wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));

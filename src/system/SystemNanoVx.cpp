@@ -103,7 +103,8 @@ void SystemNanoVx::hwInit()
 
 void SystemNanoVx::init()
 {
-  deviceName = "nano32";
+  deviceName = "nano";
+  hardwareVersion = 3u;
   wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
   wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));
 

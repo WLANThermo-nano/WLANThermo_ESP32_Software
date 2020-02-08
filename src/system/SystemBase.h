@@ -72,6 +72,8 @@ public:
   void run();
 
   String getDeviceName();
+  String getCpuName();
+  size_t getFlashSize();
   static String getSerialNumber();
   String getLanguage();
   void setLanguage(String language);
@@ -89,6 +91,7 @@ protected:
   Buzzer *buzzer;
   const uint8_t pitmasterProfileCount = MAX_PITMASTERPROFILES;
   String deviceName;
+  String cpuName;
   static char serialNumber[13];
   String language;
   uint8_t hardwareVersion;

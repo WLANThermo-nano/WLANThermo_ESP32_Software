@@ -35,6 +35,9 @@ void API::deviceObj(JsonObject &jObj)
 
   jObj["device"] = gSystem->getDeviceName();
   jObj["serial"] = gSystem->getSerialNumber();
+  jObj["cpu"] = gSystem->getCpuName();
+  jObj["flash_size"] = gSystem->getFlashSize();
+
   /*if (sys.item != "")
     jObj["item"] = sys.item;*/
   //TODO

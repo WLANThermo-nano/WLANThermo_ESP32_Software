@@ -24,7 +24,7 @@
 #ifndef C_VERSION_H_
 #define C_VERSION_H_
 
-#define FIRMWAREVERSION  "v1.0.0"
+#define FIRMWAREVERSION  "v0.9.0"
 #define GUIAPIVERSION    "1"
 #define SERVERAPIVERSION "1"
 
