@@ -30,8 +30,7 @@
 OtaUpdate::OtaUpdate()
 {
   state = 0;
-
-  loadConfig();
+  prerelease = false;
 
   if (state == 0)
   {
@@ -92,6 +91,7 @@ void OtaUpdate::saveConfig()
   json["update"] = state;
   json["getupd"] = get;
   json["autoupd"] = autoupdate;
+  json["prerelease"] = prerelease;
   Settings::write(kOtaUpdate, json);
 }
 
@@ -102,13 +102,14 @@ void OtaUpdate::loadConfig()
 
   if (json.success())
   {
-
     if (json.containsKey("update"))
       state = json["update"];
     if (json.containsKey("autoupd"))
       autoupdate = json["autoupd"];
     if (json.containsKey("getupd"))
       get = json["getupd"].asString();
+    if (json.containsKey("prerelease"))
+      prerelease = json["prerelease"];
   }
 }
 
@@ -220,4 +221,14 @@ void OtaUpdate::doHttpUpdate()
       }
     }
   }
+}
+
+boolean OtaUpdate::getPrerelease()
+{
+  return prerelease;
+}
+
+boolean OtaUpdate::setPrerelease(boolean prerelease)
+{
+  this->prerelease = prerelease;
 }

@@ -533,6 +533,12 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
     unit = _system["unit"].asString();
   if (_system.containsKey("autoupd"))
     gSystem->otaUpdate.autoupdate = _system["autoupd"];
+  if (_system.containsKey("prerelease"))
+  {
+    gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
+    gSystem->otaUpdate.saveConfig();
+  }
+    
   //if (_system.containsKey("fastmode"))  sys.fastmode   = _system["fastmode"];
 
   if (_system.containsKey("host"))
