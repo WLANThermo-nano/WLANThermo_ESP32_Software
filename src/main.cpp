@@ -18,7 +18,7 @@
     HISTORY: Please refer Github History
     
  ****************************************************/
-
+#include "RecoveryMode.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
 #include "SerialCmd.h"
@@ -32,20 +32,16 @@ void createTasks();
 // SETUP
 void setup()
 {
+  RecoveryMode::run();
 
   // Initialize Serial
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  printf("SDK version:%s\n", system_get_sdk_version()); //getSdkVersion
 
   gSystem->hwInit();
   gDisplay->init();
   gSystem->loadConfig();
   gSystem->init();
-
-  // Open Config-File
-  //setEE();
-
   gSystem->run();
 
   // Initialize Wifi
