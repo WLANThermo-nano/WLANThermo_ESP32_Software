@@ -15,7 +15,7 @@ import pip
 # path configuration
 web_ui_path = "./webui/"
 target_path = "./src/webui/"
-web_ui_source_files = ["index.html", "fwupdate.html"]
+web_ui_source_files = ["index.html", "fwupdate.html", "recoverymode.html"]
 
 def install_package(package):
     subprocess.call(["pip","install","--upgrade",package])
