@@ -2995,7 +2995,8 @@
 							<div class="form-group">
 							  <select id="hwversion"></select><label class="control-label" for="select" data-tag="hw_version">Hardwareversion</label><i class="bar"></i>
 							</div>
-							<div class="checkbox"><label><input id="searchUpdate" type="checkbox"/><i class="helper"></i><p data-tag="update_search">Automatisch nach Updates suchen</p></label></div>								
+							<div class="checkbox"><label><input id="searchUpdate" type="checkbox"/><i class="helper"></i><p data-tag="update_search">Automatisch nach Updates suchen</p></label></div>	
+							<div class="checkbox"><label><input id="prerelease" type="checkbox"/><i class="helper"></i><p data-tag="prerelease">Beta-Versionen in der Suche mit einschießen</p></label></div>								
 						</form>
 					</div>
 				</div>
@@ -3746,6 +3747,7 @@
 			byId('thermoname').innerHTML = jr.system.host;
 			byId('unit').value = jr.system.unit;
 			byId('searchUpdate').checked = jr.system.autoupd;
+			byId('prerelease').checked = jr.system.prerelease;
 			clearOption('hwversion');
 			for (var i = 0; i < jr.hardware.length; i++) {
 				byId('hwversion').options[byId('hwversion').options.length] = new Option(jr.hardware[i], jr.hardware[i]);
@@ -3765,7 +3767,8 @@
 			jr.system.hwversion = byId('hwversion').value;
 			jr.system.language = byId('language').value;
 			jr.system.unit = byId('unit').value;		
-			jr.system.autoupd = byId('searchUpdate').checked;			
+			jr.system.autoupd = byId('searchUpdate').checked;	
+			jr.system.prerelease = byId('prerelease').checked;			
 			loadTranslation(jr.system.language);
 			var data = JSON.stringify(jr.system);
 			showLoader('true');

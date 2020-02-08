@@ -11,6 +11,7 @@
 				ap_name:"APN",
 				hw_version:"Hardware version",
 				update_search:"Automatically check for updates",
+				prerelease:"Include prerelease in the search",
 				// Buttons
 				back:"Back",
 				save:"Save",
@@ -112,6 +113,7 @@
 				ap_name:"APN",
 				hw_version:"Hardwareversion",
 				update_search:"Automatisch nach Updates suchen",
+				prerelease:"Beta-Versionen in der Suche mit einschießen",
 				// Buttons
 				back:"Zurück",
 				save:"Speichern",
