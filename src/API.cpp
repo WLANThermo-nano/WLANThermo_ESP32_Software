@@ -38,9 +38,8 @@ void API::deviceObj(JsonObject &jObj)
   jObj["cpu"] = gSystem->getCpuName();
   jObj["flash_size"] = gSystem->getFlashSize();
 
-  /*if (sys.item != "")
-    jObj["item"] = sys.item;*/
-  //TODO
+  if (gSystem->item.read(ItemNvsKeys::kItem) != "")
+    jObj["item"] =gSystem->item.read(ItemNvsKeys::kItem);
 
   jObj["hw_version"] = String("v") + String(gSystem->getHardwareVersion());
 

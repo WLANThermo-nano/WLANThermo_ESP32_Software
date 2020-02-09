@@ -30,6 +30,7 @@
 #include "Cloud.h"
 #include "Mqtt.h"
 #include "OtaUpdate.h"
+#include "Item.h"
 
 #define MAX_PITMASTERS 2u
 #define MAX_PITMASTERPROFILES 3u
@@ -86,6 +87,7 @@ public:
   Cloud cloud;
   Mqtt mqtt;
   OtaUpdate otaUpdate;
+  Item item;
 
 protected:
   Buzzer *buzzer;
