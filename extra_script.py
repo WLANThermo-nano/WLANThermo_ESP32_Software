@@ -30,6 +30,8 @@ import zlib
 
 def compress_nextion_file():
     print("---- Convert nextion to include file ----")
+    if not os.path.exists('./data/'):
+        os.makedirs('./data/')
     nextion_file_header_array = nextion_file + ".zlib"
     nextion_file_uncompressed_size = os.path.getsize(nextion_source_path + nextion_file)
     with open(nextion_source_path + nextion_file, "rb") as f:
