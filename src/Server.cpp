@@ -36,6 +36,7 @@
 // include html files
 #include "webui/index.html.gz.h"
 #include "webui/fwupdate.html.gz.h"
+#include "webui/displayupdate.html.gz.h"
 
 #define DEFAULT_PASSWORD "admin"
 
@@ -52,14 +53,6 @@ void WServer::init()
   webServer = new AsyncWebServer(80);
   webServer->addHandler(&nanoWebHandler);
   webServer->addHandler(&bodyWebHandler);
-
-#if defined HW_MINI_V2 || defined HW_MINI_V3
-  // handler for uploading nextion tft file
-  webServer->on("/nexupload", HTTP_POST, [](AsyncWebServerRequest *request) {
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-  },
-                DisplayNextion::uploadHandler);
-#endif
 
   webServer->on("/help", HTTP_GET, [](AsyncWebServerRequest *request) {
              request->redirect("https://github.com/WLANThermo-nano/WLANThermo_nano_Software/blob/master/README.md");
@@ -157,6 +150,29 @@ void WServer::init()
         String url = request->getParam("url", true)->value();
         request->send(200, TEXTPLAIN, "OK");
         gSystem->otaUpdate.doHttpUpdate(url.c_str());
+      }
+      else
+      {
+        request->send(500, TEXTPLAIN, "Invalid");
+      }
+    }
+  });
+
+  webServer->on("/displayupdate", [](AsyncWebServerRequest *request) {
+    if (request->method() == HTTP_GET)
+    {
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", displayupdate_html_gz, sizeof(displayupdate_html_gz));
+      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    }
+    else if (request->method() == HTTP_POST)
+    {
+      if (request->hasParam("url", true))
+      {
+        String url = request->getParam("url", true)->value();
+        request->send(200, TEXTPLAIN, "OK");
+        gSystem->otaUpdate.downloadFileToSPIFFS(url.c_str(), "/nextion.tft.zlib");
       }
       else
       {

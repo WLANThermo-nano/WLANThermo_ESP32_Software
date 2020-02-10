@@ -20,6 +20,15 @@
 #include "DisplayNextion.h"
 #include "Settings.h"
 #include "Nextion.h"
+#include "SPIFFS.h"
+
+extern "C" {
+#include <rom/miniz.h>
+}
+
+#define OUTBUFFER_SIZE (32u*1024u)
+#define INBUFFER_SIZE  (32u*1024u)
+#define NEXTION_SPIFFS_UPDATE_FILENAME "/nextion.tft.zlib"
 
 #define NEXTION_TEMPERATURES_MAX 12u
 #define NEXTION_TEMPERATURES_PER_PAGE 6u
@@ -102,8 +111,7 @@ uint8_t DisplayNextion::serialTimeout = 0u;
 boolean DisplayNextion::flashInProgress = false;
 boolean DisplayNextion::updateInProgress = false;
 boolean DisplayNextion::wifiScanInProgress = false;
-ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(115200);
-uint32_t DisplayNextion::uploadFileSize = 0u;
+ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(921600);
 
 DisplayNextion::DisplayNextion()
 {
@@ -112,6 +120,8 @@ DisplayNextion::DisplayNextion()
 
 void DisplayNextion::init()
 {
+  updateFromSPIFFS();
+
   this->loadConfig();
 
   xTaskCreate(
@@ -181,7 +191,7 @@ void DisplayNextion::task(void *parameter)
   }
 
   while (display->initDisplay() == false)
-    vTaskDelayUntil(&xLastWakeTime, 200);
+    vTaskDelayUntil(&xLastWakeTime, 1000);
 
   for (;;)
   {
@@ -575,34 +585,96 @@ void DisplayNextion::calibrate()
   sendCommand("touch_j");
 }
 
-// handler for upload of nextion tft file
-void DisplayNextion::uploadHandler(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+void DisplayNextion::updateFromSPIFFS()
 {
-  //Serial.printf("uploadHandler: len = %d\n", len);
-  //Handle upload
-  if (!index)
+  if (!SPIFFS.begin(false))
   {
-    Serial.printf("UploadStart: %s\n", filename.c_str());
-    flashInProgress = true;
-    nexSerial.end();
-    nexUpload.prepareUpload(uploadFileSize);
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
   }
 
-  // send data to nextion display
-  nexUpload.upload(data, len);
-
-  if (final)
+  if (!SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
   {
-    Serial.printf("UploadEnd: %s (%u bytes)\n", filename.c_str(), index + len);
-    flashInProgress = false;
-    nexUpload.end();
-    // restart uC after upload
-    ESP.restart();
+    Serial.println("No nextion update available");
+    return;
   }
-}
 
-void DisplayNextion::setUploadFileSize(size_t size)
-{
-  Serial.println("DisplayNextion::setUploadFileSize");
-  uploadFileSize = size;
+  File nextionFile = SPIFFS.open(NEXTION_SPIFFS_UPDATE_FILENAME, FILE_READ);
+
+  if (!nextionFile)
+  {
+    Serial.println("Error opening nextion file");
+    return;
+  }
+
+  std::unique_ptr<tinfl_decompressor> decomp(new tinfl_decompressor);
+  std::unique_ptr<uint8_t[]> outBuffer(new uint8_t[OUTBUFFER_SIZE]);
+  std::unique_ptr<uint8_t[]> inBuffer(new uint8_t[INBUFFER_SIZE]);
+  size_t inPosition = 0u;
+  size_t outPosition = 0u;
+  size_t outBytes = 0u;
+  size_t inBytes = 0u;
+  size_t totalBytes = 0u;
+
+  if (!decomp.get() || !outBuffer.get() || !inBuffer.get())
+  {
+    Serial.println("Cannot allocate memory");
+  }
+
+  tinfl_init(decomp.get());
+
+  // first decompression for getting the final size
+  while (nextionFile.available())
+  {
+    inBytes = nextionFile.readBytes((char *)inBuffer.get(), INBUFFER_SIZE);
+    outBytes = OUTBUFFER_SIZE;
+    mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
+    tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (uint8_t *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    totalBytes += outBytes;
+    inPosition += inBytes;
+    nextionFile.seek(inPosition);
+    Serial.printf("Decompressed %d bytes\n", totalBytes);
+  }
+
+  if (!nexUpload.prepareUpload(totalBytes))
+  {
+    Serial.println("Prepare Nextion upload failed!");
+    return;
+  }
+
+  // reset data for second decompression
+  inPosition = 0u;
+  outPosition = 0u;
+  outBytes = 0u;
+  inBytes = 0u;
+  totalBytes = 0u;
+
+  decomp.reset(new tinfl_decompressor);
+  tinfl_init(decomp.get());
+  nextionFile.seek(0u);
+
+  // second decompression for uploading the file
+  while (nextionFile.available())
+  {
+    inBytes = nextionFile.readBytes((char *)inBuffer.get(), INBUFFER_SIZE);
+    outBytes = OUTBUFFER_SIZE;
+    mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
+    tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (mz_uint8 *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    totalBytes += outBytes;
+    inPosition += inBytes;
+    nextionFile.seek(inPosition);
+    if (!nexUpload.upload(outBuffer.get(), outBytes))
+    {
+      Serial.println("Prepare Nextion upload failed!");
+      return;
+    }
+    Serial.printf("Uploaded %d bytes\n", totalBytes);
+  }
+
+  nexUpload.end();
+
+  //TODO: test connection again?
+
+  SPIFFS.remove(NEXTION_SPIFFS_UPDATE_FILENAME);
+  SPIFFS.end();
 }

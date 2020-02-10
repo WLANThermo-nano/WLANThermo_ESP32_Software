@@ -21,6 +21,7 @@
 
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
+#include <SPIFFS.h>
 #include "OtaUpdate.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
@@ -121,6 +122,42 @@ void OtaUpdate::doHttpUpdate(const char *url)
   {
     this->start();
   }
+}
+
+void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
+{
+   if (!SPIFFS.begin(true))
+  {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File nextionFile = SPIFFS.open(fileName, FILE_WRITE);
+
+  if (!nextionFile)
+  {
+    Serial.println("Error opening file");
+    return;
+  }
+
+  WiFiClient client;
+  HTTPClient http;
+  http.begin(client, url);
+  int httpCode = http.GET();
+  if (httpCode > 0)
+  {
+    //TODO: write file to SPIFFS
+  }
+  else
+  {
+    Serial.printf("Http GET failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  Serial.printf("File %s has been written to SPIFFS\n", fileName);
+
+  http.end();
+  nextionFile.close();
+  SPIFFS.end();
 }
 
 void OtaUpdate::doHttpUpdate()

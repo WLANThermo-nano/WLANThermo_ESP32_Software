@@ -32,9 +32,8 @@ public:
   void init();
   void update();
   void saveConfig();
-  static void uploadHandler(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-  static void setUploadFileSize(size_t size);
   void calibrate();
+  void updateFromSPIFFS();
 
 private:
   static void setTemperatureAllItems(TemperatureBase *temperature);
@@ -63,5 +62,4 @@ private:
   static boolean updateInProgress;
   static boolean wifiScanInProgress;
   static ESPNexUpload nexUpload;
-  static uint32_t uploadFileSize;
 };

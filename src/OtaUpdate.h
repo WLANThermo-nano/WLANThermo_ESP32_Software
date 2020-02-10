@@ -30,6 +30,7 @@ public:
   void loadConfig();
   void doHttpUpdate();
   void doHttpUpdate(const char *url);
+  void downloadFileToSPIFFS(const char *url, const char *fileName);
   boolean getPrerelease();
   boolean setPrerelease(boolean prerelease);
   String firmwareUrl;       // UPDATE FIRMWARE LINK
