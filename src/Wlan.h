@@ -52,6 +52,7 @@ public:
   String getAccessPointName();
   void setAccessPointName(String accessPointName);
   void addCredentials(const char *ssid, const char *password, bool force = false);
+  void getCredentials(WlanCredentials *credentials);
   int32_t getRssi();
   static void clearCredentials();
   String getMacAddress();
@@ -73,7 +74,8 @@ private:
   static String hostName;
   static String accessPointName;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
-  static WlanCredentials currentWlanCredentials;
+  static WlanCredentials newWlanCredentials;
+  static uint8_t credentialIndex;
   int32_t rssi;
   uint16_t connectTimeout;
   WifiState wifiState;
