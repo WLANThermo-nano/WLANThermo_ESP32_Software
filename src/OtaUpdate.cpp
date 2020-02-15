@@ -41,13 +41,14 @@ OtaUpdate::OtaUpdate()
   autoupdate = 1;
   firmwareUrl = ""; // wird nur von der API befüllt wenn Update da ist
   spiffsUrl = "";
+  displayUrl = "";
 
   state = -1; // Kontakt zur API herstellen
 }
 
 void OtaUpdate::start()
 {
-  xTaskCreate(OtaUpdate::task, "OtaUpdate::task", 10000, this, 100, NULL);
+  xTaskCreatePinnedToCore(OtaUpdate::task, "OtaUpdate::task", 10000, this, 100, NULL, 1);
 }
 
 void OtaUpdate::task(void *parameter)
@@ -55,14 +56,13 @@ void OtaUpdate::task(void *parameter)
   TickType_t xLastWakeTime = xTaskGetTickCount();
   OtaUpdate *otaUpdate = (OtaUpdate *)parameter;
 
-  disableCore0WDT();
-  disableCore1WDT();
-
-  for (;;)
+  if(otaUpdate->firmwareUrl.length() > 0u)
   {
     WiFiClient client;
-    t_httpUpdate_return retVal = httpUpdate.update(client, otaUpdate->firmwareUrl);
-    yield();
+    t_httpUpdate_return retVal;
+
+    httpUpdate.rebootOnUpdate(false);
+    retVal = httpUpdate.update(client, otaUpdate->firmwareUrl);
 
     switch (retVal)
     {
@@ -80,8 +80,12 @@ void OtaUpdate::task(void *parameter)
     }
   }
 
-  enableCore0WDT();
-  enableCore1WDT();
+  if(otaUpdate->displayUrl.length() > 0u)
+  {
+    otaUpdate->displayUrl += "&zlib=true";
+    otaUpdate->downloadFileToSPIFFS(otaUpdate->displayUrl.c_str(), "/nextion.tft.zlib");
+  }
+
   vTaskDelete(NULL);
 }
 
@@ -114,14 +118,14 @@ void OtaUpdate::loadConfig()
   }
 }
 
-void OtaUpdate::doHttpUpdate(const char *url)
+void OtaUpdate::setFirmwareUrl(const char *url)
 {
   firmwareUrl = url;
+}
 
-  if (firmwareUrl.length() > 0)
-  {
-    this->start();
-  }
+void OtaUpdate::setDisplayUrl(const char *url)
+{
+  displayUrl = url;
 }
 
 void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)

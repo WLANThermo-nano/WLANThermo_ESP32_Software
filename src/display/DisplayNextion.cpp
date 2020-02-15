@@ -124,13 +124,14 @@ void DisplayNextion::init()
 
   this->loadConfig();
 
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       DisplayNextion::task,   /* Task function. */
       "DisplayNextion::task", /* String with name of task. */
       10000,                  /* Stack size in bytes. */
       this,                   /* Parameter passed as input of the task */
       1,                      /* Priority of the task. */
-      NULL);                  /* Task handle. */
+      NULL,                   /* Task handle. */
+      1);                     /* CPU Core */
 }
 
 boolean DisplayNextion::initDisplay()

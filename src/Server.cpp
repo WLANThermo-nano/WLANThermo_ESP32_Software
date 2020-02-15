@@ -149,7 +149,8 @@ void WServer::init()
       {
         String url = request->getParam("url", true)->value();
         request->send(200, TEXTPLAIN, "OK");
-        gSystem->otaUpdate.doHttpUpdate(url.c_str());
+        gSystem->otaUpdate.setFirmwareUrl(url.c_str());
+        gSystem->otaUpdate.start();
       }
       else
       {
@@ -172,7 +173,8 @@ void WServer::init()
       {
         String url = request->getParam("url", true)->value();
         request->send(200, TEXTPLAIN, "OK");
-        gSystem->otaUpdate.downloadFileToSPIFFS(url.c_str(), "/nextion.tft.zlib");
+        gSystem->otaUpdate.setDisplayUrl(url.c_str());
+        gSystem->otaUpdate.start();
       }
       else
       {
