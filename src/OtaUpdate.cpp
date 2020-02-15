@@ -146,7 +146,10 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
   int httpCode = http.GET();
   if (httpCode > 0)
   {
-    //TODO: write file to SPIFFS
+    if (httpCode == HTTP_CODE_OK)
+    {
+      http.writeToStream(&nextionFile);
+    }
   }
   else
   {

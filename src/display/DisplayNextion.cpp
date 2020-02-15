@@ -111,7 +111,7 @@ uint8_t DisplayNextion::serialTimeout = 0u;
 boolean DisplayNextion::flashInProgress = false;
 boolean DisplayNextion::updateInProgress = false;
 boolean DisplayNextion::wifiScanInProgress = false;
-ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(921600);
+ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(460800);
 
 DisplayNextion::DisplayNextion()
 {
@@ -185,18 +185,18 @@ void DisplayNextion::task(void *parameter)
   uint32_t bootScreenTimeout = 200u; // 1s
   while (bootScreenTimeout || display->system->isInitDone() != true)
   {
-    vTaskDelayUntil(&xLastWakeTime, 10);
+    vTaskDelay(10);
     if (bootScreenTimeout)
       bootScreenTimeout--;
   }
 
   while (display->initDisplay() == false)
-    vTaskDelayUntil(&xLastWakeTime, 1000);
+    vTaskDelay(1000);
 
   for (;;)
   {
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, 10);
+    vTaskDelay(10);
     display->update();
   }
 }
@@ -630,6 +630,7 @@ void DisplayNextion::updateFromSPIFFS()
     outBytes = OUTBUFFER_SIZE;
     mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
     tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (uint8_t *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    if(0u == outBytes) break;
     totalBytes += outBytes;
     inPosition += inBytes;
     nextionFile.seek(inPosition);
@@ -660,15 +661,16 @@ void DisplayNextion::updateFromSPIFFS()
     outBytes = OUTBUFFER_SIZE;
     mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
     tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (mz_uint8 *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    if(0u == outBytes) break;
     totalBytes += outBytes;
     inPosition += inBytes;
     nextionFile.seek(inPosition);
+    Serial.printf("Uploading %d bytes\n", totalBytes);
     if (!nexUpload.upload(outBuffer.get(), outBytes))
     {
       Serial.println("Prepare Nextion upload failed!");
       return;
     }
-    Serial.printf("Uploaded %d bytes\n", totalBytes);
   }
 
   nexUpload.end();
