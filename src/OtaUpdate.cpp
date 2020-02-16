@@ -31,17 +31,16 @@
 OtaUpdate::OtaUpdate()
 {
   state = 0;
+  
   prerelease = false;
-
-  if (state == 0)
-  {
-    get = "false"; // Änderungen am EE während Update
-    version = "false";
-  }
-  autoupdate = 1;
-  firmwareUrl = ""; // wird nur von der API befüllt wenn Update da ist
-  spiffsUrl = "";
+  autoUpdate = true;
+  firmwareUrl = "";
   displayUrl = "";
+  otaUpdateState = OtaUpdateState::Idle;
+
+
+  get = "false"; // Änderungen am EE während Update
+  version = "false";
 
   state = -1; // Kontakt zur API herstellen
 }
@@ -56,35 +55,8 @@ void OtaUpdate::task(void *parameter)
   TickType_t xLastWakeTime = xTaskGetTickCount();
   OtaUpdate *otaUpdate = (OtaUpdate *)parameter;
 
-  if(otaUpdate->firmwareUrl.length() > 0u)
-  {
-    WiFiClient client;
-    t_httpUpdate_return retVal;
-
-    httpUpdate.rebootOnUpdate(false);
-    retVal = httpUpdate.update(client, otaUpdate->firmwareUrl);
-
-    switch (retVal)
-    {
-    case HTTP_UPDATE_FAILED:
-      Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
-      break;
-
-    case HTTP_UPDATE_NO_UPDATES:
-      Serial.println("HTTP_UPDATE_NO_UPDATES");
-      break;
-
-    case HTTP_UPDATE_OK:
-      Serial.println("HTTP_UPDATE_OK");
-      break;
-    }
-  }
-
-  if(otaUpdate->displayUrl.length() > 0u)
-  {
-    otaUpdate->displayUrl += "&zlib=true";
-    otaUpdate->downloadFileToSPIFFS(otaUpdate->displayUrl.c_str(), "/nextion.tft.zlib");
-  }
+  otaUpdate->doFirmwareUpdate();
+  otaUpdate->doDisplayUpdate();
 
   vTaskDelete(NULL);
 }
@@ -95,7 +67,7 @@ void OtaUpdate::saveConfig()
   JsonObject &json = jsonBuffer.createObject();
   json["update"] = state;
   json["getupd"] = get;
-  json["autoupd"] = autoupdate;
+  json["autoupd"] = autoUpdate;
   json["prerelease"] = prerelease;
   Settings::write(kOtaUpdate, json);
 }
@@ -110,7 +82,7 @@ void OtaUpdate::loadConfig()
     if (json.containsKey("update"))
       state = json["update"];
     if (json.containsKey("autoupd"))
-      autoupdate = json["autoupd"];
+      autoUpdate = json["autoupd"];
     if (json.containsKey("getupd"))
       get = json["getupd"].asString();
     if (json.containsKey("prerelease"))
@@ -126,6 +98,16 @@ void OtaUpdate::setFirmwareUrl(const char *url)
 void OtaUpdate::setDisplayUrl(const char *url)
 {
   displayUrl = url;
+}
+
+void OtaUpdate::setAutoUpdate(boolean enable)
+{
+  this->autoUpdate = enable;
+}
+
+boolean OtaUpdate::getAutoUpdate()
+{
+  return this->autoUpdate;
 }
 
 void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
@@ -147,9 +129,12 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
   WiFiClient client;
   HTTPClient http;
   http.begin(client, url);
+  http.addHeader("Accept-Encoding", "deflate");
   int httpCode = http.GET();
   if (httpCode > 0)
   {
+    Serial.printf("Content-Encoding: %s\n", http.header("Content-Encoding").c_str());
+
     if (httpCode == HTTP_CODE_OK)
     {
       http.writeToStream(&nextionFile);
@@ -167,104 +152,39 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
   SPIFFS.end();
 }
 
-void OtaUpdate::doHttpUpdate()
+void OtaUpdate::doFirmwareUpdate()
 {
-
-  // UPDATE beendet
-  if (gSystem->otaUpdate.state == 4)
-  {
-    //question.typ = OTAUPDATE; TODO
-    gSystem->otaUpdate.get = "false";
-    gSystem->otaUpdate.state = 0;
-    gSystem->otaUpdate.saveConfig();
-    gSystem->otaUpdate.state = -1; // Neue Suche anstoßen
-    IPRINTPLN("u:finish");         // Update finished
+  if (!this->firmwareUrl.length())
     return;
+
+  WiFiClient client;
+  t_httpUpdate_return retVal;
+
+  httpUpdate.rebootOnUpdate(false);
+  retVal = httpUpdate.update(client, this->firmwareUrl);
+
+  switch (retVal)
+  {
+  case HTTP_UPDATE_FAILED:
+    Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+    break;
+
+  case HTTP_UPDATE_NO_UPDATES:
+    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    break;
+
+  case HTTP_UPDATE_OK:
+    Serial.println("HTTP_UPDATE_OK");
+    break;
   }
+}
 
-  if (gSystem->wlan.isConnected())
-  { // nur bei STA
-    if (gSystem->otaUpdate.get != "false")
-    {
+void OtaUpdate::doDisplayUpdate()
+{
+  if (!this->displayUrl.length())
+    return;
 
-      // UPDATE Adresse
-      String adress;
-
-      if (gSystem->otaUpdate.state == 1 || gSystem->otaUpdate.state == 3)
-      { // nicht im Neuaufbau während Update
-        // UPDATE 2x Wiederholen falls schief gelaufen
-        if (gSystem->otaUpdate.count < 3)
-          gSystem->otaUpdate.count++; // Wiederholung
-        else
-        {
-          gSystem->otaUpdate.state = 0;
-          gSystem->otaUpdate.saveConfig();
-          //question.typ = OTAUPDATE; TODO
-          IPRINTPLN("u:cancel"); // Update canceled
-          gDisplay->block(false);
-          gSystem->otaUpdate.count = 0;
-          return;
-        }
-      }
-
-      // UPDATE spiffs oder firmware
-      gDisplay->block(true);
-      t_httpUpdate_return ret;
-
-      if (gSystem->otaUpdate.state == 1 && gSystem->otaUpdate.spiffsUrl != "")
-      {                                  // erst wenn API abgefragt
-        gSystem->otaUpdate.state = 2;    // Nächster Updatestatus
-        gSystem->otaUpdate.saveConfig(); // SPEICHERN
-        IPRINTPLN("u:SPIFFS ...");
-        adress = gSystem->otaUpdate.spiffsUrl + adress; // https://.... + adress
-        Serial.println(adress);
-        WiFiClient client;
-        ret = httpUpdate.updateSpiffs(client, adress);
-      }
-      else if (gSystem->otaUpdate.state == 3 && gSystem->otaUpdate.firmwareUrl != "")
-      { // erst wenn API abgefragt
-        gSystem->otaUpdate.state = 4;
-        gSystem->otaUpdate.saveConfig(); // SPEICHERN
-        IPRINTPLN("u:FW ...");
-        adress = gSystem->otaUpdate.firmwareUrl + adress; // https://.... + adress
-        Serial.println(adress);
-        WiFiClient client;
-        ret = httpUpdate.update(client, adress);
-      }
-
-      // UPDATE Ereigniskontrolle
-      switch (ret)
-      {
-      case HTTP_UPDATE_FAILED:
-        DPRINTF("[HTTP]\tUPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-        DPRINTPLN("");
-        if (gSystem->otaUpdate.state == 2)
-          gSystem->otaUpdate.state = 1; // Spiffs wiederholen
-        else
-          gSystem->otaUpdate.state = 3; // Firmware wiederholen
-        break;
-
-      case HTTP_UPDATE_NO_UPDATES:
-        DPRINTPLN("[HTTP]\tNO_UPDATES");
-        gDisplay->block(false);
-        break;
-
-      case HTTP_UPDATE_OK:
-        DPRINTPLN("[HTTP]\tUPDATE_OK");
-        if (gSystem->otaUpdate.state == 2)
-          ESP.restart(); // falls nach spiffs kein automatischer Restart durchgeführt wird
-        break;
-      }
-    }
-    else
-    {
-      if (gSystem->otaUpdate.state != 2)
-      { // nicht während Neustarts im Updateprozess
-        IPRINTPLN("u:no");
-        gSystem->otaUpdate.state = 0; // Vorgang beenden
-      }
-    }
-  }
+  this->downloadFileToSPIFFS(this->displayUrl.c_str(), "/nextion.tft.zlib");
 }
 
 boolean OtaUpdate::getPrerelease()

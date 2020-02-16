@@ -73,7 +73,7 @@ void API::systemObj(JsonObject &jObj, bool settings)
     jObj["language"] = gSystem->getLanguage();
     jObj["version"] = FIRMWAREVERSION;
     jObj["getupdate"] = gSystem->otaUpdate.version;
-    jObj["autoupd"] = gSystem->otaUpdate.autoupdate;
+    jObj["autoupd"] = gSystem->otaUpdate.getAutoUpdate();
     jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
     jObj["hwversion"] = String("V") + String(gSystem->getHardwareVersion());
   }

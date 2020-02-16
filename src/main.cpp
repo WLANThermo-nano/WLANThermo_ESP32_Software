@@ -101,8 +101,6 @@ void ConnectTask(void *parameter)
 
     // HTTP Update
     Cloud::check_api();
-    if (gSystem->otaUpdate.state > 0)
-      gSystem->otaUpdate.doHttpUpdate();
 
     if (gSystem->wlan.isConnected() && gSystem->otaUpdate.state == 0)
     {
