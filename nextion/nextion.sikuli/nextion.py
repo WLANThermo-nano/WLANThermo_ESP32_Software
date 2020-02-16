@@ -1,7 +1,5 @@
 import sys.argv
 
-addImagePath(getParentPath() + "\images")
-
 wait("Device_ID.png", 10)
 click("Device_ID.png")
 click("Dummy_Direction.png")
