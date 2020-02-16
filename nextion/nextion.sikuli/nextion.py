@@ -1,0 +1,22 @@
+import sys.argv
+
+addImagePath(getParentPath() + "\images")
+
+wait("Device_ID.png", 10)
+click("Device_ID.png")
+click("Dummy_Direction.png")
+click(sys.argv[1] + ".png")
+wait(Pattern("Device.png").similar(0.80))
+click(Pattern("Device.png").similar(0.80))
+click("Intelligent.png")
+click(sys.argv[2] + ".png")
+click("Dummy_Model.png")
+click(sys.argv[3] + ".png")
+click("OK.png")
+click("File.png")
+click(Pattern("TFT_file_output.png").targetOffset(-85,0))
+wait("Output.png")
+click(Pattern("Output.png").targetOffset(0,-50))
+type(getParentPath())
+click("Output.png")
+wait(5)
