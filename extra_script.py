@@ -73,4 +73,4 @@ def convert_web_ui_to_include_files():
     os.remove(web_ui_source_path + "WLANThermoLogo.png")
 
 convert_web_ui_to_include_files()
-//compress_nextion_file()
+#compress_nextion_file()
