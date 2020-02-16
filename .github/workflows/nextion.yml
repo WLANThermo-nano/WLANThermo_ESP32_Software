@@ -1,0 +1,19 @@
+name: Nextion
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build nextion
+      shell: pwsh
+      run: |
+        .\nextion\build.ps1
+    - uses: actions/upload-artifact@v1
+      with:
+          name: nextion_artifacts
+          path: ./nextion/artifacts
