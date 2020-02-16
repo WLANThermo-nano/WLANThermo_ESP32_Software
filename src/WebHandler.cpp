@@ -30,9 +30,6 @@
 #include "DbgPrint.h"
 #include "system/SystemBase.h"
 #include "Version.h"
-#if defined HW_MINI_V2 || defined HW_MINI_V3
-#include "display/DisplayNextion.h"
-#endif
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 
@@ -70,19 +67,6 @@
 #define DC_STATUS "/dcstatus"
 
 #define APPLICATIONJSON "application/json"
-
-const char *upload_page = "<form method='POST' action='/nexupload' enctype='multipart/form-data'> \ 
-<input type='file' name='file' id='file' onchange=\"fileInfo()\"> \ 
-<input type='submit' value='Update'></form> \ 
-<script type='text/javascript'> \ 
-function fileInfo(){ \ 
-    var fileSize = document.getElementById('file').files[0].size; \
-    var xmlHttp = new XMLHttpRequest(); \
-    xmlHttp.open(\"POST\",\"/upload?usize=\" + fileSize, true); \
-    xmlHttp.setRequestHeader(\"Content-Type\", \"application/x-www-form-urlencoded\"); \
-    xmlHttp.send(); \
-} \ 
-</script>";
 
 const char *public_list[] = {
     "/nano.ttf",
@@ -391,31 +375,6 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
 
     // REQUEST: /upload
   }
-#if defined HW_MINI_V2 || defined HW_MINI_V3
-  else if (request->url() == UPLOAD)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      request->send(200, "text/html", upload_page);
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      if (request->hasArg("usize"))
-      {
-        String usize = request->arg("usize");
-        DisplayNextion::setUploadFileSize(usize.toInt());
-      }
-      else
-      {
-        Serial.println("upload arg missing");
-      }
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-  }
-#endif
   else if (request->url() == HISTORY)
   {
     if (request->method() == HTTP_GET)
@@ -533,6 +492,12 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
     unit = _system["unit"].asString();
   if (_system.containsKey("autoupd"))
     gSystem->otaUpdate.autoupdate = _system["autoupd"];
+  if (_system.containsKey("prerelease"))
+  {
+    gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
+    gSystem->otaUpdate.saveConfig();
+  }
+    
   //if (_system.containsKey("fastmode"))  sys.fastmode   = _system["fastmode"];
 
   if (_system.containsKey("host"))

@@ -35,9 +35,11 @@ void API::deviceObj(JsonObject &jObj)
 
   jObj["device"] = gSystem->getDeviceName();
   jObj["serial"] = gSystem->getSerialNumber();
-  /*if (sys.item != "")
-    jObj["item"] = sys.item;*/
-  //TODO
+  jObj["cpu"] = gSystem->getCpuName();
+  jObj["flash_size"] = gSystem->getFlashSize();
+
+  if (gSystem->item.read(ItemNvsKeys::kItem) != "")
+    jObj["item"] =gSystem->item.read(ItemNvsKeys::kItem);
 
   jObj["hw_version"] = String("v") + String(gSystem->getHardwareVersion());
 
@@ -72,6 +74,7 @@ void API::systemObj(JsonObject &jObj, bool settings)
     jObj["version"] = FIRMWAREVERSION;
     jObj["getupdate"] = gSystem->otaUpdate.version;
     jObj["autoupd"] = gSystem->otaUpdate.autoupdate;
+    jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
     jObj["hwversion"] = String("V") + String(gSystem->getHardwareVersion());
   }
 }
@@ -233,9 +236,7 @@ void API::extObj(JsonObject &jObj)
 // Update JSON Object
 void API::updateObj(JsonObject &jObj)
 {
-
-  // nur leeres Objekt, wird vom Server befüllt
-  //jObj["available"] = true;
+  jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
 
   // nach einer bestimmten Version fragen
   if (gSystem->otaUpdate.get != "false")

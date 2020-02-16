@@ -71,7 +71,7 @@ void SystemMiniV3::hwInit()
 
 void SystemMiniV3::init()
 {
-  deviceName = "mini32-v3";
+  deviceName = "mini";
   hardwareVersion = 3u;
   wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
   wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));

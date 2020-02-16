@@ -34,6 +34,7 @@ SystemBase::SystemBase()
   battery = NULL;
   sdCard = NULL;
   deviceName = "undefined";
+  cpuName = "esp32";
   language = "de";
   hardwareVersion = 1u;
   powerSaveModeSupport = false;
@@ -164,6 +165,7 @@ void SystemBase::loadConfig()
   cloud.loadConfig();
   mqtt.loadConfig();
   notification.loadConfig();
+  otaUpdate.loadConfig();
 }
 
 boolean SystemBase::isInitDone()
@@ -194,6 +196,16 @@ void SystemBase::wireRelease()
 String SystemBase::getDeviceName()
 {
   return this->deviceName;
+}
+
+String SystemBase::getCpuName()
+{
+  return this->cpuName;
+}
+
+size_t SystemBase::getFlashSize()
+{
+  return ESP.getFlashChipSize();
 }
 
 String SystemBase::getSerialNumber()

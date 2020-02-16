@@ -27,8 +27,12 @@ class OtaUpdate
 public:
   OtaUpdate();
   void saveConfig();
+  void loadConfig();
   void doHttpUpdate();
   void doHttpUpdate(const char *url);
+  void downloadFileToSPIFFS(const char *url, const char *fileName);
+  boolean getPrerelease();
+  boolean setPrerelease(boolean prerelease);
   String firmwareUrl;       // UPDATE FIRMWARE LINK
   String spiffsUrl;         // UPDATE SPIFFS LINK
   byte count;               // UPDATE SPIFFS REPEAT
@@ -36,10 +40,9 @@ public:
   String get;               // UPDATE MY NEW VERSION (über Eingabe)
   String version = "false"; // UPDATE SERVER NEW VERSION
   bool autoupdate;          // CHECK UPDATE INFORMATION
-  bool prerelease;          // ?
 
 private:
-  void loadConfig();
   void start();
   static void task(void *parameter);
+  bool prerelease;
 };

@@ -1,0 +1,17 @@
+<form method='POST' action='/uploadfile' enctype='multipart/form-data'>
+    <input type='file' name='file' id='file' onchange="fileInfo()">
+    <button>Upload file</button>
+</form>
+<form method='POST' action='/resetconfig'>
+    <button>Reset config</button>
+</form>
+<form method='POST' action='/restart'>
+    <button>Restart</button>
+</form>
+<script type='text/javascript'> function fileInfo(){
+var fileSize = document.getElementById('file').files[0].size;
+var xmlHttp = new XMLHttpRequest();
+xmlHttp.open("POST","/uploadfile?usize=" + fileSize, true);
+xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+xmlHttp.send(); }
+</script>

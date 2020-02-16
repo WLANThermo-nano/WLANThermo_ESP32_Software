@@ -1,5 +1,5 @@
- /*************************************************** 
-    Copyright (C) 2018  Steffen Ochs
+/*************************************************** 
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,17 +15,28 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     HISTORY: Please refer Github History
+    
+****************************************************/
+#pragma once
+#include <Arduino.h>
 
-    NOTE:
-    - Nano V2: MISO > Supply Switch; CLK > PIT2
+enum class UploadFileType
+{
+  None,
+  Firmware,
+  SPIFFS,
+  Nextion
+};
 
- ****************************************************/
+class RecoveryMode
+{
+public:
+  RecoveryMode(void);
+  static void run();
 
-#ifndef C_VERSION_H_
-#define C_VERSION_H_
-
-#define FIRMWAREVERSION  "v0.9.0"
-#define GUIAPIVERSION    "1"
-#define SERVERAPIVERSION "1"
-
-#endif /* C_VERSION_H_ */
+private:
+  static UploadFileType getFileType(String fileName);
+  static UploadFileType uploadFileType;
+  static size_t uploadFileSize;
+  static void *nexUpload;
+};

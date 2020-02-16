@@ -71,9 +71,6 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
     pinMode(this->ioPin1, OUTPUT);
     digitalWrite(this->ioPin1, LOW);
-    ledcSetup(this->channel1, CHANNEL1_FREQUENCY, CHANNEL1_BIT_RES);
-    ledcAttachPin(this->ioPin1, this->channel1);
-    ledcWrite(this->channel1, 0u);
 
     pinMode(this->ioPin2, OUTPUT);
     digitalWrite(this->ioPin2, LOW);
@@ -522,11 +519,10 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
     uint16_t dcmin = newDcMin * 10u; // 1. Nachkommastelle
     uint16_t dcmax = newDcMax * 10u; // 1. Nachkommastelle
 
-    dcmin = map(dcmin, 0, 1000u, 0u, 0xFFFFu);
-    dcmax = map(dcmax, 0, 1000u, 0u, 0xFFFFu);
+    dcmin = map(dcmin, 0, 1000u, 0u, 0xFFu);
+    dcmax = map(dcmax, 0, 1000u, 0u, 0xFFu);
 
     uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
-    uint32_t prevDc = ledcRead(this->channel1);
 
     // boost when coming from 0
     if ((0 == prevValue) && (newValue < FAN_BOOST_VALUE) && (newValue > 0))
@@ -534,16 +530,16 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
         newDc = map(FAN_BOOST_VALUE, 0, 100, dcmin, dcmax);
     }
 
-    prevValue = newValue;
-
     if (0u == newValue)
     {
-        ledcWrite(this->channel1, 0u);
+        dacWrite(this->ioPin1, 0u);
     }
-    else if (newDc != prevDc)
+    else
     {
-        ledcWrite(this->channel1, newDc);
+        dacWrite(this->ioPin1, newDc);
     }
+
+    prevValue = newValue;
 }
 
 void Pitmaster::controlServo(float newValue, float newDcMin, float newDcMax)
@@ -589,7 +585,7 @@ void Pitmaster::enableStepUp(boolean enable)
 
 void Pitmaster::disableActuators()
 {
-    ledcWrite(this->channel1, 0u);
+    dacWrite(this->ioPin1, 0u);
     ledcWrite(this->channel2, 0u);
     this->enableStepUp(false);
     //TODO: reset pid values

@@ -21,6 +21,7 @@
 
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
+#include <SPIFFS.h>
 #include "OtaUpdate.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
@@ -30,8 +31,7 @@
 OtaUpdate::OtaUpdate()
 {
   state = 0;
-
-  loadConfig();
+  prerelease = false;
 
   if (state == 0)
   {
@@ -92,6 +92,7 @@ void OtaUpdate::saveConfig()
   json["update"] = state;
   json["getupd"] = get;
   json["autoupd"] = autoupdate;
+  json["prerelease"] = prerelease;
   Settings::write(kOtaUpdate, json);
 }
 
@@ -102,13 +103,14 @@ void OtaUpdate::loadConfig()
 
   if (json.success())
   {
-
     if (json.containsKey("update"))
       state = json["update"];
     if (json.containsKey("autoupd"))
       autoupdate = json["autoupd"];
     if (json.containsKey("getupd"))
       get = json["getupd"].asString();
+    if (json.containsKey("prerelease"))
+      prerelease = json["prerelease"];
   }
 }
 
@@ -120,6 +122,42 @@ void OtaUpdate::doHttpUpdate(const char *url)
   {
     this->start();
   }
+}
+
+void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
+{
+   if (!SPIFFS.begin(true))
+  {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File nextionFile = SPIFFS.open(fileName, FILE_WRITE);
+
+  if (!nextionFile)
+  {
+    Serial.println("Error opening file");
+    return;
+  }
+
+  WiFiClient client;
+  HTTPClient http;
+  http.begin(client, url);
+  int httpCode = http.GET();
+  if (httpCode > 0)
+  {
+    //TODO: write file to SPIFFS
+  }
+  else
+  {
+    Serial.printf("Http GET failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  Serial.printf("File %s has been written to SPIFFS\n", fileName);
+
+  http.end();
+  nextionFile.close();
+  SPIFFS.end();
 }
 
 void OtaUpdate::doHttpUpdate()
@@ -220,4 +258,14 @@ void OtaUpdate::doHttpUpdate()
       }
     }
   }
+}
+
+boolean OtaUpdate::getPrerelease()
+{
+  return prerelease;
+}
+
+boolean OtaUpdate::setPrerelease(boolean prerelease)
+{
+  this->prerelease = prerelease;
 }

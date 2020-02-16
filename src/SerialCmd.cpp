@@ -56,8 +56,11 @@ void read_serial(char *buffer) {
        return;
     }
 
-    else if (command == "setEE") {
-      return;
+    // set item string
+    else if (command == "item") {
+      String payload((char*)buffer);
+      gSystem->item.write(ItemNvsKeys::kItem, payload);
+      return;    
     }
 
      // UPDATE auf bestimmte Version
@@ -92,8 +95,10 @@ void read_serial(char *buffer) {
     }
   } else {
   
-    if (str == "getEE") {
-      return;
+    // set item string
+    if (str == "item") {
+      Serial.println(gSystem->item.read(ItemNvsKeys::kItem));
+      return;    
     }
 
     else if (str == "data") {

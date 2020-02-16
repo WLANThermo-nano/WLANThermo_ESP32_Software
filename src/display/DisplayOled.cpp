@@ -40,6 +40,9 @@
 #define OLED_FLASH_INTERVAL 50u    // 50 * 10ms = 500ms
 #define OLED_WIFI_AP_DELAY 10000u
 #define OLED_BATTERY_PERCENTAGE_DELAY 10000u
+#define BUTTON_DEBOUNCE_TICKS 10u
+#define BUTTON_CLICK_TICKS 200u
+#define BUTTON_PRESS_TICKS 600u
 
 enum class Frames
 {
@@ -108,12 +111,18 @@ boolean DisplayOled::initDisplay()
   lButton.attachLongPressStop(this->lButtonLongClickEnd);
   lButton.attachDoubleClick(this->lButtonDoubleClick);
   lButton.attachDuringLongPress(this->lButtonLongClickOnGoing);
+  lButton.setDebounceTicks(BUTTON_DEBOUNCE_TICKS);
+  lButton.setClickTicks(BUTTON_CLICK_TICKS);
+  lButton.setPressTicks(BUTTON_PRESS_TICKS);
 
   rButton.attachClick(this->rButtonClick);
   rButton.attachLongPressStart(this->rButtonLongClickStart);
   rButton.attachLongPressStop(this->rButtonLongClickEnd);
   rButton.attachDoubleClick(this->rButtonDoubleClick);
   rButton.attachDuringLongPress(this->rButtonLongClickOnGoing);
+  rButton.setDebounceTicks(BUTTON_DEBOUNCE_TICKS);
+  rButton.setClickTicks(BUTTON_CLICK_TICKS);
+  rButton.setPressTicks(BUTTON_PRESS_TICKS);
 
   return true;
 }
