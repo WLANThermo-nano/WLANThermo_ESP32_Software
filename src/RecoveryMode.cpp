@@ -34,10 +34,22 @@
 UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
 size_t RecoveryMode::uploadFileSize = 0u;
+RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
+RTC_DATA_ATTR char RecoveryMode::wifiName[32];
+RTC_DATA_ATTR char RecoveryMode::wifiPassword[32];
 
 RecoveryMode::RecoveryMode(void)
 {
 
+}
+
+void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPassword)
+{
+  fromApp = true;
+  strcpy(wifiName, paramWifiName);
+  strcpy(wifiPassword, paramWifiPassword);
+  esp_sleep_enable_timer_wakeup(10);
+  esp_deep_sleep_start();
 }
 
 void RecoveryMode::run()
@@ -45,7 +57,7 @@ void RecoveryMode::run()
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
-  while((millis() - startTime) < RECOVERY_PIN_TIME)
+  while(((millis() - startTime) < RECOVERY_PIN_TIME) && !fromApp)
   {
     if(digitalRead(RECOVERY_PIN) == 1u)
     {
@@ -56,13 +68,23 @@ void RecoveryMode::run()
 
   // Welcome to recovery mode
 
-  // Start AP
-  IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
   WiFi.persistent(false);
   WiFi.disconnect(true);
-  WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(RECOVERY_AP_NAME, RECOVERY_AP_PASSWORD);
-  WiFi.mode(WIFI_AP);
+
+  if(fromApp)
+  {
+    // Start STA
+    WiFi.begin(wifiName, wifiPassword);
+    WiFi.mode(WIFI_STA);
+  }
+  else
+  {
+    // Start AP
+    IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
+    WiFi.softAPConfig(local_IP, gateway, subnet);
+    WiFi.softAP(RECOVERY_AP_NAME, RECOVERY_AP_PASSWORD);
+    WiFi.mode(WIFI_AP);
+  }
 
   // Start web server
   AsyncWebServer *webServer = new AsyncWebServer(80);

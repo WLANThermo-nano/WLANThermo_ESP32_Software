@@ -76,13 +76,14 @@ DisplayOled::DisplayOled()
 
 void DisplayOled::init()
 {
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       DisplayOled::task,   /* Task function. */
       "DisplayOled::task", /* String with name of task. */
       10000,               /* Stack size in bytes. */
       this,                /* Parameter passed as input of the task */
       1,                   /* Priority of the task. */
-      NULL);               /* Task handle. */
+      NULL,                   /* Task handle. */
+      1);                     /* CPU Core */
 }
 
 boolean DisplayOled::initDisplay()

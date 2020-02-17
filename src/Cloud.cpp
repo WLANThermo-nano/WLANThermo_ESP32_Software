@@ -27,7 +27,7 @@
 #include <SPIFFS.h>
 
 // API
-#define APISERVER "api.wlanthermo.de"
+#define APISERVER "dev-api.wlanthermo.de"
 #define CHECKAPI "/"
 #define URL_FILE "/url.json"
 #define DEFAULT_INTERVAL 30u

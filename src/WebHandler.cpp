@@ -30,6 +30,7 @@
 #include "DbgPrint.h"
 #include "system/SystemBase.h"
 #include "Version.h"
+#include "RecoveryMode.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 
@@ -51,6 +52,7 @@
 #define ADMIN "/admin"
 #define UPLOAD "/upload"
 #define HISTORY "/history"
+#define RECOVERY "/recovery"
 
 #define SET_NETWORK "/setnetwork"
 #define SET_SYSTEM "/setsystem"
@@ -304,6 +306,25 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
       request->send(500, TEXTPLAIN, BAD_PATH);
     return;
 
+    // REQUEST: /recovery
+  }
+  else if (request->url() == RECOVERY)
+  {
+    if (request->method() == HTTP_GET)
+    {
+      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
+        return request->requestAuthentication();
+      
+      request->send(200, TEXTPLAIN, TEXTTRUE);
+
+      WlanCredentials credentials;
+      gSystem->wlan.getCredentials(&credentials);
+      RecoveryMode::runFromApp(credentials.ssid, credentials.password);
+    }
+    else
+      request->send(500, TEXTPLAIN, BAD_PATH);
+    return;
+
     // REQUEST: /admin
   }
   else if (request->url() == ADMIN)
@@ -423,7 +444,7 @@ bool NanoWebHandler::canHandle(AsyncWebServerRequest *request)
 {
   if (request->method() == HTTP_GET)
   {
-    if (request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == ADMIN || request->url() == UPLOAD || request->url() == HISTORY
+    if (request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == RECOVERY ||request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == ADMIN || request->url() == UPLOAD || request->url() == HISTORY
         //|| request->url() == LOGGING_PATH
     )
     {
@@ -491,14 +512,12 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
   if (_system.containsKey("unit"))
     unit = _system["unit"].asString();
   if (_system.containsKey("autoupd"))
-    gSystem->otaUpdate.autoupdate = _system["autoupd"];
+    gSystem->otaUpdate.setAutoUpdate((boolean)_system["autoupd"]);
   if (_system.containsKey("prerelease"))
   {
     gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
     gSystem->otaUpdate.saveConfig();
   }
-    
-  //if (_system.containsKey("fastmode"))  sys.fastmode   = _system["fastmode"];
 
   if (_system.containsKey("host"))
   {
@@ -913,7 +932,7 @@ bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
     if (_update.containsKey("available"))
       available = _update["available"];
 
-    if (available && (gSystem->otaUpdate.autoupdate || gSystem->otaUpdate.get != "false"))
+    if (available && (gSystem->otaUpdate.getAutoUpdate() || gSystem->otaUpdate.get != "false"))
     {
       // bei gSystem->otaUpdate.get wurde eine bestimmte Version angefragt
       String version;
@@ -933,26 +952,27 @@ bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
           gSystem->otaUpdate.get = "false"; // nicht die richtige Version übermittelt
         }
       }
+      if (_update.containsKey("NX3224K028"))
+      { // Firmware-Link
+        JsonObject &_fw = _update["NX3224K028"];
+        if (_fw.containsKey("url"))
+          gSystem->otaUpdate.setDisplayUrl(_fw["url"].asString());
+        Serial.println(_fw["url"].asString());
+      }
       if (_update.containsKey("firmware"))
       { // Firmware-Link
         JsonObject &_fw = _update["firmware"];
         if (_fw.containsKey("url"))
-          gSystem->otaUpdate.firmwareUrl = _fw["url"].asString();
-        Serial.println(gSystem->otaUpdate.firmwareUrl);
+          gSystem->otaUpdate.setFirmwareUrl(_fw["url"].asString());
+        Serial.println(_fw["url"].asString());
       }
-      if (_update.containsKey("spiffs"))
-      { // SPIFFS-Link
-        JsonObject &_sf = _update["spiffs"];
-        if (_sf.containsKey("url"))
-          gSystem->otaUpdate.spiffsUrl = _sf["url"].asString();
-        Serial.println(gSystem->otaUpdate.spiffsUrl);
-      }
-      //if (_update.containsKey("prerelease"))  gSystem->otaUpdate.prerelease = _update["prerelease"];
+
       if (_update.containsKey("force"))
       {
         gSystem->otaUpdate.get = gSystem->otaUpdate.version;
         gSystem->otaUpdate.state = 1; // Update erzwingen
       }
+      gSystem->otaUpdate.start();
     }
     else
     {

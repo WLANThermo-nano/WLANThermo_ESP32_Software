@@ -32,7 +32,8 @@
 String Wlan::hostName = DEFAULT_HOST;
 String Wlan::accessPointName = APNAME;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
-WlanCredentials Wlan::currentWlanCredentials;
+WlanCredentials Wlan::newWlanCredentials;
+uint8_t Wlan::credentialIndex = 0u;
 
 Wlan::Wlan()
 {
@@ -45,8 +46,8 @@ Wlan::Wlan()
     wlanCredentials[i].password[0] = '\0';
   }
 
-  currentWlanCredentials.ssid[0] = '\0';
-  currentWlanCredentials.password[0] = '\0';
+  newWlanCredentials.ssid[0] = '\0';
+  newWlanCredentials.password[0] = '\0';
 }
 
 void Wlan::init()
@@ -97,7 +98,7 @@ void Wlan::loadConfig()
 
 void Wlan::saveConfig()
 {
-  if (currentWlanCredentials.ssid[0] != '\0')
+  if (newWlanCredentials.ssid[0] != '\0')
   {
     for (uint8_t i = NUM_OF_WLAN_CREDENTIALS - 1u; i != 0; i--)
     {
@@ -105,10 +106,11 @@ void Wlan::saveConfig()
       strcpy(wlanCredentials[i].password, wlanCredentials[i - 1].password);
     }
 
-    strcpy(wlanCredentials[0].ssid, currentWlanCredentials.ssid);
-    strcpy(wlanCredentials[0].password, currentWlanCredentials.password);
-    currentWlanCredentials.ssid[0] = '\0';
-    currentWlanCredentials.password[0] = '\0';
+    strcpy(wlanCredentials[0].ssid, newWlanCredentials.ssid);
+    strcpy(wlanCredentials[0].password, newWlanCredentials.password);
+    newWlanCredentials.ssid[0] = '\0';
+    newWlanCredentials.password[0] = '\0';
+    credentialIndex = 0u;
   }
 
   DynamicJsonBuffer jsonBuffer;
@@ -167,8 +169,8 @@ uint8_t Wlan::numOfAPClients()
 void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 {
   Serial.printf("Wlan::addCredentials: ssid = %s, password = %s, force = %d\n", ssid, password, force);
-  strcpy(currentWlanCredentials.ssid, ssid);
-  strcpy(currentWlanCredentials.password, password);
+  strcpy(newWlanCredentials.ssid, ssid);
+  strcpy(newWlanCredentials.password, password);
 
   if (force)
   {
@@ -181,6 +183,14 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
   wifiState = WifiState::AddCredentials;
   WiFi.begin(ssid, password);
   connectTimeout = CONNECT_TIMEOUT;
+}
+
+void Wlan::getCredentials(WlanCredentials *credentials)
+{
+  if(credentials != NULL)
+  {
+    memcpy(credentials, &wlanCredentials[credentialIndex], sizeof(WlanCredentials));
+  }
 }
 
 void Wlan::update()
@@ -234,7 +244,6 @@ void Wlan::connectToNewStation()
 void Wlan::connectToKnownStations()
 {
   static uint8_t stationIndex = 0u;
-
   // check for state machine change
   if (isConnected())
   {
@@ -252,6 +261,7 @@ void Wlan::connectToKnownStations()
     if (wlanCredentials[stationIndex].ssid[0] != '\0')
     {
       connectTimeout = CONNECT_TIMEOUT;
+      credentialIndex = stationIndex;
       WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
       Serial.printf("Wlan::connectToStations: SSID = %s, PW = %s\n", wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
     }
@@ -280,10 +290,15 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
   WiFi.mode(WIFI_STA);
 
-  if (WiFi.SSID() == currentWlanCredentials.ssid)
+  if (WiFi.SSID() == newWlanCredentials.ssid)
   {
     saveConfig();
   }
+  else
+  {
+    
+  }
+  
 
   if (!MDNS.begin(hostName.c_str()))
   {
