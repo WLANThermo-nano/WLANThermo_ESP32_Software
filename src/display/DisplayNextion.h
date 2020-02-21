@@ -36,6 +36,7 @@ public:
   void updateFromSPIFFS();
 
 private:
+  static void setTemperatureCount();
   static void setTemperatureAllItems(TemperatureBase *temperature);
   static void setTemperatureColor(TemperatureBase *temperature);
   static void setTemperatureName(TemperatureBase *temperature);
@@ -47,19 +48,20 @@ private:
   static void showTemperatureSettings(void *ptr);
   static void saveTemperatureSettings(void *ptr);
   static void enterWifiSettingsPage(void *ptr);
-  static void exitWifiSettingsPage(void *ptr);
+  static void wifiNextLeft(void *ptr);
+  static void wifiNextRight(void *ptr);
+  static void wifiConnect(void *ptr);
   static void enterPitmasterSettingsPage(void *ptr);
   static void savePitmasterSettings(void *ptr);
   void updateWifiSettingsPage();
   void loadConfig();
   boolean initDisplay();
-  static void temperatureUpdateCb(TemperatureBase *temperature, void *userData);
+  static void temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData);
   static void task(void *parameter);
   static SystemBase *system;
   static uint32_t updateTemperature;
   static uint8_t serialTimeout;
-  static boolean flashInProgress;
-  static boolean updateInProgress;
   static boolean wifiScanInProgress;
   static ESPNexUpload nexUpload;
+  static int8_t wifiIndex;
 };

@@ -26,7 +26,7 @@
 #define TEMPERATURE_TYPE_NOT_CHANGEABLE 0xFFu
 #define NUM_OF_TYPES 12u
 
-typedef void (*TemperatureCallback_t)(class TemperatureBase*, void*); 
+typedef void (*TemperatureCallback_t)(class TemperatureBase*, boolean, void*); 
 
 enum AlarmSetting
 {
@@ -88,7 +88,6 @@ class TemperatureBase
   protected:
     uint8_t localIndex;
     uint8_t globalIndex;
-    float previousValue;
     float currentValue;
     MedianFilter<float> *medianValue;
     float minValue;
@@ -102,6 +101,7 @@ class TemperatureBase
     uint8_t notificationCounter;
     static const char* typeNames[NUM_OF_TYPES];
     TemperatureCallback_t registeredCb;
+    boolean settingsChanged;
     void  *registeredCbUserData;
     static uint8_t globalIndexTracker;
     float getUnitValue(float value);
