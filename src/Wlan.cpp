@@ -329,6 +329,11 @@ String Wlan::getMacAddress()
   return String(macStr);
 }
 
+WifiState Wlan::getWifiState()
+{
+  return this->wifiState;
+}
+
 String Wlan::getHostName()
 {
   return this->hostName;

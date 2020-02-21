@@ -41,6 +41,7 @@ TemperatureBase::TemperatureBase()
   this->globalIndex = this->globalIndexTracker++;
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
   this->loadDefaultValues();
+  this->settingsChanged = false;
 }
 
 TemperatureBase::~TemperatureBase()
@@ -52,7 +53,6 @@ void TemperatureBase::loadDefaultValues()
 {
   this->currentUnit = Celsius;
   this->currentValue = INACTIVEVALUE;
-  this->previousValue = INACTIVEVALUE;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex);
@@ -61,6 +61,8 @@ void TemperatureBase::loadDefaultValues()
   this->notificationCounter = 1u;
   if (this->globalIndex < MAX_COLORS)
     this->color = colors[this->globalIndex];
+  
+  settingsChanged = true;
 }
 
 void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)
@@ -78,17 +80,16 @@ void TemperatureBase::handleCallbacks()
 {
   AlarmStatus newAlarmStatus = getAlarmStatus();
   static AlarmStatus alarmStatus = newAlarmStatus;
+  static float previousValue = currentValue;
 
   if((this->registeredCb != NULL))
   {
-    int prev = (this->previousValue * 100);
-    int cur = (this->currentValue * 100);
-
-    if(abs(cur - prev) > 10u || (alarmStatus != newAlarmStatus))
+    if((true == settingsChanged) || (alarmStatus != newAlarmStatus) || (previousValue != currentValue))
     {
-      this->registeredCb(this, this->registeredCbUserData);
-      this->previousValue = this->currentValue;
+      this->registeredCb(this, settingsChanged, this->registeredCbUserData);
       alarmStatus = newAlarmStatus;
+      settingsChanged = false;
+      previousValue = this->currentValue;
     }
   }
 }
@@ -161,33 +162,43 @@ void TemperatureBase::setType(uint8_t type)
 void TemperatureBase::setMinValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
+  {
     this->minValue = setUnitValue(value);
+    settingsChanged = true;
+  }
 }
 
 void TemperatureBase::setMaxValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
+  {
     this->maxValue = setUnitValue(value);
+    settingsChanged = true;
+  }
 }
 
 void TemperatureBase::setName(const char *name)
 {
   this->name = name;
+  settingsChanged = true;
 }
 
 void TemperatureBase::setColor(const char *color)
 {
   this->color = color;
+  settingsChanged = true;
 }
 
 void TemperatureBase::setAlarmSetting(AlarmSetting alarmSetting)
 {
   this->alarmSetting = alarmSetting;
+  settingsChanged = true;
 }
 
 void TemperatureBase::setUnit(TemperatureUnit unit)
 {
   this->currentUnit = unit;
+  settingsChanged = true;
 }
 
 uint8_t TemperatureBase::getNotificationCounter()

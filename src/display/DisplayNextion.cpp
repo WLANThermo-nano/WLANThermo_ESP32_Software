@@ -51,6 +51,7 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define PAGE_TEMP0_MAIN_ID 1u
 #define PAGE_TEMP1_MAIN_ID 2u
 #define PAGE_MENU_ID 6u
+#define PAGE_WIFI_ID 7u
 #define HOTSPOT_TEMP0_ID 66u
 #define HOTSPOT_TEMP1_ID 67u
 #define HOTSPOT_TEMP2_ID 68u
@@ -59,6 +60,9 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define HOTSPOT_TEMP5_ID 71u
 #define BUTTON_MENU_WLAN_ID 2u
 #define BUTTON_MENU_PITMASTER_ID 3u
+#define TEXT_WIFI_CONNECT_ID 1u
+#define BUTTON_WIFI_BUTTON_LEFT_ID 10u
+#define BUTTON_WIFI_BUTTON_RIGHT_ID 11u
 
 #define PAGE_TEMP_SETTINGS_ID 3u
 #define PAGE_PITMASTER_SETTINGS 9u
@@ -85,6 +89,9 @@ NexHotspot hotspotSavePitmaster = NexHotspot(PAGE_PITMASTER_SETTINGS, HOTSPOT_PI
 
 static NexButton menuWifiSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_WLAN_ID, "");
 static NexButton menuPitmasterSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_PITMASTER_ID, "");
+static NexButton wifiButtonLeft = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_LEFT_ID, "");
+static NexButton wifiButtonRight = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_RIGHT_ID, "");
+static NexText wifiButtonConnect = NexText(PAGE_WIFI_ID, TEXT_WIFI_CONNECT_ID, "");
 
 NexTouch *nex_listen_list[] = {
     &nexTemperatures[0],
@@ -103,15 +110,17 @@ NexTouch *nex_listen_list[] = {
     &menuWifiSettings,
     &menuPitmasterSettings,
     &hotspotSavePitmaster,
+    &wifiButtonLeft,
+    &wifiButtonRight,
+    &wifiButtonConnect,
     NULL};
 
 uint32_t DisplayNextion::updateTemperature = 0u;
 SystemBase *DisplayNextion::system = gSystem;
 uint8_t DisplayNextion::serialTimeout = 0u;
-boolean DisplayNextion::flashInProgress = false;
-boolean DisplayNextion::updateInProgress = false;
 boolean DisplayNextion::wifiScanInProgress = false;
 ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(460800);
+int8_t DisplayNextion::wifiIndex = 0u;
 
 DisplayNextion::DisplayNextion()
 {
@@ -146,6 +155,8 @@ boolean DisplayNextion::initDisplay()
 
   if (nexInit())
   {
+    setTemperatureCount();
+
     for (int i = 0; i < NEXTION_TEMPERATURES_MAX; i++)
     {
       TemperatureBase *temperature = system->temperatures[i];
@@ -223,14 +234,11 @@ void DisplayNextion::loadConfig()
   }
 }
 
-void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, void *userData)
+void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData)
 {
   DisplayNextion *displayNextion = (DisplayNextion *)userData;
 
-  if(flashInProgress)
-    return;
-
-  updateTemperature |= (1u << temperature->getGlobalIndex());
+  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL_TEMPERATURES : (1u << temperature->getGlobalIndex());
 }
 
 void DisplayNextion::update()
@@ -239,12 +247,6 @@ void DisplayNextion::update()
   boolean updateAllTemperatures = false;
 
   if (this->disabled)
-    return;
-
-  updateInProgress = true;
-
-  // Do not update display when flash is in progress
-  if (flashInProgress)
     return;
 
   nexLoop(nex_listen_list);
@@ -275,7 +277,6 @@ void DisplayNextion::update()
   }
 
   this->updateTemperature = 0u;
-  updateInProgress = false;
 }
 
 void DisplayNextion::showTemperatureSettings(void *ptr)
@@ -373,17 +374,26 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
 
 void DisplayNextion::enterWifiSettingsPage(void *ptr)
 {
-  if (false == wifiScanInProgress)
+  char ssid[33] = "";
+
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
+
+  if(strlen(ssid))
+  {
+    /* Do nothing */
+    /* Keyboard abort during entering of password */
+    /* Keep scan */
+    NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
+    NexText(DONT_CARE, DONT_CARE, "SSID").setFont(1u);
+    NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+  }
+  else if (false == wifiScanInProgress)
   {
     Serial.printf("DisplayNextion::enterWifiSettingsPage: scan network\n");
     WiFi.scanDelete();
     WiFi.scanNetworks(true);
     wifiScanInProgress = true;
   }
-}
-
-void DisplayNextion::exitWifiSettingsPage(void *ptr)
-{
 }
 
 void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
@@ -466,12 +476,52 @@ void DisplayNextion::savePitmasterSettings(void *ptr)
 
 void DisplayNextion::updateWifiSettingsPage()
 {
-  for (int16_t i = 0u; i < WiFi.scanComplete(); i++)
+  if(WiFi.scanComplete() > 0)
   {
-    String wifi = "wifi" + String(i);
-    NexText(DONT_CARE, DONT_CARE, wifi.c_str()).setText(WiFi.SSID(i).c_str());
+    wifiIndex = 0u;
+    NexText(DONT_CARE, DONT_CARE, "SSID").setFont(1u);
+    NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
     wifiScanInProgress = false;
+    wifiButtonLeft.attachPop(DisplayNextion::wifiNextLeft, system);
+    wifiButtonRight.attachPop(DisplayNextion::wifiNextRight, system);
+    wifiButtonConnect.attachPop(DisplayNextion::wifiConnect, system);
   }
+}
+
+void DisplayNextion::wifiNextLeft(void *ptr)
+{
+  wifiIndex--;
+  wifiIndex = (wifiIndex < 0) ? WiFi.scanComplete() - 1 : wifiIndex;
+  NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+}
+
+void DisplayNextion::wifiNextRight(void *ptr)
+{
+  wifiIndex++;
+  wifiIndex = (wifiIndex < WiFi.scanComplete()) ? wifiIndex : 0;
+  NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+}
+
+void DisplayNextion::wifiConnect(void *ptr)
+{
+  char ssid[33] = "";
+  char password[64] = "";
+
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").getText(password, sizeof(password));
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").setText("");
+  Serial.printf("%s, %s\n", ssid, password);
+
+  if(strlen(ssid) && strlen(password))
+  {
+    system->wlan.addCredentials(ssid, password);
+  }
+}
+
+void DisplayNextion::setTemperatureCount()
+{
+  NexVariable(DONT_CARE, DONT_CARE, "temp_main0.Count").setValue(system->temperatures.count());
 }
 
 void DisplayNextion::setTemperatureAllItems(TemperatureBase *temperature)
@@ -510,7 +560,7 @@ void DisplayNextion::setTemperatureMin(TemperatureBase *temperature)
 
   sprintf(item, "temp_main%d.%s%d", PAGE_TEMP_INDEX, "Min", PAGE_TEMP_ITEM_INDEX);
 
-  sprintf(text, "%.1lf\xb0", temperature->getMinValue());
+  sprintf(text, "%d\xb0", (int32_t)temperature->getMinValue());
 
   NexText(DONT_CARE, DONT_CARE, item).setText(text);
 }
@@ -522,7 +572,7 @@ void DisplayNextion::setTemperatureMax(TemperatureBase *temperature)
 
   sprintf(item, "temp_main%d.%s%d", PAGE_TEMP_INDEX, "Max", PAGE_TEMP_ITEM_INDEX);
 
-  sprintf(text, "%.1lf\xb0", temperature->getMaxValue());
+  sprintf(text, "%d\xb0", (int32_t)temperature->getMaxValue());
 
   NexText(DONT_CARE, DONT_CARE, item).setText(text);
 }
@@ -543,11 +593,11 @@ void DisplayNextion::setTemperatureCurrent(TemperatureBase *temperature)
 
 void DisplayNextion::setSymbols(boolean forceUpdate)
 {
-  boolean newWifiConnected = system->wlan.isConnected();
   boolean newHasAlarm = system->temperatures.hasAlarm();
+  WifiState newWifiState = system->wlan.getWifiState();
   static uint8_t cloudState = system->cloud.state;
-  static boolean wifiConnected = newWifiConnected;
   static boolean hasAlarm = newHasAlarm;
+  static WifiState wifiState = newWifiState;
 
   if (cloudState != system->cloud.state || forceUpdate)
   {
@@ -555,10 +605,35 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     cloudState = system->cloud.state;
   }
 
-  if (wifiConnected != newWifiConnected || forceUpdate)
+  if (wifiState != newWifiState || forceUpdate)
   {
-    NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText((newWifiConnected) ? "I" : "");
-    wifiConnected = newWifiConnected;
+    switch(newWifiState)
+    {
+      case WifiState::SoftAPNoClient:
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("WIFI:S:MINI-AP;T:WPA;P:12345678;;");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("AP: MINI-AP | PW: 12345678");
+        break;
+      case WifiState::SoftAPClientConnected:
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("http://192.168.66.1");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("http://192.168.66.1");
+        break;
+      case WifiState::ConnectedToSTA:
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("I");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(String("http://" + WiFi.localIP().toString()).c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(String("http://" + WiFi.localIP().toString()).c_str());
+        break;
+      case WifiState::ConnectingToSTA:
+      case WifiState::AddCredentials:
+        break;
+      default:
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("");
+        break;
+    }
+    wifiState = newWifiState;
   }
 
   if (hasAlarm != newHasAlarm || forceUpdate)

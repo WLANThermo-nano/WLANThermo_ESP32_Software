@@ -56,6 +56,7 @@ public:
   int32_t getRssi();
   static void clearCredentials();
   String getMacAddress();
+  WifiState getWifiState();
   boolean isConnected();
   boolean isAP();
   uint8_t numOfAPClients();
