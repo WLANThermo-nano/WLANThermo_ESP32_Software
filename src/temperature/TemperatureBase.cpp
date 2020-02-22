@@ -42,6 +42,8 @@ TemperatureBase::TemperatureBase()
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
   this->loadDefaultValues();
   this->settingsChanged = false;
+  this->cbCurrentValue = INACTIVEVALUE;
+  this->cbAlarmStatus = NoAlarm;
 }
 
 TemperatureBase::~TemperatureBase()
@@ -79,17 +81,15 @@ void TemperatureBase::unregisterCallback()
 void TemperatureBase::handleCallbacks()
 {
   AlarmStatus newAlarmStatus = getAlarmStatus();
-  static AlarmStatus alarmStatus = newAlarmStatus;
-  static float previousValue = currentValue;
 
   if((this->registeredCb != NULL))
   {
-    if((true == settingsChanged) || (alarmStatus != newAlarmStatus) || (previousValue != currentValue))
+    if((true == settingsChanged) || (cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
     {
       this->registeredCb(this, settingsChanged, this->registeredCbUserData);
-      alarmStatus = newAlarmStatus;
+      cbAlarmStatus = newAlarmStatus;
       settingsChanged = false;
-      previousValue = this->currentValue;
+      cbCurrentValue = getValue();
     }
   }
 }

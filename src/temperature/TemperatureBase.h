@@ -103,6 +103,8 @@ class TemperatureBase
     TemperatureCallback_t registeredCb;
     boolean settingsChanged;
     void  *registeredCbUserData;
+    AlarmStatus cbAlarmStatus;
+    float cbCurrentValue;
     static uint8_t globalIndexTracker;
     float getUnitValue(float value);
     float setUnitValue(float value);

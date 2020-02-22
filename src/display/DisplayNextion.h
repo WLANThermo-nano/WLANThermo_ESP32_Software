@@ -47,6 +47,8 @@ private:
   static uint32_t htmlColorToRgb565(String htmlColor);
   static void showTemperatureSettings(void *ptr);
   static void saveTemperatureSettings(void *ptr);
+  static void enterSystemSettingsPage(void *ptr);
+  static void saveSystemSettings(void *ptr);
   static void enterWifiSettingsPage(void *ptr);
   static void wifiNextLeft(void *ptr);
   static void wifiNextRight(void *ptr);
