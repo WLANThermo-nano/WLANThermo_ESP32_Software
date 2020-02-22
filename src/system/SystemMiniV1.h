@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,25 +17,14 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#pragma once
 
-#ifdef HW_MINI_V1
-#include "system/SystemMiniV1.h"
-#include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV1();
-DisplayBase *gDisplay = new DisplayNextion();
-#elif HW_MINI_V2
-#include "system/SystemMiniV2.h"
-#include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV2();
-DisplayBase *gDisplay = new DisplayNextion();
-#elif HW_MINI_V3
-#include "system/SystemMiniV3.h"
-#include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV3();
-DisplayBase *gDisplay = new DisplayNextion();
-#elif HW_NANO_VX
-#include "system/SystemNanoVx.h"
-#include "display/DisplayOled.h"
-SystemBase* gSystem = new SystemNanoVx();
-DisplayBase *gDisplay = new DisplayOled();
-#endif
+#include "SystemBase.h"
+
+class SystemMiniV1 : public SystemBase
+{
+  public:
+    SystemMiniV1();
+    void init();
+  private:
+};
