@@ -24,7 +24,6 @@
 #include "SystemMiniV2.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
-#include "temperature/TemperatureDummy.h"
 #include "display/DisplayNextion.h"
 
 #define ROOT_SYSTEM "MINI-"
@@ -101,7 +100,6 @@ void SystemMiniV2::init()
   else
   {
     delete (checkThermocouple);
-    temperatures.add(new TemperatureDummy());
   }
 
   checkThermocouple = new TemperatureMax31855(CS_MAX31855_N2);
@@ -112,7 +110,6 @@ void SystemMiniV2::init()
   else
   {
     delete (checkThermocouple);
-    temperatures.add(new TemperatureDummy());
   }
 
   // load config

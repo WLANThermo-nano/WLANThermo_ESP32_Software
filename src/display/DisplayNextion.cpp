@@ -60,13 +60,16 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define HOTSPOT_TEMP5_ID 71u
 #define BUTTON_MENU_WLAN_ID 2u
 #define BUTTON_MENU_PITMASTER_ID 3u
+#define BUTTON_MENU_SYSTEM_ID 4u
 #define TEXT_WIFI_CONNECT_ID 1u
 #define BUTTON_WIFI_BUTTON_LEFT_ID 10u
 #define BUTTON_WIFI_BUTTON_RIGHT_ID 11u
 
 #define PAGE_TEMP_SETTINGS_ID 3u
-#define PAGE_PITMASTER_SETTINGS 9u
+#define PAGE_SYSTEM_SETTINGS 9u
+#define PAGE_PITMASTER_SETTINGS 10u
 #define HOTSPOT_TEMP_SETTINGS_SAVE 26u
+#define HOTSPOT_SYSTEM_SETTINGS_SAVE 9u
 #define HOTSPOT_PITMASTER_SETTINGS_SAVE 28u
 
 NexHotspot nexTemperatures[NEXTION_TEMPERATURES_MAX] = {
@@ -86,8 +89,10 @@ NexHotspot nexTemperatures[NEXTION_TEMPERATURES_MAX] = {
 
 NexHotspot hotspotSaveTemp = NexHotspot(PAGE_TEMP_SETTINGS_ID, HOTSPOT_TEMP_SETTINGS_SAVE, "");
 NexHotspot hotspotSavePitmaster = NexHotspot(PAGE_PITMASTER_SETTINGS, HOTSPOT_PITMASTER_SETTINGS_SAVE, "");
+NexHotspot hotspotSaveSystem = NexHotspot(PAGE_SYSTEM_SETTINGS, HOTSPOT_SYSTEM_SETTINGS_SAVE, "");
 
 static NexButton menuWifiSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_WLAN_ID, "");
+static NexButton menuSystemSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_SYSTEM_ID, "");
 static NexButton menuPitmasterSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_PITMASTER_ID, "");
 static NexButton wifiButtonLeft = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_LEFT_ID, "");
 static NexButton wifiButtonRight = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_RIGHT_ID, "");
@@ -109,6 +114,8 @@ NexTouch *nex_listen_list[] = {
     &hotspotSaveTemp,
     &menuWifiSettings,
     &menuPitmasterSettings,
+    &menuSystemSettings,
+    &hotspotSaveSystem,
     &hotspotSavePitmaster,
     &wifiButtonLeft,
     &wifiButtonRight,
@@ -168,6 +175,7 @@ boolean DisplayNextion::initDisplay()
     }
 
     menuWifiSettings.attachPop(DisplayNextion::enterWifiSettingsPage, this);
+    menuSystemSettings.attachPop(DisplayNextion::enterSystemSettingsPage, this);
     menuPitmasterSettings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
 
     // register for all temperature callbacks
@@ -185,6 +193,11 @@ boolean DisplayNextion::initDisplay()
     sendCommand("page temp_main0");
     didInit = true;
   }
+  else
+  {
+    sendCommand("rest");
+  }
+  
 
   return didInit;
 }
@@ -274,9 +287,8 @@ void DisplayNextion::update()
     {
       setTemperatureCurrent(temperature);
     }
+    this->updateTemperature &= ~(1u << i);
   }
-
-  this->updateTemperature = 0u;
 }
 
 void DisplayNextion::showTemperatureSettings(void *ptr)
@@ -338,19 +350,22 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   TemperatureBase *temperature = (TemperatureBase *)ptr;
 
   // Name
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Name").getText(text, sizeof(text));
   temperature->setName(text);
   // Min
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Min").getText(text, sizeof(text));
   temperature->setMinValue(atoi(text));
   // Max
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Max").getText(text, sizeof(text));
   temperature->setMaxValue(atoi(text));
   // Type
   QUERY(NexVariable(DONT_CARE, DONT_CARE, "temp_settings.Type").getValue(&value));
   temperature->setType(value);
-  Serial.printf("type: %d\n", value);
   // Color
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Color").getText(text, sizeof(text));
   temperature->setColor(text);
 
@@ -364,6 +379,7 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   setTemperatureAllItems(temperature);
 
   // Goto previous page
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_main0.cp").getText(text, sizeof(text));
   sprintf(command, "page %s", text);
   sendCommand(command);
@@ -372,10 +388,30 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   system->temperatures.saveConfig();
 }
 
+void DisplayNextion::saveSystemSettings(void *ptr)
+{
+  char unit[20] = "";
+
+  memset(unit, 0u, sizeof(unit));
+  NexText(DONT_CARE, DONT_CARE, "Unit").getText(unit, sizeof(unit));
+
+  if(String(unit) == "Fahrenheit")
+  {
+    system->temperatures.setUnit(TemperatureUnit::Fahrenheit);
+  }
+  else if(String(unit) == "Celsius")
+  {
+    system->temperatures.setUnit(TemperatureUnit::Celsius);
+  }
+
+  sendCommand("page menu_main");
+}
+
 void DisplayNextion::enterWifiSettingsPage(void *ptr)
 {
   char ssid[33] = "";
 
+  memset(ssid, 0u, sizeof(ssid));
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
 
   if(strlen(ssid))
@@ -394,6 +430,23 @@ void DisplayNextion::enterWifiSettingsPage(void *ptr)
     WiFi.scanNetworks(true);
     wifiScanInProgress = true;
   }
+}
+
+void DisplayNextion::enterSystemSettingsPage(void *ptr)
+{
+  TemperatureUnit temperatureUnit = system->temperatures.getUnit();
+
+  if(TemperatureUnit::Fahrenheit == temperatureUnit)
+  {
+    NexText(DONT_CARE, DONT_CARE, "Unit").setText("Fahrenheit");
+  }
+  else if(TemperatureUnit::Celsius == temperatureUnit)
+  {
+    NexText(DONT_CARE, DONT_CARE, "Unit").setText("Celsius");
+  }
+
+  hotspotSaveSystem.attachPop(DisplayNextion::saveSystemSettings, system);
+  sendCommand("page sys_settings");
 }
 
 void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
@@ -452,6 +505,7 @@ void DisplayNextion::savePitmasterSettings(void *ptr)
   if (pm_manual == type)
   {
     // Value
+    memset(text, 0u, sizeof(text));
     NexText(DONT_CARE, DONT_CARE, "pitm_settings.Value").getText(text, sizeof(text));
     Serial.printf("Value: %s\n", text);
     system->pitmasters[0]->setValue(atoi(text));
@@ -465,6 +519,7 @@ void DisplayNextion::savePitmasterSettings(void *ptr)
     system->pitmasters[0]->assignTemperature(system->temperatures[value]);
 
     // Temperature
+    memset(text, 0u, sizeof(text));
     NexText(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").getText(text, sizeof(text));
     Serial.printf("Temperature: %s\n", text);
     system->pitmasters[0]->setTargetTemperature(atoi(text));
@@ -506,6 +561,9 @@ void DisplayNextion::wifiConnect(void *ptr)
 {
   char ssid[33] = "";
   char password[64] = "";
+
+  memset(ssid, 0u, sizeof(ssid));
+  memset(password, 0u, sizeof(password));
 
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
@@ -607,12 +665,17 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
 
   if (wifiState != newWifiState || forceUpdate)
   {
+    String qrCode;
+    String info;
+
     switch(newWifiState)
     {
       case WifiState::SoftAPNoClient:
+        qrCode = "WIFI:S:" + system->wlan.getAccessPointName() + ";T:WPA;P:12345678;;";
+        info = "AP: " + system->wlan.getAccessPointName() + " | PW: 12345678";
         NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
-        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("WIFI:S:MINI-AP;T:WPA;P:12345678;;");
-        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("AP: MINI-AP | PW: 12345678");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
         break;
       case WifiState::SoftAPClientConnected:
         NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
@@ -620,9 +683,11 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
         NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("http://192.168.66.1");
         break;
       case WifiState::ConnectedToSTA:
+        qrCode = "http://" + WiFi.localIP().toString();
+        info = "http://" + WiFi.localIP().toString();
         NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("I");
-        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(String("http://" + WiFi.localIP().toString()).c_str());
-        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(String("http://" + WiFi.localIP().toString()).c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
         break;
       case WifiState::ConnectingToSTA:
       case WifiState::AddCredentials:
