@@ -33,7 +33,9 @@ extern "C" {
 #define NEXTION_TEMPERATURES_MAX 12u
 #define NEXTION_TEMPERATURES_PER_PAGE 6u
 #define UPDATE_ALL_TEMPERATURES 0xFFFFFFFFu
-#define NEXTION_SERIAL_TIMEOUT 5u
+#define NEXTION_SERIAL_TIMEOUT 100u
+#define NEXTION_INVALID_PAGE 0xFFu
+#define NEXTIO_RETURN_CURRENT_PAGE_ID 0x66u
 
 #define PAGE_TEMP_INDEX (temperature->getGlobalIndex() / NEXTION_TEMPERATURES_PER_PAGE)
 #define PAGE_TEMP_ITEM_INDEX (temperature->getGlobalIndex() % NEXTION_TEMPERATURES_PER_PAGE)
@@ -160,8 +162,25 @@ boolean DisplayNextion::initDisplay()
     return true;
   }
 
-  if (nexInit())
+  if (nexUpload.getBaudrate())
   {
+    boolean cmdFinished;
+    sendCommand("bkcmd=1");
+    cmdFinished = recvRetCommandFinished();
+
+    Serial.printf("Nextion model: %s\n", nexUpload.getModel().c_str());
+
+    if(false == cmdFinished)
+    {
+      Serial.printf("cmdFinished: %d\n", cmdFinished);
+      return false;
+    }
+
+    if(getCurrentPageNumber() != 0u)
+    {
+      sendCommand("page 0");
+    }
+
     setTemperatureCount();
 
     for (int i = 0; i < NEXTION_TEMPERATURES_MAX; i++)
@@ -193,11 +212,6 @@ boolean DisplayNextion::initDisplay()
     sendCommand("page temp_main0");
     didInit = true;
   }
-  else
-  {
-    sendCommand("rest");
-  }
-  
 
   return didInit;
 }
@@ -217,6 +231,13 @@ void DisplayNextion::task(void *parameter)
 
   while (display->initDisplay() == false)
     vTaskDelay(1000);
+
+  for (;;)
+  {
+    // Wait for the next cycle.
+    vTaskDelay(10);
+    display->update();
+  }
 
   for (;;)
   {
@@ -245,6 +266,32 @@ void DisplayNextion::loadConfig()
     if (json.containsKey("disabled"))
       this->disabled = json["disabled"].as<boolean>();
   }
+}
+
+uint8_t DisplayNextion::getCurrentPageNumber()
+{
+  uint8_t data[5] = {0u};
+  uint8_t pageNumber = NEXTION_INVALID_PAGE;
+
+  sendCommand("sendme");
+
+  nexSerial.setTimeout(NEXTION_SERIAL_TIMEOUT);
+
+  if (sizeof(data) != nexSerial.readBytes((char *)data, sizeof(data)))
+  {
+      return NEXTION_INVALID_PAGE;
+  }
+
+  if (data[0] == NEXTIO_RETURN_CURRENT_PAGE_ID
+      && data[2] == 0xFFu
+      && data[3] == 0xFFu
+      && data[4] == 0xFFu
+      )
+  {
+      pageNumber = data[1];
+  }
+
+  return pageNumber;
 }
 
 void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData)
