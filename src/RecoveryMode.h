@@ -40,7 +40,7 @@ private:
   static UploadFileType uploadFileType;
   static size_t uploadFileSize;
   static void *nexUpload;
-  static RTC_DATA_ATTR char wifiName[32];
-  static RTC_DATA_ATTR char wifiPassword[32];
+  static RTC_DATA_ATTR char wifiName[33];
+  static RTC_DATA_ATTR char wifiPassword[64];
   static RTC_DATA_ATTR boolean fromApp;
 };

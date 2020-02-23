@@ -23,6 +23,7 @@
 #include "ESPNexUpload.h"
 #include "RecoveryMode.h"
 #include "webui/recoverymode.html.gz.h"
+#include "DbgPrint.h"
 
 #define RECOVERY_PIN 14u
 #define RECOVERY_PIN_TIME 3000u // 3s
@@ -35,8 +36,8 @@ UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
 size_t RecoveryMode::uploadFileSize = 0u;
 RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
-RTC_DATA_ATTR char RecoveryMode::wifiName[32];
-RTC_DATA_ATTR char RecoveryMode::wifiPassword[32];
+RTC_DATA_ATTR char RecoveryMode::wifiName[33];
+RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
 
 RecoveryMode::RecoveryMode(void)
 {
@@ -54,6 +55,14 @@ void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPa
 
 void RecoveryMode::run()
 {
+#if RM_DEBUG == SERIAL_DEBUG
+  // Initialize Serial
+  Serial.begin(115200);
+  Serial.setDebugOutput(true);
+#endif
+
+  RMPRINTLN("Check for Recovery Mode");
+
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
@@ -68,6 +77,8 @@ void RecoveryMode::run()
 
   // Welcome to recovery mode
 
+  RMPRINTLN("Recovery Mode enabled");
+
   WiFi.persistent(false);
   WiFi.disconnect(true);
 
@@ -76,6 +87,7 @@ void RecoveryMode::run()
     // Start STA
     WiFi.begin(wifiName, wifiPassword);
     WiFi.mode(WIFI_STA);
+    RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: %s\n", wifiName, wifiPassword);
   }
   else
   {
@@ -84,6 +96,7 @@ void RecoveryMode::run()
     WiFi.softAPConfig(local_IP, gateway, subnet);
     WiFi.softAP(RECOVERY_AP_NAME, RECOVERY_AP_PASSWORD);
     WiFi.mode(WIFI_AP);
+    RMPRINTLN("Recovery Mode starting Wifi AP");
   }
 
   // Start web server

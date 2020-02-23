@@ -30,6 +30,7 @@
 #define DEBUG NO_DEBUG
 #define MQTT_DEBUG NO_DEBUG
 #define PM_DEBUG NO_DEBUG
+#define RM_DEBUG NO_DEBUG
 /************************************/
 
 #if DEBUG == REMOTE_DEBUG
@@ -129,6 +130,46 @@ extern RemoteDebug Debug;
 #define PMPRINTP(...)   //blank line
 #define PMPRINTPLN(...) //blank line
 #define PMPRINTF(...)   //blank line
+#endif
+
+#if PM_DEBUG == SERIAL_DEBUG
+#define PMPRINT(...) Serial.print(__VA_ARGS__)
+#define PMPRINTLN(...) Serial.println(__VA_ARGS__)
+#define PMPRINTP(...) Serial.print(F(__VA_ARGS__))
+#define PMPRINTPLN(...) Serial.println(F(__VA_ARGS__))
+#define PMPRINTF(...) Serial.printf(__VA_ARGS__)
+#elif PM_DEBUG == REMOTE_DEBUG
+#define PMPRINT(...) Debug.print(__VA_ARGS__)
+#define PMPRINTLN(...) Debug.println(__VA_ARGS__)
+#define PMPRINTP(...) Debug.print(F(__VA_ARGS__))
+#define PMPRINTPLN(...) Debug.println(F(__VA_ARGS__))
+#define PMPRINTF(...) Debug.printf(__VA_ARGS__)
+#else
+#define PMPRINT(...)    //blank line
+#define PMPRINTLN(...)  //blank line
+#define PMPRINTP(...)   //blank line
+#define PMPRINTPLN(...) //blank line
+#define PMPRINTF(...)   //blank line
+#endif
+
+#if RM_DEBUG == SERIAL_DEBUG
+#define RMPRINT(...) Serial.print(__VA_ARGS__)
+#define RMPRINTLN(...) Serial.println(__VA_ARGS__)
+#define RMPRINTP(...) Serial.print(F(__VA_ARGS__))
+#define RMPRINTPLN(...) Serial.println(F(__VA_ARGS__))
+#define RMPRINTF(...) Serial.printf(__VA_ARGS__)
+#elif RM_DEBUG == REMOTE_DEBUG
+#define RMPRINT(...) Debug.print(__VA_ARGS__)
+#define RMPRINTLN(...) Debug.println(__VA_ARGS__)
+#define RMPRINTP(...) Debug.print(F(__VA_ARGS__))
+#define RMPRINTPLN(...) Debug.println(F(__VA_ARGS__))
+#define RMPRINTF(...) Debug.printf(__VA_ARGS__)
+#else
+#define RMPRINT(...)    //blank line
+#define RMPRINTLN(...)  //blank line
+#define RMPRINTP(...)   //blank line
+#define RMPRINTPLN(...) //blank line
+#define RMPRINTF(...)   //blank line
 #endif
 
 void dbgPrintInit();
