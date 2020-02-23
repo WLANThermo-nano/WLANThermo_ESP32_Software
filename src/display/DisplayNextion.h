@@ -44,6 +44,7 @@ private:
   static void setTemperatureMax(TemperatureBase *temperature);
   static void setTemperatureCurrent(TemperatureBase *temperature);
   static void setSymbols(boolean forceUpdate = false);
+  static uint8_t getCurrentPageNumber();
   static uint32_t htmlColorToRgb565(String htmlColor);
   static void showTemperatureSettings(void *ptr);
   static void saveTemperatureSettings(void *ptr);
