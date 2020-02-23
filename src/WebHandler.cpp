@@ -846,7 +846,7 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
       id = _pid["id"];
     else
       break;
-    if (id >= gSystem->pitmasters.count())
+    if (id >= (sizeof(gSystem->profile)/sizeof(PitmasterProfile*)))
       break;
 
     PitmasterProfile *profile = gSystem->profile[id];

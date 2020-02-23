@@ -18,7 +18,6 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-
 #include "Pitmaster.h"
 #include "DbgPrint.h"
 #include "math.h"
@@ -30,10 +29,10 @@
 #define PITMASTERSETMIN 50
 #define PITMASTERSETMAX 200
 
-#define CHANNEL1_FREQUENCY 5000
-#define CHANNEL1_BIT_RES 16
-#define CHANNEL2_FREQUENCY 50
-#define CHANNEL2_BIT_RES 16
+#define SSR_FREQUENCY 0.5
+#define SSR_BIT_RES 16
+#define SERVO_FREQUENCY 50
+#define SERVO_BIT_RES 16
 
 #define PAUSE_DEFAULT 1000u
 #define PAUSE_SSR 2000u
@@ -66,6 +65,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->ioPin2 = ioPin2;
     this->channel1 = channel1;
     this->channel2 = channel2;
+    this->initActuator = NOAR;
     this->globalIndex = this->globalIndexTracker++;
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -74,9 +74,6 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
     pinMode(this->ioPin2, OUTPUT);
     digitalWrite(this->ioPin2, LOW);
-    ledcSetup(this->channel2, CHANNEL2_FREQUENCY, CHANNEL2_BIT_RES);
-    ledcAttachPin(this->ioPin2, this->channel2);
-    ledcWrite(this->channel2, 0u);
 }
 
 void Pitmaster::setType(PitmasterType type)
@@ -243,6 +240,9 @@ boolean Pitmaster::checkDutyCycleTest()
                 break;
             case SERVO:
                 this->controlServo(newValue, 0, 100);
+                break;
+            case SSR:
+                this->controlSSR(newValue, 0, 100);
                 break;
             default:
                 break;
@@ -507,6 +507,10 @@ void Pitmaster::controlActuators()
         this->enableStepUp(false);
         this->controlServo(this->value, this->profile->dcmin, this->profile->dcmax);
         break;
+        case SSR:
+        this->enableStepUp(true);
+        this->controlSSR(this->value, this->profile->dcmin, this->profile->dcmax);
+        break;
     default:
         break;
     }
@@ -528,6 +532,14 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
     if ((0 == prevValue) && (newValue < FAN_BOOST_VALUE) && (newValue > 0))
     {
         newDc = map(FAN_BOOST_VALUE, 0, 100, dcmin, dcmax);
+    }
+
+    if(initActuator != FAN)
+    {
+        ledcDetachPin(this->ioPin1);
+        ledcDetachPin(this->ioPin2);
+        dacWrite(this->ioPin1, 0u);
+        initActuator = FAN;
     }
 
     if (0u == newValue)
@@ -562,9 +574,56 @@ void Pitmaster::controlServo(float newValue, float newDcMin, float newDcMax)
     uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
     uint32_t prevDc = ledcRead(this->channel2);
 
+    if(initActuator != SERVO)
+    {
+        dacWrite(this->ioPin1, 0u);
+        ledcDetachPin(this->ioPin1);
+        ledcDetachPin(this->ioPin2);
+        ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
+        ledcAttachPin(this->ioPin2, this->channel2);
+        ledcWrite(this->channel2, 0u);
+        initActuator = SERVO;
+    }
+
     if (newDc != prevDc)
     {
         ledcWrite(this->channel2, newDc);
+    }
+}
+
+void Pitmaster::controlSSR(float newValue, float newDcMin, float newDcMax)
+{
+    static float prevValue = 0;
+    // limits from global actor
+    uint16_t dcmin = newDcMin * 10u; // 1. Nachkommastelle
+    uint16_t dcmax = newDcMax * 10u; // 1. Nachkommastelle
+
+    dcmin = map(dcmin, 0, 1000u, 0u, 0xFFFFu);
+    dcmax = map(dcmax, 0, 1000u, 0u, 0xFFFFu);
+
+    uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
+    uint32_t prevDc = ledcRead(this->channel1);
+
+    prevValue = newValue;
+
+    if(initActuator != SSR)
+    {
+        dacWrite(this->ioPin1, 0u);
+        ledcDetachPin(this->ioPin1);
+        ledcDetachPin(this->ioPin2);
+        ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
+        ledcAttachPin(this->ioPin1, this->channel1);
+        ledcWrite(this->channel1, 0u);
+        initActuator = SSR;
+    }
+
+    if (0u == newValue)
+    {
+        ledcWrite(this->channel1, 0u);
+    }
+    else if (newDc != prevDc)
+    {
+        ledcWrite(this->channel1, newDc);
     }
 }
 
@@ -578,17 +637,22 @@ void Pitmaster::enableStepUp(boolean enable)
             ioSupplyRequested &= ~(1u << globalIndex);
 
         digitalWrite(this->ioSupply, ioSupplyRequested ? 1u : 0u);
-
-        //Serial.printf("ioSupplyRequested: %d\n", ioSupplyRequested);
     }
 }
 
 void Pitmaster::disableActuators()
 {
     dacWrite(this->ioPin1, 0u);
-    ledcWrite(this->channel2, 0u);
+    ledcDetachPin(this->ioPin1);
+    ledcDetachPin(this->ioPin2);
+    digitalWrite(this->ioPin1, LOW);
+    digitalWrite(this->ioPin2, LOW);
+
     this->enableStepUp(false);
-    //TODO: reset pid values
+    initActuator = NOAR;
+
+    this->esum = 0;
+    this->elast = 0;
 }
 
 boolean Pitmaster::isDutyCycleTestRunning()

@@ -86,8 +86,6 @@ enum PitMasterActuator
   FAN,
   SERVO,
   DAMPER,
-  FAN2,
-  SERVO2,
   NOAR
 };
 
@@ -125,6 +123,7 @@ private:
   void controlActuators();
   void controlFan(float newValue, float newDcMin, float newDcMax);
   void controlServo(float newValue, float newDcMin, float newDcMax);
+  void controlSSR(float newValue, float newDcMin, float newDcMax);
   void enableStepUp(boolean enable);
   PitmasterType type;
   PitmasterProfile *profile;
@@ -137,6 +136,7 @@ private:
   uint8_t ioPin2;
   uint8_t channel1;
   uint8_t channel2;
+  PitMasterActuator initActuator;
 
   // all pitmasters objects will share one supply IO
   static uint8_t ioSupply;
