@@ -22,8 +22,9 @@
 #include <Preferences.h>
 #include "ESPNexUpload.h"
 #include "RecoveryMode.h"
-#include "webui/recoverymode.html.gz.h"
 #include "DbgPrint.h"
+#include "webui/recoverymode.html.gz.h"
+#include "webui/restart.html.gz.h"
 
 #define RECOVERY_PIN 14u
 #define RECOVERY_PIN_TIME 3000u // 3s
@@ -49,6 +50,10 @@ void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPa
   fromApp = true;
   strcpy(wifiName, paramWifiName);
   strcpy(wifiPassword, paramWifiPassword);
+
+  WiFi.disconnect();
+  delay(500);
+
   esp_sleep_enable_timer_wakeup(10);
   esp_deep_sleep_start();
 }
@@ -88,6 +93,14 @@ void RecoveryMode::run()
     WiFi.begin(wifiName, wifiPassword);
     WiFi.mode(WIFI_STA);
     RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: %s\n", wifiName, wifiPassword);
+
+    while(WiFi.isConnected() == false)
+    {
+      RMPRINTLN("Wifi not connected");
+      delay(1000);
+    }
+
+    RMPRINTF("IP address: %s\n", WiFi.localIP().toString().c_str());
   }
   else
   {
@@ -112,7 +125,12 @@ void RecoveryMode::run()
 
   webServer->on("/restart", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    request->send(200, TEXTPLAIN, TEXTTRUE);
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+    WiFi.disconnect();
+    delay(500);
     ESP.restart();
   });
 
@@ -124,6 +142,12 @@ void RecoveryMode::run()
     prefs.end();
 
     request->send(200, TEXTPLAIN, TEXTTRUE);
+  });
+
+  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("GET /ping");
+    request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
   webServer->on("/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request)
