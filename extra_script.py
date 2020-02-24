@@ -15,7 +15,7 @@ import pip
 # path configuration
 web_ui_source_path = "./webui/"
 web_ui_target_path = "./src/webui/"
-web_ui_source_files = ["index.html", "fwupdate.html", "displayupdate.html", "recoverymode.html"]
+web_ui_source_files = ["index.html", "fwupdate.html", "displayupdate.html", "recoverymode.html", "restart.html"]
 
 nextion_source_path = "./nextion/"
 nextion_target_path = "./src/"

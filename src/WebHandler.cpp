@@ -33,6 +33,7 @@
 #include "RecoveryMode.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
+#include "webui/restart.html.gz.h"
 
 #define FLIST_PATH "/list"
 #define DELETE_PATH "/rm"
@@ -315,7 +316,10 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
       if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
         return request->requestAuthentication();
       
-      request->send(200, TEXTPLAIN, TEXTTRUE);
+      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
 
       WlanCredentials credentials;
       gSystem->wlan.getCredentials(&credentials);

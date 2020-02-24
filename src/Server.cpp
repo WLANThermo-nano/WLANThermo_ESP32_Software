@@ -37,6 +37,7 @@
 #include "webui/index.html.gz.h"
 #include "webui/fwupdate.html.gz.h"
 #include "webui/displayupdate.html.gz.h"
+#include "webui/restart.html.gz.h"
 
 #define DEFAULT_PASSWORD "admin"
 
@@ -104,10 +105,18 @@ void WServer::init()
   });
 
   webServer->on("/restart", [](AsyncWebServerRequest *request) {
-             gSystem->restart();
-             request->redirect("/");
-           })
-      .setFilter(ON_STA_FILTER);
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+    gSystem->restart();
+  })
+  .setFilter(ON_STA_FILTER);
+
+  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
+  });
 
   webServer->on("/newtoken", [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, gSystem->cloud.newToken());

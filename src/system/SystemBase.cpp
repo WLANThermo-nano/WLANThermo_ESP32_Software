@@ -176,7 +176,7 @@ boolean SystemBase::isInitDone()
 void SystemBase::restart()
 {
   WiFi.disconnect();
-  delay(100);
+  delay(500);
   yield();
   ESP.restart();
 }
