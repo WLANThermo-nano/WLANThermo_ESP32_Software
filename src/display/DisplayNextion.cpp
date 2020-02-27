@@ -30,6 +30,12 @@ extern "C" {
 #define INBUFFER_SIZE  (32u*1024u)
 #define NEXTION_SPIFFS_UPDATE_FILENAME "/nextion.tft.zlib"
 
+#if defined HW_MINI_V1
+#define NEXTION_DIRECTION_STRING "-180"
+#else
+#define NEXTION_DIRECTION_STRING "-0"
+#endif
+
 #define NEXTION_TEMPERATURES_MAX 12u
 #define NEXTION_TEMPERATURES_PER_PAGE 6u
 #define UPDATE_ALL_TEMPERATURES 0xFFFFFFFFu
@@ -781,13 +787,50 @@ void DisplayNextion::updateFromSPIFFS()
     return;
   }
 
-  if (!SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
+  // check for nextion files
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  uint8_t numOfNexFiles = 0u;
+
+  while(file)
   {
-    Serial.println("No nextion update available");
+    if(String(file.name()).endsWith(".tft.zlib"))
+    {
+      Serial.print("NEXTION FILE: ");
+      Serial.println(file.name());
+      numOfNexFiles++;
+    }
+
+    file = root.openNextFile();
+  }
+
+  if(0u == numOfNexFiles)
+  {
+    Serial.println("No Nextion update available");
     return;
   }
 
-  File nextionFile = SPIFFS.open(NEXTION_SPIFFS_UPDATE_FILENAME, FILE_READ);
+  // connect to display
+  if(!nexUpload.getBaudrate())
+  {
+    Serial.println("Cannot connect to Nextion");
+    return;
+  }
+
+  // create filename from model and direction string
+  String nextionFileName = "/" + nexUpload.getModel().substring(0u, 10u) + NEXTION_DIRECTION_STRING + ".tft.zlib";
+
+  Serial.printf("Nextion update file name: %s\n", nextionFileName.c_str());
+
+  // check if needed nextion file is available
+  if (!SPIFFS.exists(nextionFileName.c_str()))
+  {
+    Serial.println("Nextion update file not available");
+    return;
+  }
+
+  // open nextion file
+  File nextionFile = SPIFFS.open(nextionFileName, FILE_READ);
 
   if (!nextionFile)
   {
@@ -865,6 +908,23 @@ void DisplayNextion::updateFromSPIFFS()
 
   //TODO: test connection again?
 
-  SPIFFS.remove(NEXTION_SPIFFS_UPDATE_FILENAME);
+  // delete all nextion files
+  root = SPIFFS.open("/");
+  file = root.openNextFile();
+
+  while(file)
+  {
+ 
+    
+    if(String(file.name()).endsWith(".tft.zlib"))
+    {
+      Serial.print("NEXTION REMOVE: ");
+      Serial.println(file.name());
+      SPIFFS.remove(file.name());
+    }
+
+    file = root.openNextFile();
+  }
+
   SPIFFS.end();
 }
