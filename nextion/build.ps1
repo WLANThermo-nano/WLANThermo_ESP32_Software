@@ -51,6 +51,14 @@ if(!((Format-Hex -Path $nextionTftFile -Offset 0x2e -Count 4) -like '*2E   01 93
 if(!((Format-Hex -Path $nextionTftFile -Offset 0x14 -Count 1) -like '*14   01*')) {exit 1}
 Move-Item -Path $nextionTftFile -Destination "$nextionArtifactsFolder\$nextionModel-$nextionDirection.tft"
 
+$nextionDirection = "180"
+$nextionSeries = "Enhanced"
+$nextionModel = "NX3224K024"
+Start-Process -FilePath $javaBin -ArgumentList "-jar $sikulix -d -r $sikulixScript --args $nextionDirection $nextionSeries $nextionModel" -Wait -NoNewWindow
+if(!((Format-Hex -Path $nextionTftFile -Offset 0x2e -Count 4) -like '*2E   01 93 7E 5C*')) {exit 1}
+if(!((Format-Hex -Path $nextionTftFile -Offset 0x14 -Count 1) -like '*14   03*')) {exit 1}
+Move-Item -Path $nextionTftFile -Destination "$nextionArtifactsFolder\$nextionModel-$nextionDirection.tft"
+
 $nextionDirection = "0"
 $nextionSeries = "Basic"
 $nextionModel = "NX3224T028"
