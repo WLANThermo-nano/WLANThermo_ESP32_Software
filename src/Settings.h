@@ -44,8 +44,12 @@ class Settings
 public:
   Settings();
   static void write(SettingsNvsKeys key, JsonObject &json);
+  static void write(String key, String value);
   static JsonObject &read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer);
-  static void clear(SettingsNvsKeys key);
+  static String exportFile();
+  static void remove(SettingsNvsKeys key);
+  static void remove(String key);
+  static void clear();
   static void onWrite(SettingsOnChangeCallback cb);
 
   static const uint16_t jsonBufferSize;

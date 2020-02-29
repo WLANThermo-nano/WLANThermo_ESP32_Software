@@ -23,6 +23,7 @@
 #include "ESPNexUpload.h"
 #include "RecoveryMode.h"
 #include "DbgPrint.h"
+#include "Settings.h"
 #include "webui/recoverymode.html.gz.h"
 #include "webui/restart.html.gz.h"
 
@@ -36,6 +37,8 @@
 UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
 size_t RecoveryMode::uploadFileSize = 0u;
+String RecoveryMode::settingsKey = "";
+String RecoveryMode::settingsValue = "";
 RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
 RTC_DATA_ATTR char RecoveryMode::wifiName[33];
 RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
@@ -123,6 +126,14 @@ void RecoveryMode::run()
     request->send(response);
   });
 
+  webServer->on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
+    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
   webServer->on("/restart", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
@@ -134,13 +145,9 @@ void RecoveryMode::run()
     ESP.restart();
   });
 
-  webServer->on("/resetconfig", HTTP_POST, [](AsyncWebServerRequest *request)
+  webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    Preferences prefs;
-    prefs.begin("wlanthermo", false);
-    prefs.clear();
-    prefs.end();
-
+    Settings::clear();
     request->send(200, TEXTPLAIN, TEXTTRUE);
   });
 
@@ -148,6 +155,37 @@ void RecoveryMode::run()
   {
     RMPRINTLN("GET /ping");
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
+  });
+
+  webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("GET /export");
+    String exportSettings = Settings::exportFile();
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), exportSettings.length());
+    response->addHeader("Content-Disposition", "attachment; filename=settings.txt");
+    response->addHeader("Connection", "close");
+    request->send(response);
+  });
+
+  webServer->on("/import", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("POST /import");
+    if((request->contentLength() == 0u) && (request->hasHeader("xKey") == true))
+    {
+      Settings::remove(request->header("xKey"));
+    }
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    std::unique_ptr<char[]> s(new char[len + 1]);
+    static size_t receivedBytes = 0u;
+
+    if(!index) settingsKey = request->header("xKey"); settingsValue = ""; receivedBytes = 0u;
+    memset(s.get(), 0, len + 1u);
+    memcpy(s.get(), data, len);
+    settingsValue += s.get();
+    receivedBytes += len;
+    if(receivedBytes == total) Settings::write(settingsKey, settingsValue);
   });
 
   webServer->on("/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -182,7 +220,7 @@ void RecoveryMode::run()
         Update.write(data, len);
         if(final) Update.end(true);
         break;
-#if defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
       case UploadFileType::Nextion:
         if(!index) { nexUpload = new ESPNexUpload(115200); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
         ((ESPNexUpload*)nexUpload)->upload(data, len);
@@ -212,14 +250,21 @@ UploadFileType RecoveryMode::getFileType(String fileName)
   if((fileName.indexOf("firmware") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::Firmware;
+    RMPRINTLN("FILETYPE: Firmware");
   }
   else if((fileName.indexOf("spiffs") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::SPIFFS;
+    RMPRINTLN("FILETYPE: SPIFFS");
   }
   else if(fileName.indexOf(".tft") >= 0)
   {
     retFileType = UploadFileType::Nextion;
+    RMPRINTLN("FILETYPE: Nextion");
+  }
+  else
+  {
+    RMPRINTLN("FILETYPE: None");
   }
 
   return retFileType;
