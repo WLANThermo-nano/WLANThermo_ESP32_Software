@@ -57,7 +57,7 @@ void TemperatureBase::loadDefaultValues()
   this->currentValue = INACTIVEVALUE;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
-  this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex);
+  this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
   this->type = 0u;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
