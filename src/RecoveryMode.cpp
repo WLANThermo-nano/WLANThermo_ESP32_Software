@@ -36,6 +36,7 @@
 
 UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
+uint32_t RecoveryMode::nexBaudRate = 115200u;
 size_t RecoveryMode::uploadFileSize = 0u;
 String RecoveryMode::settingsKey = "";
 String RecoveryMode::settingsValue = "";
@@ -92,6 +93,9 @@ void RecoveryMode::run()
 
   if(fromApp)
   {
+    // increase nextion baud rate
+    nexBaudRate = 460800u;
+
     // Start STA
     WiFi.begin(wifiName, wifiPassword);
     WiFi.mode(WIFI_STA);
@@ -222,7 +226,7 @@ void RecoveryMode::run()
         break;
 #if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
       case UploadFileType::Nextion:
-        if(!index) { nexUpload = new ESPNexUpload(115200); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
+        if(!index) { nexUpload = new ESPNexUpload(nexBaudRate); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
         ((ESPNexUpload*)nexUpload)->upload(data, len);
         if(final) { ((ESPNexUpload*)nexUpload)->end(); delete(nexUpload); nexUpload = NULL; }
         break;
