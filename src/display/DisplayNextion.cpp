@@ -244,13 +244,6 @@ void DisplayNextion::task(void *parameter)
     vTaskDelay(10);
     display->update();
   }
-
-  for (;;)
-  {
-    // Wait for the next cycle.
-    vTaskDelay(10);
-    display->update();
-  }
 }
 
 void DisplayNextion::saveConfig()
@@ -709,6 +702,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
   static uint8_t cloudState = system->cloud.state;
   static boolean hasAlarm = newHasAlarm;
   static WifiState wifiState = newWifiState;
+  static boolean delayApSymbol = true;
 
   if (cloudState != system->cloud.state || forceUpdate)
   {
@@ -716,7 +710,19 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     cloudState = system->cloud.state;
   }
 
-  if (wifiState != newWifiState || forceUpdate)
+  if (hasAlarm != newHasAlarm || forceUpdate)
+  {
+    NexButton(DONT_CARE, DONT_CARE, "temp_main0.Alarm").setText((newHasAlarm) ? "O" : "");
+    hasAlarm = newHasAlarm;
+  }
+
+  if(delayApSymbol && (millis() > 10000u))
+  {
+    forceUpdate = true;
+    delayApSymbol = false;
+  }
+  
+  if ((wifiState != newWifiState) || forceUpdate)
   {
     String qrCode;
     String info;
@@ -724,6 +730,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     switch(newWifiState)
     {
       case WifiState::SoftAPNoClient:
+        if(delayApSymbol) break;
         qrCode = "WIFI:S:" + system->wlan.getAccessPointName() + ";T:WPA;P:12345678;;";
         info = "AP: " + system->wlan.getAccessPointName() + " | PW: 12345678";
         NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
@@ -731,6 +738,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
         NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
         break;
       case WifiState::SoftAPClientConnected:
+        if(delayApSymbol) break;
         NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
         NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("http://192.168.66.1");
         NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("http://192.168.66.1");
@@ -752,12 +760,6 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
         break;
     }
     wifiState = newWifiState;
-  }
-
-  if (hasAlarm != newHasAlarm || forceUpdate)
-  {
-    NexButton(DONT_CARE, DONT_CARE, "temp_main0.Alarm").setText((newHasAlarm) ? "O" : "");
-    hasAlarm = newHasAlarm;
   }
 }
 
