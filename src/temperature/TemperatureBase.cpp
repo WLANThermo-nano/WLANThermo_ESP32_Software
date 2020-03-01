@@ -332,10 +332,31 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, uint8_t type)
   float v = log(Rt/Rn);
   float erg = (1/(a + b*v + c*v*v)) - 273.15;
   
-  return (erg>-31)?erg:INACTIVEVALUE;
+  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
 }
 
 float TemperatureBase::calcTemperaturePTx(uint16_t rawValue, uint8_t type)
 {
-  return 0;
+  float a, b, Rpt, Rmess;
+
+  if (rawValue < 10) return INACTIVEVALUE;        // Kanal ist mit GND gebrückt
+
+  switch (type) {
+  case 12:  // PT100
+    Rpt = 0.1;	Rmess = 0.0998;
+    break; 
+
+  case 13:  // PT1000
+    Rpt = 1.0;	Rmess = 0.9792;
+    break; 
+  
+  default:  
+    return INACTIVEVALUE;
+  }
+
+  float Rt = Rmess*((4096.0/(4096-rawValue)) - 1);
+  a = 3.9083e-03; b = -5.775e-07; 
+  float erg = (-1)*sqrt((Rt/(Rpt*b)) + ((a*a)/(4*(b*b))) - 1/(b)) - (a/(2*b));
+
+  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
 }
