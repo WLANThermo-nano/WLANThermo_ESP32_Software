@@ -60,6 +60,7 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define PAGE_TEMP1_MAIN_ID 2u
 #define PAGE_MENU_ID 6u
 #define PAGE_WIFI_ID 7u
+#define PAGE_PITM_MENU_ID 11u
 #define HOTSPOT_TEMP0_ID 66u
 #define HOTSPOT_TEMP1_ID 67u
 #define HOTSPOT_TEMP2_ID 68u
@@ -67,7 +68,8 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define HOTSPOT_TEMP4_ID 70u
 #define HOTSPOT_TEMP5_ID 71u
 #define BUTTON_MENU_WLAN_ID 2u
-#define BUTTON_MENU_PITMASTER_ID 3u
+#define BUTTON_MENU_PITMASTER1_ID 4u
+#define BUTTON_MENU_PITMASTER2_ID 5u
 #define BUTTON_MENU_SYSTEM_ID 4u
 #define TEXT_WIFI_CONNECT_ID 1u
 #define BUTTON_WIFI_BUTTON_LEFT_ID 10u
@@ -101,7 +103,8 @@ NexHotspot hotspotSaveSystem = NexHotspot(PAGE_SYSTEM_SETTINGS, HOTSPOT_SYSTEM_S
 
 static NexButton menuWifiSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_WLAN_ID, "");
 static NexButton menuSystemSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_SYSTEM_ID, "");
-static NexButton menuPitmasterSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_PITMASTER_ID, "");
+static NexButton menuPitmaster1Settings = NexButton(PAGE_PITM_MENU_ID, BUTTON_MENU_PITMASTER1_ID, "");
+static NexButton menuPitmaster2Settings = NexButton(PAGE_PITM_MENU_ID, BUTTON_MENU_PITMASTER2_ID, "");
 static NexButton wifiButtonLeft = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_LEFT_ID, "");
 static NexButton wifiButtonRight = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_RIGHT_ID, "");
 static NexText wifiButtonConnect = NexText(PAGE_WIFI_ID, TEXT_WIFI_CONNECT_ID, "");
@@ -121,7 +124,8 @@ NexTouch *nex_listen_list[] = {
     &nexTemperatures[11],
     &hotspotSaveTemp,
     &menuWifiSettings,
-    &menuPitmasterSettings,
+    &menuPitmaster1Settings,
+    &menuPitmaster2Settings,
     &menuSystemSettings,
     &hotspotSaveSystem,
     &hotspotSavePitmaster,
@@ -187,7 +191,7 @@ boolean DisplayNextion::initDisplay()
       sendCommand("page 0");
     }
 
-    setTemperatureCount();
+    setCounts();
 
     for (int i = 0; i < NEXTION_TEMPERATURES_MAX; i++)
     {
@@ -201,7 +205,8 @@ boolean DisplayNextion::initDisplay()
 
     menuWifiSettings.attachPop(DisplayNextion::enterWifiSettingsPage, this);
     menuSystemSettings.attachPop(DisplayNextion::enterSystemSettingsPage, this);
-    menuPitmasterSettings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
+    menuPitmaster1Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
+    menuPitmaster2Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
 
     // register for all temperature callbacks
     for (uint8_t i = 0; i < system->temperatures.count(); i++)
@@ -499,32 +504,38 @@ void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
 {
   char item[30];
   char text[20];
+  uint32_t id = 0u;
 
-  // Type
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").setValue(system->pitmasters[0]->getType());
+  QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.PitmasterId").getValue(&id));
 
-  // Profile
-  for (uint8_t i = 0; i < system->getPitmasterProfileCount(); i++)
+  if (id < system->pitmasters.count())
   {
-    sprintf(item, "pitm_settings.Profile%d", i);
-    NexVariable(DONT_CARE, DONT_CARE, item).setText(system->getPitmasterProfile(i)->name.c_str());
+    // Type
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").setValue(system->pitmasters[id]->getType());
+
+    // Profile
+    for (uint8_t i = 0; i < system->getPitmasterProfileCount(); i++)
+    {
+      sprintf(item, "pitm_settings.Profile%d", i);
+      NexVariable(DONT_CARE, DONT_CARE, item).setText(system->getPitmasterProfile(i)->name.c_str());
+    }
+
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").setValue(system->pitmasters[id]->getAssignedProfile()->id);
+
+    // Value
+    sprintf(text, "%d", (int)system->pitmasters[id]->getValue());
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Value").setText(text);
+
+    // Channel
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(system->pitmasters[id]->getAssignedTemperature()->getGlobalIndex());
+
+    // Temperature
+    sprintf(text, "%d", (int)system->pitmasters[id]->getTargetTemperature());
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").setText(text);
+
+    hotspotSavePitmaster.attachPop(DisplayNextion::savePitmasterSettings, system);
+    sendCommand("page pitm_settings");
   }
-
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").setValue(system->pitmasters[0]->getAssignedProfile()->id);
-
-  // Value
-  sprintf(text, "%d", (int)system->pitmasters[0]->getValue());
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Value").setText(text);
-
-  // Channel
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(system->pitmasters[0]->getAssignedTemperature()->getGlobalIndex());
-
-  // Temperature
-  sprintf(text, "%d", (int)system->pitmasters[0]->getTargetTemperature());
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").setText(text);
-
-  hotspotSavePitmaster.attachPop(DisplayNextion::savePitmasterSettings, system);
-  sendCommand("page pitm_settings");
 }
 
 void DisplayNextion::savePitmasterSettings(void *ptr)
@@ -533,46 +544,53 @@ void DisplayNextion::savePitmasterSettings(void *ptr)
   char command[20] = "";
   uint32_t value = 0u;
   PitmasterType type = pm_off;
+  uint32_t id = 0u;
 
-  // Type
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").getValue(&value);
-  Serial.printf("TypeIndex: %d\n", value);
-  type = (PitmasterType)value;
-  system->pitmasters[0]->setType((PitmasterType)type);
+  QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.PitmasterId").getValue(&id));
 
-  if (pm_off != type)
+  if (id < system->pitmasters.count())
   {
-    // Profile
-    QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").getValue(&value));
-    Serial.printf("ProfileIdx: %d\n", value);
-    system->pitmasters[0]->assignProfile(system->getPitmasterProfile(value));
+
+    // Type
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").getValue(&value);
+    Serial.printf("TypeIndex: %d\n", value);
+    type = (PitmasterType)value;
+    system->pitmasters[id]->setType((PitmasterType)type);
+
+    if (pm_off != type)
+    {
+      // Profile
+      QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").getValue(&value));
+      Serial.printf("ProfileIdx: %d\n", value);
+      system->pitmasters[id]->assignProfile(system->getPitmasterProfile(value));
+    }
+
+    if (pm_manual == type)
+    {
+      // Value
+      memset(text, 0u, sizeof(text));
+      NexText(DONT_CARE, DONT_CARE, "pitm_settings.Value").getText(text, sizeof(text));
+      Serial.printf("Value: %s\n", text);
+      system->pitmasters[id]->setValue(atoi(text));
+    }
+
+    if (pm_auto == type)
+    {
+      // Channel
+      QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").getValue(&value));
+      Serial.printf("TempIndex: %d\n", value);
+      system->pitmasters[id]->assignTemperature(system->temperatures[value]);
+
+      // Temperature
+      memset(text, 0u, sizeof(text));
+      NexText(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").getText(text, sizeof(text));
+      Serial.printf("Temperature: %s\n", text);
+      system->pitmasters[id]->setTargetTemperature(atoi(text));
+    }
+
+    sendCommand("page menu_main");
+    system->pitmasters.saveConfig();
   }
-
-  if (pm_manual == type)
-  {
-    // Value
-    memset(text, 0u, sizeof(text));
-    NexText(DONT_CARE, DONT_CARE, "pitm_settings.Value").getText(text, sizeof(text));
-    Serial.printf("Value: %s\n", text);
-    system->pitmasters[0]->setValue(atoi(text));
-  }
-
-  if (pm_auto == type)
-  {
-    // Channel
-    QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").getValue(&value));
-    Serial.printf("TempIndex: %d\n", value);
-    system->pitmasters[0]->assignTemperature(system->temperatures[value]);
-
-    // Temperature
-    memset(text, 0u, sizeof(text));
-    NexText(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").getText(text, sizeof(text));
-    Serial.printf("Temperature: %s\n", text);
-    system->pitmasters[0]->setTargetTemperature(atoi(text));
-  }
-
-  sendCommand("page menu_main");
-  system->pitmasters.saveConfig();
 }
 
 void DisplayNextion::updateWifiSettingsPage()
@@ -623,9 +641,10 @@ void DisplayNextion::wifiConnect(void *ptr)
   }
 }
 
-void DisplayNextion::setTemperatureCount()
+void DisplayNextion::setCounts()
 {
   NexVariable(DONT_CARE, DONT_CARE, "temp_main0.Count").setValue(system->temperatures.count());
+  NexVariable(DONT_CARE, DONT_CARE, "pitm_menu.Count").setValue(system->pitmasters.count());
 }
 
 void DisplayNextion::setTemperatureAllItems(TemperatureBase *temperature)

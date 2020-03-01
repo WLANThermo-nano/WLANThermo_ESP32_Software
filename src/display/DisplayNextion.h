@@ -36,7 +36,7 @@ public:
   void updateFromSPIFFS();
 
 private:
-  static void setTemperatureCount();
+  static void setCounts();
   static void setTemperatureAllItems(TemperatureBase *temperature);
   static void setTemperatureColor(TemperatureBase *temperature);
   static void setTemperatureName(TemperatureBase *temperature);
