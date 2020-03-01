@@ -2647,7 +2647,7 @@
                 <li id="menuHome" class="pure-menu-item"><a href="javascript:showIndex()" class="pure-menu-link" data-tag="menuHome">Home</a></li>
 				<li id="menuWlan" class="pure-menu-item"><a href="javascript:showWLAN()" class="pure-menu-link" data-tag="menuWlan">WLAN</a></li>
 				<li id="menuSystem" class="pure-menu-item"><a href="javascript:showSystem()" class="pure-menu-link" data-tag="menuSystem">System</a></li>
-				<li id="menuPitmaster" class="pure-menu-item"><a href="javascript:showPitmaster(0)" class="pure-menu-link" data-tag="menuPitmaster">Pitmaster</a></li>
+				<li id="menuPitmaster" class="pure-menu-item"><a href="javascript:showPitmaster()" class="pure-menu-link" data-tag="menuPitmaster">Pitmaster</a></li>
 				<li id="menuIOT" class="pure-menu-item"><a href="javascript:showIOT()" class="pure-menu-link" data-tag="menuIOT">IoT</a></li>
 				<li id="menuHistory" class="pure-menu-item" style="display:none"><a href="javascript:showHistory()" class="pure-menu-link" data-tag="menuHistory">Historie</a></li>
 				<li id="menuNotification" class="pure-menu-item"><a href="javascript:showPushNotification()" class="pure-menu-link" data-tag="menuNotification">Benachrichtigung</a></li>
@@ -2755,40 +2755,81 @@
 			<div class="float-left text-align-left"><h3 class="headtitle" data-tag="pitTitle">Pitmaster-Einstellungen</h3></div>
 			<div class="float-right text-align-right"><span onclick="setHelpBox('Pitmaster Einstellungen',help_pitmaster)" class="icon-question_sign"></span></div>
 			<div style="clear:both;"></div>
-			<div class="pure-g">
+			<div class="pure-g" id="pitmaster_id0">
 				<div class="pure-u-1-1 pure-u-lg-1-1">
 					<div class="1-box channel_conf">
 						<form>
               <div class="form-group">
-								<select id="pitmaster_id" onchange="changePitmasterId();"><!-- Placeholder --></select>
+								<input value="Pitmaster 1" readonly>
 								<label class="control-label" for="select"><span data-tag="pitID">Pitmaster</span></label><i class="bar"></i>
 							</div>
 							<div class="form-group">
-								<select id="pitmaster_typ" onchange="changePitmasterTyp();"><!-- Placeholder --></select>
+								<select id="pitmaster_typ0" onchange="changePitmasterTyp(0);"><!-- Placeholder --></select>
 								<label class="control-label" for="select"><span data-tag="pitPitmaster">Typ</span></label><i class="bar"></i>
 							</div>
-							<div id="pitmaster_profile_show">
+							<div id="pitmaster_profile_show0">
 								<div class="form-group">
-									<select onchange="showPitmasterProfile(this.value);" id="pid_profile"><!-- Placeholder --></select>
-									<label class="control-label" onchange="changePitmasterView();" for="select"><span data-tag="pitProfile">Profil</span></label></span><i class="bar"></i>
-									<span class="icon-pencil icon-form" onclick="togglePitmasterView();">
+									<select onchange="showPitmasterProfile(0, this.value);" id="pid_profile0"><!-- Placeholder --></select>
+									<label class="control-label" onchange="changePitmasterView(0);" for="select"><span data-tag="pitProfile">Profil</span></label></span><i class="bar"></i>
+									<span class="icon-pencil icon-form" onclick="togglePitmasterView(0);">
 								</div>					  
 							</div>
-							<div id="pitmaster_channel_show">
+							<div id="pitmaster_channel_show0">
 								<div class="form-group">
-									<select id="pitmaster_channel"><!-- Placeholder --></select>
+									<select id="pitmaster_channel0"><!-- Placeholder --></select>
 									<label class="control-label" for="select"><span data-tag="pitChannel">Kanal</span></label><i class="bar"></i>
 								</div>	
 							</div>
-							<div id="pitmaster_set_show">	
+							<div id="pitmaster_set_show0">	
 								<div class="form-group">
-									<input type="text" id="pitmaster_set" maxlength="5" onkeyup="validateNumber(this,'1');" required="required"/>
+									<input type="text" id="pitmaster_set0" maxlength="5" onkeyup="validateNumber(this,'1');" required="required"/>
 									<label class="control-label" for="input"><span data-tag="pitTemp">Solltemperatur</span></label><i class="bar"></i>
 								</div>	
 							</div>
-							<div id="pitmaster_value_show">	
+							<div id="pitmaster_value_show0">	
 								<div class="form-group">
-								  <input type="text" id="pitmaster_value" maxlength="3" onkeyup="validateNumber(this,'1');" required="required"/>
+								  <input type="text" id="pitmaster_value0" maxlength="3" onkeyup="validateNumber(this,'1');" required="required"/>
+								  <label class="control-label" for="input"><span data-tag="pitValue">Pitmaster-Wert (%)</span></label><i class="bar"></i>
+								</div>
+							</div>
+						</form>	
+					</div>
+				</div>
+			</div>
+			<div class="pure-g" id="pitmaster_id1">
+				<div class="pure-u-1-1 pure-u-lg-1-1">
+					<div class="1-box channel_conf">
+						<form>
+              <div class="form-group">
+								<input readonly>Pitmaster 2</input>
+								<label class="control-label" for="select"><span data-tag="pitID">Pitmaster</span></label><i class="bar"></i>
+							</div>
+							<div class="form-group">
+								<select id="pitmaster_typ1" onchange="changePitmasterTyp(1);"><!-- Placeholder --></select>
+								<label class="control-label" for="select"><span data-tag="pitPitmaster">Typ</span></label><i class="bar"></i>
+							</div>
+							<div id="pitmaster_profile_show1">
+								<div class="form-group">
+									<select onchange="showPitmasterProfile(1, this.value);" id="pid_profile1"><!-- Placeholder --></select>
+									<label class="control-label" onchange="changePitmasterView(1);" for="select"><span data-tag="pitProfile">Profil</span></label></span><i class="bar"></i>
+									<span class="icon-pencil icon-form" onclick="togglePitmasterView(1);">
+								</div>					  
+							</div>
+							<div id="pitmaster_channel_show1">
+								<div class="form-group">
+									<select id="pitmaster_channel1"><!-- Placeholder --></select>
+									<label class="control-label" for="select"><span data-tag="pitChannel">Kanal</span></label><i class="bar"></i>
+								</div>	
+							</div>
+							<div id="pitmaster_set_show1">	
+								<div class="form-group">
+									<input type="text" id="pitmaster_set1" maxlength="5" onkeyup="validateNumber(this,'1');" required="required"/>
+									<label class="control-label" for="input"><span data-tag="pitTemp">Solltemperatur</span></label><i class="bar"></i>
+								</div>	
+							</div>
+							<div id="pitmaster_value_show1">	
+								<div class="form-group">
+								  <input type="text" id="pitmaster_value1" maxlength="3" onkeyup="validateNumber(this,'1');" required="required"/>
 								  <label class="control-label" for="input"><span data-tag="pitValue">Pitmaster-Wert (%)</span></label><i class="bar"></i>
 								</div>
 							</div>
@@ -3781,94 +3822,83 @@
 	}
 	// -----------------------------------------------------------------------------------
 	
-	function showPitmaster(pitID){	
+	function showPitmaster(){	
 		hideAll();
+		document.getElementById('pitmaster_id0').style.display = "none";
+		document.getElementById('pitmaster_id1').style.display = "none";
 		showLoader('true');
 		loadJSON('data', '', '3000', function (response) {
 			jr = JSON.parse(response);
-			clearOption('pitmaster_id');
-			clearOption('pitmaster_typ');
-			for (var j = 0; j < jr.pitmaster.pm.length; j++) {
-					byId('pitmaster_id').options[byId('pitmaster_id').options.length] = new Option('Pitmaster ' + (jr.pitmaster.pm[j].id + 1), jr.pitmaster.pm[j].id);
+			for (var pitID = 0; pitID < jr.pitmaster.pm.length; pitID++) {
+				clearOption('pitmaster_typ' + pitID.toString());
+				for (var j = 0; j < jr.pitmaster.type.length; j++) {
+						byId('pitmaster_typ' + pitID.toString()).options[byId('pitmaster_typ' + pitID.toString()).options.length] = new Option(jr.pitmaster.type[j], jr.pitmaster.type[j]);
+				}
+				byId('pitmaster_typ' + pitID.toString()).value = jr.pitmaster.pm[pitID].typ;
+				clearOption('pitmaster_channel' + pitID.toString());
+				for (var i = 0; i < jr.channel.length; i++) {
+						byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
+				}
+				byId('pitmaster_channel' + pitID.toString()).value = jr.pitmaster.pm[pitID].channel;
+				byId('pitmaster_set' + pitID.toString()).value = jr.pitmaster.pm[pitID].set;
+				byId('pitmaster_value' + pitID.toString()).value = jr.pitmaster.pm[pitID].value;
+				byId('pitmaster_settings').style.display = "inline";
+				showPitmasterProfile(pitID, jr.pitmaster.pm[pitID].pid);
+				changePitmasterTyp(pitID);
+				document.getElementById('pitmaster_id' + pitID.toString()).style.display = "block";
 			}
-			for (var j = 0; j < jr.pitmaster.type.length; j++) {
-					byId('pitmaster_typ').options[byId('pitmaster_typ').options.length] = new Option(jr.pitmaster.type[j], jr.pitmaster.type[j]);
-			}
-			byId('pitmaster_id').value = jr.pitmaster.pm[pitID].id;
-			byId('pitmaster_typ').value = jr.pitmaster.pm[pitID].typ;
-			clearOption('pitmaster_channel');
-			for (var i = 0; i < jr.channel.length; i++) {
-					byId('pitmaster_channel').options[byId('pitmaster_channel').options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
-			}
-			byId('pitmaster_channel').value = jr.pitmaster.pm[pitID].channel;
-			byId('pitmaster_set').value = jr.pitmaster.pm[pitID].set;
-			byId('pitmaster_value').value = jr.pitmaster.pm[pitID].value;
-			byId('pitmaster_settings').style.display = "inline";
 			showLoader('false');
-			showPitmasterProfile(jr.pitmaster.pm[pitID].pid);
-			changePitmasterTyp();
 		})
 	}
 	
-	function changePitmasterTyp(){		
-		switch(byId('pitmaster_typ').value) {
+	function changePitmasterTyp(id){		
+		switch(byId('pitmaster_typ' + id.toString()).value) {
 			case 'off':
-				byId('pitmaster_value_show').style.display = "none";
-				byId('pitmaster_channel_show').style.display = "none";
-				byId('pitmaster_set_show').style.display = "none";
-				byId('pitmaster_profile_show').style.display = "none";
+				byId('pitmaster_value_show' + id.toString()).style.display = "none";
+				byId('pitmaster_channel_show' + id.toString()).style.display = "none";
+				byId('pitmaster_set_show' + id.toString()).style.display = "none";
+				byId('pitmaster_profile_show' + id.toString()).style.display = "none";
 				byId('pid_settings_show').style.display = "none";
 				byId('advanced_settings_show').style.display = "none";
 				break;
 			case 'manual':
-				byId('pitmaster_value_show').style.display = "inline";	
-				byId('pitmaster_channel_show').style.display = "none";
-				byId('pitmaster_set_show').style.display = "none";
-				byId('pitmaster_profile_show').style.display = "inline";
+				byId('pitmaster_value_show' + id.toString()).style.display = "inline";	
+				byId('pitmaster_channel_show' + id.toString()).style.display = "none";
+				byId('pitmaster_set_show' + id.toString()).style.display = "none";
+				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
 				byId('pid_settings_show').style.display = "none";
 				byId('advanced_settings_show').style.display = "none";
 				break;
-			case 'autotune':
-				byId('pitmaster_profile_show').style.display = "inline";
-				byId('pitmaster_value_show').style.display = "none";
-				byId('pitmaster_channel_show').style.display = "inline";
-				byId('pitmaster_set_show').style.display = "inline";
-				byId('pid_settings_show').style.display = "none";	
-				byId('advanced_settings_show').style.display = "none";				
-				break;
 			case 'auto':
-				byId('pitmaster_profile_show').style.display = "inline";
-				byId('pitmaster_value_show').style.display = "none";
-				byId('pitmaster_channel_show').style.display = "inline";
-				byId('pitmaster_set_show').style.display = "inline";			
+				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
+				byId('pitmaster_value_show' + id.toString()).style.display = "none";
+				byId('pitmaster_channel_show' + id.toString()).style.display = "inline";
+				byId('pitmaster_set_show' + id.toString()).style.display = "inline";			
 				byId('pid_settings_show').style.display = "inline";
 				byId('advanced_settings_show').style.display = "inline";
 				break;
 			default:
-				byId('pitmaster_profile_show').style.display = "inline";
-				byId('pitmaster_value_show').style.display = "inline";
-				byId('pitmaster_channel_show').style.display = "inline";
-				byId('pitmaster_set_show').style.display = "inline";
+				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
+				byId('pitmaster_value_show' + id.toString()).style.display = "inline";
+				byId('pitmaster_channel_show' + id.toString()).style.display = "inline";
+				byId('pitmaster_set_show' + id.toString()).style.display = "inline";
 				byId('pid_settings_show').style.display = "inline";
 				byId('advanced_settings_show').style.display = "inline";
 		} 		
-	}
-    
-    function changePitmasterId(){
-			showPitmaster(byId('pitmaster_id').value);
 	}
 	
 	function setPitmaster(){
 		showLoader('true');
 		loadJSON('data', '', '3000', function (response) {
 			jr = JSON.parse(response);
-			pitID = byId('pitmaster_id').value;
-			jr.pitmaster.pm[pitID].id = pitID;
-			jr.pitmaster.pm[pitID].typ = byId('pitmaster_typ').value;
-			jr.pitmaster.pm[pitID].channel = byId('pitmaster_channel').value;
-			jr.pitmaster.pm[pitID].set = byId('pitmaster_set').value;
-			jr.pitmaster.pm[pitID].value = byId('pitmaster_value').value
-			jr.pitmaster.pm[pitID].pid = byId('pid_profile').value
+			for (var id = 0; id < jr.pitmaster.pm.length; id++){
+				jr.pitmaster.pm[id].id = id;
+				jr.pitmaster.pm[id].typ = byId('pitmaster_typ' + id.toString()).value;
+				jr.pitmaster.pm[id].channel = byId('pitmaster_channel' + id.toString()).value;
+				jr.pitmaster.pm[id].set = byId('pitmaster_set' + id.toString()).value;
+				jr.pitmaster.pm[id].value = byId('pitmaster_value' + id.toString()).value
+				jr.pitmaster.pm[id].pid = byId('pid_profile' + id.toString()).value
+			}
 			var data = JSON.stringify(jr.pitmaster.pm);
 			loadJSON('setpitmaster', data, '60000', function (response) {
 				showIndex();
@@ -3878,39 +3908,71 @@
 		showLoader('false');		
 	}
 	
-	function showPitmasterProfile(profile){
+	function showPitmasterProfileSettings(profile){
 		showLoader('true');
 		loadJSON('settings', '', '3000', function (response) {
-			jr = JSON.parse(response);
-			clearOption('pitmaster_profile_aktor');
-			clearOption('pid_profile');
-			for (var i = 0; i < jr.pid.length; i++) {
-				byId('pid_profile').options[byId('pid_profile').options.length] = new Option(jr.pid[i].name, i);
-			}
-			byId('pid_profile').value = profile;	
-			for (var i = 0; i < jr.aktor.length; i++) {
+		jr = JSON.parse(response);
+		clearOption('pitmaster_profile_aktor');
+
+		for (var i = 0; i < jr.aktor.length; i++) {
 				byId('pitmaster_profile_aktor').options[byId('pitmaster_profile_aktor').options.length] = new Option(jr.aktor[i], i);
-			}
-			byId('pitmaster_profile_aktor').value = jr.pid[profile].aktor;
-			byId('pid_name').value = jr.pid[profile].name;	
-			byId('pid_Kp').value = jr.pid[profile].Kp;	
-			byId('pid_Ki').value = jr.pid[profile].Ki;
-			byId('pid_Kd').value = jr.pid[profile].Kd;
-			byId('pid_DCmin').value = jr.pid[profile].DCmmin;
-			byId('pid_DCmax').value = jr.pid[profile].DCmmax;
-			byId('pid_opl').checked = jr.pid[profile].opl;
-			byId('pid_auto').checked = jr.pid[profile].tune;
-			byId('pid_jump').value = jr.pid[profile].jp;
-			showLoader('false');
+		}
+		byId('pitmaster_profile_aktor').value = jr.pid[profile].aktor;
+		byId('pid_name').value = jr.pid[profile].name;	
+		byId('pid_Kp').value = jr.pid[profile].Kp;	
+		byId('pid_Ki').value = jr.pid[profile].Ki;
+		byId('pid_Kd').value = jr.pid[profile].Kd;
+		byId('pid_DCmin').value = jr.pid[profile].DCmmin;
+		byId('pid_DCmax').value = jr.pid[profile].DCmmax;
+		byId('pid_opl').checked = jr.pid[profile].opl;
+		byId('pid_auto').checked = jr.pid[profile].tune;
+		byId('pid_jump').value = jr.pid[profile].jp;
+		showLoader('false');
+		})
+	}
+
+	function showPitmasterProfile(id, profile){
+		showLoader('true');
+		loadJSON('settings', '', '3000', function (response) {
+		jr = JSON.parse(response);
+		var profileBackup = byId('pid_profile' + id.toString()).value;
+		clearOption('pid_profile' + id.toString());
+		for (var i = 0; i < jr.pid.length; i++) {
+			byId('pid_profile' + id.toString()).options[byId('pid_profile' + id.toString()).options.length] = new Option(jr.pid[i].name, i);
+		}
+
+		if( typeof profile == 'undefined' ){
+			profile = profileBackup;
+		}
+		byId('pid_profile' + id.toString()).value = profile;
+		showLoader('false');
 		})			
 	}
 	
-	function togglePitmasterView(){
+	function togglePitmasterView(id){
+		if( typeof togglePitmasterView.id == 'undefined' ){
+        	togglePitmasterView.id = 0;
+    	}
+
+		if( typeof togglePitmasterView.profile == 'undefined' ){
+        	togglePitmasterView.profile = 0;
+    	}
+
+		if( typeof id == 'undefined' ){
+        	id = togglePitmasterView.id;
+    	}else{
+			togglePitmasterView.profile = byId('pid_profile' + id.toString()).value;
+			togglePitmasterView.id = id;
+		}
+
 		if(byId('pitmaster_settings').style.display == "inline"){
+			showPitmasterProfileSettings(byId('pid_profile' + id.toString()).value);
+			showPitmasterProfile(id, byId('pid_profile' + id.toString()).value);
 			byId('pitmaster_settings').style.display = "none";
 			byId('pitmaster_profile').style.display = "inline";		
 		}else{
-			showPitmasterProfile(byId('pid_profile').value);
+			showPitmasterProfile(0);
+			showPitmasterProfile(1);
 			byId('pitmaster_settings').style.display = "inline";
 			byId('pitmaster_profile').style.display = "none";	
 		}
@@ -3923,7 +3985,7 @@
 	function setPitmasterProfile(){
 		loadJSON('settings', '', '3000', function (response) {
 			jr = JSON.parse(response);
-			profile = byId('pid_profile').value;
+			profile = togglePitmasterView.profile;
 			jr.pid[profile].aktor = byId('pitmaster_profile_aktor').value;
 			jr.pid[profile].name = byId('pid_name').value;
 			jr.pid[profile].Kp = byId('pid_Kp').value;
