@@ -1058,12 +1058,26 @@
 		}
 
 		.spinner {
-			height: 1em;
-			width: 1em;
+			position: relative;
+			display: block;
+			text-align: center;
+			height: 3.5em;
+			width: 3.5em;
+			line-height: 3.5em;
+			text-align: center;
+		}
+
+		.spinner::after {
+			content: '';
+  			position: absolute;
+			top: 0; left: 0;
+			height: 100%;
+			width: 100%;
 			animation: rotate 0.8s infinite linear;
 			border: .3em solid #fff;
 			border-right-color: transparent;
 			border-radius: 50%;
+			box-sizing: border-box;
 			-webkit-transition-delay: 1s;
 			/* Safari */
 			transition-delay: 1s;
@@ -1073,7 +1087,6 @@
 			0% {
 				transform: rotate(0deg);
 			}
-
 			100% {
 				transform: rotate(360deg);
 			}
@@ -1097,7 +1110,7 @@
 									<form class="pure-form" method='POST' action='/uploadfile'
 										enctype='multipart/form-data'>
 										<label for="file">
-											<p class="pure-button pure-button-primary" id="select">Select File</p>
+											<p class="pure-button pure-button-primary" id="select_file">Select File</p>
 										</label>
 										<input class="inputfile" type="file" name="file" id="file"
 											onchange="fileInfo();">
@@ -1121,7 +1134,9 @@
 										Update</p>
 								</td>
 								<td>
-									<div id="spinner"></div>
+									<div id="spinner">
+										<span id="percentage"></span>
+									</div>
 								</td>
 							</tr>
 						</tbody>
@@ -1140,14 +1155,9 @@
 						<tbody>
 							<tr>
 								<td>
-									<p class="pure-button pure-button-primary" id="reset" onclick="resetSettings();">Reset
-									</p>
-								</td>
-								<td>
-									<form class="pure-form" method='POST' action='/uploadfile'
-										enctype='multipart/form-data'>
+									<form class="pure-form">
 										<label for="import">
-											<p class="pure-button pure-button-primary" id="select">Import</p>
+											<p class="pure-button pure-button-primary" id="select_import">Import</p>
 										</label>
 										<input class="inputfile" type="file" name="import" id="import"
 											onclick="this.value=null;" onchange="importSettings();">
@@ -1157,6 +1167,11 @@
 									<a href="/export" download>
 										<p class="pure-button pure-button-primary" id="export">Export</p>
 									</a>
+								</td>
+								<td>
+									<p class="pure-button pure-button-primary" id="reset" onclick="resetSettings();">
+										Reset
+									</p>
 								</td>
 							</tr>
 						</tbody>
@@ -1202,9 +1217,7 @@
 			document.getElementById('update').classList.replace("pure-button-primary", "pure-button-disabled");
 		}
 
-		document.getElementById('file').disabled = flashInProgress;
-
-		var buttons = ['update', 'reset', 'import', 'export', 'restart', 'select'];
+		var buttons = ['update', 'reset', 'import', 'export', 'restart', 'select_file', 'select_import', 'file'];
 
 		for (button of buttons) {
 			if (false == flashInProgress) {
@@ -1213,6 +1226,7 @@
 			else {
 				document.getElementById(button).classList.replace("pure-button-primary", "pure-button-disabled");
 			}
+			document.getElementById(button).disabled = flashInProgress;
 		}
 	}
 
@@ -1264,6 +1278,7 @@
 
 	function uploadFile() {
 		document.getElementById('spinner').classList.add("spinner");
+		document.getElementById("percentage").innerHTML = "";
 		var fileSize = document.getElementById('file').files[0].size;
 		var xmlHttp = new XMLHttpRequest();
 		var formData = new FormData();
@@ -1275,8 +1290,16 @@
 
 				}
 				document.getElementById('spinner').classList.remove("spinner");
+				document.getElementById("percentage").innerHTML = "";
 				flashInProgress = false;
 				checkButtons();
+			}
+		};
+
+		xmlHttp.upload.onprogress = function (event) {
+			if (event.lengthComputable) {
+				console.log(event.loaded + " / " + event.total)
+				document.getElementById("percentage").innerHTML = Math.trunc((event.loaded / event.total) * 100) + "%";
 			}
 		};
 
