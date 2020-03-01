@@ -50,7 +50,7 @@ TemperatureMax31855::TemperatureMax31855(uint8_t csPin) : TemperatureBase()
 
 void TemperatureMax31855::update()
 {
-  this->currentValue = this->calcTemperature(this->readChip());
+  this->currentValue = this->calcTemperatureTypeK(this->readChip());
 }
 
 boolean TemperatureMax31855::isBuiltIn()
@@ -91,7 +91,7 @@ uint32_t TemperatureMax31855::readChip()
   return receive.value;
 }
 
-float TemperatureMax31855::calcTemperature(uint32_t rawValue)
+float TemperatureMax31855::calcTemperatureTypeK(uint32_t rawValue)
 {
   float temperature = INACTIVEVALUE;
   uint32_t calcValue = rawValue;
