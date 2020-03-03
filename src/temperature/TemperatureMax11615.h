@@ -32,7 +32,6 @@ class TemperatureMax11615 : public TemperatureBase
     void update();
   private:
     uint16_t readChip();
-    float calcTemperature(uint16_t rawValue);
     TwoWire *twoWire;
     const uint8_t chipAddress = MAX11615_ADDRESS;
 };

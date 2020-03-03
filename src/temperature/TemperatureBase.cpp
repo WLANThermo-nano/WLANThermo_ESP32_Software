@@ -25,14 +25,21 @@
 #define DEFAULT_MIN_VALUE 10.0
 #define DEFAULT_MAX_VALUE 35.0
 #define MAX_COLORS 12u
-#define NUM_OF_TYPES 12
 #define MEDIAN_SIZE 10u
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
 const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
-const char* TemperatureBase::typeNames[NUM_OF_TYPES] = {"1000K/Maverick","Fantast-Neu","Fantast","100K/iGrill2","ET-73",
-                                      "Perfektion","50K","Inkbird","100K6A1B","Weber_6743",
-                                      "Santos","5K3A1B"};
+const char *TemperatureBase::typeNames[NUM_OF_TYPES] = {
+    "1000K/Maverick", "Fantast-Neu", "Fantast", "100K/iGrill2",
+    "ET-73", "Perfektion", "50K", "Inkbird",
+    "100K6A1B", "Weber_6743", "Santos", "5K3A1B",
+    "PT100", "PT1000"};
+TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
+    TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
+    TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
+    TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
+    TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
+    TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx};
 uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
@@ -44,6 +51,7 @@ TemperatureBase::TemperatureBase()
   this->settingsChanged = false;
   this->cbCurrentValue = INACTIVEVALUE;
   this->cbAlarmStatus = NoAlarm;
+  this->calcTemperature = typeFunctions[0];
 }
 
 TemperatureBase::~TemperatureBase()
@@ -157,6 +165,7 @@ uint8_t TemperatureBase::getGlobalIndex()
 void TemperatureBase::setType(uint8_t type)
 {
   this->type = type;
+  this->calcTemperature = (this->type < NUM_OF_TYPES) ? typeFunctions[this->type] : NULL;
 }
 
 void TemperatureBase::setMinValue(float value)
@@ -263,4 +272,91 @@ float TemperatureBase::setUnitValue(float value)
   }
 
   return convertedValue;
+}
+
+float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, uint8_t type)
+{ 
+
+  float Rmess = 47;
+  float a, b, c, Rn;
+
+  // kleine Abweichungen an GND verursachen Messfehler von wenigen Digitalwerten
+  // daher werden nur Messungen mit einem Digitalwert von mind. 10 ausgewertet,
+  // das entspricht 5 mV
+  if (rawValue < 10) return INACTIVEVALUE;        // Kanal ist mit GND gebrückt
+
+  switch (type) {
+  case 0:  // Maverik
+    Rn = 1000; a = 0.003358; b = 0.0002242; c = 0.00000261;
+    break; 
+  case 1:  // Fantast-Neu
+    Rn = 220; a = 0.00334519; b = 0.000243825; c = 0.00000261726;
+    break; 
+  case 2:  // Fantast
+    Rn = 50.08; a = 3.3558340e-03; b = 2.5698192e-04; c = 1.6391056e-06;
+    break; 
+  case 3:  // iGrill2
+    Rn = 99.61 ; a = 3.3562424e-03; b = 2.5319218e-04; c = 2.7988397e-06;
+    break; 
+  case 4:  // ET-73
+    Rn = 200; a = 0.00335672; b = 0.000291888; c = 0.00000439054; 
+    break;
+  case 5:  // PERFEKTION
+    Rn = 200.1; a =  3.3561990e-03; b = 2.4352911e-04; c = 3.4519389e-06;  
+    break; 
+  case 6:  // 50K 
+    Rn = 50.0; a = 3.35419603e-03; b = 2.41943663e-04; c = 2.77057578e-06;
+    break; 
+  case 7: // INKBIRD
+    Rn = 48.59; a = 3.3552456e-03; b = 2.5608666e-04; c = 1.9317204e-06;
+    //Rn = 48.6; a = 3.35442124e-03; b = 2.56134397e-04; c = 1.9536396e-06;
+    //Rn = 48.94; a = 3.35438959e-03; b = 2.55353377e-04; c = 1.86726509e-06;
+    break;
+  case 8: // NTC 100K6A1B (lila Kopf)
+    Rn = 100; a = 0.00335639; b = 0.000241116; c = 0.00000243362; 
+    break;
+  case 9: // Weber_6743
+    Rn = 102.315; a = 3.3558796e-03; b = 2.7111149e-04; c = 3.1838428e-06; 
+    break;
+  case 10: // Santos
+    Rn = 200.82; a = 3.3561093e-03; b = 2.3552814e-04; c = 2.1375541e-06; 
+    break;
+  case 11: // NTC 5K3A1B (orange Kopf)
+    Rn = 5; a = 0.0033555; b = 0.0002570; c = 0.00000243; 
+    break;
+  default:  
+    return INACTIVEVALUE;
+  }
+  
+  float Rt = Rmess*((4096.0/(4096-rawValue)) - 1);
+  float v = log(Rt/Rn);
+  float erg = (1/(a + b*v + c*v*v)) - 273.15;
+  
+  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
+}
+
+float TemperatureBase::calcTemperaturePTx(uint16_t rawValue, uint8_t type)
+{
+  float a, b, Rpt, Rmess;
+
+  if (rawValue < 10) return INACTIVEVALUE;        // Kanal ist mit GND gebrückt
+
+  switch (type) {
+  case 12:  // PT100
+    Rpt = 0.1;	Rmess = 0.0998;
+    break; 
+
+  case 13:  // PT1000
+    Rpt = 1.0;	Rmess = 0.9792;
+    break; 
+  
+  default:  
+    return INACTIVEVALUE;
+  }
+
+  float Rt = Rmess*((4096.0/(4096-rawValue)) - 1);
+  a = 3.9083e-03; b = -5.775e-07; 
+  float erg = (-1)*sqrt((Rt/(Rpt*b)) + ((a*a)/(4*(b*b))) - 1/(b)) - (a/(2*b));
+
+  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
 }
