@@ -108,6 +108,7 @@ public:
   bool startDutyCycleTest(uint8_t actuator, uint8_t value);
   bool startAutoTune();
   float pidCalc();
+  void pidReset();
   void disableActuators();
   boolean isDutyCycleTestRunning();
   boolean isAutoTuneRunning();

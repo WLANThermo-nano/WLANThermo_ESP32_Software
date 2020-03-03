@@ -88,7 +88,11 @@ PitmasterType Pitmaster::getType()
 
 void Pitmaster::assignProfile(PitmasterProfile *profile)
 {
-    this->profile = profile;
+    if(profile != this->profile)
+    {
+        this->pidReset();
+        this->profile = profile;
+    }
 }
 
 PitmasterProfile *Pitmaster::getAssignedProfile()
@@ -651,8 +655,7 @@ void Pitmaster::disableActuators()
     this->enableStepUp(false);
     initActuator = NOAR;
 
-    this->esum = 0;
-    this->elast = 0;
+    this->pidReset();
 }
 
 boolean Pitmaster::isDutyCycleTestRunning()
@@ -767,4 +770,11 @@ float Pitmaster::pidCalc()
     //PMPRINTLN("[PM]\tPID:" + String(y, 1) + "\tp:" + String(p_out, 1) + "\ti:" + String(i_out, 2) + "\td:" + String(d_out, 1));
 
     return y;
+}
+
+void Pitmaster::pidReset()
+{
+    this->esum = 0;
+    this->elast = 0;
+    this->Ki_alt = 0;
 }
