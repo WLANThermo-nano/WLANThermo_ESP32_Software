@@ -511,10 +511,9 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
   if (_system.containsKey("autoupd"))
     gSystem->otaUpdate.setAutoUpdate((boolean)_system["autoupd"]);
   if (_system.containsKey("prerelease"))
-  {
     gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
-    gSystem->otaUpdate.saveConfig();
-  }
+    
+  gSystem->otaUpdate.saveConfig();
 
   if (_system.containsKey("host"))
   {

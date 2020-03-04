@@ -49,13 +49,26 @@ void OtaUpdate::task(void *parameter)
 {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   OtaUpdate *otaUpdate = (OtaUpdate *)parameter;
+  boolean success = false;
 
   Serial.println("OTA update has been started.");
 
-  otaUpdate->doFirmwareUpdate();
-  otaUpdate->doDisplayUpdate();
+  success = otaUpdate->doFirmwareUpdate();
+  
+  if(success)
+    success = otaUpdate->doDisplayUpdate();
 
-  ESP.restart();
+  if(success)
+  {
+    Serial.println("OTA update finished.");
+    ESP.restart();
+  }
+
+  if(!success)
+  {
+    Serial.println("OTA update failed.");
+    otaUpdate->otaUpdateState = OtaUpdateState::UpdateFailed;
+  }
 
   vTaskDelete(NULL);
 }
@@ -149,6 +162,9 @@ void OtaUpdate::setDisplayUrl(const char *url)
 
 void OtaUpdate::setAutoUpdate(boolean enable)
 {
+  if((false == this->autoUpdate) && (true == enable))
+    resetUpdateInfo();
+
   this->autoUpdate = enable;
 }
 
@@ -157,12 +173,14 @@ boolean OtaUpdate::getAutoUpdate()
   return this->autoUpdate;
 }
 
-void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
+boolean OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
 {
+  boolean success = false;
+
    if (!SPIFFS.begin(true))
   {
     Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
+    return false;
   }
 
   File nextionFile = SPIFFS.open(fileName, FILE_WRITE);
@@ -170,7 +188,7 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
   if (!nextionFile)
   {
     Serial.println("Error opening file");
-    return;
+    return false;
   }
 
   WiFiClient client;
@@ -184,7 +202,8 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
 
     if (httpCode == HTTP_CODE_OK)
     {
-      http.writeToStream(&nextionFile);
+      if(http.writeToStream(&nextionFile) > 0)
+        success = true;
     }
   }
   else
@@ -197,12 +216,16 @@ void OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
   http.end();
   nextionFile.close();
   SPIFFS.end();
+
+  return success;
 }
 
-void OtaUpdate::doFirmwareUpdate()
+boolean OtaUpdate::doFirmwareUpdate()
 {
+  boolean success = false;
+
   if (!this->firmwareUrl.length())
-    return;
+    return true;
 
   WiFiClient client;
   t_httpUpdate_return retVal;
@@ -222,16 +245,19 @@ void OtaUpdate::doFirmwareUpdate()
 
   case HTTP_UPDATE_OK:
     Serial.println("HTTP_UPDATE_OK");
+    success = true;
     break;
   }
+
+  return success;
 }
 
-void OtaUpdate::doDisplayUpdate()
+boolean OtaUpdate::doDisplayUpdate()
 {
   if (!this->displayUrl.length())
-    return;
+    return true;
 
-  this->downloadFileToSPIFFS(this->displayUrl.c_str(), "/nextion.tft.zlib");
+  return this->downloadFileToSPIFFS(this->displayUrl.c_str(), "/nextion.tft.zlib");
 }
 
 boolean OtaUpdate::getPrerelease()
@@ -241,5 +267,8 @@ boolean OtaUpdate::getPrerelease()
 
 boolean OtaUpdate::setPrerelease(boolean prerelease)
 {
+  if((false == this->prerelease) && (true == prerelease) && (true == this->autoUpdate))
+    resetUpdateInfo();
+
   this->prerelease = prerelease;
 }

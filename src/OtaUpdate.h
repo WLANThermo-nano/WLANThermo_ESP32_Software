@@ -57,9 +57,9 @@ public:
 
 private:
   static void task(void *parameter);
-  void doFirmwareUpdate();
-  void doDisplayUpdate();
-  void downloadFileToSPIFFS(const char *url, const char *fileName);
+  boolean doFirmwareUpdate();
+  boolean doDisplayUpdate();
+  boolean downloadFileToSPIFFS(const char *url, const char *fileName);
   bool prerelease;
   bool autoUpdate;
   String firmwareUrl;
