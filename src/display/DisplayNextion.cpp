@@ -32,8 +32,10 @@ extern "C" {
 
 #if defined HW_MINI_V1
 #define NEXTION_DIRECTION_STRING "-180"
+#define NEXTION_DIRECTION_ENUM DisplayOrientation::_180
 #else
 #define NEXTION_DIRECTION_STRING "-0"
+#define NEXTION_DIRECTION_ENUM DisplayOrientation::_0
 #endif
 
 #define NEXTION_TEMPERATURES_MAX 12u
@@ -163,6 +165,7 @@ int8_t DisplayNextion::wifiIndex = 0u;
 DisplayNextion::DisplayNextion()
 {
   this->disabled = false;
+  this->orientation = NEXTION_DIRECTION_ENUM;
 }
 
 void DisplayNextion::init()
@@ -197,7 +200,8 @@ boolean DisplayNextion::initDisplay()
     sendCommand("bkcmd=1");
     cmdFinished = recvRetCommandFinished();
 
-    Serial.printf("Nextion model: %s\n", nexUpload.getModel().c_str());
+    this->updateName = nexUpload.getModel().substring(0u, 10u) + String("-") + String((int)this->orientation);
+    Serial.printf("Nextion updateName: %s\n", this->updateName.c_str());
 
     if(false == cmdFinished)
     {
@@ -863,8 +867,15 @@ void DisplayNextion::updateFromSPIFFS()
   Serial.printf("Nextion update file name: %s\n", nextionFileName.c_str());
 
   // check if needed nextion file is available
-  if (!SPIFFS.exists(nextionFileName.c_str()))
+  if(SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
   {
+    // file from OTA
+    Serial.println("Nextion update from OTA: %s\n");
+    nextionFileName = NEXTION_SPIFFS_UPDATE_FILENAME;
+  }
+  else if (!SPIFFS.exists(nextionFileName.c_str()))
+  {
+    // file from SPIFFS upload
     Serial.println("Nextion update file not available");
     return;
   }

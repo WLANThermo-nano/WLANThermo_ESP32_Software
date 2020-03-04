@@ -30,23 +30,18 @@
 
 OtaUpdate::OtaUpdate()
 {
-  state = 0;
-  
   prerelease = false;
   autoUpdate = true;
   firmwareUrl = "";
   displayUrl = "";
   otaUpdateState = OtaUpdateState::Idle;
-
-
-  get = "false"; // Änderungen am EE während Update
+  requestedVersion = "false";
   version = "false";
-
-  state = -1; // Kontakt zur API herstellen
 }
 
-void OtaUpdate::start()
+void OtaUpdate::startUpdate()
 {
+  otaUpdateState = OtaUpdateState::UpdateInProgress;
   xTaskCreatePinnedToCore(OtaUpdate::task, "OtaUpdate::task", 10000, this, 100, NULL, 1);
 }
 
@@ -55,8 +50,12 @@ void OtaUpdate::task(void *parameter)
   TickType_t xLastWakeTime = xTaskGetTickCount();
   OtaUpdate *otaUpdate = (OtaUpdate *)parameter;
 
+  Serial.println("OTA update has been started.");
+
   otaUpdate->doFirmwareUpdate();
   otaUpdate->doDisplayUpdate();
+
+  ESP.restart();
 
   vTaskDelete(NULL);
 }
@@ -65,8 +64,6 @@ void OtaUpdate::saveConfig()
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
-  json["update"] = state;
-  json["getupd"] = get;
   json["autoupd"] = autoUpdate;
   json["prerelease"] = prerelease;
   Settings::write(kOtaUpdate, json);
@@ -79,14 +76,64 @@ void OtaUpdate::loadConfig()
 
   if (json.success())
   {
-    if (json.containsKey("update"))
-      state = json["update"];
     if (json.containsKey("autoupd"))
       autoUpdate = json["autoupd"];
-    if (json.containsKey("getupd"))
-      get = json["getupd"].asString();
     if (json.containsKey("prerelease"))
       prerelease = json["prerelease"];
+  }
+}
+
+boolean OtaUpdate::checkForUpdate(String version)
+{
+  boolean doUpdate = false;
+
+  if((this->version != "false") && (this->version == this->requestedVersion))
+  {
+    doUpdate = true;
+    startUpdate();
+  }
+
+  return doUpdate;
+}
+
+void OtaUpdate::requestVersion(String requestedVersion)
+{
+  this->requestedVersion = version;
+  otaUpdateState = OtaUpdateState::GetUpdateInfo;
+}
+
+void OtaUpdate::resetUpdateInfo()
+{
+  firmwareUrl = "";
+  displayUrl = "";
+  otaUpdateState = OtaUpdateState::GetUpdateInfo;
+  requestedVersion = "false";
+  version = "false";
+}
+
+void OtaUpdate::update()
+{
+  switch(otaUpdateState)
+  {
+    case OtaUpdateState::Idle:
+      otaUpdateState = (this->autoUpdate) ? OtaUpdateState::GetUpdateInfo : OtaUpdateState::Idle;
+      break;
+    case OtaUpdateState::GetUpdateInfo:
+      Cloud::check_api();
+      otaUpdateState = OtaUpdateState::NoUpdateInfo;
+      break;
+    case OtaUpdateState::NoUpdateInfo:
+      otaUpdateState = (version != "false") ? OtaUpdateState::UpdateAvailable : OtaUpdateState::NoUpdateInfo;
+      break;
+    case OtaUpdateState::UpdateAvailable:
+      break;
+    case OtaUpdateState::UpdateInProgress:
+      break;
+    case OtaUpdateState::UpdateFinished:
+      break;
+    case OtaUpdateState::UpdateFailed:
+    default:
+      break;
   }
 }
 

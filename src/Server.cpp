@@ -100,7 +100,7 @@ void WServer::init()
 
   webServer->on("/clientlog", [](AsyncWebServerRequest *request) {
     Cloud::clientlog = true;
-    gSystem->otaUpdate.state = -1;
+    gSystem->otaUpdate.resetUpdateInfo();
     request->send(200, TEXTPLAIN, "aktiviert");
   });
 
@@ -159,7 +159,7 @@ void WServer::init()
         String url = request->getParam("url", true)->value();
         request->send(200, TEXTPLAIN, "OK");
         gSystem->otaUpdate.setFirmwareUrl(url.c_str());
-        gSystem->otaUpdate.start();
+        gSystem->otaUpdate.startUpdate();
       }
       else
       {
@@ -183,7 +183,7 @@ void WServer::init()
         String url = request->getParam("url", true)->value();
         request->send(200, TEXTPLAIN, "OK");
         gSystem->otaUpdate.setDisplayUrl(url.c_str());
-        gSystem->otaUpdate.start();
+        gSystem->otaUpdate.startUpdate();
       }
       else
       {

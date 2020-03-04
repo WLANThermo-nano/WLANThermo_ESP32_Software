@@ -25,9 +25,12 @@
 enum class OtaUpdateState
 {
   Idle,
-  InProgress,
-  Failed,
-  Finished
+  GetUpdateInfo,
+  NoUpdateInfo,
+  UpdateAvailable,
+  UpdateInProgress,
+  UpdateFailed,
+  UpdateFinished
 };
 
 class OtaUpdate
@@ -36,17 +39,21 @@ public:
   OtaUpdate();
   void saveConfig();
   void loadConfig();
+  void update();
   void setFirmwareUrl(const char *url);
   void setDisplayUrl(const char *url);
   void setAutoUpdate(boolean enable);
+  void setUpdateVersion(String version){this->version = version;};
+  void requestVersion(String version);
+  void resetUpdateInfo();
+  String getRequestedVersion(){return this->requestedVersion;};
+  String getVersion(){return this->version;};
+  boolean checkForUpdate(String version);
   boolean getAutoUpdate();
-  void start();
+  boolean isUpdateInProgress(){return (OtaUpdateState::UpdateInProgress == otaUpdateState);};
+  void startUpdate();
   boolean getPrerelease();
   boolean setPrerelease(boolean prerelease);
-  byte count;               // UPDATE SPIFFS REPEAT
-  int state;                // UPDATE STATE: -1 = check, 0 = no, 1 = start spiffs, 2 = check after restart, 3 = firmware, 4 = finish
-  String get;               // UPDATE MY NEW VERSION (über Eingabe)
-  String version = "false"; // UPDATE SERVER NEW VERSION
 
 private:
   static void task(void *parameter);
@@ -58,4 +65,6 @@ private:
   String firmwareUrl;
   String displayUrl;
   OtaUpdateState otaUpdateState;
+  String requestedVersion;
+  String version;
 };

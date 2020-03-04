@@ -29,6 +29,7 @@
 #include "API.h"
 #include "DbgPrint.h"
 #include "system/SystemBase.h"
+#include "display/DisplayBase.h"
 #include "Version.h"
 #include "RecoveryMode.h"
 #include <SPIFFS.h>
@@ -234,7 +235,7 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     }
     else if (request->url() == UPDATE_CHECK)
     {
-      gSystem->otaUpdate.state = -1;
+      gSystem->otaUpdate.resetUpdateInfo();
       request->send(200, TEXTPLAIN, TEXTTRUE);
       return;
     }
@@ -247,7 +248,7 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     if (request->url() == UPDATE_STATUS)
     {
       DPRINTLN("... in process");
-      if (gSystem->otaUpdate.state > 0)
+      if (gSystem->otaUpdate.isUpdateInProgress())
         request->send(200, TEXTPLAIN, TEXTTRUE);
       request->send(200, TEXTPLAIN, TEXTFALSE);
       return;
@@ -371,26 +372,18 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
         return request->requestAuthentication();
       if (request->hasParam("version", true))
       {
-        //ESP.wdtDisable();
-        // use getParam(xxx, true) for form-data parameters in POST request header
         String version = request->getParam("version", true)->value();
         Serial.println(version);
         if (version.indexOf("v") == 0)
         {
-          gSystem->otaUpdate.get = version; // Versionswunsch speichern
-          if (gSystem->otaUpdate.get == gSystem->otaUpdate.version)
-            gSystem->otaUpdate.state = 1; // Version schon bekannt, direkt los
-          else
-            gSystem->otaUpdate.state = -1; // Version erst vom Server anfragen
-          //ESP.wdtEnable(10);
+          gSystem->otaUpdate.requestVersion(version);
         }
         else
           request->send(200, TEXTPLAIN, "Version unknown!");
       }
       else
       {
-        gSystem->otaUpdate.get = gSystem->otaUpdate.version;
-        gSystem->otaUpdate.state = 1; // Version bekannt, also direkt los
+        gSystem->otaUpdate.startUpdate();
       }
       request->send(200, TEXTPLAIN, "Do Update...");
     }
@@ -936,33 +929,29 @@ bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
     if (_update.containsKey("available"))
       available = _update["available"];
 
-    if (available && (gSystem->otaUpdate.getAutoUpdate() || gSystem->otaUpdate.get != "false"))
+    if (available)
     {
       // bei gSystem->otaUpdate.get wurde eine bestimmte Version angefragt
       String version;
       if (_update.containsKey("version"))
       {
         version = _update["version"].asString();
-        if (gSystem->otaUpdate.get == version)
+
+        if (!gSystem->otaUpdate.checkForUpdate(version))
         {
-          if (gSystem->otaUpdate.state < 1)
-            gSystem->otaUpdate.state = 1; // Anfrage erfolgreich, Update starten
-          else if (gSystem->otaUpdate.state == 2)
-            gSystem->otaUpdate.state = 3; // Anfrage während des Updateprozesses
-        }
-        else
-        { // keine konrekte Anfrage
-          gSystem->otaUpdate.version = version;
-          gSystem->otaUpdate.get = "false"; // nicht die richtige Version übermittelt
+          // keine konrekte Anfrage
+          gSystem->otaUpdate.setUpdateVersion(version);
         }
       }
-      if (_update.containsKey("NX3224K028"))
+
+      if (_update.containsKey(gDisplay->getUpdateName()))
       { // Firmware-Link
-        JsonObject &_fw = _update["NX3224K028"];
+        JsonObject &_fw = _update[gDisplay->getUpdateName()];
         if (_fw.containsKey("url"))
           gSystem->otaUpdate.setDisplayUrl(_fw["url"].asString());
         Serial.println(_fw["url"].asString());
       }
+
       if (_update.containsKey("firmware"))
       { // Firmware-Link
         JsonObject &_fw = _update["firmware"];
@@ -973,25 +962,12 @@ bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
 
       if (_update.containsKey("force"))
       {
-        gSystem->otaUpdate.get = gSystem->otaUpdate.version;
-        gSystem->otaUpdate.state = 1; // Update erzwingen
+        gSystem->otaUpdate.startUpdate();
       }
-      gSystem->otaUpdate.start();
     }
     else
     {
-      gSystem->otaUpdate.version = "false"; // kein Server-Update
-      if (gSystem->otaUpdate.get != "false")
-        gSystem->otaUpdate.get = "false"; // bestimmte Version nicht bekannt
-    }
-
-    if (gSystem->otaUpdate.state == 3)
-    {
-    } // nicht speichern falls Absturz -> wiederholen
-    else
-    {
-      gSystem->otaUpdate.saveConfig();
-      return 0; // für Update
+      gSystem->otaUpdate.setUpdateVersion("false");
     }
   }
 

@@ -99,11 +99,9 @@ void ConnectTask(void *parameter)
     // WiFi - Monitoring
     gSystem->wlan.update();
 
-    // HTTP Update
-    Cloud::check_api();
-
-    if (gSystem->wlan.isConnected() && gSystem->otaUpdate.state == 0)
+    if (gSystem->wlan.isConnected())
     {
+      gSystem->otaUpdate.update();
       gSystem->mqtt.update();
       gSystem->notification.update();
       gSystem->cloud.update();

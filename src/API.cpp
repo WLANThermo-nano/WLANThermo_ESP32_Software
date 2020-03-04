@@ -72,7 +72,7 @@ void API::systemObj(JsonObject &jObj, bool settings)
     jObj["host"] = gSystem->wlan.getHostName();
     jObj["language"] = gSystem->getLanguage();
     jObj["version"] = FIRMWAREVERSION;
-    jObj["getupdate"] = gSystem->otaUpdate.version;
+    jObj["getupdate"] = gSystem->otaUpdate.getVersion();
     jObj["autoupd"] = gSystem->otaUpdate.getAutoUpdate();
     jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
     jObj["hwversion"] = String("V") + String(gSystem->getHardwareVersion());
@@ -239,8 +239,8 @@ void API::updateObj(JsonObject &jObj)
   jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
 
   // nach einer bestimmten Version fragen
-  if (gSystem->otaUpdate.get != "false")
-    jObj["version"] = gSystem->otaUpdate.get;
+  if (gSystem->otaUpdate.getRequestedVersion() != "false")
+    jObj["version"] = gSystem->otaUpdate.getRequestedVersion();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
