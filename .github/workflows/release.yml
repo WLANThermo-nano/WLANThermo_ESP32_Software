@@ -75,6 +75,7 @@ jobs:
 
   nextion:
     name: Build Nextion
+    needs: firmware
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
