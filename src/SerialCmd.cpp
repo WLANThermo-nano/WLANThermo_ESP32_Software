@@ -63,15 +63,22 @@ void read_serial(char *buffer) {
       return;    
     }
 
-     // UPDATE auf bestimmte Version
-    else if (command == "update") {
-      String payload((char*)buffer);
-      if (payload.indexOf("v") == 0) {
-        gSystem->otaUpdate.get = payload;  // kein Speichern, da während des Updates eh gespeichert wird
-        if (gSystem->otaUpdate.get == gSystem->otaUpdate.version) gSystem->otaUpdate.state = 1;   // Version schon bekannt, direkt los
-        else gSystem->otaUpdate.state = -1;                               // Version erst vom Server anfragen
-      } else  {IPRINTPLN("Update unbekannt!");}
-      return;    
+    // UPDATE auf bestimmte Version
+    else if (command == "update")
+    {
+      String payload((char *)buffer);
+      if (payload.indexOf("v") == 0)
+      {
+        if (!gSystem->otaUpdate.checkForUpdate(payload))
+        {
+          gSystem->otaUpdate.requestVersion(payload);
+        }
+      }
+      else
+      {
+        IPRINTPLN("Update unbekannt!");
+      }
+      return;
     }
 
     // Battery MIN
@@ -208,7 +215,7 @@ void read_serial(char *buffer) {
 
     // CHECK HTTP UPDATE
     else if (str == "checkupdate") {
-      gSystem->otaUpdate.state = -1;
+      gSystem->otaUpdate.resetUpdateInfo();
       return;
     }
 

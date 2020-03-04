@@ -5,8 +5,8 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  main:
-    name: Release
+  firmware:
+    name: Build Firmware
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -19,95 +19,185 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U platformio
       - name: Build firmware
-        run: platformio run -e miniV2 -e miniV3 -e nano
-#      - name: Build file system
-#        run: platformio run -e miniV2 -e miniV3 -e nano -t buildfs --disable-auto-clean
+        run: platformio run -e miniV1 -e miniV2 -e miniV3 -e nano
+      - shell: bash
+        run: |
+          mkdir ./artifacts
+          cp ./.pio/build/miniV1/firmware.bin ./artifacts/miniV1.bin
+          cp ./.pio/build/miniV2/firmware.bin ./artifacts/miniV2.bin
+          cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3.bin
+          cp ./.pio/build/nano/firmware.bin ./artifacts/nano.bin
+      - uses: actions/upload-artifact@v1
+        with:
+            name: firmware
+            path: ./artifacts
+
+  nextion:
+    name: Build Nextion
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build nextion
+        shell: pwsh
+        run: |
+          .\nextion\build.ps1
+      - uses: actions/upload-artifact@v1
+        with:
+            name: nextion
+            path: ./nextion/artifacts
+
+  release:
+    name: Build Release
+    needs: [firmware, nextion]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download firmware
+        uses: actions/download-artifact@v1
+        with:
+          name: firmware
+      - name: Download nextion
+        uses: actions/download-artifact@v1
+        with:
+          name: nextion
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
             Changes in this Release
-            - Testing Github action release
           draft: true
           prerelease: true
           allowUpdates: true
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3) 
-      - name: Upload Release Asset miniV2 firmware
+        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+      - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./.pio/build/miniV2/firmware.bin
+          asset_path: ./firmware/miniV1.bin
+          asset_name: mini_v1_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./firmware/miniV2.bin
           asset_name: mini_v2_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
-#      - name: Upload Release Asset miniV2 file system
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: ./.pio/build/miniV2/spiffs.bin
-#          asset_name: miniV2_spiffs_${{ steps.get_version.outputs.version }}.bin
-#          asset_content_type: application/octet-stream
-      - name: Upload Release Asset miniV2 nextion
+      - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nextion/miniV2.tft
-          asset_name: mini_v2_esp32_NX3224K028_${{ steps.get_version.outputs.version }}.tft
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset miniV3 firmware
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./.pio/build/miniV3/firmware.bin
+          asset_path: ./firmware/miniV3.bin
           asset_name: mini_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
-#      - name: Upload Release Asset miniV3 file system
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: ./.pio/build/miniV3/spiffs.bin
-#          asset_name: miniV3_spiffs_${{ steps.get_version.outputs.version }}.bin
-#          asset_content_type: application/octet-stream
-      - name: Upload Release Asset miniV3 nextion
+      - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nextion/miniV3.tft
-          asset_name: mini_v3_esp32_NX3224K024_${{ steps.get_version.outputs.version }}.tft
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset nano firmware
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./.pio/build/nano/firmware.bin
+          asset_path: ./firmware/nano.bin
           asset_name: nano_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
-#      - name: Upload Release Asset nano file system
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: ./.pio/build/nano/spiffs.bin
-#          asset_name: nano_spiffs_${{ steps.get_version.outputs.version }}.bin
-#          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224T028-0.tft
+          asset_name: mini_v1_esp32_NX3224T028-0_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224T028-180.tft
+          asset_name: mini_v1_esp32_NX3224T028-180_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K028-0.tft
+          asset_name: mini_v1_esp32_NX3224K028-0_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K028-180.tft
+          asset_name: mini_v1_esp32_NX3224K028-180_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224T028-0.tft
+          asset_name: mini_v2_esp32_NX3224T028-0_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224T028-180.tft
+          asset_name: mini_v2_esp32_NX3224T028-180_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K028-0.tft
+          asset_name: mini_v2_esp32_NX3224K028-0_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K028-180.tft
+          asset_name: mini_v2_esp32_NX3224K028-180_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K024-0.tft
+          asset_name: mini_v3_esp32_NX3224K024-0_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nextion/NX3224K024-180.tft
+          asset_name: mini_v3_esp32_NX3224K024-180_${{ steps.get_version.outputs.version }}.tft
+          asset_content_type: application/octet-stream

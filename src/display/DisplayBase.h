@@ -22,6 +22,12 @@
 #include "Arduino.h"
 #include "system/SystemBase.h"
 
+enum class DisplayOrientation
+{
+  _0 = 0,
+  _180 = 180
+};
+
 class DisplayBase
 {
 public:
@@ -32,6 +38,7 @@ public:
   virtual void saveConfig();
   void disable(boolean disabled);
   void block(boolean block);
+  String getUpdateName(){return updateName;};
   virtual void calibrate();
   static String debugString;
 
@@ -39,6 +46,8 @@ protected:
   SystemBase *system;
   boolean disabled;
   boolean blocked;
+  DisplayOrientation orientation;
+  String updateName;
 };
 
 extern DisplayBase *gDisplay;
