@@ -24,7 +24,12 @@
 #ifndef C_VERSION_H_
 #define C_VERSION_H_
 
+/*!!!DO NOT REMOVE THE NEXT LINE!!!*/
+/*REL_VER*/
+
+#ifndef FIRMWAREVERSION
 #define FIRMWAREVERSION  "v0.9.0"
+#endif
 #define GUIAPIVERSION    "1"
 #define SERVERAPIVERSION "1"
 
