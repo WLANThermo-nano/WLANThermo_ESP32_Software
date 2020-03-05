@@ -54,7 +54,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 2, NULL, 0);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 2, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
