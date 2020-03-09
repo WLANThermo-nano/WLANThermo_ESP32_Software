@@ -21,16 +21,14 @@
 #include <ArduinoJson.h>
 #include "Wlan.h"
 #include "Settings.h"
-
-#define APNAME "DEVICE-AP"
-#define DEFAULT_HOST "DEVICE-"
+#include "Constants.h"
 
 #define APPASSWORD "12345678"
 
 #define CONNECT_TIMEOUT 5u // 5s
 
-String Wlan::hostName = DEFAULT_HOST;
-String Wlan::accessPointName = APNAME;
+String Wlan::hostName = DEFAULT_HOSTNAME;
+String Wlan::accessPointName = DEFAULT_APNAME;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;

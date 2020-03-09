@@ -23,6 +23,7 @@
 #include <SPIFFS.h>
 #include <rom/rtc.h>
 #include "SystemBase.h"
+#include "Constants.h"
 
 #define STRINGIFY(s) #s
 
@@ -151,8 +152,8 @@ void SystemBase::resetConfig()
     }
   }
 
-  wlan.setHostName("NANO-" + String(this->serialNumber));
-  wlan.setAccessPointName("NANO-AP");
+  wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
+  wlan.setAccessPointName(DEFAULT_APNAME);
 }
 
 void SystemBase::saveConfig()

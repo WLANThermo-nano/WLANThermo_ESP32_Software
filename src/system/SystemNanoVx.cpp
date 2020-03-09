@@ -24,8 +24,7 @@
 #include "SystemNanoVx.h"
 #include "temperature/TemperatureMax11615.h"
 #include "display/DisplayOled.h"
-
-#define ROOT_SYSTEM "NANO-"
+#include "Constants.h"
 
 // PITMASTER
 #define PITMASTER0IO1 25u   // Fan Pin
@@ -105,8 +104,7 @@ void SystemNanoVx::init()
 {
   deviceName = "nano";
   hardwareVersion = 3u;
-  wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
-  wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));
+  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 
   // initialize temperatures
   this->wireLock();

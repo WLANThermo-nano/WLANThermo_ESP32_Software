@@ -24,8 +24,7 @@
 #include "SystemMiniV1.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "display/DisplayNextion.h"
-
-#define ROOT_SYSTEM "MINI-"
+#include "Constants.h"
 
 // TEMPERATURES
 #define CS_MCP3208 0u
@@ -59,8 +58,7 @@ void SystemMiniV1::init()
 {
   deviceName = "mini";
   hardwareVersion = 1u;
-  wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
-  wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));
+  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 
   // configure PIN mode
   pinMode(CS_MCP3208, OUTPUT);
