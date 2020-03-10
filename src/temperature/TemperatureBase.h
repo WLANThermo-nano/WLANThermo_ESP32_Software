@@ -24,7 +24,7 @@
 
 #define INACTIVEVALUE 999
 #define TEMPERATURE_TYPE_NOT_CHANGEABLE 0xFFu
-#define NUM_OF_TYPES 14u
+#define NUM_OF_TYPES 15u
 
 typedef void (*TemperatureCallback_t)(class TemperatureBase*, boolean, void*); 
 typedef float (*TemperatureCalculation_t)(uint16_t, uint8_t); 
