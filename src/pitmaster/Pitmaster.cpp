@@ -103,6 +103,7 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
     this->temperature = temperature;
+    memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 }
 
 TemperatureBase *Pitmaster::getAssignedTemperature()
@@ -656,6 +657,7 @@ void Pitmaster::disableActuators()
     initActuator = NOAR;
 
     this->pidReset();
+    memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 }
 
 boolean Pitmaster::isDutyCycleTestRunning()
