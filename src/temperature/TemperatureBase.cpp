@@ -33,13 +33,13 @@ const char *TemperatureBase::typeNames[NUM_OF_TYPES] = {
     "1000K/Maverick", "Fantast-Neu", "Fantast", "100K/iGrill2",
     "ET-73", "Perfektion", "50K", "Inkbird",
     "100K6A1B", "Weber_6743", "Santos", "5K3A1B",
-    "PT100", "PT1000"};
+    "PT100", "PT1000", "ThermoWorks"};
 TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
-    TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx};
+    TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC};
 uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
@@ -323,6 +323,9 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, uint8_t type)
     break;
   case 11: // NTC 5K3A1B (orange Kopf)
     Rn = 5; a = 0.0033555; b = 0.0002570; c = 0.00000243; 
+    break;
+  case 14: // ThermoWorks
+    Rn = 97.31; a = 3.3556417e-03; b = 2.5191450e-04; c = 2.3606960e-06; 
     break;
   default:  
     return INACTIVEVALUE;
