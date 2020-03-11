@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,11 +19,12 @@
 ****************************************************/
 #pragma once
 
-#include "TemperatureBase.h"
+#include "SystemBase.h"
 
-class TemperatureDummy : public TemperatureBase
+class SystemMiniV1 : public SystemBase
 {
   public:
-    TemperatureDummy();
+    SystemMiniV1();
+    void init();
   private:
 };

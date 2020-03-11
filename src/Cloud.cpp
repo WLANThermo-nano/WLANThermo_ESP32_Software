@@ -27,7 +27,7 @@
 #include <SPIFFS.h>
 
 // API
-#define APISERVER "api.wlanthermo.de"
+#define APISERVER "dev-api.wlanthermo.de"
 #define CHECKAPI "/"
 #define URL_FILE "/url.json"
 #define DEFAULT_INTERVAL 30u
@@ -525,33 +525,13 @@ bool Cloud::sendAPI(int check)
 
 void Cloud::check_api()
 {
-
-  // bei wifi-connect wird gSystem->otaUpdate.state = -1 gesetzt
-
-  if (gSystem->otaUpdate.state == -1 || gSystem->otaUpdate.state == 2)
-  { // -1 = check, 2 = check after restart during update
-    if ((gSystem->wlan.isConnected()))
-    {
-      //Serial.println("Verbindungsversuch API");
-      if (sendAPI(0))
-      { // blockt sich selber, so dass nur ein Client gleichzeitig offen
-        apiindex = APIUPDATE;
-        urlindex = APILINK;
-        parindex = NOPARA;
-        sendAPI(2);
-      }
-
-      // kommt nicht bei Systemstart zum Einsatz
-    }
-    else
-    { // kein Internet, also Update stoppen
-      if (gSystem->otaUpdate.state == -1)
-        gSystem->otaUpdate.get = "false"; // nicht während Update, da wird die Version gebraucht
-    }
-
-    if (gSystem->otaUpdate.state == -1)
-      gSystem->otaUpdate.state = 0; // von check (-1) auf ruhend (0) wechseln
-    // kein Speichern im EE, Zustand -1 ist nur temporär
+  Serial.println("check_api");
+  if (sendAPI(0))
+  { // blockt sich selber, so dass nur ein Client gleichzeitig offen
+    apiindex = APIUPDATE;
+    urlindex = APILINK;
+    parindex = NOPARA;
+    sendAPI(2);
   }
 }
 // GET/POST Generator

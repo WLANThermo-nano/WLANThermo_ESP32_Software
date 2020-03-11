@@ -24,9 +24,10 @@
 
 #define INACTIVEVALUE 999
 #define TEMPERATURE_TYPE_NOT_CHANGEABLE 0xFFu
-#define NUM_OF_TYPES 12u
+#define NUM_OF_TYPES 15u
 
-typedef void (*TemperatureCallback_t)(class TemperatureBase*, void*); 
+typedef void (*TemperatureCallback_t)(class TemperatureBase*, boolean, void*); 
+typedef float (*TemperatureCalculation_t)(uint16_t, uint8_t); 
 
 enum AlarmSetting
 {
@@ -88,7 +89,6 @@ class TemperatureBase
   protected:
     uint8_t localIndex;
     uint8_t globalIndex;
-    float previousValue;
     float currentValue;
     MedianFilter<float> *medianValue;
     float minValue;
@@ -97,13 +97,20 @@ class TemperatureBase
     String name;
     String color;
     AlarmSetting alarmSetting;
+    TemperatureCalculation_t calcTemperature;
   private:
     TemperatureUnit currentUnit;
     uint8_t notificationCounter;
     static const char* typeNames[NUM_OF_TYPES];
+    static TemperatureCalculation_t typeFunctions[NUM_OF_TYPES];
     TemperatureCallback_t registeredCb;
+    boolean settingsChanged;
     void  *registeredCbUserData;
+    AlarmStatus cbAlarmStatus;
+    float cbCurrentValue;
     static uint8_t globalIndexTracker;
     float getUnitValue(float value);
     float setUnitValue(float value);
+    static float calcTemperatureNTC(uint16_t rawValue, uint8_t type);
+    static float calcTemperaturePTx(uint16_t rawValue, uint8_t type);
 };

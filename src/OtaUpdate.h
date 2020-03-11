@@ -22,27 +22,49 @@
 
 #include "Arduino.h"
 
+enum class OtaUpdateState
+{
+  Idle,
+  GetUpdateInfo,
+  NoUpdateInfo,
+  UpdateAvailable,
+  UpdateInProgress,
+  UpdateFailed,
+  UpdateFinished
+};
+
 class OtaUpdate
 {
 public:
   OtaUpdate();
   void saveConfig();
   void loadConfig();
-  void doHttpUpdate();
-  void doHttpUpdate(const char *url);
-  void downloadFileToSPIFFS(const char *url, const char *fileName);
+  void update();
+  void setFirmwareUrl(const char *url);
+  void setDisplayUrl(const char *url);
+  void setAutoUpdate(boolean enable);
+  void setUpdateVersion(String version){this->version = version;};
+  void requestVersion(String version);
+  void resetUpdateInfo();
+  String getRequestedVersion(){return this->requestedVersion;};
+  String getVersion(){return this->version;};
+  boolean checkForUpdate(String version);
+  boolean getAutoUpdate();
+  boolean isUpdateInProgress(){return (OtaUpdateState::UpdateInProgress == otaUpdateState);};
+  void startUpdate();
   boolean getPrerelease();
   boolean setPrerelease(boolean prerelease);
-  String firmwareUrl;       // UPDATE FIRMWARE LINK
-  String spiffsUrl;         // UPDATE SPIFFS LINK
-  byte count;               // UPDATE SPIFFS REPEAT
-  int state;                // UPDATE STATE: -1 = check, 0 = no, 1 = start spiffs, 2 = check after restart, 3 = firmware, 4 = finish
-  String get;               // UPDATE MY NEW VERSION (über Eingabe)
-  String version = "false"; // UPDATE SERVER NEW VERSION
-  bool autoupdate;          // CHECK UPDATE INFORMATION
 
 private:
-  void start();
   static void task(void *parameter);
+  boolean doFirmwareUpdate();
+  boolean doDisplayUpdate();
+  boolean downloadFileToSPIFFS(const char *url, const char *fileName);
   bool prerelease;
+  bool autoUpdate;
+  String firmwareUrl;
+  String displayUrl;
+  OtaUpdateState otaUpdateState;
+  String requestedVersion;
+  String version;
 };

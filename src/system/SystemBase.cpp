@@ -23,6 +23,7 @@
 #include <SPIFFS.h>
 #include <rom/rtc.h>
 #include "SystemBase.h"
+#include "Constants.h"
 
 #define STRINGIFY(s) #s
 
@@ -54,7 +55,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreate(SystemBase::task, "SystemBase::task", 5000, this, 2, NULL);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 2, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
@@ -151,8 +152,8 @@ void SystemBase::resetConfig()
     }
   }
 
-  wlan.setHostName("NANO-" + String(this->serialNumber));
-  wlan.setAccessPointName("NANO-AP");
+  wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
+  wlan.setAccessPointName(DEFAULT_APNAME);
 }
 
 void SystemBase::saveConfig()
@@ -176,7 +177,7 @@ boolean SystemBase::isInitDone()
 void SystemBase::restart()
 {
   WiFi.disconnect();
-  delay(100);
+  delay(500);
   yield();
   ESP.restart();
 }

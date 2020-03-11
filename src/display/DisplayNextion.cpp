@@ -30,10 +30,20 @@ extern "C" {
 #define INBUFFER_SIZE  (32u*1024u)
 #define NEXTION_SPIFFS_UPDATE_FILENAME "/nextion.tft.zlib"
 
+#if defined HW_MINI_V1
+#define NEXTION_DIRECTION_STRING "-180"
+#define NEXTION_DIRECTION_ENUM DisplayOrientation::_180
+#else
+#define NEXTION_DIRECTION_STRING "-0"
+#define NEXTION_DIRECTION_ENUM DisplayOrientation::_0
+#endif
+
 #define NEXTION_TEMPERATURES_MAX 12u
 #define NEXTION_TEMPERATURES_PER_PAGE 6u
 #define UPDATE_ALL_TEMPERATURES 0xFFFFFFFFu
-#define NEXTION_SERIAL_TIMEOUT 5u
+#define NEXTION_SERIAL_TIMEOUT 100u
+#define NEXTION_INVALID_PAGE 0xFFu
+#define NEXTIO_RETURN_CURRENT_PAGE_ID 0x66u
 
 #define PAGE_TEMP_INDEX (temperature->getGlobalIndex() / NEXTION_TEMPERATURES_PER_PAGE)
 #define PAGE_TEMP_ITEM_INDEX (temperature->getGlobalIndex() % NEXTION_TEMPERATURES_PER_PAGE)
@@ -43,14 +53,22 @@ extern "C" {
 
 #define DONT_CARE 0u
 #define NEXTION_COLOR_NO_ALARM 0xFFFFu
-#define NEXTION_COLOR_MIN_ALARM 0x32F0u
+#define NEXTION_COLOR_MIN_ALARM 0x4D3Fu
 #define NEXTION_COLOR_MAX_ALARM 0xF800u
 
 uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, NEXTION_COLOR_MAX_ALARM};
 
+
+/* PAGE ID */
 #define PAGE_TEMP0_MAIN_ID 1u
 #define PAGE_TEMP1_MAIN_ID 2u
-#define PAGE_MENU_ID 6u
+#define PAGE_TEMP_SETTINGS_ID 3u
+#define PAGE_MENU_ID 5u
+#define PAGE_WIFI_ID 6u
+#define PAGE_SYSTEM_SETTINGS_ID 8u
+#define PAGE_PITMASTER_SETTINGS_ID 9u
+#define PAGE_PITM_MENU_ID 10
+
 #define HOTSPOT_TEMP0_ID 66u
 #define HOTSPOT_TEMP1_ID 67u
 #define HOTSPOT_TEMP2_ID 68u
@@ -59,10 +77,30 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define HOTSPOT_TEMP5_ID 71u
 #define BUTTON_MENU_WLAN_ID 2u
 #define BUTTON_MENU_PITMASTER_ID 3u
+#define BUTTON_MENU_SYSTEM_ID 4u
+#define TEXT_WIFI_CONNECT_ID 1u
+#define BUTTON_WIFI_BUTTON_LEFT_ID 10u
+#define BUTTON_WIFI_BUTTON_RIGHT_ID 11u
 
-#define PAGE_TEMP_SETTINGS_ID 3u
-#define PAGE_PITMASTER_SETTINGS 9u
 #define HOTSPOT_TEMP_SETTINGS_SAVE 26u
+#define HOTSPOT_SYSTEM_SETTINGS_SAVE 9u
+#define HOTSPOT_PITMASTER_SETTINGS_SAVE 28u
+#define HOTSPOT_TEMP0_ID 66u
+#define HOTSPOT_TEMP1_ID 67u
+#define HOTSPOT_TEMP2_ID 68u
+#define HOTSPOT_TEMP3_ID 69u
+#define HOTSPOT_TEMP4_ID 70u
+#define HOTSPOT_TEMP5_ID 71u
+#define BUTTON_MENU_WLAN_ID 2u
+#define BUTTON_MENU_PITMASTER1_ID 4u
+#define BUTTON_MENU_PITMASTER2_ID 5u
+#define BUTTON_MENU_SYSTEM_ID 4u
+#define TEXT_WIFI_CONNECT_ID 1u
+#define BUTTON_WIFI_BUTTON_LEFT_ID 10u
+#define BUTTON_WIFI_BUTTON_RIGHT_ID 11u
+
+#define HOTSPOT_TEMP_SETTINGS_SAVE 26u
+#define HOTSPOT_SYSTEM_SETTINGS_SAVE 9u
 #define HOTSPOT_PITMASTER_SETTINGS_SAVE 28u
 
 NexHotspot nexTemperatures[NEXTION_TEMPERATURES_MAX] = {
@@ -81,10 +119,16 @@ NexHotspot nexTemperatures[NEXTION_TEMPERATURES_MAX] = {
 };
 
 NexHotspot hotspotSaveTemp = NexHotspot(PAGE_TEMP_SETTINGS_ID, HOTSPOT_TEMP_SETTINGS_SAVE, "");
-NexHotspot hotspotSavePitmaster = NexHotspot(PAGE_PITMASTER_SETTINGS, HOTSPOT_PITMASTER_SETTINGS_SAVE, "");
+NexHotspot hotspotSavePitmaster = NexHotspot(PAGE_PITMASTER_SETTINGS_ID, HOTSPOT_PITMASTER_SETTINGS_SAVE, "");
+NexHotspot hotspotSaveSystem = NexHotspot(PAGE_SYSTEM_SETTINGS_ID, HOTSPOT_SYSTEM_SETTINGS_SAVE, "");
 
 static NexButton menuWifiSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_WLAN_ID, "");
-static NexButton menuPitmasterSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_PITMASTER_ID, "");
+static NexButton menuSystemSettings = NexButton(PAGE_MENU_ID, BUTTON_MENU_SYSTEM_ID, "");
+static NexButton menuPitmaster1Settings = NexButton(PAGE_PITM_MENU_ID, BUTTON_MENU_PITMASTER1_ID, "");
+static NexButton menuPitmaster2Settings = NexButton(PAGE_PITM_MENU_ID, BUTTON_MENU_PITMASTER2_ID, "");
+static NexButton wifiButtonLeft = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_LEFT_ID, "");
+static NexButton wifiButtonRight = NexButton(PAGE_WIFI_ID, BUTTON_WIFI_BUTTON_RIGHT_ID, "");
+static NexText wifiButtonConnect = NexText(PAGE_WIFI_ID, TEXT_WIFI_CONNECT_ID, "");
 
 NexTouch *nex_listen_list[] = {
     &nexTemperatures[0],
@@ -101,21 +145,27 @@ NexTouch *nex_listen_list[] = {
     &nexTemperatures[11],
     &hotspotSaveTemp,
     &menuWifiSettings,
-    &menuPitmasterSettings,
+    &menuPitmaster1Settings,
+    &menuPitmaster2Settings,
+    &menuSystemSettings,
+    &hotspotSaveSystem,
     &hotspotSavePitmaster,
+    &wifiButtonLeft,
+    &wifiButtonRight,
+    &wifiButtonConnect,
     NULL};
 
 uint32_t DisplayNextion::updateTemperature = 0u;
 SystemBase *DisplayNextion::system = gSystem;
 uint8_t DisplayNextion::serialTimeout = 0u;
-boolean DisplayNextion::flashInProgress = false;
-boolean DisplayNextion::updateInProgress = false;
 boolean DisplayNextion::wifiScanInProgress = false;
-ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(921600);
+ESPNexUpload DisplayNextion::nexUpload = ESPNexUpload(460800);
+int8_t DisplayNextion::wifiIndex = 0u;
 
 DisplayNextion::DisplayNextion()
 {
   this->disabled = false;
+  this->orientation = NEXTION_DIRECTION_ENUM;
 }
 
 void DisplayNextion::init()
@@ -124,13 +174,14 @@ void DisplayNextion::init()
 
   this->loadConfig();
 
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       DisplayNextion::task,   /* Task function. */
       "DisplayNextion::task", /* String with name of task. */
       10000,                  /* Stack size in bytes. */
       this,                   /* Parameter passed as input of the task */
       1,                      /* Priority of the task. */
-      NULL);                  /* Task handle. */
+      NULL,                   /* Task handle. */
+      1);                     /* CPU Core */
 }
 
 boolean DisplayNextion::initDisplay()
@@ -143,8 +194,28 @@ boolean DisplayNextion::initDisplay()
     return true;
   }
 
-  if (nexInit())
+  if (nexUpload.getBaudrate())
   {
+    boolean cmdFinished;
+    sendCommand("bkcmd=1");
+    cmdFinished = recvRetCommandFinished();
+
+    this->updateName = nexUpload.getModel().substring(0u, 10u) + String("-") + String((int)this->orientation);
+    Serial.printf("Nextion updateName: %s\n", this->updateName.c_str());
+
+    if(false == cmdFinished)
+    {
+      Serial.printf("cmdFinished: %d\n", cmdFinished);
+      return false;
+    }
+
+    if(getCurrentPageNumber() != 0u)
+    {
+      sendCommand("page 0");
+    }
+
+    setCounts();
+
     for (int i = 0; i < NEXTION_TEMPERATURES_MAX; i++)
     {
       TemperatureBase *temperature = system->temperatures[i];
@@ -156,7 +227,9 @@ boolean DisplayNextion::initDisplay()
     }
 
     menuWifiSettings.attachPop(DisplayNextion::enterWifiSettingsPage, this);
-    menuPitmasterSettings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
+    menuSystemSettings.attachPop(DisplayNextion::enterSystemSettingsPage, this);
+    menuPitmaster1Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
+    menuPitmaster2Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
 
     // register for all temperature callbacks
     for (uint8_t i = 0; i < system->temperatures.count(); i++)
@@ -185,18 +258,18 @@ void DisplayNextion::task(void *parameter)
   uint32_t bootScreenTimeout = 200u; // 1s
   while (bootScreenTimeout || display->system->isInitDone() != true)
   {
-    vTaskDelayUntil(&xLastWakeTime, 10);
+    vTaskDelay(10);
     if (bootScreenTimeout)
       bootScreenTimeout--;
   }
 
   while (display->initDisplay() == false)
-    vTaskDelayUntil(&xLastWakeTime, 1000);
+    vTaskDelay(1000);
 
   for (;;)
   {
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, 10);
+    vTaskDelay(10);
     display->update();
   }
 }
@@ -222,14 +295,37 @@ void DisplayNextion::loadConfig()
   }
 }
 
-void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, void *userData)
+uint8_t DisplayNextion::getCurrentPageNumber()
+{
+  uint8_t data[5] = {0u};
+  uint8_t pageNumber = NEXTION_INVALID_PAGE;
+
+  sendCommand("sendme");
+
+  nexSerial.setTimeout(NEXTION_SERIAL_TIMEOUT);
+
+  if (sizeof(data) != nexSerial.readBytes((char *)data, sizeof(data)))
+  {
+      return NEXTION_INVALID_PAGE;
+  }
+
+  if (data[0] == NEXTIO_RETURN_CURRENT_PAGE_ID
+      && data[2] == 0xFFu
+      && data[3] == 0xFFu
+      && data[4] == 0xFFu
+      )
+  {
+      pageNumber = data[1];
+  }
+
+  return pageNumber;
+}
+
+void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData)
 {
   DisplayNextion *displayNextion = (DisplayNextion *)userData;
 
-  if(flashInProgress)
-    return;
-
-  updateTemperature |= (1u << temperature->getGlobalIndex());
+  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL_TEMPERATURES : (1u << temperature->getGlobalIndex());
 }
 
 void DisplayNextion::update()
@@ -238,12 +334,6 @@ void DisplayNextion::update()
   boolean updateAllTemperatures = false;
 
   if (this->disabled)
-    return;
-
-  updateInProgress = true;
-
-  // Do not update display when flash is in progress
-  if (flashInProgress)
     return;
 
   nexLoop(nex_listen_list);
@@ -271,10 +361,8 @@ void DisplayNextion::update()
     {
       setTemperatureCurrent(temperature);
     }
+    this->updateTemperature &= ~(1u << i);
   }
-
-  this->updateTemperature = 0u;
-  updateInProgress = false;
 }
 
 void DisplayNextion::showTemperatureSettings(void *ptr)
@@ -336,19 +424,22 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   TemperatureBase *temperature = (TemperatureBase *)ptr;
 
   // Name
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Name").getText(text, sizeof(text));
   temperature->setName(text);
   // Min
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Min").getText(text, sizeof(text));
   temperature->setMinValue(atoi(text));
   // Max
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Max").getText(text, sizeof(text));
   temperature->setMaxValue(atoi(text));
   // Type
   QUERY(NexVariable(DONT_CARE, DONT_CARE, "temp_settings.Type").getValue(&value));
   temperature->setType(value);
-  Serial.printf("type: %d\n", value);
   // Color
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_settings.Color").getText(text, sizeof(text));
   temperature->setColor(text);
 
@@ -362,6 +453,7 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   setTemperatureAllItems(temperature);
 
   // Goto previous page
+  memset(text, 0u, sizeof(text));
   NexText(DONT_CARE, DONT_CARE, "temp_main0.cp").getText(text, sizeof(text));
   sprintf(command, "page %s", text);
   sendCommand(command);
@@ -370,9 +462,42 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   system->temperatures.saveConfig();
 }
 
+void DisplayNextion::saveSystemSettings(void *ptr)
+{
+  char unit[20] = "";
+
+  memset(unit, 0u, sizeof(unit));
+  NexText(DONT_CARE, DONT_CARE, "Unit").getText(unit, sizeof(unit));
+
+  if(String(unit) == "Fahrenheit")
+  {
+    system->temperatures.setUnit(TemperatureUnit::Fahrenheit);
+  }
+  else if(String(unit) == "Celsius")
+  {
+    system->temperatures.setUnit(TemperatureUnit::Celsius);
+  }
+
+  sendCommand("page menu_main");
+}
+
 void DisplayNextion::enterWifiSettingsPage(void *ptr)
 {
-  if (false == wifiScanInProgress)
+  char ssid[33] = "";
+
+  memset(ssid, 0u, sizeof(ssid));
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
+
+  if(strlen(ssid))
+  {
+    /* Do nothing */
+    /* Keyboard abort during entering of password */
+    /* Keep scan */
+    NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
+    NexText(DONT_CARE, DONT_CARE, "SSID").setFont(1u);
+    NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+  }
+  else if (false == wifiScanInProgress)
   {
     Serial.printf("DisplayNextion::enterWifiSettingsPage: scan network\n");
     WiFi.scanDelete();
@@ -381,40 +506,59 @@ void DisplayNextion::enterWifiSettingsPage(void *ptr)
   }
 }
 
-void DisplayNextion::exitWifiSettingsPage(void *ptr)
+void DisplayNextion::enterSystemSettingsPage(void *ptr)
 {
+  TemperatureUnit temperatureUnit = system->temperatures.getUnit();
+
+  if(TemperatureUnit::Fahrenheit == temperatureUnit)
+  {
+    NexText(DONT_CARE, DONT_CARE, "Unit").setText("Fahrenheit");
+  }
+  else if(TemperatureUnit::Celsius == temperatureUnit)
+  {
+    NexText(DONT_CARE, DONT_CARE, "Unit").setText("Celsius");
+  }
+
+  hotspotSaveSystem.attachPop(DisplayNextion::saveSystemSettings, system);
+  sendCommand("page sys_settings");
 }
 
 void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
 {
   char item[30];
   char text[20];
+  uint32_t id = 0u;
 
-  // Type
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").setValue(system->pitmasters[0]->getType());
+  QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.PitmasterId").getValue(&id));
 
-  // Profile
-  for (uint8_t i = 0; i < system->getPitmasterProfileCount(); i++)
+  if (id < system->pitmasters.count())
   {
-    sprintf(item, "pitm_settings.Profile%d", i);
-    NexVariable(DONT_CARE, DONT_CARE, item).setText(system->getPitmasterProfile(i)->name.c_str());
+    // Type
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").setValue(system->pitmasters[id]->getType());
+
+    // Profile
+    for (uint8_t i = 0; i < system->getPitmasterProfileCount(); i++)
+    {
+      sprintf(item, "pitm_settings.Profile%d", i);
+      NexVariable(DONT_CARE, DONT_CARE, item).setText(system->getPitmasterProfile(i)->name.c_str());
+    }
+
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").setValue(system->pitmasters[id]->getAssignedProfile()->id);
+
+    // Value
+    sprintf(text, "%d", (int)system->pitmasters[id]->getValue());
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Value").setText(text);
+
+    // Channel
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(system->pitmasters[id]->getAssignedTemperature()->getGlobalIndex());
+
+    // Temperature
+    sprintf(text, "%d", (int)system->pitmasters[id]->getTargetTemperature());
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").setText(text);
+
+    hotspotSavePitmaster.attachPop(DisplayNextion::savePitmasterSettings, system);
+    sendCommand("page pitm_settings");
   }
-
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").setValue(system->pitmasters[0]->getAssignedProfile()->id);
-
-  // Value
-  sprintf(text, "%d", (int)system->pitmasters[0]->getValue());
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Value").setText(text);
-
-  // Channel
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(system->pitmasters[0]->getAssignedTemperature()->getGlobalIndex());
-
-  // Temperature
-  sprintf(text, "%d", (int)system->pitmasters[0]->getTargetTemperature());
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").setText(text);
-
-  hotspotSavePitmaster.attachPop(DisplayNextion::savePitmasterSettings, system);
-  sendCommand("page pitm_settings");
 }
 
 void DisplayNextion::savePitmasterSettings(void *ptr)
@@ -423,54 +567,107 @@ void DisplayNextion::savePitmasterSettings(void *ptr)
   char command[20] = "";
   uint32_t value = 0u;
   PitmasterType type = pm_off;
+  uint32_t id = 0u;
 
-  // Type
-  NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").getValue(&value);
-  Serial.printf("TypeIndex: %d\n", value);
-  type = (PitmasterType)value;
-  system->pitmasters[0]->setType((PitmasterType)type);
+  QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.PitmasterId").getValue(&id));
 
-  if (pm_off != type)
+  if (id < system->pitmasters.count())
   {
-    // Profile
-    QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").getValue(&value));
-    Serial.printf("ProfileIdx: %d\n", value);
-    system->pitmasters[0]->assignProfile(system->getPitmasterProfile(value));
+
+    // Type
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TypeIndex").getValue(&value);
+    Serial.printf("TypeIndex: %d\n", value);
+    type = (PitmasterType)value;
+    system->pitmasters[id]->setType((PitmasterType)type);
+
+    if (pm_off != type)
+    {
+      // Profile
+      QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.ProfileIdx").getValue(&value));
+      Serial.printf("ProfileIdx: %d\n", value);
+      system->pitmasters[id]->assignProfile(system->getPitmasterProfile(value));
+    }
+
+    if (pm_manual == type)
+    {
+      // Value
+      memset(text, 0u, sizeof(text));
+      NexText(DONT_CARE, DONT_CARE, "pitm_settings.Value").getText(text, sizeof(text));
+      Serial.printf("Value: %s\n", text);
+      system->pitmasters[id]->setValue(atoi(text));
+    }
+
+    if (pm_auto == type)
+    {
+      // Channel
+      QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").getValue(&value));
+      Serial.printf("TempIndex: %d\n", value);
+      system->pitmasters[id]->assignTemperature(system->temperatures[value]);
+
+      // Temperature
+      memset(text, 0u, sizeof(text));
+      NexText(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").getText(text, sizeof(text));
+      Serial.printf("Temperature: %s\n", text);
+      system->pitmasters[id]->setTargetTemperature(atoi(text));
+    }
+
+    sendCommand("page menu_main");
+    system->pitmasters.saveConfig();
   }
-
-  if (pm_manual == type)
-  {
-    // Value
-    NexText(DONT_CARE, DONT_CARE, "pitm_settings.Value").getText(text, sizeof(text));
-    Serial.printf("Value: %s\n", text);
-    system->pitmasters[0]->setValue(atoi(text));
-  }
-
-  if (pm_auto == type)
-  {
-    // Channel
-    QUERY(NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").getValue(&value));
-    Serial.printf("TempIndex: %d\n", value);
-    system->pitmasters[0]->assignTemperature(system->temperatures[value]);
-
-    // Temperature
-    NexText(DONT_CARE, DONT_CARE, "pitm_settings.Temperature").getText(text, sizeof(text));
-    Serial.printf("Temperature: %s\n", text);
-    system->pitmasters[0]->setTargetTemperature(atoi(text));
-  }
-
-  sendCommand("page menu_main");
-  system->pitmasters.saveConfig();
 }
 
 void DisplayNextion::updateWifiSettingsPage()
 {
-  for (int16_t i = 0u; i < WiFi.scanComplete(); i++)
+  if(WiFi.scanComplete() > 0)
   {
-    String wifi = "wifi" + String(i);
-    NexText(DONT_CARE, DONT_CARE, wifi.c_str()).setText(WiFi.SSID(i).c_str());
+    wifiIndex = 0u;
+    NexText(DONT_CARE, DONT_CARE, "SSID").setFont(1u);
+    NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
     wifiScanInProgress = false;
+    wifiButtonLeft.attachPop(DisplayNextion::wifiNextLeft, system);
+    wifiButtonRight.attachPop(DisplayNextion::wifiNextRight, system);
+    wifiButtonConnect.attachPop(DisplayNextion::wifiConnect, system);
   }
+}
+
+void DisplayNextion::wifiNextLeft(void *ptr)
+{
+  wifiIndex--;
+  wifiIndex = (wifiIndex < 0) ? WiFi.scanComplete() - 1 : wifiIndex;
+  NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+}
+
+void DisplayNextion::wifiNextRight(void *ptr)
+{
+  wifiIndex++;
+  wifiIndex = (wifiIndex < WiFi.scanComplete()) ? wifiIndex : 0;
+  NexText(DONT_CARE, DONT_CARE, "SSID").setText(WiFi.SSID(wifiIndex).c_str());
+}
+
+void DisplayNextion::wifiConnect(void *ptr)
+{
+  char ssid[33] = "";
+  char password[64] = "";
+
+  memset(ssid, 0u, sizeof(ssid));
+  memset(password, 0u, sizeof(password));
+
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").getText(ssid, sizeof(ssid));
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").getText(password, sizeof(password));
+  NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").setText("");
+  Serial.printf("%s, %s\n", ssid, password);
+
+  if(strlen(ssid) && strlen(password))
+  {
+    system->wlan.addCredentials(ssid, password);
+  }
+}
+
+void DisplayNextion::setCounts()
+{
+  NexVariable(DONT_CARE, DONT_CARE, "temp_main0.Count").setValue(system->temperatures.count());
+  NexVariable(DONT_CARE, DONT_CARE, "pitm_menu.Count").setValue(system->pitmasters.count());
 }
 
 void DisplayNextion::setTemperatureAllItems(TemperatureBase *temperature)
@@ -509,7 +706,7 @@ void DisplayNextion::setTemperatureMin(TemperatureBase *temperature)
 
   sprintf(item, "temp_main%d.%s%d", PAGE_TEMP_INDEX, "Min", PAGE_TEMP_ITEM_INDEX);
 
-  sprintf(text, "%.1lf\xb0", temperature->getMinValue());
+  sprintf(text, "%d\xb0", (int32_t)temperature->getMinValue());
 
   NexText(DONT_CARE, DONT_CARE, item).setText(text);
 }
@@ -521,7 +718,7 @@ void DisplayNextion::setTemperatureMax(TemperatureBase *temperature)
 
   sprintf(item, "temp_main%d.%s%d", PAGE_TEMP_INDEX, "Max", PAGE_TEMP_ITEM_INDEX);
 
-  sprintf(text, "%.1lf\xb0", temperature->getMaxValue());
+  sprintf(text, "%d\xb0", (int32_t)temperature->getMaxValue());
 
   NexText(DONT_CARE, DONT_CARE, item).setText(text);
 }
@@ -542,11 +739,12 @@ void DisplayNextion::setTemperatureCurrent(TemperatureBase *temperature)
 
 void DisplayNextion::setSymbols(boolean forceUpdate)
 {
-  boolean newWifiConnected = system->wlan.isConnected();
   boolean newHasAlarm = system->temperatures.hasAlarm();
+  WifiState newWifiState = system->wlan.getWifiState();
   static uint8_t cloudState = system->cloud.state;
-  static boolean wifiConnected = newWifiConnected;
   static boolean hasAlarm = newHasAlarm;
+  static WifiState wifiState = newWifiState;
+  static boolean delayApSymbol = true;
 
   if (cloudState != system->cloud.state || forceUpdate)
   {
@@ -554,16 +752,56 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     cloudState = system->cloud.state;
   }
 
-  if (wifiConnected != newWifiConnected || forceUpdate)
-  {
-    NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText((newWifiConnected) ? "I" : "");
-    wifiConnected = newWifiConnected;
-  }
-
   if (hasAlarm != newHasAlarm || forceUpdate)
   {
     NexButton(DONT_CARE, DONT_CARE, "temp_main0.Alarm").setText((newHasAlarm) ? "O" : "");
     hasAlarm = newHasAlarm;
+  }
+
+  if(delayApSymbol && (millis() > 10000u))
+  {
+    forceUpdate = true;
+    delayApSymbol = false;
+  }
+  
+  if ((wifiState != newWifiState) || forceUpdate)
+  {
+    String qrCode;
+    String info;
+
+    switch(newWifiState)
+    {
+      case WifiState::SoftAPNoClient:
+        if(delayApSymbol) break;
+        qrCode = "WIFI:S:" + system->wlan.getAccessPointName() + ";T:WPA;P:12345678;;";
+        info = "AP: " + system->wlan.getAccessPointName() + " | PW: 12345678";
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
+        break;
+      case WifiState::SoftAPClientConnected:
+        if(delayApSymbol) break;
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("l");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("http://192.168.66.1");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("http://192.168.66.1");
+        break;
+      case WifiState::ConnectedToSTA:
+        qrCode = "http://" + WiFi.localIP().toString();
+        info = "http://" + WiFi.localIP().toString();
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("I");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
+        break;
+      case WifiState::ConnectingToSTA:
+      case WifiState::AddCredentials:
+        break;
+      default:
+        NexButton(DONT_CARE, DONT_CARE, "temp_main0.Wifi").setText("");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("");
+        NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("");
+        break;
+    }
+    wifiState = newWifiState;
   }
 }
 
@@ -593,13 +831,57 @@ void DisplayNextion::updateFromSPIFFS()
     return;
   }
 
-  if (!SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
+  // check for nextion files
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  uint8_t numOfNexFiles = 0u;
+
+  while(file)
   {
-    Serial.println("No nextion update available");
+    if(String(file.name()).endsWith(".tft.zlib"))
+    {
+      Serial.print("NEXTION FILE: ");
+      Serial.println(file.name());
+      numOfNexFiles++;
+    }
+
+    file = root.openNextFile();
+  }
+
+  if(0u == numOfNexFiles)
+  {
+    Serial.println("No Nextion update available");
     return;
   }
 
-  File nextionFile = SPIFFS.open(NEXTION_SPIFFS_UPDATE_FILENAME, FILE_READ);
+  // connect to display
+  if(!nexUpload.getBaudrate())
+  {
+    Serial.println("Cannot connect to Nextion");
+    return;
+  }
+
+  // create filename from model and direction string
+  String nextionFileName = "/" + nexUpload.getModel().substring(0u, 10u) + NEXTION_DIRECTION_STRING + ".tft.zlib";
+
+  Serial.printf("Nextion update file name: %s\n", nextionFileName.c_str());
+
+  // check if needed nextion file is available
+  if(SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
+  {
+    // file from OTA
+    Serial.println("Nextion update from OTA: %s\n");
+    nextionFileName = NEXTION_SPIFFS_UPDATE_FILENAME;
+  }
+  else if (!SPIFFS.exists(nextionFileName.c_str()))
+  {
+    // file from SPIFFS upload
+    Serial.println("Nextion update file not available");
+    return;
+  }
+
+  // open nextion file
+  File nextionFile = SPIFFS.open(nextionFileName, FILE_READ);
 
   if (!nextionFile)
   {
@@ -630,6 +912,7 @@ void DisplayNextion::updateFromSPIFFS()
     outBytes = OUTBUFFER_SIZE;
     mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
     tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (uint8_t *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    if(0u == outBytes) break;
     totalBytes += outBytes;
     inPosition += inBytes;
     nextionFile.seek(inPosition);
@@ -660,21 +943,39 @@ void DisplayNextion::updateFromSPIFFS()
     outBytes = OUTBUFFER_SIZE;
     mz_uint32 flags = TINFL_FLAG_PARSE_ZLIB_HEADER | ((nextionFile.position() < nextionFile.size()) ? TINFL_FLAG_HAS_MORE_INPUT : 0u);
     tinfl_status status = tinfl_decompress(decomp.get(), (const mz_uint8 *)inBuffer.get(), &inBytes, (mz_uint8 *)outBuffer.get(), (mz_uint8 *)outBuffer.get(), &outBytes, flags);
+    if(0u == outBytes) break;
     totalBytes += outBytes;
     inPosition += inBytes;
     nextionFile.seek(inPosition);
+    Serial.printf("Uploading %d bytes\n", totalBytes);
     if (!nexUpload.upload(outBuffer.get(), outBytes))
     {
       Serial.println("Prepare Nextion upload failed!");
       return;
     }
-    Serial.printf("Uploaded %d bytes\n", totalBytes);
   }
 
   nexUpload.end();
 
   //TODO: test connection again?
 
-  SPIFFS.remove(NEXTION_SPIFFS_UPDATE_FILENAME);
+  // delete all nextion files
+  root = SPIFFS.open("/");
+  file = root.openNextFile();
+
+  while(file)
+  {
+ 
+    
+    if(String(file.name()).endsWith(".tft.zlib"))
+    {
+      Serial.print("NEXTION REMOVE: ");
+      Serial.println(file.name());
+      SPIFFS.remove(file.name());
+    }
+
+    file = root.openNextFile();
+  }
+
   SPIFFS.end();
 }

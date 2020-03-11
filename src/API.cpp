@@ -72,8 +72,8 @@ void API::systemObj(JsonObject &jObj, bool settings)
     jObj["host"] = gSystem->wlan.getHostName();
     jObj["language"] = gSystem->getLanguage();
     jObj["version"] = FIRMWAREVERSION;
-    jObj["getupdate"] = gSystem->otaUpdate.version;
-    jObj["autoupd"] = gSystem->otaUpdate.autoupdate;
+    jObj["getupdate"] = gSystem->otaUpdate.getVersion();
+    jObj["autoupd"] = gSystem->otaUpdate.getAutoUpdate();
     jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
     jObj["hwversion"] = String("V") + String(gSystem->getHardwareVersion());
   }
@@ -135,7 +135,7 @@ void API::pitAry(JsonArray &jAry, int cc)
       ma["id"] = i;
       ma["channel"] = pm->getAssignedTemperature()->getGlobalIndex() + 1;
       ma["pid"] = pm->getAssignedProfile()->id;
-      ma["value"] = pm->getValue();
+      ma["value"] = (uint8_t)pm->getValue();
       ma["set"] = pm->getTargetTemperature();
       switch (pm->getType())
       {
@@ -239,8 +239,8 @@ void API::updateObj(JsonObject &jObj)
   jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
 
   // nach einer bestimmten Version fragen
-  if (gSystem->otaUpdate.get != "false")
-    jObj["version"] = gSystem->otaUpdate.get;
+  if (gSystem->otaUpdate.getRequestedVersion() != "false")
+    jObj["version"] = gSystem->otaUpdate.getRequestedVersion();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

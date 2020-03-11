@@ -74,6 +74,6 @@ String Item::read(ItemNvsKeys key)
   memset(s.get(), 0, sSize);
   prefs.getString(NvsKeyStrings[key], s.get(), sSize);
   prefs.end();
-  Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyStrings[key], sSize, s.get());
+  //Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyStrings[key], sSize, s.get());
   return String(s.get());
 }

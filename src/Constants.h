@@ -1,6 +1,5 @@
-/*************************************************** 
-    Copyright (C) 2016  Steffen Ochs
-    Copyright (C) 2019  Martin Koerner
+ /*************************************************** 
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +15,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     HISTORY: Please refer Github History
-    
-****************************************************/
 
-#include "TemperatureDummy.h"
-#include <SPI.h>
+ ****************************************************/
 
-TemperatureDummy::TemperatureDummy()
-{
+#ifndef C_CONSTANTS_H_
+#define C_CONSTANTS_H_
 
-}
+#define DEFAULT_APNAME "WLANTHERMO-AP"
+
+#ifdef HW_NANO_VX
+#define DEFAULT_HOSTNAME "NANO-"
+#else
+#define DEFAULT_HOSTNAME "MINI-"
+#endif
+
+#endif /* C_CONSTANTS_H_ */

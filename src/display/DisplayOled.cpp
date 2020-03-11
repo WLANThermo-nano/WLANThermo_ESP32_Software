@@ -34,7 +34,7 @@
 #define OLIMITMAXF 392.0
 #define DISPLAY_I2C_ADDRESS 0x3cu
 #define LBUTTON_IO 14u
-#define RBUTTON_IO 13u
+#define RBUTTON_IO 12u
 #define OLED_TASK_CYCLE_TIME 10u   // 10ms
 #define OLED_BOOT_SCREEN_TIME 100u // 100 * 10ms = 1s
 #define OLED_FLASH_INTERVAL 50u    // 50 * 10ms = 500ms
@@ -76,13 +76,14 @@ DisplayOled::DisplayOled()
 
 void DisplayOled::init()
 {
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       DisplayOled::task,   /* Task function. */
       "DisplayOled::task", /* String with name of task. */
       10000,               /* Stack size in bytes. */
       this,                /* Parameter passed as input of the task */
       1,                   /* Priority of the task. */
-      NULL);               /* Task handle. */
+      NULL,                   /* Task handle. */
+      1);                     /* CPU Core */
 }
 
 boolean DisplayOled::initDisplay()

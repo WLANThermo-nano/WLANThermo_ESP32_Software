@@ -22,7 +22,10 @@
 #include <Preferences.h>
 #include "ESPNexUpload.h"
 #include "RecoveryMode.h"
+#include "DbgPrint.h"
+#include "Settings.h"
 #include "webui/recoverymode.html.gz.h"
+#include "webui/restart.html.gz.h"
 
 #define RECOVERY_PIN 14u
 #define RECOVERY_PIN_TIME 3000u // 3s
@@ -33,19 +36,46 @@
 
 UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
+uint32_t RecoveryMode::nexBaudRate = 115200u;
 size_t RecoveryMode::uploadFileSize = 0u;
+String RecoveryMode::settingsKey = "";
+String RecoveryMode::settingsValue = "";
+RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
+RTC_DATA_ATTR char RecoveryMode::wifiName[33];
+RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
 
 RecoveryMode::RecoveryMode(void)
 {
 
 }
 
+void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPassword)
+{
+  fromApp = true;
+  strcpy(wifiName, paramWifiName);
+  strcpy(wifiPassword, paramWifiPassword);
+
+  WiFi.disconnect();
+  delay(500);
+
+  esp_sleep_enable_timer_wakeup(10);
+  esp_deep_sleep_start();
+}
+
 void RecoveryMode::run()
 {
+#if RM_DEBUG == SERIAL_DEBUG
+  // Initialize Serial
+  Serial.begin(115200);
+  Serial.setDebugOutput(true);
+#endif
+
+  RMPRINTLN("Check for Recovery Mode");
+
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
-  while((millis() - startTime) < RECOVERY_PIN_TIME)
+  while(((millis() - startTime) < RECOVERY_PIN_TIME) && !fromApp)
   {
     if(digitalRead(RECOVERY_PIN) == 1u)
     {
@@ -56,13 +86,38 @@ void RecoveryMode::run()
 
   // Welcome to recovery mode
 
-  // Start AP
-  IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
+  RMPRINTLN("Recovery Mode enabled");
+
   WiFi.persistent(false);
   WiFi.disconnect(true);
-  WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(RECOVERY_AP_NAME, RECOVERY_AP_PASSWORD);
-  WiFi.mode(WIFI_AP);
+
+  if(fromApp)
+  {
+    // increase nextion baud rate
+    nexBaudRate = 460800u;
+
+    // Start STA
+    WiFi.begin(wifiName, wifiPassword);
+    WiFi.mode(WIFI_STA);
+    RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: %s\n", wifiName, wifiPassword);
+
+    while(WiFi.isConnected() == false)
+    {
+      RMPRINTLN("Wifi not connected");
+      delay(1000);
+    }
+
+    RMPRINTF("IP address: %s\n", WiFi.localIP().toString().c_str());
+  }
+  else
+  {
+    // Start AP
+    IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
+    WiFi.softAPConfig(local_IP, gateway, subnet);
+    WiFi.softAP(RECOVERY_AP_NAME, RECOVERY_AP_PASSWORD);
+    WiFi.mode(WIFI_AP);
+    RMPRINTLN("Recovery Mode starting Wifi AP");
+  }
 
   // Start web server
   AsyncWebServer *webServer = new AsyncWebServer(80);
@@ -75,20 +130,66 @@ void RecoveryMode::run()
     request->send(response);
   });
 
+  webServer->on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
+    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
   webServer->on("/restart", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    request->send(200, TEXTPLAIN, TEXTTRUE);
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+    WiFi.disconnect();
+    delay(500);
     ESP.restart();
   });
 
-  webServer->on("/resetconfig", HTTP_POST, [](AsyncWebServerRequest *request)
+  webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request)
   {
-    Preferences prefs;
-    prefs.begin("wlanthermo", false);
-    prefs.clear();
-    prefs.end();
-
+    Settings::clear();
     request->send(200, TEXTPLAIN, TEXTTRUE);
+  });
+
+  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("GET /ping");
+    request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
+  });
+
+  webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("GET /export");
+    String exportSettings = Settings::exportFile();
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), exportSettings.length());
+    response->addHeader("Content-Disposition", "attachment; filename=settings.txt");
+    response->addHeader("Connection", "close");
+    request->send(response);
+  });
+
+  webServer->on("/import", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    RMPRINTLN("POST /import");
+    if((request->contentLength() == 0u) && (request->hasHeader("xKey") == true))
+    {
+      Settings::remove(request->header("xKey"));
+    }
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    std::unique_ptr<char[]> s(new char[len + 1]);
+    static size_t receivedBytes = 0u;
+
+    if(!index) settingsKey = request->header("xKey"); settingsValue = ""; receivedBytes = 0u;
+    memset(s.get(), 0, len + 1u);
+    memcpy(s.get(), data, len);
+    settingsValue += s.get();
+    receivedBytes += len;
+    if(receivedBytes == total) Settings::write(settingsKey, settingsValue);
   });
 
   webServer->on("/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -123,9 +224,9 @@ void RecoveryMode::run()
         Update.write(data, len);
         if(final) Update.end(true);
         break;
-#if defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
       case UploadFileType::Nextion:
-        if(!index) { nexUpload = new ESPNexUpload(115200); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
+        if(!index) { nexUpload = new ESPNexUpload(nexBaudRate); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
         ((ESPNexUpload*)nexUpload)->upload(data, len);
         if(final) { ((ESPNexUpload*)nexUpload)->end(); delete(nexUpload); nexUpload = NULL; }
         break;
@@ -153,14 +254,21 @@ UploadFileType RecoveryMode::getFileType(String fileName)
   if((fileName.indexOf("firmware") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::Firmware;
+    RMPRINTLN("FILETYPE: Firmware");
   }
   else if((fileName.indexOf("spiffs") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::SPIFFS;
+    RMPRINTLN("FILETYPE: SPIFFS");
   }
   else if(fileName.indexOf(".tft") >= 0)
   {
     retFileType = UploadFileType::Nextion;
+    RMPRINTLN("FILETYPE: Nextion");
+  }
+  else
+  {
+    RMPRINTLN("FILETYPE: None");
   }
 
   return retFileType;

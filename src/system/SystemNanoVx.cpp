@@ -24,13 +24,12 @@
 #include "SystemNanoVx.h"
 #include "temperature/TemperatureMax11615.h"
 #include "display/DisplayOled.h"
-
-#define ROOT_SYSTEM "NANO-"
+#include "Constants.h"
 
 // PITMASTER
 #define PITMASTER0IO1 25u   // Fan Pin
 #define PITMASTER0IO2 33u   // Data Pin
-#define PITMASTERSUPPLY 12u // StepUp Pin
+#define PITMASTERSUPPLY 13u // StepUp Pin
 
 // OLED
 #define OLED_RESET_IO 4u
@@ -105,8 +104,7 @@ void SystemNanoVx::init()
 {
   deviceName = "nano";
   hardwareVersion = 3u;
-  wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
-  wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));
+  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 
   // initialize temperatures
   this->wireLock();
@@ -133,7 +131,7 @@ void SystemNanoVx::init()
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP...
   profile[0] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[1] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
-  profile[2] = new PitmasterProfile{"Kamado 50x50", 2, 1, 7.0, 0.019, 630, 25, 100, 70};
+  profile[2] = new PitmasterProfile{"Kamado 50x50", 2, 1, 7.0, 0.019, 130, 25, 100, 70};
 
   // default profiles and temperatures, will be overwritten when config exists
   pitmasters[0u]->assignProfile(profile[0]);

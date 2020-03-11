@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,22 +21,19 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <driver/ledc.h>
-#include "SystemMiniV3.h"
+#include "SystemMiniV1.h"
 #include "temperature/TemperatureMcp3208.h"
-#include "temperature/TemperatureMax31855.h"
 #include "display/DisplayNextion.h"
 #include "Constants.h"
 
 // TEMPERATURES
 #define CS_MCP3208 0u
 #define CS_MAX31855_N1 15u
+#define CS_MAX31855_N2 13u
 
 // PITMASTER
 #define PITMASTER0IO1 25u // Fan Pin
-#define PITMASTER0IO2 33u // Data Pin
-#define PITMASTER1IO1 26u // Fan Pin
-#define PITMASTER1IO2 27u // Data Pin
-#define PITMASTERSUPPLY 13u // StepUp Pin
+#define PITMASTER0IO2 25u // Data Pin
 
 // BUZZER
 #define BUZZER_IO 2u
@@ -53,33 +50,25 @@ enum ledcChannels
   ledcBuzzer = 4
 };
 
-SystemMiniV3::SystemMiniV3() : SystemBase()
+SystemMiniV1::SystemMiniV1() : SystemBase()
 {
 }
 
-void SystemMiniV3::hwInit()
-{
-  // initialize battery in hwInit!
-  battery = new Battery();
-  battery->update();
-
-  pinMode(PITMASTERSUPPLY, OUTPUT);
-  digitalWrite(PITMASTERSUPPLY, 0u);
-}
-
-void SystemMiniV3::init()
+void SystemMiniV1::init()
 {
   deviceName = "mini";
-  hardwareVersion = 3u;
+  hardwareVersion = 1u;
   wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 
   // configure PIN mode
   pinMode(CS_MCP3208, OUTPUT);
   pinMode(CS_MAX31855_N1, OUTPUT);
+  pinMode(CS_MAX31855_N2, OUTPUT);
 
   // set initial PIN state
   digitalWrite(CS_MCP3208, HIGH);
   digitalWrite(CS_MAX31855_N1, HIGH);
+  digitalWrite(CS_MAX31855_N2, HIGH);
 
   // initialize SPI interface
   SPI.begin();
@@ -97,17 +86,6 @@ void SystemMiniV3::init()
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
-  //check if thermocouple is built in
-  TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(CS_MAX31855_N1);
-  if (checkThermocouple->isBuiltIn())
-  {
-    temperatures.add(checkThermocouple);
-  }
-  else
-  {
-    delete (checkThermocouple);
-  }
-
   // load config
   temperatures.loadConfig();
 
@@ -115,9 +93,7 @@ void SystemMiniV3::init()
   buzzer = new Buzzer(BUZZER_IO, ledcBuzzer);
 
   // initialize pitmasters
-  Pitmaster::setSupplyPin(PITMASTERSUPPLY);
   pitmasters.add(new Pitmaster(PITMASTER0IO1, ledcPitMaster0IO1, PITMASTER0IO2, ledcPitMaster0IO2));
-  pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP...
   profile[0] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
@@ -127,15 +103,10 @@ void SystemMiniV3::init()
   // default profiles and temperatures, will be overwritten when config exists
   pitmasters[0u]->assignProfile(profile[0]);
   pitmasters[0u]->assignTemperature(temperatures[0]);
-  pitmasters[1u]->assignProfile(profile[1]);
-  pitmasters[1u]->assignTemperature(temperatures[1]);
 
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
-
-  powerSaveModeSupport = true;
-  setPowerSaveMode(true);
 
   initDone = true;
 }

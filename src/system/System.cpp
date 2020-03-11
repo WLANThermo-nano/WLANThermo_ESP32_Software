@@ -18,7 +18,12 @@
     
 ****************************************************/
 
-#ifdef HW_MINI_V2
+#ifdef HW_MINI_V1
+#include "system/SystemMiniV1.h"
+#include "display/DisplayNextion.h"
+SystemBase* gSystem = new SystemMiniV1();
+DisplayBase *gDisplay = new DisplayNextion();
+#elif HW_MINI_V2
 #include "system/SystemMiniV2.h"
 #include "display/DisplayNextion.h"
 SystemBase* gSystem = new SystemMiniV2();

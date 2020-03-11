@@ -99,13 +99,9 @@ void ConnectTask(void *parameter)
     // WiFi - Monitoring
     gSystem->wlan.update();
 
-    // HTTP Update
-    Cloud::check_api();
-    if (gSystem->otaUpdate.state > 0)
-      gSystem->otaUpdate.doHttpUpdate();
-
-    if (gSystem->wlan.isConnected() && gSystem->otaUpdate.state == 0)
+    if (gSystem->wlan.isConnected())
     {
+      gSystem->otaUpdate.update();
       gSystem->mqtt.update();
       gSystem->notification.update();
       gSystem->cloud.update();
@@ -118,21 +114,23 @@ void ConnectTask(void *parameter)
 
 void createTasks()
 {
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       MainTask,   /* Task function. */
       "MainTask", /* String with name of task. */
       10000,      /* Stack size in bytes. */
       NULL,       /* Parameter passed as input of the task */
       3,          /* Priority of the task. */
-      NULL);      /* Task handle. */
+      NULL,       /* Task handle. */
+      1);         /* CPU Core */
 
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
       ConnectTask,   /* Task function. */
       "ConnectTask", /* String with name of task. */
       10000,         /* Stack size in bytes. */
       NULL,          /* Parameter passed as input of the task */
       4,             /* Priority of the task. */
-      NULL);         /* Task handle. */
+      NULL,          /* Task handle. */
+      1);            /* CPU Core */
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++

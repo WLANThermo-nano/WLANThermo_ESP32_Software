@@ -29,6 +29,5 @@ class TemperatureMcp3208 : public TemperatureBase
     void update();
   private:
     uint16_t readChip();
-    float calcTemperature(uint16_t rawValue);
     uint8_t csPin;
 };

@@ -24,10 +24,8 @@
 #include "SystemMiniV2.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
-#include "temperature/TemperatureDummy.h"
 #include "display/DisplayNextion.h"
-
-#define ROOT_SYSTEM "MINI-"
+#include "Constants.h"
 
 // TEMPERATURES
 #define CS_MCP3208 0u
@@ -63,8 +61,7 @@ void SystemMiniV2::init()
 {
   deviceName = "mini";
   hardwareVersion = 2u;
-  wlan.setHostName(ROOT_SYSTEM + String(serialNumber));
-  wlan.setAccessPointName(ROOT_SYSTEM + String("AP"));
+  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 
   // configure PIN mode
   pinMode(CS_MCP3208, OUTPUT);
@@ -101,7 +98,6 @@ void SystemMiniV2::init()
   else
   {
     delete (checkThermocouple);
-    temperatures.add(new TemperatureDummy());
   }
 
   checkThermocouple = new TemperatureMax31855(CS_MAX31855_N2);
@@ -112,7 +108,6 @@ void SystemMiniV2::init()
   else
   {
     delete (checkThermocouple);
-    temperatures.add(new TemperatureDummy());
   }
 
   // load config
@@ -126,10 +121,10 @@ void SystemMiniV2::init()
   pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP...
-  //profile[0] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
-  profile[0] = new PitmasterProfile{"Servo MG995", 0, 2, 104, 0.2, 0, 25, 75, 100};
+
+  profile[0] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
   profile[1] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
-  profile[2] = new PitmasterProfile{"Kamado 50x50", 2, 1, 7.0, 0.019, 630, 25, 100, 70};
+  profile[2] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 25, 75, 100};
 
   // default profiles and temperatures, will be overwritten when config exists
   pitmasters[0u]->assignProfile(profile[0]);

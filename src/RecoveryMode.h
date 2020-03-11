@@ -33,10 +33,17 @@ class RecoveryMode
 public:
   RecoveryMode(void);
   static void run();
+  static void runFromApp(const char *paramWifiName, const char *paramWifiPassword);
 
 private:
   static UploadFileType getFileType(String fileName);
   static UploadFileType uploadFileType;
   static size_t uploadFileSize;
   static void *nexUpload;
+  static uint32_t nexBaudRate;
+  static String settingsKey;
+  static String settingsValue;
+  static RTC_DATA_ATTR char wifiName[33];
+  static RTC_DATA_ATTR char wifiPassword[64];
+  static RTC_DATA_ATTR boolean fromApp;
 };

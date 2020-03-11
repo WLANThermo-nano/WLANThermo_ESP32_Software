@@ -24,11 +24,15 @@ String DisplayBase::debugString;
 DisplayBase::DisplayBase()
 {
   this->blocked = false;
+  this->orientation = DisplayOrientation::_0;
+  this->updateName = "";
 }
 
 DisplayBase::DisplayBase(SystemBase *system)
 {
   this->blocked = false;
+  this->orientation = DisplayOrientation::_0;
+  this->updateName = "";
   this->system = system;
 }
 

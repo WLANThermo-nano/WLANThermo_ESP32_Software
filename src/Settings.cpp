@@ -25,20 +25,24 @@
 
 #define STRINGIFY(s) #s
 
-static char *NvsKeyStrings[] =
-    {
-        STRINGIFY(kWifi),
-        STRINGIFY(kMqtt),
-        STRINGIFY(kCloud),
-        STRINGIFY(kSystem),
-        STRINGIFY(kChannels),
-        STRINGIFY(kPitmasters),
-        STRINGIFY(kPush),
-        STRINGIFY(kDisplay),
-        STRINGIFY(kBattery),
-        STRINGIFY(kOtaUpdate),
-        STRINGIFY(kServer)
-        };
+typedef struct
+{
+  const char *keyName;
+  boolean exportEnabled;
+} NvsKeyConfig_t;
+
+static const NvsKeyConfig_t NvsKeyConfig[] =
+        {{STRINGIFY(kWifi),       false},
+        {STRINGIFY(kMqtt),        false},
+        {STRINGIFY(kCloud),       false},
+        {STRINGIFY(kSystem),      true},
+        {STRINGIFY(kChannels),    true},
+        {STRINGIFY(kPitmasters),  true},
+        {STRINGIFY(kPush),        false},
+        {STRINGIFY(kDisplay),     true},
+        {STRINGIFY(kBattery),     true},
+        {STRINGIFY(kOtaUpdate),   true},
+        {STRINGIFY(kServer),      true}};
 
 class Prefs : public Preferences
 {
@@ -75,8 +79,8 @@ void Settings::write(SettingsNvsKeys key, JsonObject &json)
   std::unique_ptr<char[]> s(new char[sSize]);
   json.printTo(s.get(), sSize);
   prefs.begin(nvsNamespace, false);
-  prefs.putString(NvsKeyStrings[key], s.get());
-  Serial.printf("Settings::write: %s - %s\n", NvsKeyStrings[key], s.get());
+  prefs.putString(NvsKeyConfig[key].keyName, s.get());
+  Serial.printf("Settings::write: %s - %s\n", NvsKeyConfig[key].keyName, s.get());
   prefs.end();
 
   for (std::vector<SettingsOnChangeCallback>::iterator it = registeredCallbacks.begin() ; it != registeredCallbacks.end(); ++it)
@@ -87,21 +91,80 @@ JsonObject &Settings::read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer)
 {
   Prefs prefs;
   prefs.begin(nvsNamespace, true);
-  size_t sSize = prefs.getStringLength(NvsKeyStrings[key]) + 1u;
+  size_t sSize = prefs.getStringLength(NvsKeyConfig[key].keyName) + 1u;
   std::unique_ptr<char[]> s(new char[sSize]);
   memset(s.get(), 0, sSize);
-  prefs.getString(NvsKeyStrings[key], s.get(), sSize);
+  prefs.getString(NvsKeyConfig[key].keyName, s.get(), sSize);
   prefs.end();
-  Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyStrings[key], sSize, s.get());
+  Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyConfig[key].keyName, sSize, s.get());
   JsonObject &json = jsonBuffer->parseObject(s.get());
   return json;
 }
 
-void Settings::clear(SettingsNvsKeys key)
+String Settings::exportFile()
+{
+  String exportString = "";
+
+  for(uint8_t keyIndex = 0u; keyIndex < (sizeof(NvsKeyConfig)/sizeof(NvsKeyConfig_t)); keyIndex++)
+  {
+    if(NvsKeyConfig[keyIndex].exportEnabled)
+    {
+      Prefs prefs;
+      prefs.begin(nvsNamespace, true);
+      size_t sSize = prefs.getStringLength(NvsKeyConfig[keyIndex].keyName) + 1u;
+      std::unique_ptr<char[]> s(new char[sSize]);
+      memset(s.get(), 0, sSize);
+      prefs.getString(NvsKeyConfig[keyIndex].keyName, s.get(), sSize);
+      exportString += NvsKeyConfig[keyIndex].keyName;
+      exportString += ":";
+      exportString += s.get();
+      exportString += "\r\n";
+      prefs.end();
+    }
+  }
+  return exportString;
+}
+
+void Settings::write(String key, String value)
+{
+  for(uint8_t keyIndex = 0u; keyIndex < (sizeof(NvsKeyConfig)/sizeof(NvsKeyConfig_t)); keyIndex++)
+  {
+    if(String(NvsKeyConfig[keyIndex].keyName) == key)
+    {
+      Prefs prefs;
+      prefs.begin(nvsNamespace, false);
+      prefs.putString(key.c_str(), value.c_str());
+      Serial.printf("Settings::write: %s - %s\n", key.c_str(), value.c_str());
+      prefs.end();
+      break;
+    }
+  }
+}
+
+void Settings::remove(SettingsNvsKeys key)
 {
   Preferences prefs;
-  prefs.begin(nvsNamespace, true);
-  prefs.remove(NvsKeyStrings[key]);
+  prefs.begin(nvsNamespace);
+  prefs.remove(NvsKeyConfig[key].keyName);
+  Serial.printf("Settings::remove: %s\n", NvsKeyConfig[key].keyName);
+  prefs.end();
+}
+
+void Settings::remove(String key)
+{
+  Preferences prefs;
+  prefs.begin(nvsNamespace);
+  prefs.remove(key.c_str());
+  Serial.printf("Settings::remove: %s\n",key.c_str());
+  prefs.end();
+}
+
+void Settings::clear()
+{
+  Preferences prefs;
+  prefs.begin(nvsNamespace);
+  prefs.clear();
+  Serial.printf("Settings::clear\n");
   prefs.end();
 }
 
