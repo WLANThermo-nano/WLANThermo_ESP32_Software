@@ -267,8 +267,9 @@ boolean OtaUpdate::getPrerelease()
 
 boolean OtaUpdate::setPrerelease(boolean prerelease)
 {
-  if((false == this->prerelease) && (true == prerelease) && (true == this->autoUpdate))
-    resetUpdateInfo();
-
+  boolean checkForUpdate = (false == this->prerelease) && (true == prerelease) && (true == this->autoUpdate);
   this->prerelease = prerelease;
+
+  if(checkForUpdate)
+    resetUpdateInfo();
 }

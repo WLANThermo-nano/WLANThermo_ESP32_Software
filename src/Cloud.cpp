@@ -563,7 +563,8 @@ String Cloud::createCommand(bool meth, int para, const char *link, const char *h
     command += F("\n");
   }
 
-  command += F("User-Agent: WLANThermo nano\n");
+  command += F("Connection: close\r\n");
+  command += F("User-Agent: WLANThermo ESP32\n");
   command += F("SN: ");
   command += gSystem->getSerialNumber();
   command += F("\n");
