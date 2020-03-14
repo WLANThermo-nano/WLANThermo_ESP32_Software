@@ -22,8 +22,7 @@
 #include "TemperatureMcp3208.h"
 #include <SPI.h>
 
-union SplitTwoBytes
-{
+union SplitTwoBytes {
   uint16_t value;
   struct
   {
@@ -34,18 +33,17 @@ union SplitTwoBytes
 
 TemperatureMcp3208::TemperatureMcp3208()
 {
-
 }
 
 TemperatureMcp3208::TemperatureMcp3208(uint8_t index, uint8_t csPin) : TemperatureBase()
 {
-    this->localIndex = index;
-    this->csPin = csPin;
+  this->localIndex = index;
+  this->csPin = csPin;
 }
 
 void TemperatureMcp3208::update()
 {
-  if(this->calcTemperature != NULL)
+  if (this->calcTemperature != NULL)
   {
     this->currentValue = this->calcTemperature(this->readChip(), this->type);
   }
@@ -53,25 +51,25 @@ void TemperatureMcp3208::update()
 
 uint16_t TemperatureMcp3208::readChip()
 {
-    SplitTwoBytes receive;
-    SplitTwoBytes command;
-    command.value = 0x0400;
+  SplitTwoBytes receive;
+  SplitTwoBytes command;
+  command.value = 0x0400;
 
-    // set channel
-    command.value |= ((this->localIndex + 8u) << 6u);
+  // set channel
+  command.value |= ((this->localIndex + 8u) << 6u);
 
-    // write CS
-    digitalWrite(csPin, LOW);
+  // write CS
+  digitalWrite(csPin, LOW);
 
-    // send first byte
-    SPI.transfer(command.highByte);
-    // send second byte and receive first 4 bits
-    receive.highByte = SPI.transfer(command.lowByte) & 0x0Fu;
-    // receive last 8 bits
-    receive.lowByte = SPI.transfer(0x00u);
+  // send first byte
+  SPI.transfer(command.highByte);
+  // send second byte and receive first 4 bits
+  receive.highByte = SPI.transfer(command.lowByte) & 0x0Fu;
+  // receive last 8 bits
+  receive.lowByte = SPI.transfer(0x00u);
 
-    // write CS
-    digitalWrite(csPin, HIGH);
-    
-    return receive.value;
+  // write CS
+  digitalWrite(csPin, HIGH);
+
+  return receive.value;
 }

@@ -29,17 +29,13 @@
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
 const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
-const char *TemperatureBase::typeNames[NUM_OF_TYPES] = {
-    "1000K/Maverick", "Fantast-Neu", "Fantast", "100K/iGrill2",
-    "ET-73", "Perfektion", "50K", "Inkbird",
-    "100K6A1B", "Weber_6743", "Santos", "5K3A1B",
-    "PT100", "PT1000", "ThermoWorks"};
 TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
-    TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC};
+    TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC,
+    NULL};
 uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
@@ -52,6 +48,7 @@ TemperatureBase::TemperatureBase()
   this->cbCurrentValue = INACTIVEVALUE;
   this->cbAlarmStatus = NoAlarm;
   this->calcTemperature = typeFunctions[0];
+  this->fixedSensor = false;
 }
 
 TemperatureBase::~TemperatureBase()
@@ -66,33 +63,33 @@ void TemperatureBase::loadDefaultValues()
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
-  this->type = 0u;
+  this->type = SensorType::Maverick;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
   if (this->globalIndex < MAX_COLORS)
     this->color = colors[this->globalIndex];
-  
+
   settingsChanged = true;
 }
 
 void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)
 {
-   this->registeredCb = callback;
-   this->registeredCbUserData = userData;
+  this->registeredCb = callback;
+  this->registeredCbUserData = userData;
 }
 
 void TemperatureBase::unregisterCallback()
 {
-   this->registeredCb = NULL;
+  this->registeredCb = NULL;
 }
 
 void TemperatureBase::handleCallbacks()
 {
   AlarmStatus newAlarmStatus = getAlarmStatus();
 
-  if((this->registeredCb != NULL))
+  if ((this->registeredCb != NULL))
   {
-    if((true == settingsChanged) || (cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
+    if ((true == settingsChanged) || (cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
     {
       this->registeredCb(this, settingsChanged, this->registeredCbUserData);
       cbAlarmStatus = newAlarmStatus;
@@ -139,7 +136,7 @@ AlarmSetting TemperatureBase::getAlarmSetting()
 
 uint8_t TemperatureBase::getType()
 {
-  return this->type;
+  return (uint8_t)this->type;
 }
 
 uint8_t TemperatureBase::getTypeCount()
@@ -149,12 +146,12 @@ uint8_t TemperatureBase::getTypeCount()
 
 String TemperatureBase::getTypeName()
 {
-  return getTypeName(this->type);
+  return getTypeName((uint8_t)this->type);
 }
 
 String TemperatureBase::getTypeName(uint8_t index)
 {
-  return (index < NUM_OF_TYPES) ? typeNames[index] : "";
+  return (index < NUM_OF_TYPES) ? sensorTypeInfo[index].name : "";
 }
 
 uint8_t TemperatureBase::getGlobalIndex()
@@ -164,8 +161,11 @@ uint8_t TemperatureBase::getGlobalIndex()
 
 void TemperatureBase::setType(uint8_t type)
 {
-  this->type = type;
-  this->calcTemperature = (this->type < NUM_OF_TYPES) ? typeFunctions[this->type] : NULL;
+  if(false == this->fixedSensor)
+  {
+    this->type = (SensorType)type;
+    this->calcTemperature = (type < NUM_OF_TYPES) ? typeFunctions[type] : NULL;
+  }
 }
 
 void TemperatureBase::setMinValue(float value)
@@ -214,7 +214,6 @@ uint8_t TemperatureBase::getNotificationCounter()
 {
   return this->notificationCounter;
 }
-
 
 void TemperatureBase::setNotificationCounter(uint8_t notificationCounter)
 {
@@ -274,8 +273,8 @@ float TemperatureBase::setUnitValue(float value)
   return convertedValue;
 }
 
-float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, uint8_t type)
-{ 
+float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
+{
 
   float Rmess = 47;
   float a, b, c, Rn;
@@ -283,83 +282,129 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, uint8_t type)
   // kleine Abweichungen an GND verursachen Messfehler von wenigen Digitalwerten
   // daher werden nur Messungen mit einem Digitalwert von mind. 10 ausgewertet,
   // das entspricht 5 mV
-  if (rawValue < 10) return INACTIVEVALUE;        // Kanal ist mit GND gebrückt
+  if (rawValue < 10)
+    return INACTIVEVALUE; // Kanal ist mit GND gebrückt
 
-  switch (type) {
-  case 0:  // Maverik
-    Rn = 1000; a = 0.003358; b = 0.0002242; c = 0.00000261;
-    break; 
-  case 1:  // Fantast-Neu
-    Rn = 220; a = 0.00334519; b = 0.000243825; c = 0.00000261726;
-    break; 
-  case 2:  // Fantast
-    Rn = 50.08; a = 3.3558340e-03; b = 2.5698192e-04; c = 1.6391056e-06;
-    break; 
-  case 3:  // iGrill2
-    Rn = 99.61 ; a = 3.3562424e-03; b = 2.5319218e-04; c = 2.7988397e-06;
-    break; 
-  case 4:  // ET-73
-    Rn = 200; a = 0.00335672; b = 0.000291888; c = 0.00000439054; 
+  switch (type)
+  {
+  case SensorType::Maverick: // Maverik
+    Rn = 1000;
+    a = 0.003358;
+    b = 0.0002242;
+    c = 0.00000261;
     break;
-  case 5:  // PERFEKTION
-    Rn = 200.1; a =  3.3561990e-03; b = 2.4352911e-04; c = 3.4519389e-06;  
-    break; 
-  case 6:  // 50K 
-    Rn = 50.0; a = 3.35419603e-03; b = 2.41943663e-04; c = 2.77057578e-06;
-    break; 
-  case 7: // INKBIRD
-    Rn = 48.59; a = 3.3552456e-03; b = 2.5608666e-04; c = 1.9317204e-06;
+  case SensorType::FantastNeu: // Fantast-Neu
+    Rn = 220;
+    a = 0.00334519;
+    b = 0.000243825;
+    c = 0.00000261726;
+    break;
+  case SensorType::Fantast: // Fantast
+    Rn = 50.08;
+    a = 3.3558340e-03;
+    b = 2.5698192e-04;
+    c = 1.6391056e-06;
+    break;
+  case SensorType::iGrill2: // iGrill2
+    Rn = 99.61;
+    a = 3.3562424e-03;
+    b = 2.5319218e-04;
+    c = 2.7988397e-06;
+    break;
+  case SensorType::ET73: // ET-73
+    Rn = 200;
+    a = 0.00335672;
+    b = 0.000291888;
+    c = 0.00000439054;
+    break;
+  case SensorType::PERFEKTION: // PERFEKTION
+    Rn = 200.1;
+    a = 3.3561990e-03;
+    b = 2.4352911e-04;
+    c = 3.4519389e-06;
+    break;
+  case SensorType::_50K: // 50K
+    Rn = 50.0;
+    a = 3.35419603e-03;
+    b = 2.41943663e-04;
+    c = 2.77057578e-06;
+    break;
+  case SensorType::INKBIRD: // INKBIRD
+    Rn = 48.59;
+    a = 3.3552456e-03;
+    b = 2.5608666e-04;
+    c = 1.9317204e-06;
     //Rn = 48.6; a = 3.35442124e-03; b = 2.56134397e-04; c = 1.9536396e-06;
     //Rn = 48.94; a = 3.35438959e-03; b = 2.55353377e-04; c = 1.86726509e-06;
     break;
-  case 8: // NTC 100K6A1B (lila Kopf)
-    Rn = 100; a = 0.00335639; b = 0.000241116; c = 0.00000243362; 
+  case SensorType::NTC100K6A1B: // NTC 100K6A1B (lila Kopf)
+    Rn = 100;
+    a = 0.00335639;
+    b = 0.000241116;
+    c = 0.00000243362;
     break;
-  case 9: // Weber_6743
-    Rn = 102.315; a = 3.3558796e-03; b = 2.7111149e-04; c = 3.1838428e-06; 
+  case SensorType::Weber6743: // Weber_6743
+    Rn = 102.315;
+    a = 3.3558796e-03;
+    b = 2.7111149e-04;
+    c = 3.1838428e-06;
     break;
-  case 10: // Santos
-    Rn = 200.82; a = 3.3561093e-03; b = 2.3552814e-04; c = 2.1375541e-06; 
+  case SensorType::Santos: // Santos
+    Rn = 200.82;
+    a = 3.3561093e-03;
+    b = 2.3552814e-04;
+    c = 2.1375541e-06;
     break;
-  case 11: // NTC 5K3A1B (orange Kopf)
-    Rn = 5; a = 0.0033555; b = 0.0002570; c = 0.00000243; 
+  case SensorType::NTC5K3A1B: // NTC 5K3A1B (orange Kopf)
+    Rn = 5;
+    a = 0.0033555;
+    b = 0.0002570;
+    c = 0.00000243;
     break;
-  case 14: // ThermoWorks
-    Rn = 97.31; a = 3.3556417e-03; b = 2.5191450e-04; c = 2.3606960e-06; 
+  case SensorType::ThermoWorks: // ThermoWorks
+    Rn = 97.31;
+    a = 3.3556417e-03;
+    b = 2.5191450e-04;
+    c = 2.3606960e-06;
     break;
-  default:  
+  default:
     return INACTIVEVALUE;
   }
-  
-  float Rt = Rmess*((4096.0/(4096-rawValue)) - 1);
-  float v = log(Rt/Rn);
-  float erg = (1/(a + b*v + c*v*v)) - 273.15;
-  
-  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
+
+  float Rt = Rmess * ((4096.0 / (4096 - rawValue)) - 1);
+  float v = log(Rt / Rn);
+  float erg = (1 / (a + b * v + c * v * v)) - 273.15;
+
+  return (erg > LOWEST_VALUE) ? erg : INACTIVEVALUE;
 }
 
-float TemperatureBase::calcTemperaturePTx(uint16_t rawValue, uint8_t type)
+float TemperatureBase::calcTemperaturePTx(uint16_t rawValue, SensorType type)
 {
   float a, b, Rpt, Rmess;
 
-  if (rawValue < 10) return INACTIVEVALUE;        // Kanal ist mit GND gebrückt
+  if (rawValue < 10)
+    return INACTIVEVALUE; // Kanal ist mit GND gebrückt
 
-  switch (type) {
-  case 12:  // PT100
-    Rpt = 0.1;	Rmess = 0.0998;
-    break; 
+  switch (type)
+  {
+  case SensorType::PT100: // PT100
+    Rpt = 0.1;
+    Rmess = 0.0998;
+    break;
 
-  case 13:  // PT1000
-    Rpt = 1.0;	Rmess = 0.9792;
-    break; 
-  
-  default:  
+  case SensorType::PT1000: // PT1000
+    Rpt = 1.0;
+    Rmess = 0.9792;
+    break;
+
+  default:
     return INACTIVEVALUE;
   }
 
-  float Rt = Rmess*((4096.0/(4096-rawValue)) - 1);
-  a = 3.9083e-03; b = -5.775e-07; 
-  float erg = (-1)*sqrt((Rt/(Rpt*b)) + ((a*a)/(4*(b*b))) - 1/(b)) - (a/(2*b));
+  float Rt = Rmess * ((4096.0 / (4096 - rawValue)) - 1);
+  a = 3.9083e-03;
+  b = -5.775e-07;
+  float erg = (-1) * sqrt((Rt / (Rpt * b)) + ((a * a) / (4 * (b * b))) - 1 / (b)) - (a / (2 * b));
 
-  return (erg>LOWEST_VALUE)?erg:INACTIVEVALUE;
+  return (erg > LOWEST_VALUE) ? erg : INACTIVEVALUE;
 }

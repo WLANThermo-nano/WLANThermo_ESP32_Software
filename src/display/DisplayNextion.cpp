@@ -408,6 +408,9 @@ void DisplayNextion::showTemperatureSettings(void *ptr)
     break;
   }
 
+  // Fixed
+  NexVariable(DONT_CARE, DONT_CARE, "temp_settings.Fixed").setValue(temperature->getFixedSensor());
+
   hotspotSaveTemp.attachPop(DisplayNextion::saveTemperatureSettings, temperature);
 
   sendCommand("page temp_settings");

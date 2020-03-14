@@ -96,13 +96,13 @@ void API::channelAry(JsonArray &jAry, int cc)
       JsonObject &data = jAry.createNestedObject();
       data["number"] = i + 1;
       data["name"] = temperature->getName();
-      if (temperature->getType() != TEMPERATURE_TYPE_NOT_CHANGEABLE)
-        data["typ"] = temperature->getType();
+      data["typ"] = temperature->getType();
       data["temp"] = limit_float(temperature->getValue(), i);
       data["min"] = temperature->getMinValue();
       data["max"] = temperature->getMaxValue();
       data["alarm"] = (uint8_t)temperature->getAlarmSetting();
       data["color"] = temperature->getColor();
+      data["fixed"] = temperature->getFixedSensor();
     }
   }
 }
@@ -194,7 +194,7 @@ void API::iotObj(JsonObject &jObj)
   jObj["CLon"] = cloudConfig.enabled;
   jObj["CLtoken"] = cloudConfig.token;
   jObj["CLint"] = cloudConfig.interval;
-  jObj["CLurl"] = "cloud.wlanthermo.de/index.html";
+  jObj["CLurl"] = "dev-cloud.wlanthermo.de/index.html";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -311,10 +311,13 @@ void API::settingsObj(JsonObject &jObj)
   api["version"] = GUIAPIVERSION;
 
   // SENSORS
-  JsonArray &_typ = jObj.createNestedArray("sensors");
-  for (int i = 0; i < TemperatureBase::getTypeCount(); i++)
+  JsonArray &_sensorsArray = jObj.createNestedArray("sensors");
+  for (uint8_t i = 0; i < NUM_OF_TYPES; i++)
   {
-    _typ.add(TemperatureBase::getTypeName(i));
+    JsonObject &_sensorObject = _sensorsArray.createNestedObject();
+    _sensorObject["type"] = (uint8_t)sensorTypeInfo[i].type;
+    _sensorObject["name"] = sensorTypeInfo[i].name;
+    _sensorObject["fixed"] = sensorTypeInfo[i].fixed;
   }
 
   // PID-PROFILS
