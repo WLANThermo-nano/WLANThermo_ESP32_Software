@@ -3429,8 +3429,8 @@
 			byId('PMQinterval').value = jr.iot.PMQint;
 			byId('CLon').checked = jr.iot.CLon;
 			byId('CLinterval').value = jr.iot.CLint; 
-			byId('CLtoken').innerHTML = "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken;
-			byId("CLtoken").setAttribute("href", "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken);		
+			byId('CLtoken').innerHTML = "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken;
+			byId("CLtoken").setAttribute("href", "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken);		
 			byId('thingspeak').style.display = "inline";
 			byId('mqttheader').style.display = "inline";
 			showLoader('false');
@@ -3440,8 +3440,11 @@
 	function newToken(){
 		showLoader('true');
 		loadJSON('newtoken', '', '3000', function (response){
-		byId('CLtoken').innerHTML = "https://cloud.wlanthermo.de/index.html?api_token=" + response;			
-		byId("CLtoken").setAttribute("href", "https://cloud.wlanthermo.de/index.html?api_token=" + response);
+			var str = byId('CLtoken').innerHTML;
+			var pos = str.lastIndexOf('=');
+			str = str.substr(0, pos + 1);
+			byId('CLtoken').innerHTML = str + response;			
+			byId("CLtoken").setAttribute("href", str + response);
 			showLoader('false');
 		})
 	}
@@ -3706,7 +3709,7 @@
 			jr = JSON.parse(response);
 			byId('thermoname').innerHTML = jr.system.host;	
 			if(jr.iot.CLon === true){
-				window.location = "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken;
+				window.location = "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken;
 			}else{
 			
 			}
