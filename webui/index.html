@@ -1957,6 +1957,10 @@
 			background-color: #4A4A4A;
 		}
 
+		select:disabled{
+		   opacity: 0.4;
+		}
+
 		input,
 		select,
 		textarea * {
@@ -3602,11 +3606,16 @@
         console.log(channel);
 		hideAll();
         showLoader('true');
+		byId('sensor').disabled = false;
+		var sensors;
         loadJSON('settings', '', '3000', function (response) {
             jr = JSON.parse(response);
             clearOption('sensor');
-            for (var i = 0; i < jr.sensors.length; i++) {
-                byId('sensor').options[byId('sensor').options.length] = new Option(jr.sensors[i], i);
+			sensors = jr.sensors;
+            for (var i = 0; i < sensors.length; i++) {
+				if(sensors[i].fixed == false) {
+					byId('sensor').options[i] = new Option(sensors[i].name, sensors[i].type);
+				}
             }
             loadJSON('data', '', '3000', function (response) {
                 jr = JSON.parse(response);
@@ -3618,7 +3627,20 @@
 				byId('btn-color-picker').style.color = jr.channel[channel].color;
 				byId('btn-color-picker').setAttribute('data-color', jr.channel[channel].color);
 				document.getElementsByClassName("color_border")[0].style.borderColor = jr.channel[channel].color;
-                byId('sensor').value = jr.channel[channel].typ;
+
+				if(jr.channel[channel].fixed) {
+					clearOption('sensor');
+					for (var i = 0; i < sensors.length; i++) {
+						if(sensors[i].type == jr.channel[channel].typ ) {
+							byId('sensor').options[i] = new Option(sensors[i].name, sensors[i].type);
+							break;
+						}
+            		}
+					byId('sensor').disabled = true;
+				}
+
+				byId('sensor').value = jr.channel[channel].typ;
+
                 switch(jr.channel[channel].alarm) {
 					case 0:
 						byId('pushalarm').checked = false;

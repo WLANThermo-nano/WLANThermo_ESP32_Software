@@ -21,12 +21,11 @@
 
 #include "TemperatureMax11615.h"
 
-#define MAX1161X_SGL_DIF_BIT    0x01u
-#define MAX1161X_SCAN0_BIT      0x20u
+#define MAX1161X_SGL_DIF_BIT 0x01u
+#define MAX1161X_SCAN0_BIT 0x20u
 #define MAX1161X_SET_CSX(index) (index << 0x01u)
 
-union SplitTwoBytes
-{
+union SplitTwoBytes {
   uint16_t value;
   struct
   {
@@ -37,16 +36,15 @@ union SplitTwoBytes
 
 TemperatureMax11615::TemperatureMax11615()
 {
-
 }
 
 TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : TemperatureBase()
 {
-    this->localIndex = index;
-    this->twoWire = twoWire;
+  this->localIndex = index;
+  this->twoWire = twoWire;
 
-      // MAX11615
-  byte reg = 0xA0;    // A0 = 10100000
+  // MAX11615
+  byte reg = 0xA0; // A0 = 10100000
   // page 14
   // 1: setup mode
   // SEL:010 = Reference (Table 6)
@@ -54,7 +52,7 @@ TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : Temp
   // unipolar(0)/bipolar(1)
   // 0: reset the configuration register to default
   // 0: dont't care
- 
+
   this->twoWire->beginTransmission(this->chipAddress);
   this->twoWire->write(reg);
   this->twoWire->endTransmission();
@@ -62,7 +60,7 @@ TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : Temp
 
 void TemperatureMax11615::update()
 {
-  if(this->calcTemperature != NULL)
+  if (this->calcTemperature != NULL)
   {
     this->currentValue = this->calcTemperature(this->readChip(), this->type);
   }
@@ -73,12 +71,12 @@ uint16_t TemperatureMax11615::readChip()
   byte config;
   SplitTwoBytes receive;
 
-  config = MAX1161X_SGL_DIF_BIT |  MAX1161X_SCAN0_BIT | MAX1161X_SET_CSX(this->localIndex);
-  
+  config = MAX1161X_SGL_DIF_BIT | MAX1161X_SCAN0_BIT | MAX1161X_SET_CSX(this->localIndex);
+
   this->twoWire->beginTransmission(this->chipAddress);
   this->twoWire->write(config);
   this->twoWire->endTransmission();
-  
+
   this->twoWire->requestFrom(this->chipAddress, sizeof(receive));
 
   receive.highByte = this->twoWire->read();
