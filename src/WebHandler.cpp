@@ -314,8 +314,8 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
   {
     if (request->method() == HTTP_GET)
     {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-        return request->requestAuthentication();
+      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+        return request->requestAuthentication(WServer::getRealm());
       
       AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
       response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
@@ -340,8 +340,8 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     }
     else if (request->method() == HTTP_POST)
     {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-        return request->requestAuthentication();
+      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+        return request->requestAuthentication(WServer::getRealm());
       if (request->hasParam("wwwpw", true))
       {
         String password = request->getParam("wwwpw", true)->value();
@@ -368,8 +368,8 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     }
     else if (request->method() == HTTP_POST)
     {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-        return request->requestAuthentication();
+      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+        return request->requestAuthentication(WServer::getRealm());
       if (request->hasParam("version", true))
       {
         String version = request->getParam("version", true)->value();
@@ -430,8 +430,8 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
         break;
       }
     }
-    if (auth && !request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (auth && !request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     //sendFile(request,path); //
     request->send(SPIFFS, path);
   }
@@ -1037,8 +1037,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_CHANNELS)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setChannels(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1046,8 +1046,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_SYSTEM)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setSystem(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1055,8 +1055,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_PITMASTER)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setPitmaster(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1064,8 +1064,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_PID)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setPID(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1073,8 +1073,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_IOT)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setIoT(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1082,8 +1082,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_PUSH)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setPush(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
@@ -1091,8 +1091,8 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
   else if (request->url() == SET_API)
   {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str()))
-      return request->requestAuthentication();
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
     if (!setServerAPI(request, data))
       request->send(200, TEXTPLAIN, TEXTFALSE);
     request->send(200, TEXTPLAIN, TEXTTRUE);
