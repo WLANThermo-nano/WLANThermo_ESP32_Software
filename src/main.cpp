@@ -39,6 +39,7 @@ void setup()
   Serial.setDebugOutput(true);
 
   gSystem->hwInit();
+  gDisplay->loadConfig();
   gDisplay->init();
   gSystem->loadConfig();
   gSystem->init();

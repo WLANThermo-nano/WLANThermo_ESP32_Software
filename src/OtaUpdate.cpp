@@ -37,6 +37,8 @@ OtaUpdate::OtaUpdate()
   otaUpdateState = OtaUpdateState::Idle;
   requestedVersion = "false";
   version = "false";
+  requestedFile = "";
+  forceUpdate = false;
 }
 
 void OtaUpdate::startUpdate()
@@ -96,7 +98,7 @@ void OtaUpdate::loadConfig()
   }
 }
 
-boolean OtaUpdate::checkForUpdate(String version)
+boolean OtaUpdate:: checkForUpdate(String version)
 {
   boolean doUpdate = false;
 
@@ -111,17 +113,24 @@ boolean OtaUpdate::checkForUpdate(String version)
 
 void OtaUpdate::requestVersion(String requestedVersion)
 {
-  this->requestedVersion = version;
-  otaUpdateState = OtaUpdateState::GetUpdateInfo;
+  Serial.printf("OtaUpdate::requestVersion: %s\n", requestedVersion.c_str());
+  this->requestedVersion = requestedVersion;
+}
+
+void OtaUpdate::requestFile(String file)
+{
+  Serial.printf("OtaUpdate::requestFile: %s\n", file.c_str());
+  this->requestedFile = file;
 }
 
 void OtaUpdate::resetUpdateInfo()
 {
   firmwareUrl = "";
   displayUrl = "";
-  otaUpdateState = OtaUpdateState::GetUpdateInfo;
   requestedVersion = "false";
   version = "false";
+  requestedFile = "";
+  forceUpdate = false;
 }
 
 void OtaUpdate::update()
@@ -132,7 +141,7 @@ void OtaUpdate::update()
       otaUpdateState = (this->autoUpdate) ? OtaUpdateState::GetUpdateInfo : OtaUpdateState::Idle;
       break;
     case OtaUpdateState::GetUpdateInfo:
-      Cloud::check_api();
+      Cloud::checkAPI();
       otaUpdateState = OtaUpdateState::NoUpdateInfo;
       break;
     case OtaUpdateState::NoUpdateInfo:
@@ -163,7 +172,10 @@ void OtaUpdate::setDisplayUrl(const char *url)
 void OtaUpdate::setAutoUpdate(boolean enable)
 {
   if((false == this->autoUpdate) && (true == enable))
+  {
     resetUpdateInfo();
+    askUpdateInfo();
+  }
 
   this->autoUpdate = enable;
 }

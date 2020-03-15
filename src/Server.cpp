@@ -106,6 +106,7 @@ void WServer::init()
   webServer->on("/clientlog", [](AsyncWebServerRequest *request) {
     Cloud::clientlog = true;
     gSystem->otaUpdate.resetUpdateInfo();
+    gSystem->otaUpdate.askUpdateInfo();
     request->send(200, TEXTPLAIN, "aktiviert");
   });
 

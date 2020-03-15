@@ -20,12 +20,21 @@
 ****************************************************/
 #include "API.h"
 #include "system/SystemBase.h"
+#include "display/DisplayBase.h"
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
 
 API::API()
 {
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Display JSON Object - Send everytime when connect to API
+void API::displayObj(JsonObject &jObj)
+{
+  jObj["updname"] = gDisplay->getUpdateName();
+  jObj["orientation"] = (uint16_t)gDisplay->getOrientation();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -241,6 +250,16 @@ void API::updateObj(JsonObject &jObj)
   // nach einer bestimmten Version fragen
   if (gSystem->otaUpdate.getRequestedVersion() != "false")
     jObj["version"] = gSystem->otaUpdate.getRequestedVersion();
+
+  if (gSystem->otaUpdate.getRequestedFile() != "")
+  {
+    jObj["file"] = gSystem->otaUpdate.getRequestedFile();
+    // include also preleases for file request
+    jObj["prerelease"] = true;
+  }
+
+  if (gSystem->otaUpdate.getForceFlag())
+    jObj["force"] = gSystem->otaUpdate.getForceFlag();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -332,6 +351,10 @@ void API::settingsObj(JsonObject &jObj)
   /*if (sys.damper)
     _aktor.add("DAMPER");*/
   //TODO
+
+  // DISPLAY
+  JsonObject &_display = jObj.createNestedObject("display");
+  displayObj(_display);
 
   // IOT
   JsonObject &_iot = jObj.createNestedObject("iot");

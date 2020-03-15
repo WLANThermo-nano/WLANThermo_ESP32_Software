@@ -72,6 +72,7 @@ void read_serial(char *buffer) {
         if (!gSystem->otaUpdate.checkForUpdate(payload))
         {
           gSystem->otaUpdate.requestVersion(payload);
+          gSystem->otaUpdate.askUpdateInfo();
         }
       }
       else
@@ -216,6 +217,7 @@ void read_serial(char *buffer) {
     // CHECK HTTP UPDATE
     else if (str == "checkupdate") {
       gSystem->otaUpdate.resetUpdateInfo();
+      gSystem->otaUpdate.askUpdateInfo();
       return;
     }
 
