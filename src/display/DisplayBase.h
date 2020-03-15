@@ -35,10 +35,13 @@ public:
   DisplayBase(SystemBase *system);
   virtual void init();
   virtual void update();
-  virtual void saveConfig();
+  void saveConfig();
+  void loadConfig();
   void disable(boolean disabled);
+  void toggleOrientation();
+  uint16_t getOrientation(){ return (int16_t)this->orientation; };
   void block(boolean block);
-  String getUpdateName(){return updateName;};
+  virtual String getUpdateName(){return this->modelName;};
   virtual void calibrate();
   static String debugString;
 
@@ -47,7 +50,7 @@ protected:
   boolean disabled;
   boolean blocked;
   DisplayOrientation orientation;
-  String updateName;
+  String modelName;
 };
 
 extern DisplayBase *gDisplay;

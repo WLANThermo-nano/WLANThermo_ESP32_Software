@@ -172,8 +172,6 @@ void DisplayNextion::init()
 {
   updateFromSPIFFS();
 
-  this->loadConfig();
-
   xTaskCreatePinnedToCore(
       DisplayNextion::task,   /* Task function. */
       "DisplayNextion::task", /* String with name of task. */
@@ -200,8 +198,8 @@ boolean DisplayNextion::initDisplay()
     sendCommand("bkcmd=1");
     cmdFinished = recvRetCommandFinished();
 
-    this->updateName = nexUpload.getModel().substring(0u, 10u) + String("-") + String((int)this->orientation);
-    Serial.printf("Nextion updateName: %s\n", this->updateName.c_str());
+    this->modelName = nexUpload.getModel().substring(0u, 10u);
+    Serial.printf("Nextion model: %s\n", this->modelName.c_str());
 
     if(false == cmdFinished)
     {
@@ -271,27 +269,6 @@ void DisplayNextion::task(void *parameter)
     // Wait for the next cycle.
     vTaskDelay(10);
     display->update();
-  }
-}
-
-void DisplayNextion::saveConfig()
-{
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
-  json["disabled"] = this->disabled;
-  Settings::write(kDisplay, json);
-}
-
-void DisplayNextion::loadConfig()
-{
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
-
-  if (json.success())
-  {
-
-    if (json.containsKey("disabled"))
-      this->disabled = json["disabled"].as<boolean>();
   }
 }
 
@@ -826,6 +803,18 @@ void DisplayNextion::calibrate()
   sendCommand("touch_j");
 }
 
+String DisplayNextion::getUpdateName()
+{
+  String updateName = "";
+
+  if(this->modelName != "")
+  {
+    updateName += this->modelName + String("-") + String((uint16_t)this->orientation);
+  }
+
+  return updateName;
+}
+
 void DisplayNextion::updateFromSPIFFS()
 {
   if (!SPIFFS.begin(false))
@@ -873,7 +862,7 @@ void DisplayNextion::updateFromSPIFFS()
   if(SPIFFS.exists(NEXTION_SPIFFS_UPDATE_FILENAME))
   {
     // file from OTA
-    Serial.println("Nextion update from OTA: %s\n");
+    Serial.printf("Nextion update from OTA: %s\n", NEXTION_SPIFFS_UPDATE_FILENAME);
     nextionFileName = NEXTION_SPIFFS_UPDATE_FILENAME;
   }
   else if (!SPIFFS.exists(nextionFileName.c_str()))

@@ -27,6 +27,7 @@ class API
 {
 public:
   API();
+  static void displayObj(JsonObject &jObj);
   static void deviceObj(JsonObject &jObj);
   static void systemObj(JsonObject &jObj, bool settings = false);
   static void channelAry(JsonArray &jAry, int cc);
