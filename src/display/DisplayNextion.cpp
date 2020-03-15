@@ -308,10 +308,22 @@ void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean s
 void DisplayNextion::update()
 {
   static uint8_t tempNavIndex = 0u;
+  static uint8_t updateInProgress = false;
+
   boolean updateAllTemperatures = false;
 
   if (this->disabled)
     return;
+
+  if(gSystem->otaUpdate.isUpdateInProgress())
+  {
+    if(false == updateInProgress)
+    {
+      updateInProgress = true;
+      sendCommand("page boot");
+    }
+    return;
+  }
 
   nexLoop(nex_listen_list);
 
