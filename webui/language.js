@@ -1,6 +1,6 @@
 	var en = {
 				// Reiter System-Einstellungen
-				system_settings:"System settings", 
+				system_settings:"System settings",
 				unit:"Unit",
 				german:"German",
 				english:"English",
@@ -12,6 +12,10 @@
 				hw_version:"Hardware version",
 				update_search:"Automatically check for updates",
 				prerelease:"Include prerelease in the search",
+				// Reiter Display-Einstellungen
+				display_settings:"Display settings",
+				rotate_display:"Rotate display",
+				calibrate_touch:"Calibrate touch",
 				// Buttons
 				back:"Back",
 				save:"Save",
@@ -114,6 +118,10 @@
 				hw_version:"Hardwareversion",
 				update_search:"Automatisch nach Updates suchen",
 				prerelease:"Beta-Versionen in der Suche mit einschießen",
+				// Reiter Display-Einstellungen
+				display_settings:"Display-Einstellungen",
+				rotate_display:"Display drehen",
+				calibrate_touch:"Touch kalibrieren",
 				// Buttons
 				back:"Zurück",
 				save:"Speichern",

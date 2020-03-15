@@ -21,13 +21,9 @@
 
 #include "Arduino.h"
 #include "MedianFilterLib.h"
+#include "TemperatureSensors.h"
 
 #define INACTIVEVALUE 999
-#define TEMPERATURE_TYPE_NOT_CHANGEABLE 0xFFu
-#define NUM_OF_TYPES 15u
-
-typedef void (*TemperatureCallback_t)(class TemperatureBase*, boolean, void*); 
-typedef float (*TemperatureCalculation_t)(uint16_t, uint8_t); 
 
 enum AlarmSetting
 {
@@ -52,65 +48,71 @@ enum TemperatureUnit
   Celsius = 'C',
 };
 
+typedef void (*TemperatureCallback_t)(class TemperatureBase *, boolean, void *);
+typedef float (*TemperatureCalculation_t)(uint16_t, SensorType);
+
 class TemperatureBase
 {
-  public:
-    TemperatureBase();
-    ~TemperatureBase();
-    void loadDefaultValues();
-    float getValue();
-    float GetMedianValue();
-    float getMinValue();
-    float getMaxValue();
-    String getName();
-    String getColor();
-    AlarmSetting getAlarmSetting();
-    uint8_t getType();
-    static uint8_t getTypeCount();
-    String getTypeName();
-    static String getTypeName(uint8_t index);
-    uint8_t getGlobalIndex();
-    virtual void setType(uint8_t type);
-    void setMinValue(float value);
-    void setMaxValue(float value);
-    void setName(const char* name);
-    void setColor(const char* color);
-    void setAlarmSetting(AlarmSetting alarmSetting);
-    void setUnit(TemperatureUnit unit);
-    uint8_t getNotificationCounter();
-    void setNotificationCounter(uint8_t notificationCounter);
-    void updateNotificationCounter();
-    void registerCallback(TemperatureCallback_t callback, void *userData);
-    void unregisterCallback();
-    void handleCallbacks();
-    AlarmStatus getAlarmStatus();
-    boolean isActive();
-    void virtual update();
-  protected:
-    uint8_t localIndex;
-    uint8_t globalIndex;
-    float currentValue;
-    MedianFilter<float> *medianValue;
-    float minValue;
-    float maxValue;
-    uint8_t type;
-    String name;
-    String color;
-    AlarmSetting alarmSetting;
-    TemperatureCalculation_t calcTemperature;
-  private:
-    TemperatureUnit currentUnit;
-    uint8_t notificationCounter;
-    static const char* typeNames[NUM_OF_TYPES];
-    static TemperatureCalculation_t typeFunctions[NUM_OF_TYPES];
-    TemperatureCallback_t registeredCb;
-    boolean settingsChanged;
-    void  *registeredCbUserData;
-    AlarmStatus cbAlarmStatus;
-    float cbCurrentValue;
-    static uint8_t globalIndexTracker;
-    float getUnitValue(float value);
-    float setUnitValue(float value);
-    static float calcTemperatureNTC(uint16_t rawValue, uint8_t type);
-    static float calcTemperaturePTx(uint16_t rawValue, uint8_t type);
+public:
+  TemperatureBase();
+  ~TemperatureBase();
+  void loadDefaultValues();
+  float getValue();
+  float GetMedianValue();
+  float getMinValue();
+  float getMaxValue();
+  String getName();
+  String getColor();
+  AlarmSetting getAlarmSetting();
+  uint8_t getType();
+  static uint8_t getTypeCount();
+  String getTypeName();
+  static String getTypeName(uint8_t index);
+  boolean getFixedSensor() { return this->fixedSensor; }
+  uint8_t getGlobalIndex();
+  virtual void setType(uint8_t type);
+  void setMinValue(float value);
+  void setMaxValue(float value);
+  void setName(const char *name);
+  void setColor(const char *color);
+  void setAlarmSetting(AlarmSetting alarmSetting);
+  void setUnit(TemperatureUnit unit);
+  uint8_t getNotificationCounter();
+  void setNotificationCounter(uint8_t notificationCounter);
+  void updateNotificationCounter();
+  void registerCallback(TemperatureCallback_t callback, void *userData);
+  void unregisterCallback();
+  void handleCallbacks();
+  AlarmStatus getAlarmStatus();
+  boolean isActive();
+  void virtual update();
+
+protected:
+  uint8_t localIndex;
+  uint8_t globalIndex;
+  float currentValue;
+  MedianFilter<float> *medianValue;
+  float minValue;
+  float maxValue;
+  SensorType type;
+  String name;
+  String color;
+  AlarmSetting alarmSetting;
+  TemperatureCalculation_t calcTemperature;
+  boolean fixedSensor;
+
+private:
+  TemperatureUnit currentUnit;
+  uint8_t notificationCounter;
+  static TemperatureCalculation_t typeFunctions[NUM_OF_TYPES];
+  TemperatureCallback_t registeredCb;
+  boolean settingsChanged;
+  void *registeredCbUserData;
+  AlarmStatus cbAlarmStatus;
+  float cbCurrentValue;
+  static uint8_t globalIndexTracker;
+  float getUnitValue(float value);
+  float setUnitValue(float value);
+  static float calcTemperatureNTC(uint16_t rawValue, SensorType type);
+  static float calcTemperaturePTx(uint16_t rawValue, SensorType type);
 };

@@ -80,14 +80,12 @@ void Notification::update()
 {
 
   if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
-  { // Testnachricht
-    if (Cloud::sendAPI(0))
-    {
-      Cloud::apiindex = APINOTE;
-      Cloud::urlindex = NOTELINK;
-      Cloud::parindex = NOPARA;
-      Cloud::sendAPI(2);
-    }
+  {
+    // Testnachricht
+    if(Cloud::sendAPI(APINOTE, NOTELINK, NOPARA))
+      Serial.println("Testnachricht success");
+    else
+      Serial.println("Testnachricht failed");
   }
   else if (this->notificationData.index > 0)
   { // CHANNEL NOTIFICATION
@@ -98,14 +96,8 @@ void Notification::update()
       {
         if (this->pushService.on > 0)
         {
-          if (Cloud::sendAPI(0))
-          {
-            this->notificationData.ch = i;
-            Cloud::apiindex = APINOTE;
-            Cloud::urlindex = NOTELINK;
-            Cloud::parindex = NOPARA;
-            Cloud::sendAPI(2); // Notification per Nano-Server
-          }
+          this->notificationData.ch = i;
+          Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
         }
       }
     }

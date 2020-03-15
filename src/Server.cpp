@@ -65,7 +65,6 @@ void WServer::init()
     size_t totalBytes;
     usedBytes = SPIFFS.usedBytes();
     totalBytes = SPIFFS.totalBytes();
-    String ssidstr;
     //TODO: print wifi SSIDs
     /*for (int i = 0; i < wifi.savedlen; i++) {
         ssidstr += " ";
@@ -74,7 +73,13 @@ void WServer::init()
         ssidstr += wifi.savedssid[i];
     }*/
 
-    request->send(200, "", "bytes: " + String(usedBytes) + " | " + String(totalBytes) + "\n" + "heap: " + String(ESP.getFreeHeap()) + "\n" + "sn: " + gSystem->getSerialNumber() + "\n" + "pn: " + /* TODO sys.item*/ +"\n" + "batlimit: " + String(gSystem->battery->min) + " | " + String(gSystem->battery->max) + "\n" + "bat: " + String(gSystem->battery->adcvoltage) + " | " + String(gSystem->battery->voltage) + " | " + String(gSystem->battery->simc) + "\n" + "batstat: " + String(gSystem->battery->getPowerModeInt()) + " | " + String(gSystem->battery->setreference) + "\n" + "ssid: " + ssidstr + "\n" + "wifimode: " + String(WiFi.getMode()) + "\n" + "mac:" + String(gSystem->wlan.getMacAddress()) + "\n" + "iS: " + String(ESP.getFlashChipSize()));
+    String info = "spiffs: " + String(usedBytes) + " | " + String(totalBytes) + "\n" + "heap: " + String(ESP.getFreeHeap()) + "\n" + "sn: " + gSystem->getSerialNumber() + "\n" + "pn: " + gSystem->item.read(ItemNvsKeys::kItem) + "\n";
+    if(gSystem->battery != NULL)
+    {
+      info += "batlimit: " + String(gSystem->battery->min) + " | " + String(gSystem->battery->max) + "\n" + "bat: " + String(gSystem->battery->adcvoltage) + " | " + String(gSystem->battery->voltage) + " | " + String(gSystem->battery->simc) + "\n" + "batstat: " + String(gSystem->battery->getPowerModeInt()) + " | " + String(gSystem->battery->setreference) + "\n";
+    }   
+    info+= "ssid: " + WiFi.SSID() + "\n" + "wifimode: " + String(WiFi.getMode()) + "\n" + "mac:" + String(gSystem->wlan.getMacAddress()) + "\n" + "iS: " + String(gSystem->getFlashSize());
+    request->send(200, "", info);
   });
 
   webServer->on("/setbattmin", [](AsyncWebServerRequest *request) {
@@ -101,6 +106,7 @@ void WServer::init()
   webServer->on("/clientlog", [](AsyncWebServerRequest *request) {
     Cloud::clientlog = true;
     gSystem->otaUpdate.resetUpdateInfo();
+    gSystem->otaUpdate.askUpdateInfo();
     request->send(200, TEXTPLAIN, "aktiviert");
   });
 
@@ -127,69 +133,6 @@ void WServer::init()
     String response = "\nCPU0: " + gSystem->getResetReason(0);
     response += "\nCPU1: " + gSystem->getResetReason(1);
     request->send(200, TEXTPLAIN, response);
-  });
-
-  /*
-  webServer->on("/validateUser",[](AsyncWebServerRequest *request) { 
-      if(request->hasParam("user")&&request->hasParam("passwd")){
-        ESP.wdtDisable(); 
-        String _user = request->getParam("user")->value();
-        String _pw = request->getParam("passwd")->value();
-        ESP.wdtEnable(10);
-        if (_user == WServer::getUsername().c_str() && _pw == WServer::getPassword().c_str())
-          request->send(200, TEXTPLAIN, TEXTTRUE);
-        else
-          request->send(200, TEXTPLAIN, TEXTFALSE);
-      } else request->send(200, TEXTPLAIN, TEXTFALSE);
-  });
-*/
-
-  webServer->on("/fwupdate", [](AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_GET)
-    {
-      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", fwupdate_html_gz, sizeof(fwupdate_html_gz));
-      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      if (request->hasParam("url", true))
-      {
-        String url = request->getParam("url", true)->value();
-        request->send(200, TEXTPLAIN, "OK");
-        gSystem->otaUpdate.setFirmwareUrl(url.c_str());
-        gSystem->otaUpdate.startUpdate();
-      }
-      else
-      {
-        request->send(500, TEXTPLAIN, "Invalid");
-      }
-    }
-  });
-
-  webServer->on("/displayupdate", [](AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_GET)
-    {
-      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", displayupdate_html_gz, sizeof(displayupdate_html_gz));
-      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      if (request->hasParam("url", true))
-      {
-        String url = request->getParam("url", true)->value();
-        request->send(200, TEXTPLAIN, "OK");
-        gSystem->otaUpdate.setDisplayUrl(url.c_str());
-        gSystem->otaUpdate.startUpdate();
-      }
-      else
-      {
-        request->send(500, TEXTPLAIN, "Invalid");
-      }
-    }
   });
 
   // to avoid multiple requests to ESP

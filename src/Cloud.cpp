@@ -48,11 +48,7 @@ int Cloud::log_length = 0;
 int Cloud::log_typ = 0;
 int Cloud::apicontent = 0;
 AsyncClient *Cloud::apiClient = NULL;
-byte Cloud::server_state = NULL;
 bool Cloud::clientlog = false;
-int Cloud::apiindex = 0;
-int Cloud::urlindex = 0;
-int Cloud::parindex = 0;
 
 enum
 {
@@ -99,25 +95,12 @@ void Cloud::update()
     // First get time from server before sending data
     if (now() < 31536000)
     {
-      if (Cloud::sendAPI(0))
-      {
-        Cloud::apiindex = NOAPI;
-        Cloud::urlindex = APILINK;
-        Cloud::parindex = NOPARA;
-        Cloud::sendAPI(2);
-      }
+      Cloud::sendAPI(NOAPI, APILINK, NOPARA);
     }
     else if (0u == intervalCounter)
     {
       intervalCounter = config.interval;
-
-      if (Cloud::sendAPI(0))
-      {
-        Cloud::apiindex = APICLOUD;
-        Cloud::urlindex = CLOUDLINK;
-        Cloud::parindex = NOPARA;
-        Cloud::sendAPI(2);
-      }
+      Cloud::sendAPI(APICLOUD, CLOUDLINK, NOPARA);
     }
   }
   else
@@ -404,136 +387,127 @@ void Cloud::printClient(const char *link, int arg)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Send to API
-bool Cloud::sendAPI(int check)
+bool Cloud::sendAPI(int apiIndex, int urlIndex, int parIndex)
 {
+  static CloudData cloudData = {0, 0, 0};
 
-  if (check == 0)
+  if (apiClient)
+    return false; //client already exists
+
+  apiClient = new AsyncClient();
+  if (!apiClient)
+    return false; //could not allocate client
+
+  apiClient->onError([](void *arg, AsyncClient *client, int error) {
+    IPRINTP("e:Client");
+    apiClient = NULL;
+    delete client;
+  }, NULL);
+
+  cloudData.apiIndex = apiIndex;
+  cloudData.urlIndex = urlIndex;
+  cloudData.parIndex = parIndex;
+
+  apiClient->onConnect([](void *arg, AsyncClient *client)
   {
-    if (apiClient)
-      return false; //client already exists
+    CloudData *pCloudData = (CloudData*)arg;
+    //printClient(serverurl[urlindex].page.c_str(),CLIENTCONNECT);
+    apicontent = false;
 
-    apiClient = new AsyncClient();
-    if (!apiClient)
-      return false; //could not allocate client
+    apiClient->onError(NULL, NULL);
 
-    apiClient->onError([](void *arg, AsyncClient *client, int error) {
-      IPRINTP("e:Client");
-      apiClient = NULL;
-      delete client;
-    },
-                       NULL);
-  }
-  else if (check == 2)
-  { // Senden ueber Server
-
-    server_state = 0;
-    apiClient->onConnect([](void *arg, AsyncClient *client) {
-      //printClient(serverurl[urlindex].page.c_str(),CLIENTCONNECT);
-      apicontent = false;
-
-      apiClient->onError(NULL, NULL);
-
-      client->onDisconnect([](void *arg, AsyncClient *c) {
-        //printClient(serverurl[urlindex].page.c_str() ,DISCONNECT);
-        apiClient = NULL;
-        delete c;
-      },
-                           NULL);
-
-      client->onData([](void *arg, AsyncClient *c, void *data, size_t len) {
-        String payload((char *)data);
-        //Serial.println(millis());
-        if (clientlog)
-          Serial.println(payload);
-        //Serial.println(len);
-
-        if (payload.indexOf("HTTP/1.1") > -1)
-        { // Time Stamp
-          readUTCfromHeader(payload);
-        }
-
-        if ((payload.indexOf("200 OK") > -1))
-        {                   // 200 Header
-          server_state = 1; // Server Communication: yes
-          readContentLengthfromHeader(payload, len);
-          checkContentTypfromHeader(payload, len);
-
-          if (log_length > 0)
-          { // Content available
-            apicontent = 1;
-            if (log_typ == 1 && payload.indexOf("{") > -1)
-            { // JSON: Body belongs to header
-              apicontent = payload.indexOf("{") + 1;
-              if ((len - (apicontent - 1)) != log_length)
-                Serial.println("[WARNING]: Content-Length unequal");
-              Serial.println("Body belongs to header");
-            }
-            else
-              return; // Header alone
-          }
-        }
-        else if (payload.indexOf("302 Found") > -1)
-        { // 302 Header: new API-Links
-          readLocation(payload, len);
-        }
-
-        //} else if (payload.indexOf("500 Internal Server Error") > -1) {  // 500 Header: new API-Links
-        //  Serial.println("Fehler im Verbindungsaufbau");
-
-        if (apicontent)
-        { // Body: 1 part
-          if (log_typ == 1)
-          { // JSON
-            bodyWebHandler.setServerAPI(NULL, (uint8_t *)data + (apicontent - 1));
-          }
-          apicontent = 0;
-          log_length -= len; // Option das nicht alles auf einmal kommt bleibt offen
-          //Serial.println(log_length);
-        }
-        else if (log_length > 0)
-        {                    // Body: current part
-          log_length -= len; // leeren?
-          //Serial.println(log_length);
-        }
-      },
-                     NULL);
-
-      //send the request
-      //printClient(serverurl[urlindex].page.c_str() ,SENDTO);
-      String message = API::apiData(apiindex);
-      String adress = createCommand(POSTMETH, parindex, serverurl[urlindex].page.c_str(), serverurl[urlindex].host.c_str(), message.length());
-      adress += message;
-      client->write(adress.c_str());
-      if (clientlog)
-        Serial.println(adress);
-      apiindex = 0;
-      urlindex = 0;
-      parindex = 0;
-    },
-                         NULL);
-
-    if (!apiClient->connect(serverurl[urlindex].host.c_str(), 80))
+    client->onDisconnect([](void *arg, AsyncClient *c)
     {
-      printClient(serverurl[urlindex].page.c_str(), CONNECTFAIL);
-      AsyncClient *client = apiClient;
+      //printClient(serverurl[urlindex].page.c_str() ,DISCONNECT);
       apiClient = NULL;
-      delete client;
-    }
+      delete c;
+    }, &cloudData);
+
+    client->onData([](void *arg, AsyncClient *c, void *data, size_t len)
+    {
+      CloudData *pCloudData = (CloudData*)arg;
+      String payload((char *)data);
+      //Serial.println(millis());
+      if (clientlog)
+        Serial.println(payload);
+      //Serial.println(len);
+
+      if (payload.indexOf("HTTP/1.1") > -1)
+      { // Time Stamp
+        readUTCfromHeader(payload);
+      }
+
+      if ((payload.indexOf("200 OK") > -1))
+      {                   // 200 Header
+        readContentLengthfromHeader(payload, len);
+        checkContentTypfromHeader(payload, len);
+
+        if (log_length > 0)
+        { // Content available
+          apicontent = 1;
+          if (log_typ == 1 && payload.indexOf("{") > -1)
+          { // JSON: Body belongs to header
+            apicontent = payload.indexOf("{") + 1;
+            if ((len - (apicontent - 1)) != log_length)
+              Serial.println("[WARNING]: Content-Length unequal");
+            Serial.println("Body belongs to header");
+          }
+          else
+            return; // Header alone
+        }
+      }
+      else if (payload.indexOf("302 Found") > -1)
+      { // 302 Header: new API-Links
+        readLocation(payload, len);
+      }
+
+      //} else if (payload.indexOf("500 Internal Server Error") > -1) {  // 500 Header: new API-Links
+      //  Serial.println("Fehler im Verbindungsaufbau");
+
+      if (apicontent)
+      { // Body: 1 part
+        if (log_typ == 1)
+        { // JSON
+          bodyWebHandler.setServerAPI(NULL, (uint8_t *)data + (apicontent - 1));
+        }
+        apicontent = 0;
+        log_length -= len; // Option das nicht alles auf einmal kommt bleibt offen
+        //Serial.println(log_length);
+      }
+      else if (log_length > 0)
+      {                    // Body: current part
+        log_length -= len; // leeren?
+        //Serial.println(log_length);
+      }
+    }, &cloudData);
+
+    //send the request
+    //printClient(serverurl[urlindex].page.c_str() ,SENDTO);
+    String message = API::apiData(pCloudData->apiIndex);
+    String adress = createCommand(POSTMETH, pCloudData->parIndex, serverurl[pCloudData->urlIndex].page.c_str(), serverurl[pCloudData->urlIndex].host.c_str(), message.length());
+    adress += message;
+    client->write(adress.c_str());
+    if (clientlog)
+      Serial.println(adress);
+  }, &cloudData);
+
+  if (!apiClient->connect(serverurl[cloudData.urlIndex].host.c_str(), 80))
+  {
+    printClient(serverurl[cloudData.urlIndex].page.c_str(), CONNECTFAIL);
+    AsyncClient *client = apiClient;
+    apiClient = NULL;
+    delete client;
   }
+
   return true; // Nachricht kann gesendet werden
 }
 
-void Cloud::check_api()
+void Cloud::checkAPI()
 {
-  Serial.println("check_api");
-  if (sendAPI(0))
-  { // blockt sich selber, so dass nur ein Client gleichzeitig offen
-    apiindex = APIUPDATE;
-    urlindex = APILINK;
-    parindex = NOPARA;
-    sendAPI(2);
-  }
+  Serial.println("checkAPI");
+  sendAPI(APIUPDATE, APILINK, NOPARA);
 }
+
 // GET/POST Generator
 String Cloud::createCommand(bool meth, int para, const char *link, const char *host, int content)
 {
@@ -563,7 +537,8 @@ String Cloud::createCommand(bool meth, int para, const char *link, const char *h
     command += F("\n");
   }
 
-  command += F("User-Agent: WLANThermo nano\n");
+  command += F("Connection: close\r\n");
+  command += F("User-Agent: WLANThermo ESP32\n");
   command += F("SN: ");
   command += gSystem->getSerialNumber();
   command += F("\n");

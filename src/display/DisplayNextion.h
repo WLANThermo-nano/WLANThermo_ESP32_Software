@@ -31,8 +31,8 @@ public:
   DisplayNextion();
   void init();
   void update();
-  void saveConfig();
   void calibrate();
+  String getUpdateName();
   void updateFromSPIFFS();
 
 private:
@@ -57,7 +57,6 @@ private:
   static void enterPitmasterSettingsPage(void *ptr);
   static void savePitmasterSettings(void *ptr);
   void updateWifiSettingsPage();
-  void loadConfig();
   boolean initDisplay();
   static void temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData);
   static void task(void *parameter);

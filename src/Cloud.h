@@ -31,6 +31,13 @@ typedef struct
   uint16_t interval;
 } CloudConfig;
 
+typedef struct
+{
+  int apiIndex;
+  int urlIndex;
+  int parIndex;
+} CloudData;
+
 enum
 {
   NOAPI,
@@ -77,12 +84,9 @@ public:
   void setConfig(CloudConfig newConfig);
   String newToken();
   uint8_t state;
-  static void check_api();
-  static bool sendAPI(int check);
+  static void checkAPI();
+  static bool sendAPI(int apiIndex, int urlIndex, int parIndex);
 
-  static int apiindex;
-  static int urlindex;
-  static int parindex;
   static uint8_t serverurlCount;
   static ServerData serverurl[]; // 0:api, 1: note, 2:cloud
   static bool clientlog;
@@ -102,6 +106,5 @@ private:
   static int log_typ;
   static int apicontent;
   static AsyncClient *apiClient;
-  static byte server_state;
   uint16_t intervalCounter;
 };

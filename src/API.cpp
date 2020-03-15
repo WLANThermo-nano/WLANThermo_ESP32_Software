@@ -20,12 +20,21 @@
 ****************************************************/
 #include "API.h"
 #include "system/SystemBase.h"
+#include "display/DisplayBase.h"
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
 
 API::API()
 {
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Display JSON Object - Send everytime when connect to API
+void API::displayObj(JsonObject &jObj)
+{
+  jObj["updname"] = gDisplay->getUpdateName();
+  jObj["orientation"] = (uint16_t)gDisplay->getOrientation();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -96,13 +105,13 @@ void API::channelAry(JsonArray &jAry, int cc)
       JsonObject &data = jAry.createNestedObject();
       data["number"] = i + 1;
       data["name"] = temperature->getName();
-      if (temperature->getType() != TEMPERATURE_TYPE_NOT_CHANGEABLE)
-        data["typ"] = temperature->getType();
+      data["typ"] = temperature->getType();
       data["temp"] = limit_float(temperature->getValue(), i);
       data["min"] = temperature->getMinValue();
       data["max"] = temperature->getMaxValue();
       data["alarm"] = (uint8_t)temperature->getAlarmSetting();
       data["color"] = temperature->getColor();
+      data["fixed"] = temperature->getFixedSensor();
     }
   }
 }
@@ -194,7 +203,7 @@ void API::iotObj(JsonObject &jObj)
   jObj["CLon"] = cloudConfig.enabled;
   jObj["CLtoken"] = cloudConfig.token;
   jObj["CLint"] = cloudConfig.interval;
-  jObj["CLurl"] = "cloud.wlanthermo.de/index.html";
+  jObj["CLurl"] = "dev-cloud.wlanthermo.de/index.html";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -241,6 +250,16 @@ void API::updateObj(JsonObject &jObj)
   // nach einer bestimmten Version fragen
   if (gSystem->otaUpdate.getRequestedVersion() != "false")
     jObj["version"] = gSystem->otaUpdate.getRequestedVersion();
+
+  if (gSystem->otaUpdate.getRequestedFile() != "")
+  {
+    jObj["file"] = gSystem->otaUpdate.getRequestedFile();
+    // include also preleases for file request
+    jObj["prerelease"] = true;
+  }
+
+  if (gSystem->otaUpdate.getForceFlag())
+    jObj["force"] = gSystem->otaUpdate.getForceFlag();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -311,10 +330,13 @@ void API::settingsObj(JsonObject &jObj)
   api["version"] = GUIAPIVERSION;
 
   // SENSORS
-  JsonArray &_typ = jObj.createNestedArray("sensors");
-  for (int i = 0; i < TemperatureBase::getTypeCount(); i++)
+  JsonArray &_sensorsArray = jObj.createNestedArray("sensors");
+  for (uint8_t i = 0; i < NUM_OF_TYPES; i++)
   {
-    _typ.add(TemperatureBase::getTypeName(i));
+    JsonObject &_sensorObject = _sensorsArray.createNestedObject();
+    _sensorObject["type"] = (uint8_t)sensorTypeInfo[i].type;
+    _sensorObject["name"] = sensorTypeInfo[i].name;
+    _sensorObject["fixed"] = sensorTypeInfo[i].fixed;
   }
 
   // PID-PROFILS
@@ -329,6 +351,10 @@ void API::settingsObj(JsonObject &jObj)
   /*if (sys.damper)
     _aktor.add("DAMPER");*/
   //TODO
+
+  // DISPLAY
+  JsonObject &_display = jObj.createNestedObject("display");
+  displayObj(_display);
 
   // IOT
   JsonObject &_iot = jObj.createNestedObject("iot");

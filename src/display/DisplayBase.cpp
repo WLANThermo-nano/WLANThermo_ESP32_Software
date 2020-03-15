@@ -25,14 +25,14 @@ DisplayBase::DisplayBase()
 {
   this->blocked = false;
   this->orientation = DisplayOrientation::_0;
-  this->updateName = "";
+  this->modelName = "";
 }
 
 DisplayBase::DisplayBase(SystemBase *system)
 {
   this->blocked = false;
   this->orientation = DisplayOrientation::_0;
-  this->updateName = "";
+  this->modelName = "";
   this->system = system;
 }
 
@@ -46,11 +46,36 @@ void DisplayBase::update()
 
 void DisplayBase::saveConfig()
 {
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = jsonBuffer.createObject();
+  json["disabled"] = this->disabled;
+  json["orientation"] = (uint16_t)this->orientation;
+  Settings::write(kDisplay, json);
+}
+
+void DisplayBase::loadConfig()
+{
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
+
+  if (json.success())
+  {
+
+    if (json.containsKey("disabled"))
+      this->disabled = json["disabled"].as<boolean>();
+    if (json.containsKey("orientation"))
+      this->orientation = (DisplayOrientation)json["orientation"].as<uint16_t>();
+  }
 }
 
 void DisplayBase::disable(boolean disabled)
 {
   this->disabled = disabled;
+}
+
+void DisplayBase::toggleOrientation()
+{
+  this->orientation = (DisplayOrientation::_0 == this->orientation) ? DisplayOrientation::_180 : DisplayOrientation::_0;
 }
 
 void DisplayBase::block(boolean block)

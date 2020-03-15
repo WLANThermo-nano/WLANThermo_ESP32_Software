@@ -9,7 +9,8 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 	<link rel="apple-touch-icon-precomposed" href="https://raw.githubusercontent.com/WLANThermo-nano/WLANThermo_nano_Logos/master/apple-touch-icon-180x180-precomposed.png" >
 	<!-- <link rel="apple-touch-startup-image" href="startupimagename.png" > -->
-    <script src="language.js"></script>
+	<script src="jquery.min.js"></script>
+	<script src="language.js"></script>
 	<script type="text/javascript">!function(e){function t(e,t,o){var n=this;o=o||{},o.open=n.getElm(o.open),o.openEvent=o.openEvent||"click",o.style=Object(o.style),o.style.display=o.style.display||"block",o.closeOnBlur=o.closeOnBlur||!1,o.template=o.template||'<div data-col="{color}" style="background-color: {color}"></div>',n.elm=n.getElm(e),n.cbs=[],n.isOpen=!0,n.colors=t,n.options=o,n.render(),o.open&&o.open.addEventListener(o.openEvent,function(e){n.isOpen?n.close():n.open()}),n.elm.addEventListener("click",function(e){var t=e.target.getAttribute("data-col");t&&(n.set(t),n.close())}),o.closeOnBlur&&window.addEventListener("click",function(e){e.target!=o.open&&e.target!=n.elm&&n.isOpen&&n.close()}),o.autoclose!==!1&&n.close()}t.prototype.getElm=function(e){return"string"==typeof e?document.querySelector(e):e},t.prototype.render=function(){var e=this,t="";e.colors.forEach(function(o){t+=e.options.template.replace(/\{color\}/g,o)}),e.elm.innerHTML=t},t.prototype.close=function(){this.elm.style.display="none",this.isOpen=!1},t.prototype.open=function(){this.elm.style.display=this.options.style.display,this.isOpen=!0},t.prototype.colorChosen=function(e){this.cbs.push(e)},t.prototype.set=function(e,t){var o=this;o.color=e,t!==!1&&o.cbs.forEach(function(t){t.call(o,e)})},e.Piklor=t}(this);</script>
 	<title>WLANThermo - Nano</title>
 	 <style>
@@ -1957,6 +1958,10 @@
 			background-color: #4A4A4A;
 		}
 
+		select:disabled{
+		   opacity: 0.4;
+		}
+
 		input,
 		select,
 		textarea * {
@@ -3042,6 +3047,18 @@
 					</div>
 				</div>
 			</div>
+			<div class="float-left text-align-left"><h3 class="headtitle" id="displayheader" data-tag="display_settings">Display-Einstellungen</h3></div>
+			<div style="clear:both;"></div>
+			<div class="pure-g" id="displaybuttons">
+				<div class="pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+					<div class="1-box channel_conf">
+						<form>
+							<p class="pure-button pure-button-primary" onclick="rotate();"data-tag="rotate_display">Display drehen</p>
+							<p class="pure-button pure-button-primary" onclick="calibrate();"data-tag="calibrate_touch">Touch kalibrieren</p>			
+						</form>
+					</div>
+				</div>
+			</div>
         </div>
 		<!-- ################################################### -->
 		<div id="extended_settings" class="content" style="display:none">
@@ -3429,8 +3446,8 @@
 			byId('PMQinterval').value = jr.iot.PMQint;
 			byId('CLon').checked = jr.iot.CLon;
 			byId('CLinterval').value = jr.iot.CLint; 
-			byId('CLtoken').innerHTML = "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken;
-			byId("CLtoken").setAttribute("href", "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken);		
+			byId('CLtoken').innerHTML = "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken;
+			byId("CLtoken").setAttribute("href", "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken);		
 			byId('thingspeak').style.display = "inline";
 			byId('mqttheader').style.display = "inline";
 			showLoader('false');
@@ -3440,8 +3457,11 @@
 	function newToken(){
 		showLoader('true');
 		loadJSON('newtoken', '', '3000', function (response){
-		byId('CLtoken').innerHTML = "https://cloud.wlanthermo.de/index.html?api_token=" + response;			
-		byId("CLtoken").setAttribute("href", "https://cloud.wlanthermo.de/index.html?api_token=" + response);
+			var str = byId('CLtoken').innerHTML;
+			var pos = str.lastIndexOf('=');
+			str = str.substr(0, pos + 1);
+			byId('CLtoken').innerHTML = str + response;			
+			byId("CLtoken").setAttribute("href", str + response);
 			showLoader('false');
 		})
 	}
@@ -3599,11 +3619,16 @@
         console.log(channel);
 		hideAll();
         showLoader('true');
+		byId('sensor').disabled = false;
+		var sensors;
         loadJSON('settings', '', '3000', function (response) {
             jr = JSON.parse(response);
             clearOption('sensor');
-            for (var i = 0; i < jr.sensors.length; i++) {
-                byId('sensor').options[byId('sensor').options.length] = new Option(jr.sensors[i], i);
+			sensors = jr.sensors;
+            for (var i = 0; i < sensors.length; i++) {
+				if(sensors[i].fixed == false) {
+					byId('sensor').options[i] = new Option(sensors[i].name, sensors[i].type);
+				}
             }
             loadJSON('data', '', '3000', function (response) {
                 jr = JSON.parse(response);
@@ -3615,7 +3640,20 @@
 				byId('btn-color-picker').style.color = jr.channel[channel].color;
 				byId('btn-color-picker').setAttribute('data-color', jr.channel[channel].color);
 				document.getElementsByClassName("color_border")[0].style.borderColor = jr.channel[channel].color;
-                byId('sensor').value = jr.channel[channel].typ;
+
+				if(jr.channel[channel].fixed) {
+					clearOption('sensor');
+					for (var i = 0; i < sensors.length; i++) {
+						if(sensors[i].type == jr.channel[channel].typ ) {
+							byId('sensor').options[i] = new Option(sensors[i].name, sensors[i].type);
+							break;
+						}
+            		}
+					byId('sensor').disabled = true;
+				}
+
+				byId('sensor').value = jr.channel[channel].typ;
+
                 switch(jr.channel[channel].alarm) {
 					case 0:
 						byId('pushalarm').checked = false;
@@ -3706,7 +3744,7 @@
 			jr = JSON.parse(response);
 			byId('thermoname').innerHTML = jr.system.host;	
 			if(jr.iot.CLon === true){
-				window.location = "https://cloud.wlanthermo.de/index.html?api_token=" + jr.iot.CLtoken;
+				window.location = "https://" + jr.iot.CLurl + "?api_token=" + jr.iot.CLtoken;
 			}else{
 			
 			}
@@ -3795,6 +3833,12 @@
 			}
 			byId('hwversion').value = jr.system.hwversion;
 			byId('system_config').style.display = "inline";
+
+			if(!jr.display.updname.startsWith("NX")) {
+				byId('displayheader').style.display = "none";
+				byId('displaybuttons').style.display = "none";
+			}
+
 			showLoader('false');
 		})
 	}
@@ -4449,6 +4493,19 @@
 		if (confirm(txt) == true) {
 			loadJSON('restart', '', '60000', function (response) {});
         }
+	}
+
+	function rotate(){
+		txt = 'Neustarten, um das Display zu drehen?';
+		if (confirm(txt) == true) {
+			showLoader('true');
+			loadJSON('rotate', '', '60000', function (response) {});
+			setTimeout(function(){ updateActivated = 'true'; }, 5000);
+        }
+	}
+
+	function calibrate(){
+		loadJSON('calibrate', '', '60000', function (response) {});
 	}
 	
 	// show hidden Menu 

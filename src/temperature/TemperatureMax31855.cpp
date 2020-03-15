@@ -46,6 +46,8 @@ TemperatureMax31855::TemperatureMax31855()
 TemperatureMax31855::TemperatureMax31855(uint8_t csPin) : TemperatureBase()
 {
   this->csPin = csPin;
+  this->fixedSensor = true;
+  this->type = SensorType::TypeK;
 }
 
 void TemperatureMax31855::update()
