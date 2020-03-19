@@ -33,8 +33,11 @@ typedef struct TPitmasterProfile
   float kp;
   float ki;
   float kd;
-  float dcmin;
-  float dcmax;
+  float dcmin;              // Duty Cycle Min (FAN / SSR)
+  float dcmax;              // Duty Cylce Max (FAM / SSR)
+  float spmin;              // Servo Pulse Min
+  float spmax;              // Servo Pulse Max
+  byte link;                // Link between Actuators
   byte jumppw;
   byte opl;
   byte autotune;
@@ -122,6 +125,7 @@ private:
   boolean checkAutoTune();
   boolean checkOpenLid();
   void controlActuators();
+  void initActuators();
   void controlFan(float newValue, float newDcMin, float newDcMax);
   void controlServo(float newValue, float newDcMin, float newDcMax);
   void controlSSR(float newValue, float newDcMin, float newDcMax);
