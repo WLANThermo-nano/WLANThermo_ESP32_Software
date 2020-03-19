@@ -81,6 +81,7 @@ public:
   uint8_t getHardwareVersion();
   void setPowerSaveMode(boolean enabled);
   String getResetReason(uint8_t cpuId);
+  boolean getSupportDamper();
   TemperatureGrp temperatures;
   PitmasterGrp pitmasters;
   Battery *battery;
@@ -99,6 +100,7 @@ protected:
   uint8_t hardwareVersion;
   boolean powerSaveModeSupport;
   boolean powerSaveModeEnabled;
+  boolean damperSupport;
   boolean initDone;
   SemaphoreHandle_t wireSemaHandle;
   esp_pm_lock_handle_t wirePmHandle;

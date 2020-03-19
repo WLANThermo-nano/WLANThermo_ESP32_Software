@@ -182,6 +182,9 @@ void API::pidAry(JsonArray &jAry, int cc)
     _pid["DCmmin"] = profile->dcmin;
     _pid["DCmmax"] = profile->dcmax;
     _pid["opl"] = profile->opl;
+    _pid["SPmin"] = profile->spmin;
+    _pid["SPmax"] = profile->spmax;
+    _pid["link"] = profile->link;
     _pid["tune"] = profile->autotune; // noch nicht im EE gespeichert
     _pid["jp"] = profile->jumppw;
   }
@@ -348,9 +351,10 @@ void API::settingsObj(JsonObject &jObj)
   _aktor.add("SSR");
   _aktor.add("FAN");
   _aktor.add("SERVO");
-  /*if (sys.damper)
-    _aktor.add("DAMPER");*/
-  //TODO
+  if (gSystem->getSupportDamper())
+  {
+    _aktor.add("DAMPER");
+  }
 
   // DISPLAY
   JsonObject &_display = jObj.createNestedObject("display");

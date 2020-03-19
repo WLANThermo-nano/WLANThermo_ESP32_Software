@@ -128,7 +128,7 @@ void SystemNanoVx::init()
   Pitmaster::setSupplyPin(PITMASTERSUPPLY);
   pitmasters.add(new Pitmaster(PITMASTER0IO1, ledcPitMaster0IO1, PITMASTER0IO2, ledcPitMaster0IO2));
 
-  //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP...
+  //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
   profile[0] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[1] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
   profile[2] = new PitmasterProfile{"Kamado 50x50", 2, 1, 7.0, 0.019, 130, 25, 100, 70};

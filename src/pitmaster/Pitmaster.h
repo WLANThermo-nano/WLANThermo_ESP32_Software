@@ -35,10 +35,10 @@ typedef struct TPitmasterProfile
   float kd;
   float dcmin;              // Duty Cycle Min (FAN / SSR)
   float dcmax;              // Duty Cylce Max (FAM / SSR)
+  byte jumppw;
   float spmin;              // Servo Pulse Min
   float spmax;              // Servo Pulse Max
   byte link;                // Link between Actuators
-  byte jumppw;
   byte opl;
   byte autotune;
   float jumpth;

@@ -101,10 +101,10 @@ void PitmasterGrp::loadConfig()
         profile->dcmin = _pid[pidsize]["DCmin"];
         profile->dcmax = _pid[pidsize]["DCmax"];
         profile->jumppw = _pid[pidsize]["jp"];
+        profile->spmin = _pid[pidsize]["SPmin"];
+        profile->spmax = _pid[pidsize]["SPmax"];
+        profile->link = _pid[pidsize]["link"];
         profile->opl = _pid[pidsize]["ol"];
-
-        if (profile->jumppw == 0)
-          profile->jumppw = 100; // Übergang von alten Versionen
       }
 
       pidsize++;
@@ -149,6 +149,9 @@ void PitmasterGrp::saveConfig()
       _pid["DCmin"] = double_with_n_digits(profile->dcmin, 1);
       _pid["DCmax"] = double_with_n_digits(profile->dcmax, 1);
       _pid["jp"] = profile->jumppw;
+      _pid["SPmin"] = double_with_n_digits(profile->spmin, 1);
+      _pid["SPmax"] = double_with_n_digits(profile->spmax, 1);
+      _pid["link"] = profile->link;
       _pid["ol"] = profile->opl;
     }
   }
