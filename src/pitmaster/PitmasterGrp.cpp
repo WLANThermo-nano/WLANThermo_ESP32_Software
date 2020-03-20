@@ -170,7 +170,7 @@ void PitmasterGrp::enable(boolean enabled)
     {
       if (pitmasters[i] != NULL)
       {
-        pitmasters[i]->disableActuators();
+        pitmasters[i]->disableActuators(false);
       }
     }
   }

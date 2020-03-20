@@ -112,7 +112,7 @@ public:
   bool startAutoTune();
   float pidCalc();
   void pidReset();
-  void disableActuators();
+  void disableActuators(boolean allowdelay);
   boolean isDutyCycleTestRunning();
   boolean isAutoTuneRunning();
   static void setSupplyPin(uint8_t ioPin);

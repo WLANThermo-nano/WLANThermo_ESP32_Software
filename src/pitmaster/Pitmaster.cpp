@@ -193,7 +193,7 @@ boolean Pitmaster::startAutoTune()
     // macht Autotune überhaupt Sinn?
     if (this->autoTune->set - currenttemp > (this->targetTemperature * 0.05))
     {                             // mindestens 5% von Set
-        this->disableActuators(); // SWITCH OF HEATER
+        this->disableActuators(false); // SWITCH OF HEATER
         this->autoTune->run = 2;  // AUTOTUNE INITALIZED
         this->autoTune->max = this->profile->jumppw;
         PMPRINTPLN("[AT]\t Start!");
@@ -400,14 +400,14 @@ boolean Pitmaster::checkAutoTune()
     if (currentTemp > (this->autoTune->set + ATOVERTEMP))
     {
         PMPRINTPLN("f:AT OVERTEMP");
-        this->disableActuators();
+        this->disableActuators(false);
         this->autoTune->stop = 2;
     }
 
     if ((time - this->autoTune->time[0]) > ATTIMELIMIT)
     { // 20 Minutes
         PMPRINTPLN("f:AT TIMEOUT");
-        this->disableActuators();
+        this->disableActuators(false);
         this->autoTune->stop = 3;
     }
 
@@ -488,7 +488,7 @@ void Pitmaster::update()
     switch (this->type)
     {
     case pm_off:
-        this->disableActuators();
+        this->disableActuators(true);
         break;
     case pm_auto:
         this->value = (false == this->openLid.detected) ? this->pidCalc() : 0u;
@@ -531,8 +531,8 @@ void Pitmaster::controlActuators()
         else 
         {
             // linear link
-            linkedvalue = ((int) this->value * 0.1) * 10.0;
-            Serial.println(linkedvalue);
+            linkedvalue = (ceil(this->value * 0.1)) * 10.0;
+            //Serial.println(linkedvalue);
         }
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
         
@@ -691,8 +691,16 @@ void Pitmaster::enableStepUp(boolean enable)
     }
 }
 
-void Pitmaster::disableActuators()
+void Pitmaster::disableActuators(boolean allowdelay)
 {
+
+    if (true == allowdelay && (initActuator == SERVO || initActuator == DAMPER)) {
+        this->controlServo(0, this->profile->spmin, this->profile->spmax);
+        initActuator = NOAR;
+        Serial.println("ServoOFF");
+        return;
+    }
+    
     dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);

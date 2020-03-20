@@ -825,7 +825,7 @@ bool BodyWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
       byte temppid = _pitmaster["pid"];
       if (temppid != pm->getAssignedProfile()->id)
       {
-        pm->disableActuators();
+        pm->disableActuators(false);
         //Serial.println("PID-Wechsel");
       }
       pm->assignProfile(gSystem->getPitmasterProfile(temppid));
