@@ -3947,30 +3947,42 @@
 				byId('pitmaster_channel_show' + id.toString()).style.display = "none";
 				byId('pitmaster_set_show' + id.toString()).style.display = "none";
 				byId('pitmaster_profile_show' + id.toString()).style.display = "none";
-				byId('pid_settings_show').style.display = "none";
-				byId('advanced_settings_show').style.display = "none";
 				break;
 			case 'manual':
 				byId('pitmaster_value_show' + id.toString()).style.display = "inline";	
 				byId('pitmaster_channel_show' + id.toString()).style.display = "none";
 				byId('pitmaster_set_show' + id.toString()).style.display = "none";
 				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
-				byId('pid_settings_show').style.display = "none";
-				byId('advanced_settings_show').style.display = "none";
 				break;
 			case 'auto':
 				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
 				byId('pitmaster_value_show' + id.toString()).style.display = "none";
 				byId('pitmaster_channel_show' + id.toString()).style.display = "inline";
 				byId('pitmaster_set_show' + id.toString()).style.display = "inline";			
-				byId('pid_settings_show').style.display = "inline";
-				byId('advanced_settings_show').style.display = "inline";
 				break;
 			default:
 				byId('pitmaster_profile_show' + id.toString()).style.display = "inline";
 				byId('pitmaster_value_show' + id.toString()).style.display = "inline";
 				byId('pitmaster_channel_show' + id.toString()).style.display = "inline";
 				byId('pitmaster_set_show' + id.toString()).style.display = "inline";
+		} 		
+	}
+
+	function changeProfilShow(id){		
+		switch(byId('pitmaster_typ' + id.toString()).value) {
+			case 'off':
+				byId('pid_settings_show').style.display = "none";
+				byId('advanced_settings_show').style.display = "none";
+				break;
+			case 'manual':
+				byId('pid_settings_show').style.display = "none";
+				byId('advanced_settings_show').style.display = "none";
+				break;
+			case 'auto':
+				byId('pid_settings_show').style.display = "inline";
+				byId('advanced_settings_show').style.display = "inline";
+				break;
+			default:
 				byId('pid_settings_show').style.display = "inline";
 				byId('advanced_settings_show').style.display = "inline";
 		} 		
@@ -4080,6 +4092,7 @@
 		if(byId('pitmaster_settings').style.display == "inline"){
 			showPitmasterProfileSettings(byId('pid_profile' + id.toString()).value);
 			showPitmasterProfile(id, byId('pid_profile' + id.toString()).value);
+			changeProfilShow(id);
 			byId('pitmaster_settings').style.display = "none";
 			byId('pitmaster_profile').style.display = "inline";		
 		}else{
