@@ -170,7 +170,7 @@ void API::pidAry(JsonArray &jAry, int cc)
 {
   for (int i = 0; i < gSystem->getPitmasterProfileCount(); i++)
   { // pidsize
-    PitmasterProfile *profile = gSystem->profile[i];
+    PitmasterProfile *profile = gSystem->getPitmasterProfile(i);
 
     JsonObject &_pid = jAry.createNestedObject();
     _pid["name"] = profile->name;

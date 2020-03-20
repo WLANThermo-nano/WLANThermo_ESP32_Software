@@ -71,7 +71,7 @@ void PitmasterGrp::loadConfig()
       if (pm != NULL)
       {
         pm->assignTemperature(gSystem->temperatures[_master[pitsize]["ch"]]);
-        pm->assignProfile(gSystem->profile[_master[pitsize]["pid"].as<uint8_t>()]);
+        pm->assignProfile(gSystem->getPitmasterProfile(_master[pitsize]["pid"].as<uint8_t>()));
         pm->setTargetTemperature(_master[pitsize]["set"]);
         pm->setType((PitmasterType)_master[pitsize]["act"].as<uint8_t>());
 

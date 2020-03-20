@@ -38,6 +38,7 @@ SystemBase::SystemBase()
   cpuName = "esp32";
   language = "de";
   hardwareVersion = 1u;
+  pitmasterProfileCount = 0u;
   powerSaveModeSupport = false;
   powerSaveModeEnabled = false;
   damperSupport = false;

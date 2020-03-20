@@ -33,7 +33,7 @@
 #include "Item.h"
 
 #define MAX_PITMASTERS 2u
-#define MAX_PITMASTERPROFILES 3u
+#define MAX_PITMASTERPROFILES 4u
 
 enum class SystemEdition
 {
@@ -63,7 +63,6 @@ public:
   void saveConfig();
   void loadConfig();
   boolean isInitDone();
-  PitmasterProfile *profile[MAX_PITMASTERPROFILES];
   Notification notification;
   Wlan wlan;
   SdCard *sdCard;
@@ -92,7 +91,8 @@ public:
 
 protected:
   Buzzer *buzzer;
-  const uint8_t pitmasterProfileCount = MAX_PITMASTERPROFILES;
+  PitmasterProfile *profile[MAX_PITMASTERPROFILES];
+  uint8_t pitmasterProfileCount;
   String deviceName;
   String cpuName;
   static char serialNumber[13];

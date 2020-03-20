@@ -828,7 +828,7 @@ bool BodyWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
         pm->disableActuators();
         //Serial.println("PID-Wechsel");
       }
-      pm->assignProfile(gSystem->profile[temppid]);
+      pm->assignProfile(gSystem->getPitmasterProfile(temppid));
     }
     else
       return 0;
@@ -890,10 +890,10 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
       id = _pid["id"];
     else
       break;
-    if (id >= (sizeof(gSystem->profile)/sizeof(PitmasterProfile*)))
+    if (id >= gSystem->getPitmasterProfileCount())
       break;
 
-    PitmasterProfile *profile = gSystem->profile[id];
+    PitmasterProfile *profile = gSystem->getPitmasterProfile(id);
 
     if (_pid.containsKey("name"))
       profile->name = _pid["name"].asString();
