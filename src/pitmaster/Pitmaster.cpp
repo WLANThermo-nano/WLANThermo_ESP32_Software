@@ -513,7 +513,7 @@ void Pitmaster::controlActuators()
         break;
     case SERVO:
         this->enableStepUp(false);
-        this->controlServo(this->value, this->profile->dcmin, this->profile->dcmax);
+        this->controlServo(this->value, this->profile->spmin, this->profile->spmax);
         break;
     case SSR:
         this->enableStepUp(true);
@@ -626,11 +626,11 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
     prevValue = newValue;
 }
 
-void Pitmaster::controlServo(float newValue, float newDcMin, float newDcMax)
+void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
 {
     // limits from global actor
-    uint16_t spmin = newDcMin * 10u; // 1. Nachkommastelle
-    uint16_t spmax = newDcMax * 10u; // 1. Nachkommastelle
+    uint16_t spmin = newSPMin * 10u; // 1. Nachkommastelle
+    uint16_t spmax = newSPMax * 10u; // 1. Nachkommastelle
 
     // duty cycle calculation
     // frequency: 50Hz --> 20ms

@@ -908,22 +908,12 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pid.containsKey("DCmmin"))
     {
       val = _pid["DCmmin"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
-      {
-        profile->dcmin = getDC(val * 10) / 10.0;
-      }
-      else
-        profile->dcmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      profile->dcmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("DCmmax"))
     {
-      val = _pid["DCmmax"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
-      {
-        profile->dcmax = getDC(val * 10) / 10.0;
-      }
-      else
-        profile->dcmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      val = _pid["DCmmax"] ;
+      profile->dcmax = constrain(val* 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("opl"))
       profile->opl = _pid["opl"];
@@ -934,7 +924,7 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pid.containsKey("SPmin"))
     {
       val = _pid["SPmin"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && (profile->actuator == SERVO || profile->actuator == DAMPER))
       {
         profile->spmin = getDC(val * 10) / 10.0;
       }
@@ -944,7 +934,7 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pid.containsKey("SPmax"))
     {
       val = _pid["SPmax"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && (profile->actuator == SERVO || profile->actuator == DAMPER))
       {
         profile->spmax = getDC(val * 10) / 10.0;
       }

@@ -127,7 +127,7 @@ private:
   void controlActuators();
   void initActuators();
   void controlFan(float newValue, float newDcMin, float newDcMax);
-  void controlServo(float newValue, float newDcMin, float newDcMax);
+  void controlServo(float newValue, float newSPMin, float newSPMax);
   void controlSSR(float newValue, float newDcMin, float newDcMax);
   void enableStepUp(boolean enable);
   PitmasterType type;
