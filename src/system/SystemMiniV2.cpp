@@ -124,7 +124,7 @@ void SystemMiniV2::init()
 
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 25, 75, 100, 25, 75};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Damper", 3, 3, 3.8, 0.01, 128, 25, 100, 70, 25, 75, 0};
 
   // Add Damper support
