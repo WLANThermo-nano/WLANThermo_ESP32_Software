@@ -193,7 +193,7 @@ boolean Pitmaster::startAutoTune()
     // macht Autotune überhaupt Sinn?
     if (this->autoTune->set - currenttemp > (this->targetTemperature * 0.05))
     {                             // mindestens 5% von Set
-        this->disableActuators(); // SWITCH OF HEATER
+        this->disableActuators(false); // SWITCH OF HEATER
         this->autoTune->run = 2;  // AUTOTUNE INITALIZED
         this->autoTune->max = this->profile->jumppw;
         PMPRINTPLN("[AT]\t Start!");
@@ -400,14 +400,14 @@ boolean Pitmaster::checkAutoTune()
     if (currentTemp > (this->autoTune->set + ATOVERTEMP))
     {
         PMPRINTPLN("f:AT OVERTEMP");
-        this->disableActuators();
+        this->disableActuators(false);
         this->autoTune->stop = 2;
     }
 
     if ((time - this->autoTune->time[0]) > ATTIMELIMIT)
     { // 20 Minutes
         PMPRINTPLN("f:AT TIMEOUT");
-        this->disableActuators();
+        this->disableActuators(false);
         this->autoTune->stop = 3;
     }
 
@@ -488,7 +488,7 @@ void Pitmaster::update()
     switch (this->type)
     {
     case pm_off:
-        this->disableActuators();
+        this->disableActuators(true);
         break;
     case pm_auto:
         this->value = (false == this->openLid.detected) ? this->pidCalc() : 0u;
@@ -502,6 +502,9 @@ void Pitmaster::update()
 
 void Pitmaster::controlActuators()
 {
+    float linkedvalue;
+    initActuators();
+
     switch (this->profile->actuator)
     {
     case FAN:
@@ -510,14 +513,86 @@ void Pitmaster::controlActuators()
         break;
     case SERVO:
         this->enableStepUp(false);
-        this->controlServo(this->value, this->profile->dcmin, this->profile->dcmax);
+        this->controlServo(this->value, this->profile->spmin, this->profile->spmax);
         break;
-        case SSR:
+    case SSR:
         this->enableStepUp(true);
         this->controlSSR(this->value, this->profile->dcmin, this->profile->dcmax);
         break;
+    case DAMPER:
+        this->enableStepUp(true);
+        this->controlFan(this->value, this->profile->dcmin, this->profile->dcmax);
+        if (0 == this->profile->link)
+        {
+            // degressiv link
+            if (this->value > 0) linkedvalue = 100;
+            else linkedvalue = 0;
+        }
+        else 
+        {
+            // linear link
+            linkedvalue = (ceil(this->value * 0.1)) * 10.0;
+            //Serial.println(linkedvalue);
+        }
+        this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
+        
+        break;
     default:
         break;
+    }
+}
+
+void Pitmaster::initActuators()
+{
+    switch (this->profile->actuator)
+    {
+        case FAN:
+            if(initActuator != FAN)
+            {
+                ledcDetachPin(this->ioPin1);
+                ledcDetachPin(this->ioPin2);
+                dacWrite(this->ioPin1, 0u);
+                initActuator = FAN;
+            }
+            break;
+        case SERVO:
+            if(initActuator != SERVO)
+            {
+                dacWrite(this->ioPin1, 0u);
+                ledcDetachPin(this->ioPin1);
+                ledcDetachPin(this->ioPin2);
+                ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
+                ledcAttachPin(this->ioPin2, this->channel2);
+                ledcWrite(this->channel2, 0u);
+                initActuator = SERVO;
+            }
+            break;
+        case SSR:
+            if(initActuator != SSR)
+            {
+                dacWrite(this->ioPin1, 0u);
+                ledcDetachPin(this->ioPin1);
+                ledcDetachPin(this->ioPin2);
+                ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
+                ledcAttachPin(this->ioPin1, this->channel1);
+                ledcWrite(this->channel1, 0u);
+                initActuator = SSR;
+            }
+            break;
+        case DAMPER:
+            if(initActuator != DAMPER)
+            {
+                ledcDetachPin(this->ioPin1);
+                ledcDetachPin(this->ioPin2);
+                dacWrite(this->ioPin1, 0u);
+                ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
+                ledcAttachPin(this->ioPin2, this->channel2);
+                ledcWrite(this->channel2, 0u);
+                initActuator = DAMPER;
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -539,14 +614,6 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
         newDc = map(FAN_BOOST_VALUE, 0, 100, dcmin, dcmax);
     }
 
-    if(initActuator != FAN)
-    {
-        ledcDetachPin(this->ioPin1);
-        ledcDetachPin(this->ioPin2);
-        dacWrite(this->ioPin1, 0u);
-        initActuator = FAN;
-    }
-
     if (0u == newValue)
     {
         dacWrite(this->ioPin1, 0u);
@@ -559,11 +626,11 @@ void Pitmaster::controlFan(float newValue, float newDcMin, float newDcMax)
     prevValue = newValue;
 }
 
-void Pitmaster::controlServo(float newValue, float newDcMin, float newDcMax)
+void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
 {
     // limits from global actor
-    uint16_t dcmin = newDcMin * 10u; // 1. Nachkommastelle
-    uint16_t dcmax = newDcMax * 10u; // 1. Nachkommastelle
+    uint16_t spmin = newSPMin * 10u; // 1. Nachkommastelle
+    uint16_t spmax = newSPMax * 10u; // 1. Nachkommastelle
 
     // duty cycle calculation
     // frequency: 50Hz --> 20ms
@@ -571,28 +638,18 @@ void Pitmaster::controlServo(float newValue, float newDcMin, float newDcMax)
     // resolution: 20.000us / 65535 --> 0,305us
     // servo min duty cyle:  550us / 0,305...us --> 1802
     // servo min duty cyle: 2250us / 0,305...us --> 7373
-    const uint16_t dutyCycleMin = 1802u;
-    const uint16_t dutyCycleMax = 7373u;
+    const uint16_t servoPulseMin = 1802u;
+    const uint16_t servoPulseMax = 7373u;
 
-    dcmin = map(dcmin, 0, 1000, dutyCycleMin, dutyCycleMax);
-    dcmax = map(dcmax, 0, 1000, dutyCycleMin, dutyCycleMax);
-    uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
-    uint32_t prevDc = ledcRead(this->channel2);
+    spmin = map(spmin, 0, 1000, servoPulseMin, servoPulseMax);
+    spmax = map(spmax, 0, 1000, servoPulseMin, servoPulseMax);
 
-    if(initActuator != SERVO)
+    uint32_t newSp = map(newValue, 0, 100, spmin, spmax);
+    uint32_t prevSp = ledcRead(this->channel2);
+
+    if (newSp != prevSp)
     {
-        dacWrite(this->ioPin1, 0u);
-        ledcDetachPin(this->ioPin1);
-        ledcDetachPin(this->ioPin2);
-        ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
-        ledcAttachPin(this->ioPin2, this->channel2);
-        ledcWrite(this->channel2, 0u);
-        initActuator = SERVO;
-    }
-
-    if (newDc != prevDc)
-    {
-        ledcWrite(this->channel2, newDc);
+        ledcWrite(this->channel2, newSp);
     }
 }
 
@@ -610,17 +667,6 @@ void Pitmaster::controlSSR(float newValue, float newDcMin, float newDcMax)
     uint32_t prevDc = ledcRead(this->channel1);
 
     prevValue = newValue;
-
-    if(initActuator != SSR)
-    {
-        dacWrite(this->ioPin1, 0u);
-        ledcDetachPin(this->ioPin1);
-        ledcDetachPin(this->ioPin2);
-        ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
-        ledcAttachPin(this->ioPin1, this->channel1);
-        ledcWrite(this->channel1, 0u);
-        initActuator = SSR;
-    }
 
     if (0u == newValue)
     {
@@ -645,8 +691,16 @@ void Pitmaster::enableStepUp(boolean enable)
     }
 }
 
-void Pitmaster::disableActuators()
+void Pitmaster::disableActuators(boolean allowdelay)
 {
+
+    if (true == allowdelay && (initActuator == SERVO || initActuator == DAMPER)) {
+        this->controlServo(0, this->profile->spmin, this->profile->spmax);
+        initActuator = NOAR;
+        Serial.println("ServoOFF");
+        return;
+    }
+    
     dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);

@@ -825,10 +825,10 @@ bool BodyWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
       byte temppid = _pitmaster["pid"];
       if (temppid != pm->getAssignedProfile()->id)
       {
-        pm->disableActuators();
+        pm->disableActuators(false);
         //Serial.println("PID-Wechsel");
       }
-      pm->assignProfile(gSystem->profile[temppid]);
+      pm->assignProfile(gSystem->getPitmasterProfile(temppid));
     }
     else
       return 0;
@@ -890,10 +890,10 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
       id = _pid["id"];
     else
       break;
-    if (id >= (sizeof(gSystem->profile)/sizeof(PitmasterProfile*)))
+    if (id >= gSystem->getPitmasterProfileCount())
       break;
 
-    PitmasterProfile *profile = gSystem->profile[id];
+    PitmasterProfile *profile = gSystem->getPitmasterProfile(id);
 
     if (_pid.containsKey("name"))
       profile->name = _pid["name"].asString();
@@ -908,22 +908,12 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pid.containsKey("DCmmin"))
     {
       val = _pid["DCmmin"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
-      {
-        profile->dcmin = getDC(val * 10) / 10.0;
-      }
-      else
-        profile->dcmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      profile->dcmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("DCmmax"))
     {
-      val = _pid["DCmmax"];
-      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
-      {
-        profile->dcmax = getDC(val * 10) / 10.0;
-      }
-      else
-        profile->dcmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      val = _pid["DCmmax"] ;
+      profile->dcmax = constrain(val* 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("opl"))
       profile->opl = _pid["opl"];
@@ -931,6 +921,28 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
       profile->autotune = _pid["tune"];
     if (_pid.containsKey("jp"))
       profile->jumppw = constrain(_pid["jp"], 10, 100);
+    if (_pid.containsKey("SPmin"))
+    {
+      val = _pid["SPmin"];
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && (profile->actuator == SERVO || profile->actuator == DAMPER))
+      {
+        profile->spmin = getDC(val * 10) / 10.0;
+      }
+      else
+        profile->spmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+    }
+    if (_pid.containsKey("SPmax"))
+    {
+      val = _pid["SPmax"];
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && (profile->actuator == SERVO || profile->actuator == DAMPER))
+      {
+        profile->spmax = getDC(val * 10) / 10.0;
+      }
+      else
+        profile->spmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+    }
+    if (_pid.containsKey("link"))
+      profile->link = _pid["link"];
 
     ii++;
   }

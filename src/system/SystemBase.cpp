@@ -38,8 +38,10 @@ SystemBase::SystemBase()
   cpuName = "esp32";
   language = "de";
   hardwareVersion = 1u;
+  pitmasterProfileCount = 0u;
   powerSaveModeSupport = false;
   powerSaveModeEnabled = false;
+  damperSupport = false;
   initDone = false;
   wireSemaHandle = xSemaphoreCreateMutex();
   esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "NULL", &this->wirePmHandle);
@@ -290,4 +292,9 @@ String SystemBase::getResetReason(uint8_t cpuId)
   }
 
   return resetString;
+}
+
+boolean SystemBase::getSupportDamper()
+{
+  return this->damperSupport;
 }
