@@ -95,6 +95,8 @@
 				pitAktor:"Actuator",
 				pitDCmin:"DCmin [0-100%]",
 				pitDCmax:"DCmax [0-100%]",
+				pitSPmin:"SPmin [0-100%]",
+				pitSPmax:"SPmax [0-100%]",
 				pidTitle:"PID",
 				pidKp:"Kp",
 				pidKi:"Ki",
@@ -102,7 +104,11 @@
 				pidJump:"Jump Power [10-100%]",
 				pidAutotune:"Auto tune",
 				pitAdvancesTitle:"Advanced",
-				pitLid:"Lid monitoring"
+				pitNameTitle:"General",
+				pitLid:"Lid monitoring",
+				pitlink:"Linking Actuators",
+				pitlinkdegressiv:"degressive",
+				pitlinklinear:"linear"
 			};
 	var de = {
 				// Reiter System-Einstellungen
@@ -201,12 +207,18 @@
 				pitAktor:"Aktor",
 				pitDCmin:"DCmin [0-100%]",
 				pitDCmax:"DCmax [0-100%]",
+				pitSPmin:"SPmin [0-100%]",
+				pitSPmax:"SPmax [0-100%]",
 				pidTitle:"PID",
 				pidKp:"Kp",
 				pidKi:"Ki",
 				pidKd:"Kd",
 				pidJump:"Jump Power [10-100%]",					
 				pidAutotune:"Autotune",
-				pitAdvancesTitle:"Spezialfunktionen",		
-				pitLid:"Deckelüberwachung"					
+				pitAdvancesTitle:"Spezialfunktionen",
+				pitNameTitle:"Allgemein",		
+				pitLid:"Deckelüberwachung",
+				pitlink:"Aktorverknüfung",
+				pitlinkdegressiv:"degressiv",
+				pitlinklinear:"linear"					
 			};

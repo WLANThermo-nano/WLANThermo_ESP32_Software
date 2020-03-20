@@ -2850,9 +2850,9 @@
 				  <td><span onclick="backPidProfile();"><span class="icon-arrow_left"></span><span data-tag="back">Zurück</span></span></td>
 				  <td><span onclick="setPitmasterProfile();"><span data-tag="save">Speichern</span><span class="icon-arrow_right"></span></span></td>
 				</tr>
-			</table>	
-			<div id="aktorik_settings_show">
-				<h3 class="headtitle" data-tag="pitAktorTitle">Aktorik</h3>
+			</table>
+			<div id="pid_profile_name_show">
+				<h3 class="headtitle" data-tag="pitNameTitle">Allgemein</h3>
 				<div class="pure-g">
 					<div class="pure-u-1-1 pure-u-lg-1-1">
 						<div class="1-box channel_conf">
@@ -2861,28 +2861,72 @@
 								  <input type="text" id="pid_name" maxlength="12" required="required"/>
 								  <label class="control-label" for="input"><span data-tag="pitProfileName">Profil-Name</span></label><i class="bar"></i>
 								</div>
+							</form>	
+						</div>
+					</div>
+				</div>
+			</div>	
+			<div id="aktorik_settings_show">
+				<h3 class="headtitle" data-tag="pitAktorTitle">Aktorik</h3>
+				<div class="pure-g">
+					<div class="pure-u-1-1 pure-u-lg-1-1">
+						<div class="1-box channel_conf">
+							<form>
 								<div class="form-group">
-									<select id="pitmaster_profile_aktor"></select>
+									<select id="pitmaster_profile_aktor" onchange="changeActuatorTyp()"></select>
 									<label class="control-label" onchange="" for="select"><span data-tag="pitAktor">Aktor</span></label><i class="bar"></i>
 								</div>
-								<table class="table50" cellpadding="0" cellspacing="0" width="100%" border="0">
-									<tr>
-									  <td>
-										<div class="form-group">
-										  <input type="text" id="pid_DCmin" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
-										  <label class="control-label" for="input"><span data-tag="pitDCmin">DCmin [0-100%]</span></label><i class="bar"></i>
-										  <span class="icon-play icon-input" onclick="setDC('0');"></span>
-										</div>
-									  </td>
-									  <td>	
-										<div class="form-group">
-										  <input type="text" id="pid_DCmax" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
-										  <label class="control-label" for="input"><span data-tag="pitDCmax">DCmax [0-100%]</span></label><i class="bar"></i>
-										  <span class="icon-play icon-input" onclick="setDC('1');"></span>
-										</div>							  
-									  </td>
-									</tr>
-								</table>
+								<div id="pid_dcvalue_show">
+									<div class="form-group">
+										<table class="table50" cellpadding="0" cellspacing="0" width="100%" border="0">
+											<tr>
+									  			<td>
+													<div class="form-group">
+										  				<input type="text" id="pid_DCmin" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
+										  				<label class="control-label" for="input"><span data-tag="pitDCmin">DCmin [0-100%]</span></label><i class="bar"></i>
+										  				<span class="icon-play icon-input" onclick="setDC('0');"></span>
+													</div>
+									  			</td>
+									  			<td>	
+													<div class="form-group">
+										  				<input type="text" id="pid_DCmax" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
+										  				<label class="control-label" for="input"><span data-tag="pitDCmax">DCmax [0-100%]</span></label><i class="bar"></i>
+										  				<span class="icon-play icon-input" onclick="setDC('1');"></span>
+													</div>							  
+									  			</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+								<div id="pid_spvalue_show">
+									<div class="form-group">
+										<table class="table50" cellpadding="0" cellspacing="0" width="100%" border="0">
+											<tr>
+									  			<td>
+													<div class="form-group">
+										  				<input type="text" id="pid_SPmin" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
+										  				<label class="control-label" for="input"><span data-tag="pitSPmin">SPmin [0-100%]</span></label><i class="bar"></i>
+													</div>
+									  			</td>
+									  			<td>	
+													<div class="form-group">
+										  				<input type="text" id="pid_SPmax" maxlength="4" onkeyup="validateNumber(this,'1');" required="required"/>
+										  				<label class="control-label" for="input"><span data-tag="pitSPmax">SPmax [0-100%]</span></label><i class="bar"></i>
+													</div>							  
+									  			</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+								<div id="pid_link_show">
+									<div class="form-group">
+							  			<select id="pid_link">
+											<option value="0" data-tag="pitlinkkdegressiv">degressiv</option>
+											<option value="1" data-tag="pitlinklinear">linear</option>
+							  			</select>
+							  			<label class="control-label" for="select" data-tag="pitlink">Aktorverknüpfung</label><i class="bar"></i>
+									</div>
+								</div>
 							</form>	
 						</div>
 					</div>
@@ -3889,6 +3933,7 @@
 				byId('pitmaster_settings').style.display = "inline";
 				showPitmasterProfile(pitID, jr.pitmaster.pm[pitID].pid);
 				changePitmasterTyp(pitID);
+				changeActuatorTyp();
 				document.getElementById('pitmaster_id' + pitID.toString()).style.display = "block";
 			}
 			showLoader('false');
@@ -3928,6 +3973,25 @@
 				byId('pitmaster_set_show' + id.toString()).style.display = "inline";
 				byId('pid_settings_show').style.display = "inline";
 				byId('advanced_settings_show').style.display = "inline";
+		} 		
+	}
+
+	function changeActuatorTyp(){		
+		switch(byId('pitmaster_profile_aktor').value) {
+			case '3':
+				byId('pid_dcvalue_show').style.display = "inline";
+				byId('pid_spvalue_show').style.display = "inline";
+				byId('pid_link_show').style.display = "inline";
+				break;
+			case '2':
+				byId('pid_dcvalue_show').style.display = "none";
+				byId('pid_spvalue_show').style.display = "inline";
+				byId('pid_link_show').style.display = "none";
+				break;
+			default:
+				byId('pid_dcvalue_show').style.display = "inline";
+				byId('pid_spvalue_show').style.display = "none";
+				byId('pid_link_show').style.display = "none";
 		} 		
 	}
 	
@@ -3971,7 +4035,11 @@
 		byId('pid_opl').checked = jr.pid[profile].opl;
 		byId('pid_auto').checked = jr.pid[profile].tune;
 		byId('pid_jump').value = jr.pid[profile].jp;
+		byId('pid_SPmin').value = jr.pid[profile].SPmin;
+		byId('pid_SPmax').value = jr.pid[profile].SPmax;
+		byId('pid_link').value = jr.pid[profile].link;
 		showLoader('false');
+		changeActuatorTyp();
 		})
 	}
 
@@ -3990,7 +4058,7 @@
 		}
 		byId('pid_profile' + id.toString()).value = profile;
 		showLoader('false');
-		})			
+		})		
 	}
 	
 	function togglePitmasterView(id){
@@ -4040,6 +4108,9 @@
 			jr.pid[profile].opl = byId('pid_opl').checked;
 			jr.pid[profile].tune = byId('pid_auto').checked;
 			jr.pid[profile].jp = byId('pid_jump').value;
+			jr.pid[profile].SPmin = byId('pid_SPmin').value;
+			jr.pid[profile].SPmax = byId('pid_SPmax').value;
+			jr.pid[profile].link = byId('pid_link').value;
 			var data = JSON.stringify(jr.pid);
 			loadJSON('setpid', data, '60000', function (response) {
 				togglePitmasterView();

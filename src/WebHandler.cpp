@@ -931,6 +931,28 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
       profile->autotune = _pid["tune"];
     if (_pid.containsKey("jp"))
       profile->jumppw = constrain(_pid["jp"], 10, 100);
+    if (_pid.containsKey("SPmin"))
+    {
+      val = _pid["SPmin"];
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
+      {
+        profile->spmin = getDC(val * 10) / 10.0;
+      }
+      else
+        profile->spmin = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+    }
+    if (_pid.containsKey("SPmax"))
+    {
+      val = _pid["SPmax"];
+      if (val >= SERVOPULSMIN && val <= SERVOPULSMAX && profile->actuator == SERVO)
+      {
+        profile->spmax = getDC(val * 10) / 10.0;
+      }
+      else
+        profile->spmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+    }
+    if (_pid.containsKey("link"))
+      profile->link = _pid["link"];
 
     ii++;
   }
