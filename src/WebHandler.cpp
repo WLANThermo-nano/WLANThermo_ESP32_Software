@@ -135,6 +135,7 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     {
       json["Connect"] = true;
       json["SSID"] = WiFi.SSID();
+      json["BSSID"] = WiFi.BSSIDstr();
       json["IP"] = WiFi.localIP().toString();
       json["Mask"] = WiFi.subnetMask().toString();
       json["Gate"] = WiFi.gatewayIP().toString();
@@ -146,17 +147,23 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
       json["IP"] = WiFi.softAPIP().toString();
     }
 
+    String filterDuplicates;
     JsonArray &_scan = json.createNestedArray("Scan");
-    for (int i = 0; i < n; i++)
+    for (uint8_t i = 0; i < n; i++)
     {
+      if(filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
+        continue;
+
+      filterDuplicates += "||" + WiFi.SSID(i) + "||";
       JsonObject &_wifi = _scan.createNestedObject();
       _wifi["SSID"] = WiFi.SSID(i);
+      _wifi["BSSID"] = WiFi.BSSIDstr(i);
       _wifi["RSSI"] = WiFi.RSSI(i);
       _wifi["Enc"] = WiFi.encryptionType(i);
-      if (WiFi.status() == WL_CONNECTED & WiFi.SSID(i) == WiFi.SSID())
+      if ((WiFi.status() == WL_CONNECTED) && (WiFi.SSID(i) == WiFi.SSID()) && (WiFi.BSSIDstr(i) == WiFi.BSSIDstr()))
       {
+        json["RSSI"] = WiFi.RSSI();
         json["Enc"] = WiFi.encryptionType(i);
-        json["RSSI"] = WiFi.RSSI(i);
       }
     }
   }

@@ -4396,8 +4396,7 @@
 		loadJSON('networklist', '', '3000', function (response) {
 			try {
 				jr = JSON.parse(response);
-				jr.Scan.sort(function(a,b) {return b.RSSI - a.RSSI;});
-				jr.Scan = getUnique(jr.Scan,'SSID');				
+				jr.Scan.sort(function(a,b) {return b.RSSI - a.RSSI;});		
 				byId('networklist').innerHTML = '';
 				byId('networkconnect').innerHTML = '';
 				var table_networklist = byId('networklist');
@@ -4406,7 +4405,7 @@
 					byId('hr_wifi').style.display = "";
 					var row = table_networkconnect.insertRow(0);
 					addCell(row,getIcon('ok'),'row-Check','0');
-					addCell(row,jr.SSID,'row-SSID','1');
+					addCell(row,jr.SSID + " (" + jr.BSSID + ")",'row-SSID','1');
 					addCell(row,getRSSIIcon(jr.RSSI),'row-RSSI','2');
 					addCell(row,getWifiSecureIcon(jr.Enc),'row-Enc','3');
 					addCell(row,'','row-link','4');
