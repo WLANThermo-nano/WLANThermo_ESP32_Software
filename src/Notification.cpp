@@ -82,10 +82,7 @@ void Notification::update()
   if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
   {
     // Testnachricht
-    if(Cloud::sendAPI(APINOTE, NOTELINK, NOPARA))
-      Serial.println("Testnachricht success");
-    else
-      Serial.println("Testnachricht failed");
+    Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
   }
   else if (this->notificationData.index > 0)
   { // CHANNEL NOTIFICATION

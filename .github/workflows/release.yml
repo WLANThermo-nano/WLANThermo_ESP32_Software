@@ -81,7 +81,7 @@ jobs:
         id: get_version
         run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -90,7 +90,7 @@ jobs:
           asset_name: mini_v1_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -99,7 +99,7 @@ jobs:
           asset_name: mini_v2_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -108,7 +108,7 @@ jobs:
           asset_name: mini_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -117,7 +117,7 @@ jobs:
           asset_name: nano_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -126,7 +126,7 @@ jobs:
           asset_name: mini_v1_esp32_NX3224T028-0_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -135,7 +135,7 @@ jobs:
           asset_name: mini_v1_esp32_NX3224T028-180_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -144,7 +144,7 @@ jobs:
           asset_name: mini_v1_esp32_NX3224K028-0_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -153,7 +153,7 @@ jobs:
           asset_name: mini_v1_esp32_NX3224K028-180_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -162,7 +162,7 @@ jobs:
           asset_name: mini_v2_esp32_NX3224T028-0_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -171,7 +171,7 @@ jobs:
           asset_name: mini_v2_esp32_NX3224T028-180_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -180,7 +180,7 @@ jobs:
           asset_name: mini_v2_esp32_NX3224K028-0_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -189,7 +189,7 @@ jobs:
           asset_name: mini_v2_esp32_NX3224K028-180_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -198,7 +198,7 @@ jobs:
           asset_name: mini_v3_esp32_NX3224K024-0_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

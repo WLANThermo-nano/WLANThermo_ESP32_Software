@@ -22,7 +22,7 @@
 
 #include <Arduino.h>
 #include <TimeLib.h>
-#include <AsyncTCP.h>
+#include <asyncHTTPrequest.h>
 
 typedef struct
 {
@@ -85,7 +85,7 @@ public:
   String newToken();
   uint8_t state;
   static void checkAPI();
-  static bool sendAPI(int apiIndex, int urlIndex, int parIndex);
+  static void sendAPI(int apiIndex, int urlIndex, int parIndex);
 
   static uint8_t serverurlCount;
   static ServerData serverurl[]; // 0:api, 1: note, 2:cloud
@@ -93,18 +93,12 @@ public:
 
 private:
   String createToken();
+  static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
   static void readUTCfromHeader(String payload);
   static tmElements_t *string_to_tm(tmElements_t *tme, char *str);
-  static void readContentLengthfromHeader(String payload, int len);
-  static void checkContentTypfromHeader(String payload, int len);
-  static void readLocation(String payload, int len);
-  static void printClient(const char *link, int arg);
-  static String createCommand(bool meth, int para, const char *link, const char *host, int content);
-
+  void handleQueue();
   CloudConfig config;
-  static int log_length;
-  static int log_typ;
-  static int apicontent;
-  static AsyncClient *apiClient;
+  static asyncHTTPrequest apiClient;
+  static QueueHandle_t apiQueue;
   uint16_t intervalCounter;
 };
