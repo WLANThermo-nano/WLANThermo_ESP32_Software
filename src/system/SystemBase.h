@@ -33,7 +33,7 @@
 #include "Item.h"
 
 #define MAX_PITMASTERS 2u
-#define MAX_PITMASTERPROFILES 3u
+#define MAX_PITMASTERPROFILES 4u
 
 enum class SystemEdition
 {
@@ -63,7 +63,6 @@ public:
   void saveConfig();
   void loadConfig();
   boolean isInitDone();
-  PitmasterProfile *profile[MAX_PITMASTERPROFILES];
   Notification notification;
   Wlan wlan;
   SdCard *sdCard;
@@ -81,6 +80,7 @@ public:
   uint8_t getHardwareVersion();
   void setPowerSaveMode(boolean enabled);
   String getResetReason(uint8_t cpuId);
+  boolean getSupportDamper();
   TemperatureGrp temperatures;
   PitmasterGrp pitmasters;
   Battery *battery;
@@ -91,7 +91,8 @@ public:
 
 protected:
   Buzzer *buzzer;
-  const uint8_t pitmasterProfileCount = MAX_PITMASTERPROFILES;
+  PitmasterProfile *profile[MAX_PITMASTERPROFILES];
+  uint8_t pitmasterProfileCount;
   String deviceName;
   String cpuName;
   static char serialNumber[13];
@@ -99,6 +100,7 @@ protected:
   uint8_t hardwareVersion;
   boolean powerSaveModeSupport;
   boolean powerSaveModeEnabled;
+  boolean damperSupport;
   boolean initDone;
   SemaphoreHandle_t wireSemaHandle;
   esp_pm_lock_handle_t wirePmHandle;
