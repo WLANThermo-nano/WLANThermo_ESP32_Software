@@ -53,7 +53,7 @@ bool TemperatureGrp::setUnit(TemperatureUnit unit)
 
   if (hasChanged)
   {
-    for (uint8_t i = 0; i < MAX_TEMPERATURES; i++)
+    for (uint8_t i = 0; i < count(); i++)
     {
       if (temperatures[i] != NULL)
       {
@@ -75,7 +75,7 @@ TemperatureBase *TemperatureGrp::getNextActive(uint8_t index)
 {
   TemperatureBase *activeTemperature = NULL;
 
-  for (uint8_t i = index; i < MAX_TEMPERATURES; i++)
+  for (uint8_t i = index; i < count(); i++)
   {
     if (temperatures[i] != NULL)
     {
@@ -90,6 +90,46 @@ TemperatureBase *TemperatureGrp::getNextActive(uint8_t index)
   return activeTemperature;
 }
 
+uint32_t TemperatureGrp::getActiveBits()
+{
+  uint32_t bits = 0u;
+
+  TemperatureBase *activeTemperature = NULL;
+
+  for (uint8_t i = 0u; i < count(); i++)
+  {
+    if (temperatures[i] != NULL)
+    {
+      if (temperatures[i]->isActive())
+      {
+        bits |= (1u << i);
+      }
+    }
+  }
+
+  return bits;
+}
+
+uint8_t TemperatureGrp::getActiveCount()
+{
+  uint8_t activeCount = 0u;
+
+  TemperatureBase *activeTemperature = NULL;
+
+  for (uint8_t i = 0u; i < count(); i++)
+  {
+    if (temperatures[i] != NULL)
+    {
+      if (temperatures[i]->isActive())
+      {
+        activeCount++;
+      }
+    }
+  }
+
+  return activeCount;
+}
+
 uint8_t TemperatureGrp::count()
 {
   return this->addIndex;
@@ -99,7 +139,7 @@ boolean TemperatureGrp::hasAlarm()
 {
   boolean hasAlarm = false;
 
-  for (uint8_t i = 0; i < MAX_TEMPERATURES; i++)
+  for (uint8_t i = 0; i < count(); i++)
   {
     if (temperatures[i] != NULL)
     {
@@ -125,7 +165,7 @@ void TemperatureGrp::loadConfig()
     else
       return;
 
-    for (int i = 0; i < MAX_TEMPERATURES; i++)
+    for (int i = 0; i < count(); i++)
     {
       TemperatureBase *temperature = temperatures[i];
       if (temperature != NULL)
@@ -155,7 +195,7 @@ void TemperatureGrp::saveConfig()
   JsonArray &_alarm = json.createNestedArray("talarm");
   JsonArray &_color = json.createNestedArray("tcolor");
 
-  for (int i = 0; i < MAX_TEMPERATURES; i++)
+  for (int i = 0; i < count(); i++)
   {
     TemperatureBase *temperature = temperatures[i];
     if (temperature)
@@ -173,5 +213,5 @@ void TemperatureGrp::saveConfig()
 
 TemperatureBase *TemperatureGrp::operator[](int index)
 {
-  return (index < MAX_TEMPERATURES) ? temperatures[index] : NULL;
+  return (index < count()) ? temperatures[index] : NULL;
 }
