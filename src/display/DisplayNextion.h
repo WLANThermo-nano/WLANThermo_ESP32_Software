@@ -52,6 +52,7 @@ private:
   static void showTemperatureSettings(void *ptr);
   static void saveTemperatureSettings(void *ptr);
   static void navigateTemperature(void *ptr);
+  static void acknowledgeAlarm(void *ptr);
   static void enterSystemSettingsPage(void *ptr);
   static void saveSystemSettings(void *ptr);
   static void enterWifiSettingsPage(void *ptr);

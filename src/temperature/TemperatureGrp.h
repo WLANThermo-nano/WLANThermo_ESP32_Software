@@ -38,6 +38,7 @@ public:
   uint32_t getActiveBits();
   uint8_t getActiveCount();
   boolean hasAlarm();
+  void acknowledgeAlarm();
   void saveConfig();
   void loadConfig();
 

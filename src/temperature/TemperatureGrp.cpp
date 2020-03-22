@@ -153,6 +153,20 @@ boolean TemperatureGrp::hasAlarm()
   return hasAlarm;
 }
 
+void TemperatureGrp::acknowledgeAlarm()
+{
+  for (uint8_t i = 0; i < count(); i++)
+  {
+    if (temperatures[i] != NULL)
+    {
+      if (temperatures[i]->getAlarmStatus() != NoAlarm)
+      {
+        temperatures[i]->acknowledgeAlarm();
+      }
+    }
+  }
+}
+
 void TemperatureGrp::loadConfig()
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);

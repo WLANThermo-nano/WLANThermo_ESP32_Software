@@ -72,6 +72,7 @@ uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, N
 #define BUTTON_CHANNEL_ID 10u
 #define BUTTON_TEMPB_ID 64u
 #define BUTTON_TEMPF_ID 65u
+#define BUTTON_ALARM_ID 73u
 #define HOTSPOT_TEMP0_ID 66u
 #define HOTSPOT_TEMP1_ID 67u
 #define HOTSPOT_TEMP2_ID 68u
@@ -100,6 +101,7 @@ NexHotspot nexTemperatures[NEXTION_TEMPERATURES_PER_PAGE] = {
 
 static NexButton tempButtonB = NexButton(PAGE_TEMP_MAIN_ID, BUTTON_TEMPB_ID, "");
 static NexButton tempButtonF = NexButton(PAGE_TEMP_MAIN_ID, BUTTON_TEMPF_ID, "");
+static NexButton alarmButton = NexButton(PAGE_TEMP_MAIN_ID, BUTTON_ALARM_ID, "");
 
 static NexButton pitButtonChannel = NexButton(PAGE_PITMASTER_SETTINGS_ID, BUTTON_CHANNEL_ID, "");
 
@@ -124,6 +126,7 @@ NexTouch *nex_listen_list[] = {
     &nexTemperatures[5],
     &tempButtonB,
     &tempButtonF,
+    &alarmButton,
     &hotspotSaveTemp,
     &pitButtonChannel,
     &menuWifiSettings,
@@ -204,6 +207,7 @@ boolean DisplayNextion::initDisplay()
 
     tempButtonB.attachPop(DisplayNextion::navigateTemperature, (void *)BUTTON_TEMPB_ID);
     tempButtonF.attachPop(DisplayNextion::navigateTemperature, (void *)BUTTON_TEMPF_ID);
+    alarmButton.attachPop(DisplayNextion::acknowledgeAlarm, NULL);
     menuWifiSettings.attachPop(DisplayNextion::enterWifiSettingsPage, this);
     menuSystemSettings.attachPop(DisplayNextion::enterSystemSettingsPage, this);
     menuPitmaster1Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
@@ -504,6 +508,11 @@ void DisplayNextion::navigateTemperature(void *ptr)
     tempPageIndex = newPageIndex;
     updateTemperaturePage(true);
   }
+}
+
+void DisplayNextion::acknowledgeAlarm(void *ptr)
+{
+  system->temperatures.acknowledgeAlarm();
 }
 
 void DisplayNextion::saveSystemSettings(void *ptr)
