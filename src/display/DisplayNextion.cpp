@@ -480,6 +480,8 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   temperature->setAlarmSetting((AlarmSetting)alarmSetting);
 
   updateTemperaturePage(true);
+  sendCommand("page temp_main");
+
 
   // save config
   system->temperatures.saveConfig();
