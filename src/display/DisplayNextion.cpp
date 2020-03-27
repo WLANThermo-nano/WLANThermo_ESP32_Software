@@ -40,7 +40,7 @@ extern "C"
 #endif
 
 #define NEXTION_TEMPERATURES_PER_PAGE 6u
-#define UPDATE_ALL_TEMPERATURES 0xFFFFFFFFu
+#define UPDATE_ALL 0xFFFFFFFFu
 #define NEXTION_SERIAL_TIMEOUT 100u
 #define NEXTION_INVALID_PAGE 0xFFu
 #define NEXTION_RETURN_CURRENT_PAGE_ID 0x66u
@@ -57,6 +57,7 @@ extern "C"
 uint16_t AlarmColorMap[3u] = {NEXTION_COLOR_NO_ALARM, NEXTION_COLOR_MIN_ALARM, NEXTION_COLOR_MAX_ALARM};
 
 /* PAGE ID */
+#define PAGE_BOOT_ID 0u
 #define PAGE_TEMP_MAIN_ID 1u
 #define PAGE_TEMP_LOAD_ID 2u
 #define PAGE_TEMP_SETTINGS_ID 3u
@@ -141,6 +142,7 @@ NexTouch *nex_listen_list[] = {
     NULL};
 
 uint32_t DisplayNextion::updateTemperature = 0u;
+uint32_t DisplayNextion::updatePitmaster = 0u;
 SystemBase *DisplayNextion::system = gSystem;
 uint8_t DisplayNextion::serialTimeout = 0u;
 boolean DisplayNextion::wifiScanInProgress = false;
@@ -193,7 +195,7 @@ boolean DisplayNextion::initDisplay()
       return false;
     }
 
-    if (getCurrentPageNumber() != 0u)
+    if (getCurrentPageNumber() != PAGE_BOOT_ID)
     {
       sendCommand("page 0");
     }
@@ -223,9 +225,23 @@ boolean DisplayNextion::initDisplay()
       }
     }
 
+    // register for all pitmaster callbacks
+    for (uint8_t i = 0; i < system->pitmasters.count(); i++)
+    {
+      Pitmaster *pitmaster = system->pitmasters[i];
+      if (pitmaster != NULL)
+      {
+        pitmaster->registerCallback(pitmasterUpdateCb, this);
+      }
+    }
+
     setSymbols(true);
     updateTemperaturePage(true);
     sendCommand("page temp_main");
+
+    // restore display timeout
+    String setTimeout = "thsp=" + String(this->timeout);
+    sendCommand(setTimeout.c_str());
 
     didInit = true;
   }
@@ -239,14 +255,17 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
 
   uint8_t visibleCount = 0u;
   uint32_t activeBits = system->temperatures.getActiveBits();
-  boolean updatePage = (activeBits != activeBitsOld) ? true : forceUpdate;
+  boolean updatePage = forceUpdate;
   uint32_t skippedTemperatures = 0u;
 
-  if(updatePage)
+  if((activeBits != activeBitsOld) || (UPDATE_ALL == updateTemperature) || (UPDATE_ALL == updatePitmaster))
+    updatePage = true;
+
+  if (updatePage)
   {
-    if(getCurrentPageNumber() == PAGE_TEMP_MAIN_ID)
+    if (getCurrentPageNumber() == PAGE_TEMP_MAIN_ID)
       sendCommand("page temp_load");
-    
+
     uint32_t numOfTemperatures = system->temperatures.getActiveCount();
     numOfTemperatures = (0u == numOfTemperatures) ? system->temperatures.count() : numOfTemperatures;
     uint8_t numOfPages = (numOfTemperatures / NEXTION_TEMPERATURES_PER_PAGE) + 1u;
@@ -263,12 +282,15 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
   {
     if (activeBits & (1u << i))
     {
-      if(skippedTemperatures >= tempPageIndex * NEXTION_TEMPERATURES_PER_PAGE)
+      if (skippedTemperatures >= tempPageIndex * NEXTION_TEMPERATURES_PER_PAGE)
       {
-        if(updatePage)
+        if (updatePage)
           setTemperatureAllItems(visibleCount, system->temperatures[i]);
-        else if(updateTemperature & (1u << i))
+        else if (updateTemperature & (1u << i))
           setTemperatureCurrent(visibleCount, system->temperatures[i]);
+        
+        if (updatePitmaster & (1u << i))
+          setTemperaturePitmasterName(visibleCount, system->temperatures[i]);
 
         visibleCount++;
       }
@@ -278,16 +300,17 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
       }
     }
   }
-  if(updatePage)
-    NexVariable(DONT_CARE, DONT_CARE, "temp_main.Count").setValue(visibleCount);
-  
-  updateTemperature = 0u;
 
-  if(updatePage)
+  if (updatePage)
   {
-    if(getCurrentPageNumber() == PAGE_TEMP_LOAD_ID)
+    NexVariable(DONT_CARE, DONT_CARE, "temp_main.Count").setValue(visibleCount);
+
+    if (getCurrentPageNumber() == PAGE_TEMP_LOAD_ID)
       sendCommand("page temp_main");
   }
+
+  updateTemperature = 0u;
+  updatePitmaster = 0u;
 }
 
 void DisplayNextion::updatePitmasterChannel(void *ptr)
@@ -351,12 +374,20 @@ void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean s
 {
   DisplayNextion *displayNextion = (DisplayNextion *)userData;
 
-  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL_TEMPERATURES : (1u << temperature->getGlobalIndex());
+  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL: (1u << temperature->getGlobalIndex());
+}
+
+void DisplayNextion::pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData)
+{
+  TemperatureBase *temperature = pitmaster->getAssignedTemperature();
+
+  updatePitmaster |= (true == settingsChanged) ? UPDATE_ALL: (1u << temperature->getGlobalIndex());
 }
 
 void DisplayNextion::update()
 {
   static uint8_t updateInProgress = false;
+  static boolean wakeup = false;
 
   if (this->disabled)
     return;
@@ -372,8 +403,16 @@ void DisplayNextion::update()
   }
 
   nexLoop(nex_listen_list);
-  setSymbols();
+
+  // check if we came from sleep
+  if (getCurrentPageNumber() == PAGE_BOOT_ID)
+  {
+    updateTemperaturePage(true);
+    sendCommand("page temp_main");
+  }
+
   updateTemperaturePage();
+  setSymbols();
   updateWifiSettingsPage();
 }
 
@@ -482,7 +521,6 @@ void DisplayNextion::saveTemperatureSettings(void *ptr)
   updateTemperaturePage(true);
   sendCommand("page temp_main");
 
-
   // save config
   system->temperatures.saveConfig();
 }
@@ -496,16 +534,16 @@ void DisplayNextion::navigateTemperature(void *ptr)
   numOfTemperatures = (0u == numOfTemperatures) ? system->temperatures.count() : numOfTemperatures;
   uint8_t numOfPages = (numOfTemperatures / NEXTION_TEMPERATURES_PER_PAGE) + 1u;
 
-  if(newPageIndex < 0)
+  if (newPageIndex < 0)
   {
     newPageIndex = numOfPages - 1u;
   }
-  else if(newPageIndex >= numOfPages)
+  else if (newPageIndex >= numOfPages)
   {
     newPageIndex = 0u;
   }
 
-  if(tempPageIndex != newPageIndex)
+  if (tempPageIndex != newPageIndex)
   {
     tempPageIndex = newPageIndex;
     updateTemperaturePage(true);
@@ -520,6 +558,8 @@ void DisplayNextion::acknowledgeAlarm(void *ptr)
 void DisplayNextion::saveSystemSettings(void *ptr)
 {
   char unit[20] = "";
+  uint32_t value = 0u;
+  DisplayNextion *display = (DisplayNextion *)ptr;
 
   memset(unit, 0u, sizeof(unit));
   NexText(DONT_CARE, DONT_CARE, "Unit").getText(unit, sizeof(unit));
@@ -532,6 +572,11 @@ void DisplayNextion::saveSystemSettings(void *ptr)
   {
     system->temperatures.setUnit(TemperatureUnit::Celsius);
   }
+
+  QUERY(NexVariable(DONT_CARE, DONT_CARE, "timeoutV").getValue(&value));
+  display->timeout = value;
+
+  display->saveConfig();
 
   sendCommand("page menu_main");
 }
@@ -563,6 +608,7 @@ void DisplayNextion::enterWifiSettingsPage(void *ptr)
 
 void DisplayNextion::enterSystemSettingsPage(void *ptr)
 {
+  DisplayNextion *display = (DisplayNextion *)ptr;
   TemperatureUnit temperatureUnit = system->temperatures.getUnit();
 
   if (TemperatureUnit::Fahrenheit == temperatureUnit)
@@ -574,7 +620,9 @@ void DisplayNextion::enterSystemSettingsPage(void *ptr)
     NexText(DONT_CARE, DONT_CARE, "Unit").setText("Celsius");
   }
 
-  hotspotSaveSystem.attachPop(DisplayNextion::saveSystemSettings, system);
+  NexVariable(DONT_CARE, DONT_CARE, "timeoutV").setValue(display->timeout);
+
+  hotspotSaveSystem.attachPop(DisplayNextion::saveSystemSettings, ptr);
   sendCommand("page sys_settings");
 }
 
@@ -614,7 +662,7 @@ void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
 
     hotspotSavePitmaster.attachPop(DisplayNextion::savePitmasterSettings, system);
     pitButtonChannel.attachPop(DisplayNextion::updatePitmasterChannel, NULL);
-    sendCommand("page pitm_settings");   
+    sendCommand("page pitm_settings");
   }
 }
 
@@ -728,8 +776,16 @@ void DisplayNextion::setCounts()
 
 void DisplayNextion::setTemperatureAllItems(uint8_t nexIndex, TemperatureBase *temperature)
 {
+  if (system->pitmasters.getActivePitmaster(temperature))
+  {
+    setTemperaturePitmasterName(nexIndex, temperature);
+  }
+  else
+  {
+    setTemperatureName(nexIndex, temperature);
+  }
+
   setTemperatureColor(nexIndex, temperature);
-  setTemperatureName(nexIndex, temperature);
   setTemperatureMin(nexIndex, temperature);
   setTemperatureMax(nexIndex, temperature);
   setTemperatureNumber(nexIndex, temperature);
@@ -754,6 +810,23 @@ void DisplayNextion::setTemperatureName(uint8_t nexIndex, TemperatureBase *tempe
   sprintf(item, "temp_main.%s%d", "Name", nexIndex);
 
   NexText(DONT_CARE, DONT_CARE, item).setText(temperature->getName().c_str());
+}
+
+void DisplayNextion::setTemperaturePitmasterName(uint8_t nexIndex, TemperatureBase *temperature)
+{
+  char text[20];
+  char item[20];
+  Pitmaster *pitmaster = system->pitmasters.getActivePitmaster(temperature);
+
+  if (pitmaster != NULL)
+  {
+    if(pitmaster->getType() == PitmasterType::pm_auto)
+    {
+      sprintf(text, "P%d:%i\xb0/%d%%", pitmaster->getGlobalIndex() + 1u, (int)pitmaster->getTargetTemperature(), (uint8_t)pitmaster->getValue());
+      sprintf(item, "temp_main.%s%d", "Name", nexIndex);
+      NexText(DONT_CARE, DONT_CARE, item).setText(text);
+    }
+  }
 }
 
 void DisplayNextion::setTemperatureMin(uint8_t nexIndex, TemperatureBase *temperature)

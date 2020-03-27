@@ -51,6 +51,7 @@ protected:
   boolean blocked;
   DisplayOrientation orientation;
   String modelName;
+  uint16_t timeout;
 };
 
 extern DisplayBase *gDisplay;

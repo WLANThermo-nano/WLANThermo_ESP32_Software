@@ -40,6 +40,7 @@ private:
   static void setTemperatureAllItems(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureColor(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureName(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperaturePitmasterName(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureMin(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureMax(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureNumber(uint8_t nexIndex, TemperatureBase *temperature);
@@ -65,9 +66,11 @@ private:
   void updateWifiSettingsPage();
   boolean initDisplay();
   static void temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData);
+  static void pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData);
   static void task(void *parameter);
   static SystemBase *system;
   static uint32_t updateTemperature;
+  static uint32_t updatePitmaster;
   static uint8_t serialTimeout;
   static boolean wifiScanInProgress;
   static ESPNexUpload nexUpload;
