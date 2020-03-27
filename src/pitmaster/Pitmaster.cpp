@@ -45,8 +45,6 @@
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
-extern bool setconfig(byte count, const char *data[2]);
-
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
 uint8_t Pitmaster::globalIndexTracker = 0u;
@@ -67,6 +65,11 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->channel2 = channel2;
     this->initActuator = NOAR;
     this->globalIndex = this->globalIndexTracker++;
+    this->registeredCb = NULL;
+    this->settingsChanged = false;
+    this->registeredCbUserData = NULL;
+    this->cbValue = 0u;
+
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
     pinMode(this->ioPin1, OUTPUT);
@@ -79,6 +82,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 void Pitmaster::setType(PitmasterType type)
 {
     this->type = type;
+    settingsChanged = true;
 }
 
 PitmasterType Pitmaster::getType()
@@ -92,6 +96,7 @@ void Pitmaster::assignProfile(PitmasterProfile *profile)
     {
         this->pidReset();
         this->profile = profile;
+        settingsChanged = true;
     }
 }
 
@@ -104,6 +109,7 @@ void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
     this->temperature = temperature;
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
+    settingsChanged = true;
 }
 
 TemperatureBase *Pitmaster::getAssignedTemperature()
@@ -124,11 +130,40 @@ void Pitmaster::setValue(float value)
 void Pitmaster::setTargetTemperature(float temperature)
 {
     this->targetTemperature = temperature;
+    settingsChanged = true;
 }
 
 float Pitmaster::getTargetTemperature()
 {
     return this->targetTemperature;
+}
+
+void Pitmaster::registerCallback(PitmasterCallback_t callback, void *userData)
+{
+  this->registeredCb = callback;
+  this->registeredCbUserData = userData;
+}
+
+void Pitmaster::unregisterCallback()
+{
+  this->registeredCb = NULL;
+}
+
+void Pitmaster::handleCallbacks()
+{
+  if (this->registeredCb != NULL)
+  {
+    if (true == settingsChanged)
+    {
+        this->registeredCb(this, settingsChanged, this->registeredCbUserData);
+        settingsChanged = false;
+    }
+    else if(cbValue != value)
+    {
+      this->registeredCb(this, settingsChanged, this->registeredCbUserData);
+      cbValue = this->value;
+    }
+  }
 }
 
 boolean Pitmaster::checkPause()

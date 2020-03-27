@@ -46,6 +46,7 @@ void PitmasterGrp::update()
     if (pitmasters[i] != NULL)
     {
       pitmasters[i]->update();
+      pitmasters[i]->handleCallbacks();
     }
   }
 }
@@ -176,6 +177,25 @@ void PitmasterGrp::enable(boolean enabled)
   }
 
   this->enabled = enabled;
+}
+
+Pitmaster* PitmasterGrp::getActivePitmaster(TemperatureBase *temperature)
+{
+  Pitmaster* pit = NULL;
+
+  for (uint8_t i = 0u; i < MAX_PITMASTERS; i++)
+  {
+    if (pitmasters[i] != NULL)
+    {
+      if((pitmasters[i]->getAssignedTemperature()) == temperature && (PitmasterType::pm_auto == pitmasters[i]->getType()))
+      {
+        pit = pitmasters[i];
+        break;
+      }
+    }
+  }
+
+  return pit;
 }
 
 Pitmaster *PitmasterGrp::operator[](int index)

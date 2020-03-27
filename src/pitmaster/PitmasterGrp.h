@@ -35,6 +35,7 @@ public:
   void saveConfig();
   void loadConfig();
   void enable(boolean enabled);
+  Pitmaster* getActivePitmaster(TemperatureBase *temperature);
 
 private:
   Pitmaster *pitmasters[MAX_PITMASTERS];

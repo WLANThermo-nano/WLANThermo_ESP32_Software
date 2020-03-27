@@ -49,6 +49,7 @@ TemperatureBase::TemperatureBase()
   this->cbAlarmStatus = NoAlarm;
   this->calcTemperature = typeFunctions[0];
   this->fixedSensor = false;
+  this->acknowledgedAlarm = false;
 }
 
 TemperatureBase::~TemperatureBase()
@@ -236,6 +237,9 @@ AlarmStatus TemperatureBase::getAlarmStatus()
     status = MinAlarm;
   else if (this->currentValue >= this->maxValue)
     status = MaxAlarm;
+
+  if(NoAlarm == status)
+    acknowledgedAlarm = false;
 
   return status;
 }

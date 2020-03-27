@@ -127,8 +127,9 @@ void SystemBase::update()
       this->notification.check(temperatures[i]);
       AlarmStatus alarmStatus = temperatures[i]->getAlarmStatus();
       AlarmSetting alarmSetting = temperatures[i]->getAlarmSetting();
+      boolean acknowledged = temperatures[i]->isAlarmAcknowledged();
 
-      if ((alarmStatus != NoAlarm) && ((AlarmViaSummer == alarmSetting) || (AlarmAll == alarmSetting)))
+      if ((alarmStatus != NoAlarm) && (false == acknowledged) && ((AlarmViaSummer == alarmSetting) || (AlarmAll == alarmSetting)))
         buzzerAlarm = true;
     }
   }
