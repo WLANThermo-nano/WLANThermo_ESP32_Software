@@ -1,4 +1,4 @@
-$nextionEditorUrl = "https://nextion.tech/download/nextion-setup-v059.zip"
+$nextionEditorUrl = "https://nextion.tech/download/nextion-setup-v1-60-0.zip"
 $nextionEditorZip = $PSScriptRoot + "\nextion.zip"
 $nextionEditorFolder = $PSScriptRoot + "\nextion"
 $nextionEditor = $PSScriptRoot + "\nextion\NextionEditor.exe"
