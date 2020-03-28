@@ -723,13 +723,13 @@ bool BodyWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   bool refresh = cloudConfig.enabled;
 
   if (_chart.containsKey("PMQhost"))
-    mqttConfig.host = _chart["PMQhost"].asString();
+    strcpy(mqttConfig.host, _chart["PMQhost"].asString());
   if (_chart.containsKey("PMQport"))
     mqttConfig.port = _chart["PMQport"];
   if (_chart.containsKey("PMQuser"))
-    mqttConfig.user = _chart["PMQuser"].asString();
+    strcpy(mqttConfig.user, _chart["PMQuser"].asString());
   if (_chart.containsKey("PMQpass"))
-    mqttConfig.password = _chart["PMQpass"].asString();
+    strcpy(mqttConfig.password, _chart["PMQpass"].asString());
   if (_chart.containsKey("PMQqos"))
     mqttConfig.QoS = _chart["PMQqos"];
   if (_chart.containsKey("PMQon"))
