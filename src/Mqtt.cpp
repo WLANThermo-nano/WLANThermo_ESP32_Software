@@ -161,7 +161,7 @@ void Mqtt::onMqttConnect(bool sessionPresent)
   adress += gSystem->wlan.getHostName();
   adress += F("/#");
   uint16_t packetIdSub = pmqttClient.subscribe(adress.c_str(), 2);
-  MQPRINTP("[MQTT]\tSubscribing at QoS 2, packetId: ");
+  MQPRINTP("[MQTT]\tSubscribing, packetId: ");
   MQPRINTLN(packetIdSub);
   sendSettingsflag = true;
   intervalCounter = 0u;
@@ -257,6 +257,7 @@ bool Mqtt::sendData()
   {
     String payload_data = API::apiData(APIDATA);
     pmqttClient.publish(prefixgen(1).c_str(), gSystem->mqtt.config.QoS, false, payload_data.c_str());
+    MQPRINTPLN("[MQTT] Send: /data ");
     return true;
   }
   else
@@ -272,6 +273,7 @@ bool Mqtt::sendSettings()
   {
     String payload_settings = API::apiData(APISETTINGS);
     pmqttClient.publish(prefixgen(2).c_str(), gSystem->mqtt.config.QoS, false, payload_settings.c_str());
+    MQPRINTPLN("[MQTT] Send: /settings ");
     return true;
   }
   else
