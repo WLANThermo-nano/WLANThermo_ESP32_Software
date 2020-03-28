@@ -54,7 +54,8 @@ typedef struct TDutyCycleTest
 } DutyCycleTest;
 
 // AUTOTUNE
-struct AutoTune {
+struct AutoTune
+{
    uint32_t set;                // BETRIEBS-TEMPERATUR
    unsigned long time[3];       // TIME VECTOR
    float temp[3];               // TEMPERATURE VECTOR
@@ -75,6 +76,8 @@ typedef struct TOpenLid
    float temp;            // Temperatur by Open Lid
    int  count;            // Open Lid Count
 } OpenLid;
+
+typedef void (*PitmasterCallback_t)(class Pitmaster *, boolean, void *);
 
 enum PitmasterType
 {
@@ -108,6 +111,7 @@ public:
   void setValue(float value);
   void setTargetTemperature(float temperature);
   float getTargetTemperature();
+  uint8_t getGlobalIndex() { return this->globalIndex; };
   bool startDutyCycleTest(uint8_t actuator, uint8_t value);
   bool startAutoTune();
   float pidCalc();
@@ -115,6 +119,9 @@ public:
   void disableActuators(boolean allowdelay);
   boolean isDutyCycleTestRunning();
   boolean isAutoTuneRunning();
+  void registerCallback(PitmasterCallback_t callback, void *userData);
+  void unregisterCallback();
+  void handleCallbacks();
   static void setSupplyPin(uint8_t ioPin);
   void virtual update();
 
@@ -142,6 +149,10 @@ private:
   uint8_t channel1;
   uint8_t channel2;
   PitMasterActuator initActuator;
+  PitmasterCallback_t registeredCb;
+  boolean settingsChanged;
+  void *registeredCbUserData;
+  float cbValue;
 
   // all pitmasters objects will share one supply IO
   static uint8_t ioSupply;
@@ -152,7 +163,6 @@ private:
 
   float value;
   
-
   float esum;   // PITMASTER I-PART DIFFERENZ SUM
   float elast;  // PITMASTER D-PART DIFFERENZ LAST
   float Ki_alt; // PITMASTER I-PART CACHE

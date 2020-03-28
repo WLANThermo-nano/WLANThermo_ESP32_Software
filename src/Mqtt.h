@@ -24,12 +24,14 @@
 #include <AsyncMqttClient.h>
 #include "Settings.h"
 
+#define MQTT_STRING_SIZE 30u
+
 typedef struct
 {
-  String host;
+  char host[MQTT_STRING_SIZE];
   uint16_t port;
-  String user;
-  String password;
+  char user[MQTT_STRING_SIZE];
+  char password[MQTT_STRING_SIZE];
   byte QoS;
   bool enabled;
   int interval;

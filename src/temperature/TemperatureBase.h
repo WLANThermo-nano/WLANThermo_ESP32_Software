@@ -79,6 +79,8 @@ public:
   void setUnit(TemperatureUnit unit);
   uint8_t getNotificationCounter();
   void setNotificationCounter(uint8_t notificationCounter);
+  void acknowledgeAlarm() { acknowledgedAlarm = true; };
+  boolean isAlarmAcknowledged() { return acknowledgedAlarm; };
   void updateNotificationCounter();
   void registerCallback(TemperatureCallback_t callback, void *userData);
   void unregisterCallback();
@@ -109,6 +111,7 @@ private:
   boolean settingsChanged;
   void *registeredCbUserData;
   AlarmStatus cbAlarmStatus;
+  boolean acknowledgedAlarm;
   float cbCurrentValue;
   static uint8_t globalIndexTracker;
   float getUnitValue(float value);

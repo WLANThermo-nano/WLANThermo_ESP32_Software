@@ -37,17 +37,23 @@ public:
 
 private:
   static void setCounts();
-  static void setTemperatureAllItems(TemperatureBase *temperature);
-  static void setTemperatureColor(TemperatureBase *temperature);
-  static void setTemperatureName(TemperatureBase *temperature);
-  static void setTemperatureMin(TemperatureBase *temperature);
-  static void setTemperatureMax(TemperatureBase *temperature);
-  static void setTemperatureCurrent(TemperatureBase *temperature);
+  static void setTemperatureAllItems(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureColor(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureName(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperaturePitmasterName(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureMin(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureMax(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureNumber(uint8_t nexIndex, TemperatureBase *temperature);
+  static void setTemperatureCurrent(uint8_t nexIndex, TemperatureBase *temperature);
+  static void updateTemperaturePage(boolean forceUpdate = false);
+  
   static void setSymbols(boolean forceUpdate = false);
   static uint8_t getCurrentPageNumber();
   static uint32_t htmlColorToRgb565(String htmlColor);
   static void showTemperatureSettings(void *ptr);
   static void saveTemperatureSettings(void *ptr);
+  static void navigateTemperature(void *ptr);
+  static void acknowledgeAlarm(void *ptr);
   static void enterSystemSettingsPage(void *ptr);
   static void saveSystemSettings(void *ptr);
   static void enterWifiSettingsPage(void *ptr);
@@ -56,14 +62,18 @@ private:
   static void wifiConnect(void *ptr);
   static void enterPitmasterSettingsPage(void *ptr);
   static void savePitmasterSettings(void *ptr);
+  static void updatePitmasterChannel(void *ptr);
   void updateWifiSettingsPage();
   boolean initDisplay();
   static void temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData);
+  static void pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData);
   static void task(void *parameter);
   static SystemBase *system;
   static uint32_t updateTemperature;
+  static uint32_t updatePitmaster;
   static uint8_t serialTimeout;
   static boolean wifiScanInProgress;
   static ESPNexUpload nexUpload;
   static int8_t wifiIndex;
+  static uint8_t tempPageIndex;
 };

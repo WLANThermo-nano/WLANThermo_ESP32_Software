@@ -26,6 +26,7 @@ DisplayBase::DisplayBase()
   this->blocked = false;
   this->orientation = DisplayOrientation::_0;
   this->modelName = "";
+  this->timeout = 0u;
 }
 
 DisplayBase::DisplayBase(SystemBase *system)
@@ -50,6 +51,7 @@ void DisplayBase::saveConfig()
   JsonObject &json = jsonBuffer.createObject();
   json["disabled"] = this->disabled;
   json["orientation"] = (uint16_t)this->orientation;
+  json["timeout"] = this->timeout;
   Settings::write(kDisplay, json);
 }
 
@@ -65,6 +67,8 @@ void DisplayBase::loadConfig()
       this->disabled = json["disabled"].as<boolean>();
     if (json.containsKey("orientation"))
       this->orientation = (DisplayOrientation)json["orientation"].as<uint16_t>();
+    if (json.containsKey("timeout"))
+      this->timeout = json["timeout"].as<uint16_t>();
   }
 }
 

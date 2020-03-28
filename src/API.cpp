@@ -196,10 +196,10 @@ void API::iotObj(JsonObject &jObj)
 {
   MqttConfig mqttConfig = gSystem->mqtt.getConfig();
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
-  jObj["PMQhost"] = mqttConfig.host;
+  jObj["PMQhost"] = String(mqttConfig.host);
   jObj["PMQport"] = mqttConfig.port;
-  jObj["PMQuser"] = mqttConfig.user;
-  jObj["PMQpass"] = mqttConfig.password;
+  jObj["PMQuser"] = String(mqttConfig.user);
+  jObj["PMQpass"] = String(mqttConfig.password);
   jObj["PMQqos"] = mqttConfig.QoS;
   jObj["PMQon"] = mqttConfig.enabled;
   jObj["PMQint"] = mqttConfig.interval;

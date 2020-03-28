@@ -65,10 +65,10 @@ void Mqtt::update()
 
         Settings::onWrite(onSettingsWrite);
 
-        pmqttClient.setServer(gSystem->mqtt.config.host.c_str(), gSystem->mqtt.config.port);
+        pmqttClient.setServer(gSystem->mqtt.config.host, gSystem->mqtt.config.port);
 
-        if (gSystem->mqtt.config.user != "" && gSystem->mqtt.config.password != "")
-          pmqttClient.setCredentials(gSystem->mqtt.config.user.c_str(), gSystem->mqtt.config.password.c_str());
+        if (strlen(gSystem->mqtt.config.user) && strlen(gSystem->mqtt.config.password))
+          pmqttClient.setCredentials(gSystem->mqtt.config.user, gSystem->mqtt.config.password);
       }
 
       pmqttClient.connect();
@@ -102,13 +102,13 @@ void Mqtt::loadConfig()
   {
 
     if (json.containsKey("host"))
-      config.host = json["host"].asString();
+      strcpy(config.host, json["host"].asString());
     if (json.containsKey("port"))
       config.port = json["port"];
     if (json.containsKey("user"))
-      config.user = json["user"].asString();
+      strcpy(config.user, json["user"].asString());
     if (json.containsKey("password"))
-      config.password = json["password"].asString();
+      strcpy(config.password, json["password"].asString());
     if (json.containsKey("QoS"))
       config.QoS = json["QoS"];
     if (json.containsKey("enabled"))
@@ -136,11 +136,11 @@ void Mqtt::setConfig(MqttConfig newConfig)
   intervalCounter = 0u;
 
   // update MQTT server settings
-  pmqttClient.setServer(gSystem->mqtt.config.host.c_str(), gSystem->mqtt.config.port);
+  pmqttClient.setServer(gSystem->mqtt.config.host, gSystem->mqtt.config.port);
 
   // update credentials
-  if (gSystem->mqtt.config.user != "" && gSystem->mqtt.config.password != "")
-    pmqttClient.setCredentials(gSystem->mqtt.config.user.c_str(), gSystem->mqtt.config.password.c_str());
+  if (strlen(gSystem->mqtt.config.user) && strlen(gSystem->mqtt.config.password))
+    pmqttClient.setCredentials(gSystem->mqtt.config.user, gSystem->mqtt.config.password);
 
   // save to NvM
   saveConfig();
@@ -161,7 +161,7 @@ void Mqtt::onMqttConnect(bool sessionPresent)
   adress += gSystem->wlan.getHostName();
   adress += F("/#");
   uint16_t packetIdSub = pmqttClient.subscribe(adress.c_str(), 2);
-  MQPRINTP("[MQTT]\tSubscribing at QoS 2, packetId: ");
+  MQPRINTP("[MQTT]\tSubscribing, packetId: ");
   MQPRINTLN(packetIdSub);
   sendSettingsflag = true;
   intervalCounter = 0u;
@@ -257,6 +257,7 @@ bool Mqtt::sendData()
   {
     String payload_data = API::apiData(APIDATA);
     pmqttClient.publish(prefixgen(1).c_str(), gSystem->mqtt.config.QoS, false, payload_data.c_str());
+    MQPRINTPLN("[MQTT] Send: /data ");
     return true;
   }
   else
@@ -272,6 +273,7 @@ bool Mqtt::sendSettings()
   {
     String payload_settings = API::apiData(APISETTINGS);
     pmqttClient.publish(prefixgen(2).c_str(), gSystem->mqtt.config.QoS, false, payload_settings.c_str());
+    MQPRINTPLN("[MQTT] Send: /settings ");
     return true;
   }
   else
