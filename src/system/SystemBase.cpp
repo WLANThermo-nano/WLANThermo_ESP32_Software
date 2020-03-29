@@ -24,6 +24,7 @@
 #include <rom/rtc.h>
 #include "SystemBase.h"
 #include "Constants.h"
+#include "RecoveryMode.h"
 
 #define STRINGIFY(s) #s
 
@@ -182,6 +183,7 @@ void SystemBase::restart()
   WiFi.disconnect();
   delay(500);
   yield();
+  RecoveryMode::zeroResetCounter();
   ESP.restart();
 }
 

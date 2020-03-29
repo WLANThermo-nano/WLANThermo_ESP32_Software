@@ -20,13 +20,16 @@
 #include <ESPAsyncWebServer.h>
 #include <Update.h>
 #include <Preferences.h>
+#include <rom/rtc.h>
 #include "ESPNexUpload.h"
 #include "RecoveryMode.h"
 #include "DbgPrint.h"
 #include "Settings.h"
+#include "system/SystemBase.h"
 #include "webui/recoverymode.html.gz.h"
 #include "webui/restart.html.gz.h"
 
+#define RECOVERY_RESET_THRESHOLD 10u
 #define RECOVERY_PIN 14u
 #define RECOVERY_PIN_TIME 3000u // 3s
 #define RECOVERY_AP_NAME "WLANThermo-RecoveryMode"
@@ -43,6 +46,7 @@ String RecoveryMode::settingsValue = "";
 RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
 RTC_DATA_ATTR char RecoveryMode::wifiName[33];
 RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
+RTC_NOINIT_ATTR uint8_t RecoveryMode::resetCounter = 0u;
 
 RecoveryMode::RecoveryMode(void)
 {
@@ -55,6 +59,7 @@ void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPa
   strcpy(wifiName, paramWifiName);
   strcpy(wifiPassword, paramWifiPassword);
 
+  delay(500);
   WiFi.disconnect();
   delay(500);
 
@@ -70,12 +75,17 @@ void RecoveryMode::run()
   Serial.setDebugOutput(true);
 #endif
 
+  // Handle reset counter
+  boolean initResetCounter = (POWERON_RESET == rtc_get_reset_reason(0)) || (DEEPSLEEP_RESET == rtc_get_reset_reason(0));
+  resetCounter = (initResetCounter) ? 0u : resetCounter + 1u;
+  RMPRINTF("Reset counter: %d\n", resetCounter);
+
   RMPRINTLN("Check for Recovery Mode");
 
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
-  while(((millis() - startTime) < RECOVERY_PIN_TIME) && !fromApp)
+  while(((millis() - startTime) < RECOVERY_PIN_TIME) && (!fromApp) && (resetCounter < RECOVERY_RESET_THRESHOLD))
   {
     if(digitalRead(RECOVERY_PIN) == 1u)
     {
@@ -85,7 +95,7 @@ void RecoveryMode::run()
   }
 
   // Welcome to recovery mode
-
+  resetCounter = 0u;
   RMPRINTLN("Recovery Mode enabled");
 
   WiFi.persistent(false);
@@ -145,8 +155,8 @@ void RecoveryMode::run()
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
     WiFi.disconnect();
-    delay(500);
-    ESP.restart();
+    delay(1000);
+    gSystem->restart();
   });
 
   webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request)
