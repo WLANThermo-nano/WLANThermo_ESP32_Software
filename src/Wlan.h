@@ -22,10 +22,12 @@
 #include <WiFi.h>
 
 #define NUM_OF_WLAN_CREDENTIALS 5u
+#define WLAN_SSID_MAX_LENGTH 33u // 32 + '\0'
+#define WLAN_PASS_MAX_LENGTH 64u // 63 + '\0'
 
 typedef struct {
-    char ssid[32];
-    char password[32];
+    char ssid[WLAN_SSID_MAX_LENGTH];
+    char password[WLAN_PASS_MAX_LENGTH];
 } WlanCredentials;
 
 enum class WifiState
