@@ -38,14 +38,8 @@ Wlan::Wlan()
   this->connectTimeout = 0u;
   wifiState = WifiState::SoftAPNoClient;
 
-  for (uint8_t i = 0; i < NUM_OF_WLAN_CREDENTIALS; ++i)
-  {
-    wlanCredentials[i].ssid[0] = '\0';
-    wlanCredentials[i].password[0] = '\0';
-  }
-
-  newWlanCredentials.ssid[0] = '\0';
-  newWlanCredentials.password[0] = '\0';
+  memset(&wlanCredentials, 0u, sizeof(wlanCredentials));
+  memset(&newWlanCredentials, 0u, sizeof(newWlanCredentials));
 }
 
 void Wlan::init()
@@ -86,9 +80,16 @@ void Wlan::loadConfig()
     JsonArray &_wifi = json["wifi"];
     for (JsonArray::iterator it = _wifi.begin(); (it != _wifi.end()) && (i < NUM_OF_WLAN_CREDENTIALS); ++it)
     {
-      strcpy(wlanCredentials[i].ssid, _wifi[i]["SSID"].asString());
-      strcpy(wlanCredentials[i].password, _wifi[i]["PASS"].asString());
-      Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+      if((strlen(_wifi[i]["SSID"].asString()) >= WLAN_SSID_MAX_LENGTH) || (strlen(_wifi[i]["PASS"].asString()) >= WLAN_PASS_MAX_LENGTH))
+      {
+        Serial.println("Wlan::loadConfig: credentials invalid");
+      }
+      else
+      {
+        strcpy(wlanCredentials[i].ssid, _wifi[i]["SSID"].asString());
+        strcpy(wlanCredentials[i].password, _wifi[i]["PASS"].asString());
+        Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+      }
       i++;
     }
   }
@@ -166,21 +167,29 @@ uint8_t Wlan::numOfAPClients()
 
 void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 {
-  Serial.printf("Wlan::addCredentials: ssid = %s, password = %s, force = %d\n", ssid, password, force);
-  strcpy(newWlanCredentials.ssid, ssid);
-  strcpy(newWlanCredentials.password, password);
-
-  if (force)
+  if ((strlen(ssid) >= WLAN_SSID_MAX_LENGTH) || (strlen(password) >= WLAN_PASS_MAX_LENGTH))
   {
-    saveConfig();
+    Serial.println("Wlan::addCredentials: credentials invalid");
   }
+  else
+  {
 
-  if (isConnected())
-    WiFi.disconnect();
+    Serial.printf("Wlan::addCredentials: ssid = %s, password = %s, force = %d\n", ssid, password, force);
+    strcpy(newWlanCredentials.ssid, ssid);
+    strcpy(newWlanCredentials.password, password);
 
-  wifiState = WifiState::AddCredentials;
-  WiFi.begin(ssid, password);
-  connectTimeout = CONNECT_TIMEOUT;
+    if (force)
+    {
+      saveConfig();
+    }
+
+    if (isConnected())
+      WiFi.disconnect();
+
+    wifiState = WifiState::AddCredentials;
+    WiFi.begin(ssid, password);
+    connectTimeout = CONNECT_TIMEOUT;
+  }
 }
 
 void Wlan::getCredentials(WlanCredentials *credentials)
