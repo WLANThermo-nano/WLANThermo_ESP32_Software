@@ -25,6 +25,7 @@
 #include "OtaUpdate.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
+#include "RecoveryMode.h"
 #include "Settings.h"
 #include "DbgPrint.h"
 
@@ -63,6 +64,7 @@ void OtaUpdate::task(void *parameter)
   if(success)
   {
     Serial.println("OTA update finished.");
+    RecoveryMode::zeroResetCounter();
     ESP.restart();
   }
 

@@ -883,18 +883,22 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
 {
   boolean newHasAlarm = system->temperatures.hasAlarm();
   WifiState newWifiState = system->wlan.getWifiState();
+  WifiStrength newWifiStrength = system->wlan.getSignalStrength();
+  char wifiSymbol = 'I';
   static uint8_t cloudState = system->cloud.state;
   static boolean hasAlarm = newHasAlarm;
   static WifiState wifiState = newWifiState;
+  static WifiStrength wifiStrength = newWifiStrength;
+  static uint32_t debounceWifiSymbol = millis();
   static boolean delayApSymbol = true;
 
-  if (cloudState != system->cloud.state || forceUpdate)
+  if ((cloudState != system->cloud.state) || forceUpdate)
   {
     NexButton(DONT_CARE, DONT_CARE, "temp_main.Cloud").setText((system->cloud.state != 2) ? "" : "h");
     cloudState = system->cloud.state;
   }
 
-  if (hasAlarm != newHasAlarm || forceUpdate)
+  if ((hasAlarm != newHasAlarm) || forceUpdate)
   {
     NexButton(DONT_CARE, DONT_CARE, "temp_main.Alarm").setText((newHasAlarm) ? "O" : "");
     hasAlarm = newHasAlarm;
@@ -906,9 +910,33 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     delayApSymbol = false;
   }
 
+  if ((wifiStrength != newWifiStrength) || forceUpdate)
+  {
+    switch (newWifiStrength)
+    {
+    case WifiStrength::High:
+      wifiSymbol = 'I';
+      break;
+    case WifiStrength::Medium:
+      wifiSymbol = 'H';
+      break;
+    case WifiStrength::Low:
+      wifiSymbol = 'G';
+      break;
+    default:
+      wifiSymbol = '\0';
+      break;
+    }
+    if((millis() - debounceWifiSymbol) >= 1000u)
+    {
+      wifiStrength = newWifiStrength;
+      forceUpdate = true;
+      debounceWifiSymbol = millis();
+    }
+  }
+
   if ((wifiState != newWifiState) || forceUpdate)
   {
-    String qrCode;
     String info;
 
     switch (newWifiState)
@@ -916,33 +944,30 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
     case WifiState::SoftAPNoClient:
       if (delayApSymbol)
         break;
-      qrCode = "WIFI:S:" + system->wlan.getAccessPointName() + ";T:WPA;P:12345678;;";
-      info = "AP: " + system->wlan.getAccessPointName() + " | PW: 12345678";
       NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("l");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName().c_str());
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
       break;
     case WifiState::SoftAPClientConnected:
       if (delayApSymbol)
         break;
       NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("l");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("http://192.168.66.1");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("http://192.168.66.1");
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("http://192.168.66.1");
       break;
     case WifiState::ConnectedToSTA:
-      qrCode = "http://" + WiFi.localIP().toString();
       info = "http://" + WiFi.localIP().toString();
-      NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("I");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText(qrCode.c_str());
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText(info.c_str());
+      NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText(String(wifiSymbol).c_str());
+      NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(WiFi.SSID().c_str());
+      NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText(info.c_str());
       break;
     case WifiState::ConnectingToSTA:
     case WifiState::AddCredentials:
       break;
     default:
       NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.QrCode").setText("");
-      NexText(DONT_CARE, DONT_CARE, "wifi_info.Info").setText("");
+      NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
+      NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("");
       break;
     }
     wifiState = newWifiState;
