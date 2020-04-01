@@ -200,6 +200,29 @@ void Wlan::getCredentials(WlanCredentials *credentials)
   }
 }
 
+WifiStrength Wlan::getSignalStrength()
+{
+  WifiStrength strength = WifiStrength::None;
+
+  if(WiFi.isConnected())
+  {
+    if(WiFi.RSSI() >= -80)
+    {
+      strength = WifiStrength::High;
+    }
+    else if(WiFi.RSSI() >= -95)
+    {
+      strength = WifiStrength::Medium;
+    }
+    else if(WiFi.RSSI() >= -105)
+    {
+      strength = WifiStrength::Low;
+    }
+  }
+
+  return strength;
+}
+
 void Wlan::update()
 {
   //Serial.printf("Wlan::update: wifiState = %d\n", wifiState);
