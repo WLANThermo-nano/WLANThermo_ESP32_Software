@@ -42,6 +42,14 @@ enum class WifiState
   Stopped
 };
 
+enum class WifiStrength
+{
+  High,
+  Medium,
+  Low,
+  None
+};
+
 class Wlan
 {
 public:
@@ -55,6 +63,7 @@ public:
   void setAccessPointName(String accessPointName);
   void addCredentials(const char *ssid, const char *password, bool force = false);
   void getCredentials(WlanCredentials *credentials);
+  WifiStrength getSignalStrength();
   int32_t getRssi();
   static void clearCredentials();
   String getMacAddress();

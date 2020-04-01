@@ -883,18 +883,22 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
 {
   boolean newHasAlarm = system->temperatures.hasAlarm();
   WifiState newWifiState = system->wlan.getWifiState();
+  WifiStrength newWifiStrength = system->wlan.getSignalStrength();
+  char wifiSymbol = 'I';
   static uint8_t cloudState = system->cloud.state;
   static boolean hasAlarm = newHasAlarm;
   static WifiState wifiState = newWifiState;
+  static WifiStrength wifiStrength = newWifiStrength;
+  static uint32_t debounceWifiSymbol = millis();
   static boolean delayApSymbol = true;
 
-  if (cloudState != system->cloud.state || forceUpdate)
+  if ((cloudState != system->cloud.state) || forceUpdate)
   {
     NexButton(DONT_CARE, DONT_CARE, "temp_main.Cloud").setText((system->cloud.state != 2) ? "" : "h");
     cloudState = system->cloud.state;
   }
 
-  if (hasAlarm != newHasAlarm || forceUpdate)
+  if ((hasAlarm != newHasAlarm) || forceUpdate)
   {
     NexButton(DONT_CARE, DONT_CARE, "temp_main.Alarm").setText((newHasAlarm) ? "O" : "");
     hasAlarm = newHasAlarm;
@@ -904,6 +908,31 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
   {
     forceUpdate = true;
     delayApSymbol = false;
+  }
+
+  if ((wifiStrength != newWifiStrength) || forceUpdate)
+  {
+    switch (newWifiStrength)
+    {
+    case WifiStrength::High:
+      wifiSymbol = 'I';
+      break;
+    case WifiStrength::Medium:
+      wifiSymbol = 'H';
+      break;
+    case WifiStrength::Low:
+      wifiSymbol = 'G';
+      break;
+    default:
+      wifiSymbol = '\0';
+      break;
+    }
+    if((millis() - debounceWifiSymbol) >= 1000u)
+    {
+      wifiStrength = newWifiStrength;
+      forceUpdate = true;
+      debounceWifiSymbol = millis();
+    }
   }
 
   if ((wifiState != newWifiState) || forceUpdate)
@@ -928,7 +957,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
       break;
     case WifiState::ConnectedToSTA:
       info = "http://" + WiFi.localIP().toString();
-      NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("I");
+      NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText(String(wifiSymbol).c_str());
       NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(WiFi.SSID().c_str());
       NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText(info.c_str());
       break;
