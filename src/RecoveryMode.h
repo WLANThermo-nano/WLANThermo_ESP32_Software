@@ -35,6 +35,7 @@ public:
   static void run();
   static void runFromApp(const char *paramWifiName, const char *paramWifiPassword);
   static void zeroResetCounter() { resetCounter = 0u; };
+  static uint16_t getResetCounter() { return resetCounter; };
 
 private:
   static UploadFileType getFileType(String fileName);
@@ -47,5 +48,5 @@ private:
   static RTC_DATA_ATTR char wifiName[33];
   static RTC_DATA_ATTR char wifiPassword[64];
   static RTC_DATA_ATTR boolean fromApp;
-  static RTC_NOINIT_ATTR uint8_t resetCounter;
+  static RTC_NOINIT_ATTR uint16_t resetCounter;
 };
