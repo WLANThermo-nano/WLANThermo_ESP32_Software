@@ -46,11 +46,10 @@ String RecoveryMode::settingsValue = "";
 RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
 RTC_DATA_ATTR char RecoveryMode::wifiName[33];
 RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
-RTC_NOINIT_ATTR uint8_t RecoveryMode::resetCounter = 0u;
+RTC_NOINIT_ATTR uint16_t RecoveryMode::resetCounter = 0u;
 
 RecoveryMode::RecoveryMode(void)
 {
-
 }
 
 void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPassword)
@@ -85,9 +84,9 @@ void RecoveryMode::run()
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
-  while(((millis() - startTime) < RECOVERY_PIN_TIME) && (!fromApp) && (resetCounter < RECOVERY_RESET_THRESHOLD))
+  while (((millis() - startTime) < RECOVERY_PIN_TIME) && (!fromApp) /*&& (resetCounter < RECOVERY_RESET_THRESHOLD)*/)
   {
-    if(digitalRead(RECOVERY_PIN) == 1u)
+    if (digitalRead(RECOVERY_PIN) == 1u)
     {
       // No recovery mode
       return;
@@ -101,7 +100,7 @@ void RecoveryMode::run()
   WiFi.persistent(false);
   WiFi.disconnect(true);
 
-  if(fromApp)
+  if (fromApp)
   {
     // increase nextion baud rate
     nexBaudRate = 460800u;
@@ -111,7 +110,7 @@ void RecoveryMode::run()
     WiFi.mode(WIFI_STA);
     RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: %s\n", wifiName, wifiPassword);
 
-    while(WiFi.isConnected() == false)
+    while (WiFi.isConnected() == false)
     {
       RMPRINTLN("Wifi not connected");
       delay(1000);
@@ -132,25 +131,22 @@ void RecoveryMode::run()
   // Start web server
   AsyncWebServer *webServer = new AsyncWebServer(80);
 
-  webServer->on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
+  webServer->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
 
-  webServer->on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
+  webServer->on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recoverymode_html_gz, sizeof(recoverymode_html_gz));
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
 
-  webServer->on("/restart", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+  webServer->on("/restart", HTTP_POST, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
@@ -159,38 +155,33 @@ void RecoveryMode::run()
     gSystem->restart();
   });
 
-  webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
+  webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request) {
     Settings::clear();
     request->send(200, TEXTPLAIN, TEXTTRUE);
   });
 
-  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request) {
     RMPRINTLN("GET /ping");
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
-  webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+  webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request) {
     RMPRINTLN("GET /export");
     String exportSettings = Settings::exportFile();
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), exportSettings.length());
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/text", (uint8_t *)exportSettings.c_str(), exportSettings.length());
     response->addHeader("Content-Disposition", "attachment; filename=settings.txt");
     response->addHeader("Connection", "close");
     request->send(response);
   });
 
-  webServer->on("/import", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
+  webServer->on(
+      "/import", HTTP_POST, [](AsyncWebServerRequest *request) {
     RMPRINTLN("POST /import");
     if((request->contentLength() == 0u) && (request->hasHeader("xKey") == true))
     {
       Settings::remove(request->header("xKey"));
     }
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-  {
+    request->send(200, TEXTPLAIN, TEXTTRUE); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
     std::unique_ptr<char[]> s(new char[len + 1]);
     static size_t receivedBytes = 0u;
 
@@ -199,50 +190,60 @@ void RecoveryMode::run()
     memcpy(s.get(), data, len);
     settingsValue += s.get();
     receivedBytes += len;
-    if(receivedBytes == total) Settings::write(settingsKey, settingsValue);
-  });
+    if(receivedBytes == total) Settings::write(settingsKey, settingsValue); });
 
-  webServer->on("/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    if (request->hasArg("usize"))
-    {
-      String usize = request->arg("usize");
-      uploadFileSize = usize.toInt();
-    }
-    else if(nexUpload)
-    {
-      delete(nexUpload);
-      nexUpload = NULL;
-    }
+  webServer->on(
+      "/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasArg("usize"))
+        {
+          String usize = request->arg("usize");
+          uploadFileSize = usize.toInt();
+        }
+        else if (nexUpload)
+        {
+          delete (nexUpload);
+          nexUpload = NULL;
+        }
 
-    request->send(200, TEXTPLAIN, TEXTTRUE);
+        request->send(200, TEXTPLAIN, TEXTTRUE); },
+      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+        if (!index)
+          uploadFileType = getFileType(filename);
 
-  },  [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
-  {
-    if(!index)
-      uploadFileType = getFileType(filename);
-
-    switch(uploadFileType)
-    {
-      case UploadFileType::Firmware:
-        if(!index) Update.begin(uploadFileSize);
-        Update.write(data, len);
-        if(final) Update.end(true);
-        break;
-      case UploadFileType::SPIFFS:
-        if(!index) Update.begin(uploadFileSize, U_SPIFFS);
-        Update.write(data, len);
-        if(final) Update.end(true);
-        break;
+        switch (uploadFileType)
+        {
+        case UploadFileType::Firmware:
+          if (!index)
+            Update.begin(uploadFileSize);
+          Update.write(data, len);
+          if (final)
+            Update.end(true);
+          break;
+        case UploadFileType::SPIFFS:
+          if (!index)
+            Update.begin(uploadFileSize, U_SPIFFS);
+          Update.write(data, len);
+          if (final)
+            Update.end(true);
+          break;
 #if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
-      case UploadFileType::Nextion:
-        if(!index) { nexUpload = new ESPNexUpload(nexBaudRate); ((ESPNexUpload*)nexUpload)->prepareUpload(uploadFileSize); }
-        ((ESPNexUpload*)nexUpload)->upload(data, len);
-        if(final) { ((ESPNexUpload*)nexUpload)->end(); delete(nexUpload); nexUpload = NULL; }
-        break;
+        case UploadFileType::Nextion:
+          if (!index)
+          {
+            nexUpload = new ESPNexUpload(nexBaudRate);
+            ((ESPNexUpload *)nexUpload)->prepareUpload(uploadFileSize);
+          }
+          ((ESPNexUpload *)nexUpload)->upload(data, len);
+          if (final)
+          {
+            ((ESPNexUpload *)nexUpload)->end();
+            delete (nexUpload);
+            nexUpload = NULL;
+          }
+          break;
 #endif
-    }
-  });
+        }
+      });
 
   // 404 not found
   webServer->onNotFound([](AsyncWebServerRequest *request) {
@@ -251,7 +252,7 @@ void RecoveryMode::run()
 
   webServer->begin();
 
-  while(true)
+  while (true)
   {
     delay(100);
   }
@@ -261,17 +262,17 @@ UploadFileType RecoveryMode::getFileType(String fileName)
 {
   UploadFileType retFileType = UploadFileType::None;
 
-  if((fileName.indexOf("firmware") >= 0) && (fileName.indexOf(".bin") >= 0))
+  if ((fileName.indexOf("firmware") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::Firmware;
     RMPRINTLN("FILETYPE: Firmware");
   }
-  else if((fileName.indexOf("spiffs") >= 0) && (fileName.indexOf(".bin") >= 0))
+  else if ((fileName.indexOf("spiffs") >= 0) && (fileName.indexOf(".bin") >= 0))
   {
     retFileType = UploadFileType::SPIFFS;
     RMPRINTLN("FILETYPE: SPIFFS");
   }
-  else if(fileName.indexOf(".tft") >= 0)
+  else if (fileName.indexOf(".tft") >= 0)
   {
     retFileType = UploadFileType::Nextion;
     RMPRINTLN("FILETYPE: Nextion");

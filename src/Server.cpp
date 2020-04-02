@@ -31,6 +31,7 @@
 #endif
 #include "DbgPrint.h"
 #include "Settings.h"
+#include "RecoveryMode.h"
 #include <SPIFFS.h>
 
 // include html files
@@ -74,11 +75,11 @@ void WServer::init()
     }*/
 
     String info = "spiffs: " + String(usedBytes) + " | " + String(totalBytes) + "\n" + "heap: " + String(ESP.getFreeHeap()) + "\n" + "sn: " + gSystem->getSerialNumber() + "\n" + "pn: " + gSystem->item.read(ItemNvsKeys::kItem) + "\n";
-    if(gSystem->battery != NULL)
+    if (gSystem->battery != NULL)
     {
       info += "batlimit: " + String(gSystem->battery->min) + " | " + String(gSystem->battery->max) + "\n" + "bat: " + String(gSystem->battery->adcvoltage) + " | " + String(gSystem->battery->voltage) + " | " + String(gSystem->battery->simc) + "\n" + "batstat: " + String(gSystem->battery->getPowerModeInt()) + " | " + String(gSystem->battery->setreference) + "\n";
-    }   
-    info+= "ssid: " + WiFi.SSID() + "\n" + "wifimode: " + String(WiFi.getMode()) + "\n" + "mac:" + String(gSystem->wlan.getMacAddress()) + "\n" + "iS: " + String(gSystem->getFlashSize());
+    }
+    info += "ssid: " + WiFi.SSID() + "\n" + "wifimode: " + String(WiFi.getMode()) + "\n" + "mac:" + String(gSystem->wlan.getMacAddress()) + "\n" + "iS: " + String(gSystem->getFlashSize());
     request->send(200, "", info);
   });
 
@@ -111,16 +112,15 @@ void WServer::init()
   });
 
   webServer->on("/restart", [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
-    response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-    gSystem->restart();
-  })
-  .setFilter(ON_STA_FILTER);
+             AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+             response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+             response->addHeader("Content-Encoding", "gzip");
+             request->send(response);
+             gSystem->restart();
+           })
+      .setFilter(ON_STA_FILTER);
 
-  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
@@ -132,12 +132,13 @@ void WServer::init()
   webServer->on("/rr", [](AsyncWebServerRequest *request) {
     String response = "\nCPU0: " + gSystem->getResetReason(0);
     response += "\nCPU1: " + gSystem->getResetReason(1);
+    response += "\nResetCounter: " + String(RecoveryMode::getResetCounter());
     request->send(200, TEXTPLAIN, response);
   });
 
   // to avoid multiple requests to ESP
   webServer->on("/", [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", index_html_gz, sizeof(index_html_gz));
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, sizeof(index_html_gz));
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
