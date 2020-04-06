@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,34 +17,22 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#pragma once
 
-#include "Arduino.h"
-#include "TemperatureBase.h"
+#include "TemperatureBle.h"
+#include "TemperatureBleProxy.h"
 
-#define MAX_TEMPERATURES 20u
-
-class TemperatureGrp
+TemperatureBle::TemperatureBle()
 {
-public:
-  TemperatureGrp();
-  void virtual update();
-  void add(TemperatureBase *temperature);
-  TemperatureBase *operator[](int index);
-  uint8_t count();
-  boolean setUnit(TemperatureUnit unit);
-  TemperatureUnit getUnit();
-  TemperatureBase *getNextActive(uint8_t index);
-  uint32_t getActiveBits();
-  uint8_t getActiveCount();
-  boolean hasAlarm();
-  void acknowledgeAlarm();
-  void saveConfig();
-  void loadConfig();
+}
 
-private:
-  TemperatureBase *addRemote(SensorType type, String address, uint8_t localIndex);
-  TemperatureBase *temperatures[MAX_TEMPERATURES];
-  uint8_t addIndex;
-  TemperatureUnit currentUnit;
-};
+TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureBase()
+{
+  this->localIndex = index;
+  this->address = peerAddress;
+  this->type = SensorType::Ble;
+}
+
+void TemperatureBle::update()
+{
+  this->currentValue = TemperatureBleProxy::getCurrentValue(this->address, this->localIndex);
+}

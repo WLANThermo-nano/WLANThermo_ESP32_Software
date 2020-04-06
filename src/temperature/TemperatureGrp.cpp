@@ -19,6 +19,7 @@
 ****************************************************/
 
 #include "TemperatureGrp.h"
+#include "TemperatureBle.h"
 #include "Settings.h"
 
 TemperatureGrp::TemperatureGrp()
@@ -179,11 +180,18 @@ void TemperatureGrp::loadConfig()
     else
       return;
 
-    for (int i = 0; i < count(); i++)
+    Serial.printf("tname size = %d\n", json["tname"].size());
+    for (uint8_t i = 0u; i < json["tname"].size(); i++)
     {
       TemperatureBase *temperature = temperatures[i];
+
+      // add optional remote temperatures (e.g. BLE)
+      if ((temperature == NULL) && json.containsKey("taddress") && json.containsKey("tlindex"))
+        temperature = addRemote((SensorType)json["ttyp"][i].as<uint8_t>(), json["taddress"][i].asString(), json["tlindex"][i].as<uint8_t>());
+
       if (temperature != NULL)
       {
+        Serial.printf("tname = %s\n", json["tname"][i].asString());
         temperature->setName(json["tname"][i].asString());
         temperature->setType(json["ttyp"][i]);
         temperature->setMinValue(json["tmin"][i]);
@@ -193,6 +201,25 @@ void TemperatureGrp::loadConfig()
       }
     }
   }
+}
+
+TemperatureBase *TemperatureGrp::addRemote(SensorType type, String address, uint8_t localIndex)
+{
+  TemperatureBase *temperature = NULL;
+
+  Serial.printf("addRemote: type = %d, address = %s, localIndex = %d\n", (uint8_t)type, address.c_str(), localIndex);
+
+  switch (type)
+  {
+  case SensorType::Ble:
+    temperature = new TemperatureBle(address, localIndex);
+    add(temperature);
+    break;
+  default:
+    break;
+  }
+
+  return temperature;
 }
 
 void TemperatureGrp::saveConfig()
@@ -208,6 +235,8 @@ void TemperatureGrp::saveConfig()
   JsonArray &_max = json.createNestedArray("tmax");
   JsonArray &_alarm = json.createNestedArray("talarm");
   JsonArray &_color = json.createNestedArray("tcolor");
+  JsonArray &_address = json.createNestedArray("taddress");
+  JsonArray &_lindex = json.createNestedArray("tlindex");
 
   for (int i = 0; i < count(); i++)
   {
@@ -220,6 +249,8 @@ void TemperatureGrp::saveConfig()
       _max.add(temperature->getMaxValue(), 1);
       _alarm.add((uint8_t)temperature->getAlarmSetting());
       _color.add(temperature->getColor());
+      _address.add(temperature->getAddress());
+      _lindex.add(temperature->getLocalIndex());
     }
   }
   Settings::write(kChannels, json);

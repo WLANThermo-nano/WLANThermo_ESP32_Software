@@ -35,7 +35,7 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC,
-    NULL};
+    NULL, NULL};
 uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
@@ -64,6 +64,7 @@ void TemperatureBase::loadDefaultValues()
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
+  this->address = "";
   this->type = SensorType::Maverick;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
@@ -125,6 +126,11 @@ String TemperatureBase::getName()
   return this->name;
 }
 
+String TemperatureBase::getAddress()
+{
+  return this->address;
+}
+
 String TemperatureBase::getColor()
 {
   return this->color;
@@ -162,7 +168,7 @@ uint8_t TemperatureBase::getGlobalIndex()
 
 void TemperatureBase::setType(uint8_t type)
 {
-  if(false == this->fixedSensor)
+  if (false == this->fixedSensor)
   {
     this->type = (SensorType)type;
     this->calcTemperature = (type < NUM_OF_TYPES) ? typeFunctions[type] : NULL;
@@ -190,6 +196,12 @@ void TemperatureBase::setMaxValue(float value)
 void TemperatureBase::setName(const char *name)
 {
   this->name = name;
+  settingsChanged = true;
+}
+
+void TemperatureBase::setAddress(const char *address)
+{
+  this->address = address;
   settingsChanged = true;
 }
 
@@ -238,7 +250,7 @@ AlarmStatus TemperatureBase::getAlarmStatus()
   else if (this->currentValue >= this->maxValue)
     status = MaxAlarm;
 
-  if(NoAlarm == status)
+  if (NoAlarm == status)
     acknowledgedAlarm = false;
 
   return status;

@@ -62,7 +62,9 @@ public:
   float getMinValue();
   float getMaxValue();
   String getName();
+  String getAddress();
   String getColor();
+  uint8_t getLocalIndex() { return localIndex; };
   AlarmSetting getAlarmSetting();
   uint8_t getType();
   static uint8_t getTypeCount();
@@ -73,7 +75,8 @@ public:
   virtual void setType(uint8_t type);
   void setMinValue(float value);
   void setMaxValue(float value);
-  void setName(const char *name);
+  void setName(const char *address);
+  void setAddress(const char *name);
   void setColor(const char *color);
   void setAlarmSetting(AlarmSetting alarmSetting);
   void setUnit(TemperatureUnit unit);
@@ -99,6 +102,7 @@ protected:
   SensorType type;
   String name;
   String color;
+  String address;
   AlarmSetting alarmSetting;
   TemperatureCalculation_t calcTemperature;
   boolean fixedSensor;

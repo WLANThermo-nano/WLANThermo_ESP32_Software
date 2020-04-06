@@ -21,6 +21,7 @@
 #include "RecoveryMode.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
+#include "temperature/TemperatureBleProxy.h"
 #include "SerialCmd.h"
 #include "Server.h"
 #include "DbgPrint.h"
@@ -95,6 +96,8 @@ void ConnectTask(void *parameter)
 {
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
+  TemperatureBleProxy::init();
+
   for (;;)
   {
     // WiFi - Monitoring
@@ -107,6 +110,8 @@ void ConnectTask(void *parameter)
       gSystem->notification.update();
       gSystem->cloud.update();
     }
+
+    TemperatureBleProxy::update();
 
     // Wait for the next cycle.
     vTaskDelayUntil(&xLastWakeTime, 1000);
@@ -129,7 +134,7 @@ void createTasks()
       "ConnectTask", /* String with name of task. */
       10000,         /* Stack size in bytes. */
       NULL,          /* Parameter passed as input of the task */
-      4,             /* Priority of the task. */
+      1,             /* Priority of the task. */
       NULL,          /* Task handle. */
       1);            /* CPU Core */
 }

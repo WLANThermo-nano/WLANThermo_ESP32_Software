@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,32 +19,17 @@
 ****************************************************/
 #pragma once
 
-#include "Arduino.h"
-#include "TemperatureBase.h"
+#include <Arduino.h>
 
-#define MAX_TEMPERATURES 20u
-
-class TemperatureGrp
+class TemperatureBleProxy
 {
 public:
-  TemperatureGrp();
-  void virtual update();
-  void add(TemperatureBase *temperature);
-  TemperatureBase *operator[](int index);
-  uint8_t count();
-  boolean setUnit(TemperatureUnit unit);
-  TemperatureUnit getUnit();
-  TemperatureBase *getNextActive(uint8_t index);
-  uint32_t getActiveBits();
-  uint8_t getActiveCount();
-  boolean hasAlarm();
-  void acknowledgeAlarm();
-  void saveConfig();
-  void loadConfig();
+  TemperatureBleProxy();
+  static void init();
+  static void update();
+  static float getCurrentValue(String peerAddress, uint8_t index);
 
 private:
-  TemperatureBase *addRemote(SensorType type, String address, uint8_t localIndex);
-  TemperatureBase *temperatures[MAX_TEMPERATURES];
-  uint8_t addIndex;
-  TemperatureUnit currentUnit;
+  static String bleDeviceJson;
+  static HardwareSerial *serialBle;
 };
