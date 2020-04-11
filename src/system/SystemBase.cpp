@@ -34,6 +34,7 @@ SystemBase::SystemBase()
 {
   buzzer = NULL;
   battery = NULL;
+  bluetooth = NULL;
   sdCard = NULL;
   deviceName = "undefined";
   cpuName = "esp32";

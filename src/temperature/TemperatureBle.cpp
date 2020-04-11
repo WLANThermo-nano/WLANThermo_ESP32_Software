@@ -19,7 +19,7 @@
 ****************************************************/
 
 #include "TemperatureBle.h"
-#include "TemperatureBleProxy.h"
+#include "bluetooth/Bluetooth.h"
 
 TemperatureBle::TemperatureBle()
 {
@@ -27,12 +27,13 @@ TemperatureBle::TemperatureBle()
 
 TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureBase()
 {
-  this->localIndex = index;
   this->address = peerAddress;
+  this->localIndex = index;
   this->type = SensorType::Ble;
+  this->fixedSensor = true;
 }
 
 void TemperatureBle::update()
 {
-  this->currentValue = TemperatureBleProxy::getCurrentValue(this->address, this->localIndex);
+  this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
 }

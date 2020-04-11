@@ -68,4 +68,4 @@ const SensorTypeInfoType sensorTypeInfo[NUM_OF_TYPES] = {
     {SensorType::PT1000, "PT1000", false},
     {SensorType::ThermoWorks, "ThermoWorks", false},
     {SensorType::TypeK, "Typ K", true},
-    {SensorType::TypeK, "Bluetooth", true}};
+    {SensorType::Ble, "Bluetooth", true}};

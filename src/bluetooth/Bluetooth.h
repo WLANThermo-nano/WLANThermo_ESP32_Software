@@ -19,17 +19,26 @@
 ****************************************************/
 #pragma once
 
-#include <Arduino.h>
+#include "Arduino.h"
+#include <ArduinoJson.h>
+#include "fwu.h"
 
-class TemperatureBleProxy
+typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
+
+class Bluetooth
 {
 public:
-  TemperatureBleProxy();
-  static void init();
-  static void update();
-  static float getCurrentValue(String peerAddress, uint8_t index);
+    Bluetooth();
+    void init();
+    static float getTemperatureValue(String peerAddress, uint8_t index);
 
 private:
-  static String bleDeviceJson;
-  static HardwareSerial *serialBle;
+    static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
+    uint8_t dfuRxFunction(uint8_t *data, int maxLen);
+    void getDevices();
+    void printResponseStatus();
+    static void task(void *parameter);
+    boolean doDfu();
+    static HardwareSerial *serialBle;
+    static String bleDeviceJson;
 };

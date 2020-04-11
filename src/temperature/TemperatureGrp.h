@@ -43,7 +43,7 @@ public:
   void loadConfig();
 
 private:
-  TemperatureBase *addRemote(SensorType type, String address, uint8_t localIndex);
+  TemperatureBase *addRemote(uint8_t type, const char *address, uint8_t localIndex);
   TemperatureBase *temperatures[MAX_TEMPERATURES];
   uint8_t addIndex;
   TemperatureUnit currentUnit;
