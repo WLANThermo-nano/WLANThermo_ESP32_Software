@@ -21,7 +21,6 @@
 #include "Settings.h"
 #include "nvs.h"
 #include "Preferences.h"
-#include <memory>
 
 #define STRINGIFY(s) #s
 
