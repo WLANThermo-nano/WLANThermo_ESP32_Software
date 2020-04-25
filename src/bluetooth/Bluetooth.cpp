@@ -53,8 +53,8 @@ void Bluetooth::init()
 
 void Bluetooth::getDevices()
 {
+    serialBle->setTimeout(100);
     serialBle->println("getDevices");
-    Serial.setTimeout(100);
     bleDeviceJson = serialBle->readString();
     Serial.println(bleDeviceJson);
 }
@@ -114,10 +114,6 @@ void Bluetooth::task(void *parameter)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     Bluetooth *bluetooth = (Bluetooth *)parameter;
-
-    digitalWrite(BLE_RESET_PIN, LOW);
-    delay(20);
-    digitalWrite(BLE_RESET_PIN, HIGH);
 
     while (1)
     {
