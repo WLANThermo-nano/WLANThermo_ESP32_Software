@@ -52,24 +52,25 @@ enum class Frames
   SystemSettings,
   NumOfFrames,
 };
-/*
+
 float DisplayOledLink::currentData = 0; // Zwischenspeichervariable
-uint8_t DisplayOledLink::buttonMupi = 1u;
+//uint8_t DisplayOledLink::buttonMupi = 1u;
 boolean DisplayOledLink::oledBlocked = false;
-String alarmname[4] = {"off", "push", "summer", "all"};
+//String alarmname[4] = {"off", "push", "summer", "all"};
 
 SystemBase *DisplayOledLink::system = gSystem;
 SH1106Wire DisplayOledLink::oled = SH1106Wire(DISPLAY_I2C_ADDRESS, SDA, SCL);
 OLEDDisplayUi DisplayOledLink::ui = OLEDDisplayUi(&DisplayOledLink::oled);
-FrameCallback DisplayOledLink::frames[] = {DisplayOledLink::drawTemp, DisplayOledLink::drawTempSettings, DisplayOledLink::drawPitmasterSettings, DisplayOledLink::drawSystemSettings};
+//FrameCallback DisplayOledLink::frames[] = {DisplayOledLink::drawTemp, DisplayOledLink::drawTempSettings, DisplayOledLink::drawPitmasterSettings, DisplayOledLink::drawSystemSettings};
+FrameCallback DisplayOledLink::frames[] = {DisplayOledLink::drawTemp};
 OverlayCallback DisplayOledLink::overlays[] = {drawOverlayBar};
-OneButton DisplayOledLink::lButton = OneButton(LBUTTON_IO, true, true);
-OneButton DisplayOledLink::rButton = OneButton(RBUTTON_IO, true, true);
+//OneButton DisplayOledLink::lButton = OneButton(LBUTTON_IO, true, true);
+//OneButton DisplayOledLink::rButton = OneButton(RBUTTON_IO, true, true);
 MenuItem DisplayOledLink::menuItem = MenuItem::Boot;
-MenuMode DisplayOledLink::menuMode = MenuMode::Show;
+//MenuMode DisplayOledLink::menuMode = MenuMode::Show;
 uint8_t DisplayOledLink::currentChannel = 0u;
 boolean DisplayOledLink::flashIndicator = false;
-*/
+
 
 DisplayOledLink::DisplayOledLink()
 {
@@ -78,17 +79,17 @@ DisplayOledLink::DisplayOledLink()
 
 void DisplayOledLink::init()
 {
-  /*xTaskCreatePinnedToCore(
+  xTaskCreatePinnedToCore(
       DisplayOledLink::task,   // Task function.
-      "DisplayOled::task",      // String with name of task.
+      "DisplayOledLink::task",      // String with name of task.
       10000,                    // Stack size in bytes.
       this,                     // Parameter passed as input of the task
       1,                        // Priority of the task.
       NULL,                     // Task handle.
-      1);                       // CPU Core*/
+      1);                       // CPU Core
 }
 
-/*
+
 boolean DisplayOledLink::initDisplay()
 {
   this->loadConfig();
@@ -106,27 +107,6 @@ boolean DisplayOledLink::initDisplay()
   oled.clear();
   oled.display();
   drawConnect();
-
-  //question.typ = NO;
-  //question.con = 0;
-
-  lButton.attachClick(this->lButtonClick);
-  lButton.attachLongPressStart(this->lButtonLongClickStart);
-  lButton.attachLongPressStop(this->lButtonLongClickEnd);
-  lButton.attachDoubleClick(this->lButtonDoubleClick);
-  lButton.attachDuringLongPress(this->lButtonLongClickOnGoing);
-  lButton.setDebounceTicks(BUTTON_DEBOUNCE_TICKS);
-  lButton.setClickTicks(BUTTON_CLICK_TICKS);
-  lButton.setPressTicks(BUTTON_PRESS_TICKS);
-
-  rButton.attachClick(this->rButtonClick);
-  rButton.attachLongPressStart(this->rButtonLongClickStart);
-  rButton.attachLongPressStop(this->rButtonLongClickEnd);
-  rButton.attachDoubleClick(this->rButtonDoubleClick);
-  rButton.attachDuringLongPress(this->rButtonLongClickOnGoing);
-  rButton.setDebounceTicks(BUTTON_DEBOUNCE_TICKS);
-  rButton.setClickTicks(BUTTON_CLICK_TICKS);
-  rButton.setPressTicks(BUTTON_PRESS_TICKS);
 
   return true;
 }
@@ -182,283 +162,18 @@ void DisplayOledLink::loadConfig()
   {
   }
 }
-*/
+
 void DisplayOledLink::update()
 {
-  /*// check global block
+  // check global block
   if (!blocked)
   {
-    lButton.tick();
-    rButton.tick();
-
     //check oled block
     if (!oledBlocked)
       ui.update();
-  }*/
-}
-/*
-void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
-{
-  if (ButtonEvent::Click == buttonEvent)
-  {
-    switch (menuItem)
-    {
-    case MenuItem::TempShow:
-      handleTemperatureNavigation(buttonId);
-      break;
-    case MenuItem::TempSettingsUpper:
-    case MenuItem::TempSettingsLower:
-    case MenuItem::TempSettingsType:
-    case MenuItem::TempSettingsAlarm:
-      if (MenuMode::Show == menuMode)
-        handleMenuNavigation((ButtonId::Left == buttonId) ? -1 : 1, MenuItem::TempSettingsUpper, MenuItem::TempSettingsAlarm);
-      else if (MenuMode::Edit == menuMode)
-        if (menuItem >= MenuItem::TempSettingsType)
-          currentData += (ButtonId::Left == buttonId) ? -1 : 1;
-        else
-          handleTemperatureEdit(buttonId, buttonEvent);
-      break;
-
-    case MenuItem::PitmasterSettingsProfile:
-    case MenuItem::PitmasterSettingsChannel:
-    case MenuItem::PitmasterSettingsTemperature:
-    case MenuItem::PitmasterSettingsType:
-      if (MenuMode::Show == menuMode)
-        handleMenuNavigation((ButtonId::Left == buttonId) ? -1 : 1, MenuItem::PitmasterSettingsProfile, MenuItem::PitmasterSettingsType);
-      else if (MenuMode::Edit == menuMode)
-      {
-        if ((MenuItem::PitmasterSettingsType == menuItem))
-          currentData = (((PitmasterType)currentData) != pm_off) ? pm_off : pm_auto;
-        else if (MenuItem::PitmasterSettingsTemperature != menuItem)
-          currentData += (ButtonId::Left == buttonId) ? -1 : 1;
-        else
-          handleTemperatureEdit(buttonId, buttonEvent);
-      }
-      break;
-
-    case MenuItem::SystemSettingsSSID:
-    case MenuItem::SystemSettingsIP:
-    case MenuItem::SystemSettingsHost:
-    case MenuItem::SystemSettingsUnit:
-    case MenuItem::SystemSettingsFirmwareVersion:
-      if (MenuMode::Show == menuMode)
-        handleMenuNavigation((ButtonId::Left == buttonId) ? -1 : 1, MenuItem::SystemSettingsSSID, MenuItem::SystemSettingsFirmwareVersion);
-      else if (MenuMode::Edit == menuMode)
-      {
-        if ((MenuItem::SystemSettingsUnit == menuItem))
-          currentData = (((TemperatureUnit)currentData) != Celsius) ? Celsius : Fahrenheit;
-      }
-      break;
-
-    case MenuItem::MenuTemperature:
-    case MenuItem::MenuPitmaster:
-    case MenuItem::MenuSystem:
-      handleMenuNavigation((ButtonId::Left == buttonId) ? -1 : 1, MenuItem::MenuTemperature, MenuItem::MenuSystem);
-      drawMenu();
-      break;
-    }
-  }
-  else if (ButtonEvent::LongClickStart == buttonEvent)
-  {
-    switch (menuItem)
-    {
-    case MenuItem::TempShow:
-      if (ButtonId::Left == buttonId)
-      {
-        menuItem = MenuItem::TempSettingsUpper;
-        menuMode = MenuMode::Show;
-        ui.switchToFrame(1u);
-        oledBlocked = false;
-      }
-      else if (ButtonId::Right == buttonId)
-      {
-        menuItem = MenuItem::MenuTemperature;
-        menuMode = MenuMode::Show;
-        drawMenu();
-      }
-      break;
-    case MenuItem::TempSettingsUpper:
-    case MenuItem::TempSettingsLower:
-    case MenuItem::TempSettingsType:
-    case MenuItem::TempSettingsAlarm:
-      if ((ButtonId::Left == buttonId && MenuMode::Show == menuMode))
-      {
-        menuItem = MenuItem::TempShow;
-        menuMode = MenuMode::Show;
-        ui.switchToFrame(0u);
-        oledBlocked = false;
-      }
-      else if ((MenuMode::Edit == menuMode) && (menuItem <= MenuItem::TempSettingsLower))
-        handleTemperatureEdit(buttonId, buttonEvent);
-      break;
-
-    case MenuItem::PitmasterSettingsProfile:
-    case MenuItem::PitmasterSettingsChannel:
-    case MenuItem::PitmasterSettingsTemperature:
-    case MenuItem::PitmasterSettingsType:
-      if ((ButtonId::Left == buttonId && MenuMode::Show == menuMode))
-      {
-        menuItem = MenuItem::MenuPitmaster;
-        menuMode = MenuMode::Show;
-        drawMenu();
-      }
-      else if ((MenuMode::Edit == menuMode) && (MenuItem::PitmasterSettingsTemperature == menuItem))
-        handleTemperatureEdit(buttonId, buttonEvent);
-      break;
-
-    case MenuItem::SystemSettingsSSID:
-    case MenuItem::SystemSettingsIP:
-    case MenuItem::SystemSettingsHost:
-    case MenuItem::SystemSettingsUnit:
-    case MenuItem::SystemSettingsFirmwareVersion:
-      if ((ButtonId::Left == buttonId && MenuMode::Show == menuMode))
-      {
-        menuItem = MenuItem::MenuSystem;
-        menuMode = MenuMode::Show;
-        drawMenu();
-      }
-      break;
-
-    case MenuItem::MenuTemperature:
-      menuItem = MenuItem::TempShow;
-      menuMode = MenuMode::Show;
-      ui.switchToFrame(0u);
-      oledBlocked = false;
-      break;
-    case MenuItem::MenuPitmaster:
-      if (ButtonId::Left == buttonId)
-      {
-        menuItem = MenuItem::TempShow;
-        menuMode = MenuMode::Show;
-        ui.switchToFrame(0u);
-        oledBlocked = false;
-      }
-      else
-      {
-        menuItem = MenuItem::PitmasterSettingsProfile;
-        menuMode = MenuMode::Show;
-        ui.switchToFrame(2u);
-        oledBlocked = false;
-      }
-      break;
-
-    case MenuItem::MenuSystem:
-      if (ButtonId::Left == buttonId)
-      {
-        menuItem = MenuItem::TempShow;
-        menuMode = MenuMode::Show;
-        ui.switchToFrame(0u);
-        oledBlocked = false;
-      }
-      else
-      {
-        menuItem = MenuItem::SystemSettingsSSID;
-        ui.switchToFrame(3u);
-        oledBlocked = false;
-      }
-      break;
-    }
-  }
-  else if (ButtonEvent::LongClickEnd == buttonEvent)
-  {
-  }
-  else if (ButtonEvent::LongClickOnGoing == buttonEvent)
-  {
-    switch (menuItem)
-    {
-    case MenuItem::TempSettingsUpper:
-    case MenuItem::TempSettingsLower:
-    case MenuItem::PitmasterSettingsTemperature:
-      if (MenuMode::Edit == menuMode)
-        handleTemperatureEdit(buttonId, buttonEvent);
-      break;
-    }
-  }
-  else if (ButtonEvent::DoubleClick == buttonEvent)
-  {
-    switch (menuItem)
-    {
-    case MenuItem::TempSettingsUpper:
-    case MenuItem::TempSettingsLower:
-    case MenuItem::TempSettingsType:
-    case MenuItem::TempSettingsAlarm:
-    case MenuItem::PitmasterSettingsProfile:
-    case MenuItem::PitmasterSettingsChannel:
-    case MenuItem::PitmasterSettingsTemperature:
-    case MenuItem::PitmasterSettingsType:
-    case MenuItem::SystemSettingsUnit:
-      if ((ButtonId::Right == buttonId && MenuMode::Show == menuMode))
-      {
-        menuMode = MenuMode::Edit;
-      }
-      else if ((ButtonId::Right == buttonId && MenuMode::Edit == menuMode))
-      {
-        menuMode = MenuMode::Set;
-      }
-      break;
-    }
   }
 }
 
-void DisplayOledLink::handleTemperatureEdit(ButtonId buttonId, ButtonEvent buttonEvent)
-{
-  if (ButtonEvent::LongClickStart == buttonEvent || ButtonEvent::LongClickOnGoing == buttonEvent)
-    buttonMupi = 10;
-  else
-    buttonMupi = 1;
-
-  currentData += (0.1 * (float)buttonMupi) * (ButtonId::Left == buttonId) ? (float)-1 : (float)1;
-  if (system->temperatures.getUnit() == Celsius)
-  {
-    if (currentData > OLIMITMAX)
-      currentData = OLIMITMIN;
-    else if (currentData < OLIMITMIN)
-      currentData = OLIMITMAX;
-  }
-  else
-  {
-    if (currentData > OLIMITMAXF)
-      currentData = OLIMITMINF;
-    else if (currentData < OLIMITMINF)
-      currentData = OLIMITMAXF;
-  }
-}
-
-void DisplayOledLink::handleMenuNavigation(int8_t add, MenuItem minMenu, MenuItem maxMenu)
-{
-  if ((int8_t)menuItem + add > (int8_t)maxMenu)
-    menuItem = minMenu;
-  else if ((int8_t)menuItem + add < (int8_t)minMenu)
-    menuItem = maxMenu;
-  else
-    menuItem = (MenuItem)((int8_t)menuItem + add);
-}
-
-void DisplayOledLink::handleTemperatureNavigation(ButtonId buttonId)
-{
-  if (ButtonId::Left == buttonId)
-  {
-    if (currentChannel > 0u)
-      currentChannel--;
-    else
-      currentChannel = system->temperatures.count() - 1u;
-  }
-  else
-  {
-
-    currentChannel++;
-
-    TemperatureBase *nextActiveTemperature = system->temperatures.getNextActive(currentChannel);
-    TemperatureBase *firstActiveTemperature = system->temperatures.getNextActive(0u);
-
-    if (nextActiveTemperature != NULL)
-      currentChannel = nextActiveTemperature->getGlobalIndex();
-    else if (firstActiveTemperature != NULL)
-      currentChannel = firstActiveTemperature->getGlobalIndex();
-    else if (currentChannel >= system->temperatures.count())
-      currentChannel = 0u;
-  }
-}
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Frame while system start
@@ -479,7 +194,7 @@ void DisplayOledLink::drawConnect()
 void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state)
 {
   Pitmaster *pit = system->pitmasters[0];
-  int battPixel = 0.5 + ((gSystem->battery->percentage * MAXBATTERYBAR) / 100.0);
+  //int battPixel = 0.5 + ((gSystem->battery->percentage * MAXBATTERYBAR) / 100.0);
 
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
@@ -495,8 +210,13 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     switch (pit->getType())
     {
     case pm_off:
-      if(millis() > OLED_BATTERY_PERCENTAGE_DELAY)
-        display->drawString(24, 0, String(system->battery->percentage));
+      display->drawString(4, 0, "IP:");
+      if (system->wlan.isAP())
+        display->drawString(18, 0, WiFi.softAPIP().toString());
+      else if (system->wlan.isConnected())
+        display->drawString(18, 0, WiFi.localIP().toString());
+      else
+        display->drawString(18, 0, "");
       break;
     case pm_manual:
       display->drawString(33, 0, "M  " + String(pit->getValue(), 0) + "%");
@@ -533,37 +253,6 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     display->drawString(128, 0, "");
   }
 
-  //display->drawString(80,0,String(map(pit_y,0,pit_pause,0,100)) + "%");
-
-  if (gSystem->battery)
-  {
-    display->setTextAlignment(TEXT_ALIGN_LEFT);
-    if (flashIndicator && gSystem->battery->percentage < 10)
-    {
-    } // nothing for flash effect
-    else if (gSystem->battery->isCharging())
-    {
-      display->fillRect(18,3,2,4);              //Draw battery end button
-      display->drawRect(0,1,17,8);              //Draw Outline Battery
-    
-      display->setColor(BLACK);
-      display->fillRect(4,0,8,10);              //Lücke für Pfeil
-      display->setColor(WHITE);
-    
-      display->drawXbm(4, 0, 8, 10, xbmcharge); // Ladepfeilspitze
-      display->fillRect(2,3,6,4);               // Ladepfeilstiel
-    }
-    else if (gSystem->battery->isUsbPowered())
-    {
-      display->drawString(1,2,"USB");
-    }
-    else
-    {
-      display->fillRect(18,3,2,4);         //Draw battery end button
-      display->drawRect(0,1,17,8);         //Draw Outline
-      display->fillRect(2,3,battPixel,4);  // Draw Battery Status
-    }
-  }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -654,7 +343,7 @@ void DisplayOledLink::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, 
   }
 }
 
-*/
+
 
 /*
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
