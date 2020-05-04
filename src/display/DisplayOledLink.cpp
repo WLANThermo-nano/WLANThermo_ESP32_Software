@@ -43,7 +43,7 @@
 #define BUTTON_DEBOUNCE_TICKS 10u
 #define BUTTON_CLICK_TICKS 200u
 #define BUTTON_PRESS_TICKS 600u
-/*
+
 enum class Frames
 {
   Temperature,
@@ -52,7 +52,7 @@ enum class Frames
   SystemSettings,
   NumOfFrames,
 };
-
+/*
 float DisplayOledLink::currentData = 0; // Zwischenspeichervariable
 uint8_t DisplayOledLink::buttonMupi = 1u;
 boolean DisplayOledLink::oledBlocked = false;
@@ -69,26 +69,26 @@ MenuItem DisplayOledLink::menuItem = MenuItem::Boot;
 MenuMode DisplayOledLink::menuMode = MenuMode::Show;
 uint8_t DisplayOledLink::currentChannel = 0u;
 boolean DisplayOledLink::flashIndicator = false;
+*/
 
 DisplayOledLink::DisplayOledLink()
 {
 }
-*/
 
-/*
+
 void DisplayOledLink::init()
 {
-  xTaskCreatePinnedToCore(
+  /*xTaskCreatePinnedToCore(
       DisplayOledLink::task,   // Task function.
       "DisplayOled::task",      // String with name of task.
       10000,                    // Stack size in bytes.
       this,                     // Parameter passed as input of the task
       1,                        // Priority of the task.
       NULL,                     // Task handle.
-      1);                       // CPU Core
+      1);                       // CPU Core*/
 }
 
-
+/*
 boolean DisplayOledLink::initDisplay()
 {
   this->loadConfig();
@@ -182,10 +182,10 @@ void DisplayOledLink::loadConfig()
   {
   }
 }
-
+*/
 void DisplayOledLink::update()
 {
-  // check global block
+  /*// check global block
   if (!blocked)
   {
     lButton.tick();
@@ -194,9 +194,9 @@ void DisplayOledLink::update()
     //check oled block
     if (!oledBlocked)
       ui.update();
-  }
+  }*/
 }
-
+/*
 void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
 {
   if (ButtonEvent::Click == buttonEvent)

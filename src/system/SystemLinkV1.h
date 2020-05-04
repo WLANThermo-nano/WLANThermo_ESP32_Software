@@ -28,9 +28,6 @@ class SystemLinkV1 : public SystemBase
     SystemLinkV1();
     void init();
     void hwInit();
-  private:
-    static RTC_DATA_ATTR boolean didSleep;
-    static RTC_DATA_ATTR boolean didCharge;
 };
 
 extern SystemBase* gSystem;

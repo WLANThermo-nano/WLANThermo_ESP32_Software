@@ -40,8 +40,6 @@
 // SD CARD
 #define CS_SD_CARD 5u
 
-#define STANDBY_SLEEP_CYCLE_TIME 500000u // 500ms
-
 enum ledcChannels
 {
   // Channel 0, Timer0
@@ -52,52 +50,15 @@ enum ledcChannels
   ledcBuzzer = 4
 };
 
-RTC_DATA_ATTR boolean SystemLinkV1::didSleep = false;  // standby ram
-RTC_DATA_ATTR boolean SystemLinkV1::didCharge = false; // standby ram
-
 SystemLinkV1::SystemLinkV1() : SystemBase()
 {
 }
 
 void SystemLinkV1::hwInit()
 {
-  // only init oled reset pin when coming from cold start
-  if (didSleep != true)
-  {
-    pinMode(OLED_RESET_IO, OUTPUT);
-    digitalWrite(OLED_RESET_IO, LOW);
-    delay(100);
-    digitalWrite(OLED_RESET_IO, HIGH);
-    delay(100);
-  }
-
   pinMode(PITMASTERSUPPLY, OUTPUT);
   digitalWrite(PITMASTERSUPPLY, 0u);
 
-  // initialize battery in hwInit!
-  battery = new Battery();
-  battery->update();
-  
-
-/*
-  // handle sleep during battery charge
-  if (battery->requestsStandby())
-  {
-    if (didSleep != true || battery->isCharging() != didCharge)
-    {
-      Wire.begin();
-      Wire.setClock(700000);
-      DisplayOled::drawCharging();
-      didCharge = battery->isCharging();
-    }
-
-    didSleep = true;
-    esp_sleep_enable_timer_wakeup(STANDBY_SLEEP_CYCLE_TIME);
-    esp_deep_sleep_start();
-  }
-
-  didSleep = false;
-*/
   Wire.begin();
   Wire.setClock(700000);
 }
