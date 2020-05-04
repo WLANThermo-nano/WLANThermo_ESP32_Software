@@ -1,5 +1,6 @@
- /*************************************************** 
-    Copyright (C) 2020  Martin Koerner
+/*************************************************** 
+    Copyright (C) 2020  Steffen Ochs
+    Copyright (C) 2019  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,20 +16,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     HISTORY: Please refer Github History
+    
+****************************************************/
+#pragma once
 
- ****************************************************/
+#include "TemperatureBase.h"
+#include "Wire.h"
 
-#ifndef C_CONSTANTS_H_
-#define C_CONSTANTS_H_
+#define MAX11613_ADDRESS 0x34u
 
-#define DEFAULT_APNAME "WLANTHERMO-AP"
-
-#ifdef HW_NANO_VX
-#define DEFAULT_HOSTNAME "NANO-"
-#elif HW_LINK_V1
-#define DEFAULT_HOSTNAME "LINK-"
-#else
-#define DEFAULT_HOSTNAME "MINI-"
-#endif
-
-#endif /* C_CONSTANTS_H_ */
+class TemperatureMax11613 : public TemperatureBase
+{
+  public:
+    TemperatureMax11613();
+    TemperatureMax11613(uint8_t index, TwoWire *twoWire);
+    void update();
+  private:
+    uint16_t readChip();
+    TwoWire *twoWire;
+    const uint8_t chipAddress = MAX11613_ADDRESS;
+};

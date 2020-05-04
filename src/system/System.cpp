@@ -38,4 +38,9 @@ DisplayBase *gDisplay = new DisplayNextion();
 #include "display/DisplayOled.h"
 SystemBase* gSystem = new SystemNanoVx();
 DisplayBase *gDisplay = new DisplayOled();
+#elif HW_LINK_V1
+#include "system/SystemLinkV1.h"
+#include "display/DisplayOledLink.h"
+SystemBase* gSystem = new SystemLinkV1();
+DisplayBase *gDisplay = new DisplayOledLink();
 #endif
