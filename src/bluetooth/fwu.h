@@ -6,6 +6,7 @@
 //
 //  Created by Andreas Schweizer on 30.11.2018.
 //  Copyright © 2018-2019 Classy Code GmbH
+//  Copyright ©  2020  Martin Koerner
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -33,50 +34,55 @@
 struct SFwu;
 
 #define FWU_REQUEST_BUF_SIZE 67
-#define FWU_RESPONSE_BUF_SIZE 16
+#define FWU_RESPONSE_BUF_SIZE 17
 
-typedef enum {
+typedef enum
+{
     FWU_STATUS_UNDEFINED = 0,
     FWU_STATUS_FAILURE = 1,
     FWU_STATUS_COMPLETION = 2,
 } EFwuProcessStatus;
 
-typedef enum {
+typedef enum
+{
     FWU_RSP_OK = 0,
-    FWU_RSP_TOO_SHORT = 1,
-    FWU_RSP_START_MARKER_MISSING = 2,
-    FWU_RSP_END_MARKER_MISSING = 3,
-    FWU_RSP_REQUEST_REFERENCE_INVALID = 4,
-    FWU_RSP_ERROR_RESPONSE = 5,
-    FWU_RSP_TIMEOUT = 6,
-    FWU_RSP_PING_ID_MISMATCH = 7,
-    FWU_RSP_RX_OVERFLOW = 8,
-    FWU_RSP_INIT_COMMAND_TOO_LARGE = 9,
-    FWU_RSP_CHECKSUM_ERROR = 10,
-    FWU_RSP_DATA_OBJECT_TOO_LARGE = 11,
-    FWU_RSP_RX_INVALID_ESCAPE_SEQ = 12,
+    FWU_RSP_OK_NO_UPDATE = 1,
+    FWU_RSP_TOO_SHORT = 2,
+    FWU_RSP_START_MARKER_MISSING = 3,
+    FWU_RSP_END_MARKER_MISSING = 4,
+    FWU_RSP_REQUEST_REFERENCE_INVALID = 5,
+    FWU_RSP_ERROR_RESPONSE = 6,
+    FWU_RSP_TIMEOUT = 7,
+    FWU_RSP_PING_ID_MISMATCH = 8,
+    FWU_RSP_RX_OVERFLOW = 9,
+    FWU_RSP_INIT_COMMAND_TOO_LARGE = 10,
+    FWU_RSP_CHECKSUM_ERROR = 11,
+    FWU_RSP_DATA_OBJECT_TOO_LARGE = 12,
+    FWU_RSP_RX_INVALID_ESCAPE_SEQ = 13,
 } EFwuResponseStatus;
 
 typedef void (*FTxFunction)(struct SFwu *fwu, uint8_t *buf, uint8_t len);
 
-typedef struct SFwu {
-// --- public - define these before calling fwuInit ---
+typedef struct SFwu
+{
+    // --- public - define these before calling fwuInit ---
     // .dat
     uint8_t *commandObject;
     uint32_t commandObjectLen;
     // .bin
     uint8_t *dataObject;
     uint32_t dataObjectLen;
+    uint32_t dataObjectVer;
     // Sending bytes to the target
     FTxFunction txFunction;
     // Timeout when waiting for a response from the target
     uint32_t responseTimeoutMillisec;
-// --- public - result codes
+    // --- public - result codes
     // Overall process status code
     EFwuProcessStatus processStatus;
     // Response status code
     EFwuResponseStatus responseStatus;
-// --- private, don't modify ---
+    // --- private, don't modify ---
     uint32_t privateDataObjectOffset;
     uint32_t privateDataObjectSize;
     uint32_t privateDataObjectMaxSize;
@@ -102,6 +108,15 @@ typedef struct SFwu {
     uint32_t privateObjectCrc;
 } TFwu;
 
+#pragma pack(1)
+typedef struct SFwVerResp
+{
+    uint8_t type;
+    uint32_t version;
+    uint32_t addr;
+    uint32_t len;
+} TFwVerResp;
+#pragma pack();
 
 // First function to call to set up the internal state in the FWU structure.
 void fwuInit(TFwu *fwu);
@@ -117,6 +132,5 @@ void fwuDidReceiveData(TFwu *fwu, uint8_t *bytes, uint8_t len);
 
 // Inform the FWU module that it may send maxLen bytes of data to the target.
 void fwuCanSendData(TFwu *fwu, uint8_t maxLen);
-
 
 #endif // __FWU_H__

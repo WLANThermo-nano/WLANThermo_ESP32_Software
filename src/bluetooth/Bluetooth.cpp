@@ -22,6 +22,7 @@
 #include "bleFirmwareDat.h"
 #include "bleFirmwareBin.h"
 #include "Temperature/TemperatureBase.h"
+#include <byteswap.h>
 
 #define BLE_UART_TX 12
 #define BLE_UART_RX 14
@@ -147,6 +148,7 @@ boolean Bluetooth::doDfu()
     sFwu.commandObjectLen = sizeof(bleFirmwareDat_h);
     sFwu.dataObject = (uint8_t *)bleFirmwareBin_h;
     sFwu.dataObjectLen = sizeof(bleFirmwareBin_h);
+    sFwu.dataObjectVer = bleFirmwareBin_h_version;
     sFwu.txFunction = Bluetooth::dfuTxFunction;
     sFwu.responseTimeoutMillisec = 5000u;
 
@@ -170,13 +172,16 @@ boolean Bluetooth::doDfu()
 
         if (FWU_STATUS_COMPLETION == status)
         {
+            if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
+                Serial.println("\nFlashing skipped, version already up to date");
+            else
+                Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
 
-            Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
             break;
         }
         else if (status == FWU_STATUS_FAILURE)
         {
-            Serial.printf("\nFlashing failed = %d (%d ms)", sFwu.responseStatus, (millis() - flashStart));
+            Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
             break;
         }
     }
@@ -235,6 +240,7 @@ uint8_t Bluetooth::dfuRxFunction(uint8_t *data, int maxLen)
         {
             /*if (n)
                 Serial.println("");*/
+
             return n;
         }
 
@@ -242,5 +248,6 @@ uint8_t Bluetooth::dfuRxFunction(uint8_t *data, int maxLen)
 
     /*if (n)
         Serial.println("");*/
+
     return n;
 }
