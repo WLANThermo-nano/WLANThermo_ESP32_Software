@@ -21,6 +21,7 @@
 #include "TemperatureGrp.h"
 #include "TemperatureBle.h"
 #include "Settings.h"
+#include "bluetooth\Bluetooth.h"
 
 TemperatureGrp::TemperatureGrp()
 {
@@ -36,9 +37,65 @@ void TemperatureGrp::add(TemperatureBase *temperature)
   temperatures[addIndex++] = temperature;
 }
 
+void TemperatureGrp::addBle()
+{
+  for (uint8_t deviceIndex = 0u; deviceIndex < BLUETOOTH_MAX_DEVICE_COUNT; deviceIndex++)
+  {
+    String peerAddress = Bluetooth::getDevicePeerAddress(deviceIndex);
+
+    if (0u == peerAddress.length())
+    {
+      break;
+    }
+    else
+    {
+      uint8_t temperatureCount = Bluetooth::getDeviceTemperatureCount(peerAddress);
+
+      for (uint8_t bleTemperatureIndex = 0u; bleTemperatureIndex < temperatureCount; bleTemperatureIndex++)
+      {
+        boolean newTemperature = true;
+
+        /* check if temperature is already known */
+        for (uint8_t temperatureIndex = 0u; temperatureIndex < this->count(); temperatureIndex++)
+        {
+          if ((temperatures[temperatureIndex]->getAddress() == peerAddress) && (temperatures[temperatureIndex]->getLocalIndex() == bleTemperatureIndex))
+          {
+            newTemperature = false;
+            break;
+          }
+        }
+
+        /* add new temperature */
+        if (newTemperature)
+          this->addRemote((uint8_t)SensorType::Ble, peerAddress.c_str(), bleTemperatureIndex);
+      }
+    }
+  }
+}
+
+void TemperatureGrp::removeBle()
+{
+  uint8_t temperatureCount = this->count();
+  portMUX_TYPE mutex = portMUX_INITIALIZER_UNLOCKED;
+
+  portENTER_CRITICAL(&mutex);
+
+  for (uint8_t index = 0u; index < temperatureCount; index++)
+  {
+    if (temperatures[index]->getType() == (uint8_t)SensorType::Ble)
+    {
+      delete temperatures[index];
+      temperatures[index] = NULL;
+      addIndex--;
+    }
+  }
+
+  portEXIT_CRITICAL(&mutex);
+}
+
 void TemperatureGrp::update()
 {
-  for (uint8_t i = 0u; i < addIndex; i++)
+  for (uint8_t i = 0u; i < count(); i++)
   {
     if (temperatures[i] != NULL)
     {

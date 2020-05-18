@@ -23,6 +23,8 @@
 #include <ArduinoJson.h>
 #include "fwu.h"
 
+#define BLUETOOTH_MAX_DEVICE_COUNT 4u
+
 typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
 
 class Bluetooth
@@ -31,6 +33,8 @@ public:
     Bluetooth();
     void init();
     static float getTemperatureValue(String peerAddress, uint8_t index);
+    static String getDevicePeerAddress(uint8_t index);
+    static uint8_t getDeviceTemperatureCount(String peerAddress);
 
 private:
     static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);

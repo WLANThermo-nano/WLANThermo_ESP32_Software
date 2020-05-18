@@ -30,6 +30,8 @@ public:
   TemperatureGrp();
   void virtual update();
   void add(TemperatureBase *temperature);
+  void addBle();
+  void removeBle();
   TemperatureBase *operator[](int index);
   uint8_t count();
   boolean setUnit(TemperatureUnit unit);
