@@ -50,6 +50,7 @@ TemperatureBase::TemperatureBase()
   this->calcTemperature = typeFunctions[0];
   this->fixedSensor = false;
   this->acknowledgedAlarm = false;
+  this->connected = false;
 }
 
 TemperatureBase::~TemperatureBase()

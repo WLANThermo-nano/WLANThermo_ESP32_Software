@@ -32,6 +32,7 @@ class Bluetooth
 public:
     Bluetooth();
     void init();
+    static boolean isDeviceConnected(String peerAddress);
     static float getTemperatureValue(String peerAddress, uint8_t index);
     static String getDevicePeerAddress(uint8_t index);
     static uint8_t getDeviceTemperatureCount(String peerAddress);

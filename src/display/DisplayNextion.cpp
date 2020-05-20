@@ -474,7 +474,7 @@ void DisplayNextion::showTemperatureSettings(void *ptr)
   }
 
   // Fixed
-  NexVariable(DONT_CARE, DONT_CARE, "temp_settings.Fixed").setValue(temperature->getFixedSensor());
+  NexVariable(DONT_CARE, DONT_CARE, "temp_settings.Fixed").setValue(temperature->isFixedSensor());
 
   hotspotSaveTemp.attachPop(DisplayNextion::saveTemperatureSettings, temperature);
 

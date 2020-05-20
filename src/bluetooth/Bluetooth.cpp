@@ -156,6 +156,53 @@ uint8_t Bluetooth::getDeviceTemperatureCount(String peerAddress)
     return temperatureCount;
 }
 
+boolean Bluetooth::isDeviceConnected(String peerAddress)
+{
+    DynamicJsonBuffer jsonBuffer;
+    boolean isConnected = false;
+
+    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
+
+    if (!json.success())
+    {
+        //Serial.println("Invalid JSON");
+        return isConnected;
+    }
+
+    if (json.containsKey(BLE_JSON_DEVICES) == false)
+    {
+        Serial.println("Invalid JSON: devices missing");
+        return isConnected;
+    }
+
+    JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
+
+    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
+    {
+
+        JsonObject &_device = itDevice->asObject();
+
+        if (_device.containsKey(BLE_JSON_ADDRESS) == false)
+        {
+            Serial.println("Invalid JSON: address missing");
+            continue;
+        }
+
+        if (_device.containsKey(BLE_JSON_STATUS) == false)
+        {
+            Serial.println("Invalid JSON: status missing");
+            continue;
+        }
+
+        if (peerAddress.equalsIgnoreCase(_device[BLE_JSON_ADDRESS]))
+        {
+            isConnected = _device[BLE_JSON_STATUS].as<boolean>();
+        }
+    }
+
+    return isConnected;
+}
+
 float Bluetooth::getTemperatureValue(String peerAddress, uint8_t index)
 {
     DynamicJsonBuffer jsonBuffer;

@@ -48,7 +48,7 @@ void API::deviceObj(JsonObject &jObj)
   jObj["flash_size"] = gSystem->getFlashSize();
 
   if (gSystem->item.read(ItemNvsKeys::kItem) != "")
-    jObj["item"] =gSystem->item.read(ItemNvsKeys::kItem);
+    jObj["item"] = gSystem->item.read(ItemNvsKeys::kItem);
 
   jObj["hw_version"] = String("v") + String(gSystem->getHardwareVersion());
 
@@ -111,7 +111,8 @@ void API::channelAry(JsonArray &jAry, int cc)
       data["max"] = temperature->getMaxValue();
       data["alarm"] = (uint8_t)temperature->getAlarmSetting();
       data["color"] = temperature->getColor();
-      data["fixed"] = temperature->getFixedSensor();
+      data["fixed"] = temperature->isFixedSensor();
+      data["connected"] = temperature->isConnected();
     }
   }
 }

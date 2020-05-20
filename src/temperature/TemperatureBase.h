@@ -70,8 +70,9 @@ public:
   static uint8_t getTypeCount();
   String getTypeName();
   static String getTypeName(uint8_t index);
-  boolean getFixedSensor() { return this->fixedSensor; }
+  boolean isFixedSensor() { return this->fixedSensor; }
   uint8_t getGlobalIndex();
+  boolean isConnected() { return this->connected; }
   virtual void setType(uint8_t type);
   void setMinValue(float value);
   void setMaxValue(float value);
@@ -106,6 +107,7 @@ protected:
   AlarmSetting alarmSetting;
   TemperatureCalculation_t calcTemperature;
   boolean fixedSensor;
+  boolean connected;
 
 private:
   TemperatureUnit currentUnit;
