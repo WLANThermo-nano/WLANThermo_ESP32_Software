@@ -7,6 +7,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             fileName = "index.html"
         elif self.path == '/WLANThermoLogo.png':
             fileName = "WLANThermoMini.png"
+        elif self.path == '/favicon.ico':
+            self.send_response(404)
+            self.end_headers()
+            return
         else:
             fileName = self.path.replace('/', '')
         
