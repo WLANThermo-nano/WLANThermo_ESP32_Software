@@ -48,8 +48,10 @@ Bluetooth::Bluetooth()
 
 void Bluetooth::init()
 {
-    this->doDfu();
-    xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, 1, NULL, 1);
+    if (this->doDfu())
+    {
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, 1, NULL, 1);
+    }
 }
 
 void Bluetooth::getDevices()
@@ -280,52 +282,59 @@ boolean Bluetooth::doDfu()
     digitalWrite(BLE_RESET_PIN, HIGH);
 
     if (serialBle->readString().startsWith("@@BOOTLOADER"))
+    {
         Serial.println("Hello from BLE bootloader");
 
-    Serial.println("Start flashing of BLE application");
-    uint32_t flashStart = millis();
+        Serial.println("Start flashing of BLE application");
+        uint32_t flashStart = millis();
 
-    TFwu sFwu;
-    memset(&sFwu, 0, sizeof(TFwu));
-    sFwu.commandObject = (uint8_t *)bleFirmwareDat_h;
-    sFwu.commandObjectLen = sizeof(bleFirmwareDat_h);
-    sFwu.dataObject = (uint8_t *)bleFirmwareBin_h;
-    sFwu.dataObjectLen = sizeof(bleFirmwareBin_h);
-    sFwu.dataObjectVer = bleFirmwareBin_h_version;
-    sFwu.txFunction = Bluetooth::dfuTxFunction;
-    sFwu.responseTimeoutMillisec = 5000u;
+        TFwu sFwu;
+        memset(&sFwu, 0, sizeof(TFwu));
+        sFwu.commandObject = (uint8_t *)bleFirmwareDat_h;
+        sFwu.commandObjectLen = sizeof(bleFirmwareDat_h);
+        sFwu.dataObject = (uint8_t *)bleFirmwareBin_h;
+        sFwu.dataObjectLen = sizeof(bleFirmwareBin_h);
+        sFwu.dataObjectVer = bleFirmwareBin_h_version;
+        sFwu.txFunction = Bluetooth::dfuTxFunction;
+        sFwu.responseTimeoutMillisec = 5000u;
 
-    fwuInit(&sFwu);
-    fwuExec(&sFwu);
+        fwuInit(&sFwu);
+        fwuExec(&sFwu);
 
-    while (1)
-    {
-        fwuCanSendData(&sFwu, 128);
-
-        uint8_t rxBuf[4];
-        uint8_t rxLen = dfuRxFunction(rxBuf, 4);
-        if (rxLen > 0u)
+        while (1)
         {
-            fwuDidReceiveData(&sFwu, rxBuf, rxLen);
-        }
+            fwuCanSendData(&sFwu, 128);
 
-        static uint32_t mill = millis();
-        EFwuProcessStatus status = fwuYield(&sFwu, millis() - mill);
-        mill = millis();
+            uint8_t rxBuf[4];
+            uint8_t rxLen = dfuRxFunction(rxBuf, 4);
+            if (rxLen > 0u)
+            {
+                fwuDidReceiveData(&sFwu, rxBuf, rxLen);
+            }
 
-        if (FWU_STATUS_COMPLETION == status)
-        {
-            if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
-                Serial.println("\nFlashing skipped, version already up to date");
-            else
-                Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
+            static uint32_t mill = millis();
+            EFwuProcessStatus status = fwuYield(&sFwu, millis() - mill);
+            mill = millis();
 
-            break;
-        }
-        else if (status == FWU_STATUS_FAILURE)
-        {
-            Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
-            break;
+            if (FWU_STATUS_COMPLETION == status)
+            {
+                if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
+                {
+                    Serial.println("\nFlashing skipped, version already up to date");
+                }
+                else
+                {
+                    Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
+                }
+
+                success = true;
+                break;
+            }
+            else if (status == FWU_STATUS_FAILURE)
+            {
+                Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
+                break;
+            }
         }
     }
 
