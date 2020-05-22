@@ -3195,6 +3195,8 @@
 											class="helper"></i>
 										<p data-tag="buzzer_alarm">Piepser-Alarm</p>
 									</label></div>
+								<p class="pure-button pure-button-primary" id="channel_delete"
+									data-tag="channel_delete">Kanal löschen</p>
 							</form>
 						</div>
 					</div>
@@ -3922,6 +3924,7 @@
 				loadJSON('data', '', '3000', function (response) {
 					jr = JSON.parse(response);
 					byId('channel_settings_save').setAttribute('onclick', 'setChannel(' + channel + ');');
+					byId('channel_delete').setAttribute('onclick', 'deleteChannel(' + channel + ');');
 					byId('channel_settings_headtitle').innerHTML = jr.channel[channel].name;
 					byId('channel_name').value = jr.channel[channel].name;
 					byId('temp_max').value = jr.channel[channel].max;
@@ -3929,6 +3932,15 @@
 					byId('btn-color-picker').style.color = jr.channel[channel].color;
 					byId('btn-color-picker').setAttribute('data-color', jr.channel[channel].color);
 					document.getElementsByClassName("color_border")[0].style.borderColor = jr.channel[channel].color;
+
+					if(jr.channel[channel].typ == 16)
+					{
+						byId('channel_delete').style.display = "inline-block";
+					}
+					else
+					{
+						byId('channel_delete').style.display = "none";
+					}
 
 					if (jr.channel[channel].fixed) {
 						clearOption('sensor');
@@ -3965,6 +3977,17 @@
 					showLoader('false');
 				})
 			})
+		}
+
+		function deleteChannel(channel) {
+			if (confirm(de.channel_delete_msg) == true) {
+				showLoader('true');
+				var number = {number: channel+1};
+				var json = JSON.stringify(number);
+				loadJSON('deletechannel', json, '60000', function (response) {
+					location.reload(true);
+				});
+			}
 		}
 
 		function setChannel(channel) {

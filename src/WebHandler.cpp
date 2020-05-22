@@ -61,6 +61,7 @@
 #define SET_NETWORK "/setnetwork"
 #define SET_SYSTEM "/setsystem"
 #define SET_CHANNELS "/setchannels"
+#define DELETE_CHANNEL "/deletechannel"
 #define SET_PITMASTER "/setpitmaster"
 #define SET_PID "/setpid"
 #define SET_DC "/setDC"
@@ -151,7 +152,7 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     JsonArray &_scan = json.createNestedArray("Scan");
     for (uint8_t i = 0; i < n; i++)
     {
-      if(filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
+      if (filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
         continue;
 
       filterDuplicates += "||" + WiFi.SSID(i) + "||";
@@ -326,8 +327,8 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     {
       if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
         return request->requestAuthentication(WServer::getRealm());
-      
-      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
       response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
       response->addHeader("Content-Encoding", "gzip");
       request->send(response);
@@ -348,10 +349,10 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     {
       if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
         return request->requestAuthentication(WServer::getRealm());
-      
+
       gDisplay->toggleOrientation();
       gDisplay->saveConfig();
-      if(gDisplay->getUpdateName() != "")
+      if (gDisplay->getUpdateName() != "")
       {
         gSystem->otaUpdate.resetUpdateInfo();
         gSystem->otaUpdate.setForceFlag(true);
@@ -360,7 +361,7 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
         gSystem->otaUpdate.askUpdateInfo();
       }
 
-      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
       response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
       response->addHeader("Content-Encoding", "gzip");
       request->send(response);
@@ -377,7 +378,7 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     {
       if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
         return request->requestAuthentication(WServer::getRealm());
-      
+
       gDisplay->calibrate();
       request->send(200, TEXTPLAIN, TEXTTRUE);
     }
@@ -496,7 +497,7 @@ bool NanoWebHandler::canHandle(AsyncWebServerRequest *request)
 {
   if (request->method() == HTTP_GET)
   {
-    if (request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == RECOVERY ||request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == ADMIN || request->url() == UPLOAD || request->url() == HISTORY
+    if (request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == RECOVERY || request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == ADMIN || request->url() == UPLOAD || request->url() == HISTORY
         //|| request->url() == LOGGING_PATH
     )
     {
@@ -567,7 +568,7 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
     gSystem->otaUpdate.setAutoUpdate((boolean)_system["autoupd"]);
   if (_system.containsKey("prerelease"))
     gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
-    
+
   gSystem->otaUpdate.saveConfig();
 
   if (_system.containsKey("host"))
@@ -646,6 +647,34 @@ bool BodyWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
       temperature->setAlarmSetting((AlarmSetting)_cha["alarm"].as<uint8_t>()); // ALARM
     if (_cha.containsKey("color"))
       temperature->setColor(_cha["color"].asString()); // COLOR
+  }
+  else
+    return 0;
+
+  gSystem->temperatures.saveConfig();
+  return 1;
+}
+
+bool BodyWebHandler::deleteChannel(AsyncWebServerRequest *request, uint8_t *datas)
+{
+
+  //  https://github.com/me-no-dev/ESPAsyncWebServer/issues/123
+
+  printRequest(datas);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject &_cha = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
+  if (!_cha.success())
+    return 0;
+
+  int num = _cha["number"];
+  num--; // Intern beginnt die Zählung bei 0
+
+  TemperatureBase *temperature = gSystem->temperatures[num];
+
+  if (temperature != NULL)
+  {
+    gSystem->temperatures.remove(num);
   }
   else
     return 0;
@@ -919,8 +948,8 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     }
     if (_pid.containsKey("DCmmax"))
     {
-      val = _pid["DCmmax"] ;
-      profile->dcmax = constrain(val* 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      val = _pid["DCmmax"];
+      profile->dcmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("opl"))
       profile->opl = _pid["opl"];
@@ -1112,6 +1141,15 @@ void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
     request->send(200, TEXTPLAIN, TEXTTRUE);
     return;
   }
+  else if (request->url() == DELETE_CHANNEL)
+  {
+    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+      return request->requestAuthentication(WServer::getRealm());
+    if (!deleteChannel(request, data))
+      request->send(200, TEXTPLAIN, TEXTFALSE);
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+    return;
+  }
   else if (request->url() == SET_SYSTEM)
   {
     if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
@@ -1177,7 +1215,7 @@ bool BodyWebHandler::canHandle(AsyncWebServerRequest *request)
 {
   if (request->method() == HTTP_GET)
     return false;
-  if (request->url() == SET_NETWORK || request->url() == SET_CHANNELS || request->url() == SET_SYSTEM || request->url() == SET_PITMASTER || request->url() == SET_PID || request->url() == SET_IOT || request->url() == SET_API || request->url() == SET_DC || request->url() == SET_PUSH || request->url() == SET_GOD)
+  if (request->url() == SET_NETWORK || request->url() == SET_CHANNELS || request->url() == DELETE_CHANNEL || request->url() == SET_SYSTEM || request->url() == SET_PITMASTER || request->url() == SET_PID || request->url() == SET_IOT || request->url() == SET_API || request->url() == SET_DC || request->url() == SET_PUSH || request->url() == SET_GOD)
     return true;
   return false;
 }

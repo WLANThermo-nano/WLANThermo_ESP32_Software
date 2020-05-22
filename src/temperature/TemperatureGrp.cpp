@@ -26,15 +26,20 @@
 TemperatureGrp::TemperatureGrp()
 {
   this->currentUnit = Celsius;
-  this->addIndex = 0u;
-
-  for (uint8_t i = 0u; i < MAX_TEMPERATURES; i++)
-    temperatures[i] = NULL;
 }
 
 void TemperatureGrp::add(TemperatureBase *temperature)
 {
-  temperatures[addIndex++] = temperature;
+  temperatures.push_back(temperature);
+}
+
+void TemperatureGrp::remove(uint8_t index)
+{
+  if (index < temperatures.size())
+  {
+    delete temperatures[index];
+    temperatures.erase(temperatures.begin() + index);
+  }
 }
 
 void TemperatureGrp::addBle()
@@ -73,6 +78,8 @@ void TemperatureGrp::addBle()
   }
 }
 
+bool isTypeBle(TemperatureBase *temperature) { return (temperature->getType() == (uint8_t)SensorType::Ble); }
+
 void TemperatureGrp::removeBle()
 {
   uint8_t temperatureCount = this->count();
@@ -85,8 +92,7 @@ void TemperatureGrp::removeBle()
     if (temperatures[index]->getType() == (uint8_t)SensorType::Ble)
     {
       delete temperatures[index];
-      temperatures[index] = NULL;
-      addIndex--;
+      temperatures.erase(std::remove_if(temperatures.begin(), temperatures.end(), isTypeBle), temperatures.end());
     }
   }
 
@@ -190,7 +196,7 @@ uint8_t TemperatureGrp::getActiveCount()
 
 uint8_t TemperatureGrp::count()
 {
-  return this->addIndex;
+  return temperatures.size();
 }
 
 boolean TemperatureGrp::hasAlarm()
@@ -239,7 +245,7 @@ void TemperatureGrp::loadConfig()
 
     for (uint8_t i = 0u; i < json["tname"].size(); i++)
     {
-      TemperatureBase *temperature = temperatures[i];
+      TemperatureBase *temperature = (i < temperatures.size()) ? temperatures[i] : NULL;
 
       // add optional remote temperatures (e.g. BLE)
       if ((temperature == NULL) && json.containsKey("taddress") && json.containsKey("tlindex"))

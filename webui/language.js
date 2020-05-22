@@ -27,6 +27,8 @@
 				color:"Color",
 				push_alarm:"Push alarm",
 				buzzer_alarm:"Buzzer alarm",
+				channel_delete:"Delete channel",
+				channel_delete_msg:"Shall the channel really be deleted?",
 				//Menü
 				menuHome:"Home",
 				menuWlan:"WLAN",
@@ -139,6 +141,8 @@
 				color:"Farbe",
 				push_alarm:"Push-Alarm",
 				buzzer_alarm:"Piepser-Alarm",
+				channel_delete:"Kanal löschen",
+				channel_delete_msg:"Soll der Kanal wirklich gelöscht werden?",
 				//Menü
 				menuHome:"Home",
 				menuWlan:"WLAN",
