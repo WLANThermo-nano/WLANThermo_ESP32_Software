@@ -40,25 +40,27 @@ class NanoWebHandler : public AsyncWebHandler
 public:
   NanoWebHandler(void);
   void handleRequest(AsyncWebServerRequest *request);
-  bool canHandle(AsyncWebServerRequest *request);
-  void handleWifiResult(AsyncWebServerRequest *request = NULL);
-  void handleWifiScan(AsyncWebServerRequest *request = NULL);
-  void configreset();
-
-private:
-  void handleSettings(AsyncWebServerRequest *request);
-  void handleData(AsyncWebServerRequest *request);
-};
-
-extern NanoWebHandler nanoWebHandler;
-
-class BodyWebHandler : public AsyncWebHandler
-{
-
-public:
-  BodyWebHandler(void);
   void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
   bool canHandle(AsyncWebServerRequest *request);
+
+  // Request handler
+  void handleSettings(AsyncWebServerRequest *request);
+  void handleData(AsyncWebServerRequest *request);
+  void handleWifiResult(AsyncWebServerRequest *request = NULL);
+  void handleWifiScan(AsyncWebServerRequest *request = NULL);
+  void handleConfigReset(AsyncWebServerRequest *request);
+  void handleStopWifi(AsyncWebServerRequest *request);
+  void handleCheckUpdate(AsyncWebServerRequest *request);
+  void handleUpdateStatus(AsyncWebServerRequest *request);
+  void handleDcStatus(AsyncWebServerRequest *request);
+  void handleClearWifi(AsyncWebServerRequest *request);
+  void handleRecovery(AsyncWebServerRequest *request);
+  void handleRotate(AsyncWebServerRequest *request);
+  void handleCalibrate(AsyncWebServerRequest *request);
+  void handleAdmin(AsyncWebServerRequest *request);
+  void handleUpdate(AsyncWebServerRequest *request);
+
+  // Body handler
   bool setServerAPI(AsyncWebServerRequest *request, uint8_t *datas);
   bool setPitmaster(AsyncWebServerRequest *request, uint8_t *datas);
   bool setPID(AsyncWebServerRequest *request, uint8_t *datas);
@@ -68,12 +70,12 @@ public:
   bool setNetwork(AsyncWebServerRequest *request, uint8_t *datas);
   bool addNetwork(AsyncWebServerRequest *request, uint8_t *datas);
   bool setIoT(AsyncWebServerRequest *request, uint8_t *datas);
+  bool setPush(AsyncWebServerRequest *request, uint8_t *datas);
+  bool setDCTest(AsyncWebServerRequest *request, uint8_t *datas);
 
 private:
   int checkStringLength(String tex);
   String checkString(String tex);
-  bool setPush(AsyncWebServerRequest *request, uint8_t *datas);
-  bool setDCTest(AsyncWebServerRequest *request, uint8_t *datas);
 };
 
-extern BodyWebHandler bodyWebHandler;
+extern NanoWebHandler nanoWebHandler;
