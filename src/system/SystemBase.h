@@ -25,6 +25,7 @@
 #include "peripherie/Battery.h"
 #include "peripherie/Buzzer.h"
 #include "peripherie/SdCard.h"
+#include "bluetooth/Bluetooth.h"
 #include "Notification.h"
 #include "Wlan.h"
 #include "Cloud.h"
@@ -84,6 +85,7 @@ public:
   TemperatureGrp temperatures;
   PitmasterGrp pitmasters;
   Battery *battery;
+  Bluetooth *bluetooth;
   Cloud cloud;
   Mqtt mqtt;
   OtaUpdate otaUpdate;
@@ -109,4 +111,4 @@ private:
   static void task(void *parameter);
 };
 
-extern SystemBase* gSystem;
+extern SystemBase *gSystem;

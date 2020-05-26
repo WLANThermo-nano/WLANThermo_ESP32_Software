@@ -19,25 +19,89 @@
 ****************************************************/
 
 #include "TemperatureGrp.h"
+#include "TemperatureBle.h"
 #include "Settings.h"
+#include "bluetooth/Bluetooth.h"
 
 TemperatureGrp::TemperatureGrp()
 {
   this->currentUnit = Celsius;
-  this->addIndex = 0u;
-
-  for (uint8_t i = 0u; i < MAX_TEMPERATURES; i++)
-    temperatures[i] = NULL;
 }
 
 void TemperatureGrp::add(TemperatureBase *temperature)
 {
-  temperatures[addIndex++] = temperature;
+  temperatures.push_back(temperature);
+}
+
+void TemperatureGrp::remove(uint8_t index)
+{
+  if (index < temperatures.size())
+  {
+    delete temperatures[index];
+    temperatures.erase(temperatures.begin() + index);
+  }
+}
+
+void TemperatureGrp::addBle()
+{
+  for (uint8_t deviceIndex = 0u; deviceIndex < BLUETOOTH_MAX_DEVICE_COUNT; deviceIndex++)
+  {
+    String peerAddress = Bluetooth::getDevicePeerAddress(deviceIndex);
+
+    if (0u == peerAddress.length())
+    {
+      break;
+    }
+    else
+    {
+      uint8_t temperatureCount = Bluetooth::getDeviceTemperatureCount(peerAddress);
+
+      for (uint8_t bleTemperatureIndex = 0u; bleTemperatureIndex < temperatureCount; bleTemperatureIndex++)
+      {
+        boolean newTemperature = true;
+
+        /* check if temperature is already known */
+        for (uint8_t temperatureIndex = 0u; temperatureIndex < this->count(); temperatureIndex++)
+        {
+          if ((temperatures[temperatureIndex]->getAddress() == peerAddress) && (temperatures[temperatureIndex]->getLocalIndex() == bleTemperatureIndex))
+          {
+            newTemperature = false;
+            break;
+          }
+        }
+
+        /* add new temperature */
+        if (newTemperature)
+          this->addRemote((uint8_t)SensorType::Ble, peerAddress.c_str(), bleTemperatureIndex);
+      }
+    }
+  }
+}
+
+bool isTypeBle(TemperatureBase *temperature) { return (temperature->getType() == (uint8_t)SensorType::Ble); }
+
+void TemperatureGrp::removeBle()
+{
+  uint8_t temperatureCount = this->count();
+  portMUX_TYPE mutex = portMUX_INITIALIZER_UNLOCKED;
+
+  portENTER_CRITICAL(&mutex);
+
+  for (uint8_t index = 0u; index < temperatureCount; index++)
+  {
+    if (temperatures[index]->getType() == (uint8_t)SensorType::Ble)
+    {
+      delete temperatures[index];
+      temperatures.erase(std::remove_if(temperatures.begin(), temperatures.end(), isTypeBle), temperatures.end());
+    }
+  }
+
+  portEXIT_CRITICAL(&mutex);
 }
 
 void TemperatureGrp::update()
 {
-  for (uint8_t i = 0u; i < addIndex; i++)
+  for (uint8_t i = 0u; i < count(); i++)
   {
     if (temperatures[i] != NULL)
     {
@@ -132,7 +196,7 @@ uint8_t TemperatureGrp::getActiveCount()
 
 uint8_t TemperatureGrp::count()
 {
-  return this->addIndex;
+  return temperatures.size();
 }
 
 boolean TemperatureGrp::hasAlarm()
@@ -179,9 +243,14 @@ void TemperatureGrp::loadConfig()
     else
       return;
 
-    for (int i = 0; i < count(); i++)
+    for (uint8_t i = 0u; i < json["tname"].size(); i++)
     {
-      TemperatureBase *temperature = temperatures[i];
+      TemperatureBase *temperature = (i < temperatures.size()) ? temperatures[i] : NULL;
+
+      // add optional remote temperatures (e.g. BLE)
+      if ((temperature == NULL) && json.containsKey("taddress") && json.containsKey("tlindex"))
+        temperature = addRemote(json["ttyp"][i].as<uint8_t>(), json["taddress"][i].asString(), json["tlindex"][i].as<uint8_t>());
+
       if (temperature != NULL)
       {
         temperature->setName(json["tname"][i].asString());
@@ -193,6 +262,25 @@ void TemperatureGrp::loadConfig()
       }
     }
   }
+}
+
+TemperatureBase *TemperatureGrp::addRemote(uint8_t type, const char *address, uint8_t localIndex)
+{
+  TemperatureBase *temperature = NULL;
+
+  Serial.printf("addRemote: type = %d, address = %s, localIndex = %d\n", (uint8_t)type, address, localIndex);
+
+  switch ((SensorType)type)
+  {
+  case SensorType::Ble:
+    temperature = new TemperatureBle(address, localIndex);
+    add(temperature);
+    break;
+  default:
+    break;
+  }
+
+  return temperature;
 }
 
 void TemperatureGrp::saveConfig()
@@ -208,6 +296,8 @@ void TemperatureGrp::saveConfig()
   JsonArray &_max = json.createNestedArray("tmax");
   JsonArray &_alarm = json.createNestedArray("talarm");
   JsonArray &_color = json.createNestedArray("tcolor");
+  JsonArray &_address = json.createNestedArray("taddress");
+  JsonArray &_lindex = json.createNestedArray("tlindex");
 
   for (int i = 0; i < count(); i++)
   {
@@ -220,6 +310,8 @@ void TemperatureGrp::saveConfig()
       _max.add(temperature->getMaxValue(), 1);
       _alarm.add((uint8_t)temperature->getAlarmSetting());
       _color.add(temperature->getColor());
+      _address.add(temperature->getAddress());
+      _lindex.add(temperature->getLocalIndex());
     }
   }
   Settings::write(kChannels, json);

@@ -193,23 +193,23 @@ void Mqtt::onMqttMessage(char *topic, char *datas, AsyncMqttClientMessagePropert
 
   if (topic_short.startsWith("/set/channels"))
   {
-    bodyWebHandler.setChannels(NULL, (uint8_t *)datas);
+    nanoWebHandler.setChannels(NULL, (uint8_t *)datas);
   }
   if (topic_short.startsWith("/set/system"))
   {
-    bodyWebHandler.setSystem(NULL, (uint8_t *)datas);
+    nanoWebHandler.setSystem(NULL, (uint8_t *)datas);
   }
   if (topic_short.startsWith("/set/pitmaster"))
   {
-    bodyWebHandler.setPitmaster(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPitmaster(NULL, (uint8_t *)datas);
   }
   if (topic_short.startsWith("/set/pid"))
   {
-    bodyWebHandler.setPID(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPID(NULL, (uint8_t *)datas);
   }
   if (topic_short.startsWith("/set/iot"))
   {
-    bodyWebHandler.setIoT(NULL, (uint8_t *)datas);
+    nanoWebHandler.setIoT(NULL, (uint8_t *)datas);
   }
   if (topic_short.startsWith("/get/settings"))
   {

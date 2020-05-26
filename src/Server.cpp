@@ -54,7 +54,7 @@ void WServer::init()
   loadConfig();
   webServer = new AsyncWebServer(80);
   webServer->addHandler(&nanoWebHandler);
-  webServer->addHandler(&bodyWebHandler);
+  webServer->addHandler(&nanoWebHandler);
 
   webServer->on("/help", HTTP_GET, [](AsyncWebServerRequest *request) {
              request->redirect("https://github.com/WLANThermo-nano/WLANThermo_nano_Software/blob/master/README.md");
@@ -127,6 +127,18 @@ void WServer::init()
   webServer->on("/newtoken", [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, gSystem->cloud.newToken());
     gSystem->cloud.saveConfig();
+  });
+
+  webServer->on("/addble", [](AsyncWebServerRequest *request) {
+    gSystem->temperatures.addBle();
+    gSystem->temperatures.saveConfig();
+    request->send(200, TEXTPLAIN, "ok");
+  });
+
+  webServer->on("/clearble", [](AsyncWebServerRequest *request) {
+    gSystem->temperatures.removeBle();
+    gSystem->temperatures.saveConfig();
+    request->send(200, TEXTPLAIN, "ok");
   });
 
   webServer->on("/rr", [](AsyncWebServerRequest *request) {

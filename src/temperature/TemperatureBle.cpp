@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,34 +17,24 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#pragma once
 
-#include "Arduino.h"
-#include "TemperatureBase.h"
+#include "TemperatureBle.h"
+#include "bluetooth/Bluetooth.h"
 
-class TemperatureGrp
+TemperatureBle::TemperatureBle()
 {
-public:
-  TemperatureGrp();
-  void virtual update();
-  void add(TemperatureBase *temperature);
-  void remove(uint8_t index);
-  void addBle();
-  void removeBle();
-  TemperatureBase *operator[](int index);
-  uint8_t count();
-  boolean setUnit(TemperatureUnit unit);
-  TemperatureUnit getUnit();
-  TemperatureBase *getNextActive(uint8_t index);
-  uint32_t getActiveBits();
-  uint8_t getActiveCount();
-  boolean hasAlarm();
-  void acknowledgeAlarm();
-  void saveConfig();
-  void loadConfig();
+}
 
-private:
-  TemperatureBase *addRemote(uint8_t type, const char *address, uint8_t localIndex);
-  std::vector<TemperatureBase *> temperatures;
-  TemperatureUnit currentUnit;
-};
+TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureBase()
+{
+  this->address = peerAddress;
+  this->localIndex = index;
+  this->type = SensorType::Ble;
+  this->fixedSensor = true;
+}
+
+void TemperatureBle::update()
+{
+  this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
+  this->connected = Bluetooth::isDeviceConnected(this->address);
+}

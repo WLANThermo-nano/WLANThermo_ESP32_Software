@@ -129,7 +129,7 @@ void createTasks()
       "ConnectTask", /* String with name of task. */
       10000,         /* Stack size in bytes. */
       NULL,          /* Parameter passed as input of the task */
-      4,             /* Priority of the task. */
+      1,             /* Priority of the task. */
       NULL,          /* Task handle. */
       1);            /* CPU Core */
 }

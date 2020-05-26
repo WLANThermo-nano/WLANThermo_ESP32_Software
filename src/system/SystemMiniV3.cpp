@@ -32,10 +32,10 @@
 #define CS_MAX31855_N1 15u
 
 // PITMASTER
-#define PITMASTER0IO1 25u // Fan Pin
-#define PITMASTER0IO2 33u // Data Pin
-#define PITMASTER1IO1 26u // Fan Pin
-#define PITMASTER1IO2 27u // Data Pin
+#define PITMASTER0IO1 25u   // Fan Pin
+#define PITMASTER0IO2 33u   // Data Pin
+#define PITMASTER1IO1 26u   // Fan Pin
+#define PITMASTER1IO2 27u   // Data Pin
 #define PITMASTERSUPPLY 13u // StepUp Pin
 
 // BUZZER
@@ -43,6 +43,11 @@
 
 // SD CARD
 #define CS_SD_CARD 5u
+
+// BLUETOOTH
+#define BLE_UART_TX 12
+#define BLE_UART_RX 14
+#define BLE_RESET_PIN 4u
 
 enum ledcChannels
 {
@@ -120,7 +125,7 @@ void SystemMiniV3::init()
   pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Damper", 3, 3, 3.8, 0.01, 128, 25, 100, 70, 25, 75, 0};
@@ -137,6 +142,9 @@ void SystemMiniV3::init()
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
+
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->init();
 
   powerSaveModeSupport = true;
   setPowerSaveMode(true);

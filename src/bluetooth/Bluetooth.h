@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,31 +20,31 @@
 #pragma once
 
 #include "Arduino.h"
-#include "TemperatureBase.h"
+#include <ArduinoJson.h>
+#include "fwu.h"
 
-class TemperatureGrp
+#define BLUETOOTH_MAX_DEVICE_COUNT 4u
+
+typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
+
+class Bluetooth
 {
 public:
-  TemperatureGrp();
-  void virtual update();
-  void add(TemperatureBase *temperature);
-  void remove(uint8_t index);
-  void addBle();
-  void removeBle();
-  TemperatureBase *operator[](int index);
-  uint8_t count();
-  boolean setUnit(TemperatureUnit unit);
-  TemperatureUnit getUnit();
-  TemperatureBase *getNextActive(uint8_t index);
-  uint32_t getActiveBits();
-  uint8_t getActiveCount();
-  boolean hasAlarm();
-  void acknowledgeAlarm();
-  void saveConfig();
-  void loadConfig();
+    Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin);
+    void init();
+    static boolean isDeviceConnected(String peerAddress);
+    static float getTemperatureValue(String peerAddress, uint8_t index);
+    static String getDevicePeerAddress(uint8_t index);
+    static uint8_t getDeviceTemperatureCount(String peerAddress);
 
 private:
-  TemperatureBase *addRemote(uint8_t type, const char *address, uint8_t localIndex);
-  std::vector<TemperatureBase *> temperatures;
-  TemperatureUnit currentUnit;
+    static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
+    uint8_t dfuRxFunction(uint8_t *data, int maxLen);
+    void getDevices();
+    void printResponseStatus();
+    static void task(void *parameter);
+    boolean doDfu();
+    uint8_t resetPin;
+    static HardwareSerial *serialBle;
+    static String bleDeviceJson;
 };

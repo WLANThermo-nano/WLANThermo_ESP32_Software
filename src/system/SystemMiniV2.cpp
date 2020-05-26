@@ -44,6 +44,11 @@
 // SD CARD
 #define CS_SD_CARD 5u
 
+// BLUETOOTH
+#define BLE_UART_TX 12
+#define BLE_UART_RX 14
+#define BLE_RESET_PIN 4u
+
 enum ledcChannels
 {
   ledcPitMaster0IO1 = 0,
@@ -122,7 +127,7 @@ void SystemMiniV2::init()
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
 
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104,   0.2,   0,  0, 100, 100};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Damper", 3, 3, 3.8, 0.01, 128, 25, 100, 70, 25, 75, 0};
@@ -139,6 +144,9 @@ void SystemMiniV2::init()
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
+
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->init();
 
   initDone = true;
 }

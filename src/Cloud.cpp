@@ -306,7 +306,7 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
       readUTCfromHeader(request->respHeaderValue("Date"));
 
     if(request->responseHTTPcode() == HTTP_STATUS_OK)
-      bodyWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
+      nanoWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
     
     *requestDone = true;
   }

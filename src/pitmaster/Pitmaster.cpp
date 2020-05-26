@@ -92,7 +92,7 @@ PitmasterType Pitmaster::getType()
 
 void Pitmaster::assignProfile(PitmasterProfile *profile)
 {
-    if(profile != this->profile)
+    if (profile != this->profile)
     {
         this->pidReset();
         this->profile = profile;
@@ -107,9 +107,13 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
-    this->temperature = temperature;
-    memset((void *)&this->openLid, 0u, sizeof(this->openLid));
-    settingsChanged = true;
+    // Skip BLE temperatures for assignment
+    if (temperature->getType() != (uint8_t)SensorType::Ble)
+    {
+        this->temperature = temperature;
+        memset((void *)&this->openLid, 0u, sizeof(this->openLid));
+        settingsChanged = true;
+    }
 }
 
 TemperatureBase *Pitmaster::getAssignedTemperature()
@@ -140,30 +144,30 @@ float Pitmaster::getTargetTemperature()
 
 void Pitmaster::registerCallback(PitmasterCallback_t callback, void *userData)
 {
-  this->registeredCb = callback;
-  this->registeredCbUserData = userData;
+    this->registeredCb = callback;
+    this->registeredCbUserData = userData;
 }
 
 void Pitmaster::unregisterCallback()
 {
-  this->registeredCb = NULL;
+    this->registeredCb = NULL;
 }
 
 void Pitmaster::handleCallbacks()
 {
-  if (this->registeredCb != NULL)
-  {
-    if (true == settingsChanged)
+    if (this->registeredCb != NULL)
     {
-        this->registeredCb(this, settingsChanged, this->registeredCbUserData);
-        settingsChanged = false;
+        if (true == settingsChanged)
+        {
+            this->registeredCb(this, settingsChanged, this->registeredCbUserData);
+            settingsChanged = false;
+        }
+        else if (cbValue != value)
+        {
+            this->registeredCb(this, settingsChanged, this->registeredCbUserData);
+            cbValue = this->value;
+        }
     }
-    else if(cbValue != value)
-    {
-      this->registeredCb(this, settingsChanged, this->registeredCbUserData);
-      cbValue = this->value;
-    }
-  }
 }
 
 boolean Pitmaster::checkPause()
@@ -227,9 +231,9 @@ boolean Pitmaster::startAutoTune()
 
     // macht Autotune überhaupt Sinn?
     if (this->autoTune->set - currenttemp > (this->targetTemperature * 0.05))
-    {                             // mindestens 5% von Set
+    {                                  // mindestens 5% von Set
         this->disableActuators(false); // SWITCH OF HEATER
-        this->autoTune->run = 2;  // AUTOTUNE INITALIZED
+        this->autoTune->run = 2;       // AUTOTUNE INITALIZED
         this->autoTune->max = this->profile->jumppw;
         PMPRINTPLN("[AT]\t Start!");
     }
@@ -560,17 +564,19 @@ void Pitmaster::controlActuators()
         if (0 == this->profile->link)
         {
             // degressiv link
-            if (this->value > 0) linkedvalue = 100;
-            else linkedvalue = 0;
+            if (this->value > 0)
+                linkedvalue = 100;
+            else
+                linkedvalue = 0;
         }
-        else 
+        else
         {
             // linear link
             linkedvalue = (ceil(this->value * 0.1)) * 10.0;
             //Serial.println(linkedvalue);
         }
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
-        
+
         break;
     default:
         break;
@@ -581,53 +587,53 @@ void Pitmaster::initActuators()
 {
     switch (this->profile->actuator)
     {
-        case FAN:
-            if(initActuator != FAN)
-            {
-                ledcDetachPin(this->ioPin1);
-                ledcDetachPin(this->ioPin2);
-                dacWrite(this->ioPin1, 0u);
-                initActuator = FAN;
-            }
-            break;
-        case SERVO:
-            if(initActuator != SERVO)
-            {
-                dacWrite(this->ioPin1, 0u);
-                ledcDetachPin(this->ioPin1);
-                ledcDetachPin(this->ioPin2);
-                ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
-                ledcAttachPin(this->ioPin2, this->channel2);
-                ledcWrite(this->channel2, 0u);
-                initActuator = SERVO;
-            }
-            break;
-        case SSR:
-            if(initActuator != SSR)
-            {
-                dacWrite(this->ioPin1, 0u);
-                ledcDetachPin(this->ioPin1);
-                ledcDetachPin(this->ioPin2);
-                ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
-                ledcAttachPin(this->ioPin1, this->channel1);
-                ledcWrite(this->channel1, 0u);
-                initActuator = SSR;
-            }
-            break;
-        case DAMPER:
-            if(initActuator != DAMPER)
-            {
-                ledcDetachPin(this->ioPin1);
-                ledcDetachPin(this->ioPin2);
-                dacWrite(this->ioPin1, 0u);
-                ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
-                ledcAttachPin(this->ioPin2, this->channel2);
-                ledcWrite(this->channel2, 0u);
-                initActuator = DAMPER;
-            }
-            break;
-        default:
-            break;
+    case FAN:
+        if (initActuator != FAN)
+        {
+            ledcDetachPin(this->ioPin1);
+            ledcDetachPin(this->ioPin2);
+            dacWrite(this->ioPin1, 0u);
+            initActuator = FAN;
+        }
+        break;
+    case SERVO:
+        if (initActuator != SERVO)
+        {
+            dacWrite(this->ioPin1, 0u);
+            ledcDetachPin(this->ioPin1);
+            ledcDetachPin(this->ioPin2);
+            ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
+            ledcAttachPin(this->ioPin2, this->channel2);
+            ledcWrite(this->channel2, 0u);
+            initActuator = SERVO;
+        }
+        break;
+    case SSR:
+        if (initActuator != SSR)
+        {
+            dacWrite(this->ioPin1, 0u);
+            ledcDetachPin(this->ioPin1);
+            ledcDetachPin(this->ioPin2);
+            ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
+            ledcAttachPin(this->ioPin1, this->channel1);
+            ledcWrite(this->channel1, 0u);
+            initActuator = SSR;
+        }
+        break;
+    case DAMPER:
+        if (initActuator != DAMPER)
+        {
+            ledcDetachPin(this->ioPin1);
+            ledcDetachPin(this->ioPin2);
+            dacWrite(this->ioPin1, 0u);
+            ledcSetup(this->channel2, SERVO_FREQUENCY, SERVO_BIT_RES);
+            ledcAttachPin(this->ioPin2, this->channel2);
+            ledcWrite(this->channel2, 0u);
+            initActuator = DAMPER;
+        }
+        break;
+    default:
+        break;
     }
 }
 
@@ -729,13 +735,14 @@ void Pitmaster::enableStepUp(boolean enable)
 void Pitmaster::disableActuators(boolean allowdelay)
 {
 
-    if (true == allowdelay && (initActuator == SERVO || initActuator == DAMPER)) {
+    if (true == allowdelay && (initActuator == SERVO || initActuator == DAMPER))
+    {
         this->controlServo(0, this->profile->spmin, this->profile->spmax);
         initActuator = NOAR;
         Serial.println("ServoOFF");
         return;
     }
-    
+
     dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);

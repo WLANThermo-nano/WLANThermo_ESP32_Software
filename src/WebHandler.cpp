@@ -36,43 +36,21 @@
 #include <AsyncJson.h>
 #include "webui/restart.html.gz.h"
 
-#define FLIST_PATH "/list"
-#define DELETE_PATH "/rm"
-#define FPUTS_PATH "/fputs"
-#define DATA_PATH "/data"
-#define SETTING_PATH "/settings"
-#define UPDATE_PATH "/update"
 #define BAD_PATH "BAD PATH"
-#define DEFAULT_INDEX_FILE "index.html"
-#define LOGLIST_PATH "/loglist.php"
-#define CHART_DATA_PATH "/chart.php"
-#define NETWORK_SCAN "/networkscan"
-#define NETWORK_LIST "/networklist"
-#define NETWORK_STOP "/stopwifi"
-#define NETWORK_CLEAR "/clearwifi"
-#define CONFIG_RESET "/configreset"
-#define ADMIN "/admin"
-#define UPLOAD "/upload"
-#define HISTORY "/history"
-#define RECOVERY "/recovery"
-#define ROTATE "/rotate"
-#define CALIBRATE "/calibrate"
-
-#define SET_NETWORK "/setnetwork"
-#define SET_SYSTEM "/setsystem"
-#define SET_CHANNELS "/setchannels"
-#define SET_PITMASTER "/setpitmaster"
-#define SET_PID "/setpid"
-#define SET_DC "/setDC"
-#define SET_IOT "/setIoT"
-#define SET_PUSH "/setPush"
-#define SET_API "/setapi"
-#define SET_GOD "/god"
-#define UPDATE_CHECK "/checkupdate"
-#define UPDATE_STATUS "/updatestatus"
-#define DC_STATUS "/dcstatus"
 
 #define APPLICATIONJSON "application/json"
+
+typedef void (NanoWebHandler::*ArRequestHandlerFunc)(AsyncWebServerRequest *);
+typedef bool (NanoWebHandler::*ArBodyHandlerFunc)(AsyncWebServerRequest *, uint8_t *);
+
+typedef struct NanoWebHandlerList
+{
+  const char *requestUrl;
+  int32_t requestMethod;
+  int32_t authRequestMethod;
+  ArRequestHandlerFunc requestHandlerFunc;
+  ArBodyHandlerFunc bodyHandlerFunc;
+} NanoWebHandlerListType;
 
 const char *public_list[] = {
     "/nano.ttf",
@@ -91,11 +69,126 @@ uint16_t getDC(uint16_t impuls)
 }
 
 NanoWebHandler nanoWebHandler;
-BodyWebHandler bodyWebHandler;
 
-NanoWebHandler::NanoWebHandler(void)
+static const NanoWebHandlerListType nanoWebHandlerList[] = {
+    // Request handler
+    {"/settings", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleSettings, NULL},
+    {"/data", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleData, NULL},
+    {"/networkscan", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleWifiScan, NULL},
+    {"/networklist", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleWifiResult, NULL},
+    {"/configreset", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleConfigReset, NULL},
+    {"/stopwifi", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleStopWifi, NULL},
+    {"/checkupdate", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleCheckUpdate, NULL},
+    {"/updatestatus", HTTP_POST, 0, &NanoWebHandler::handleUpdateStatus, NULL},
+    {"/dcstatus", HTTP_POST, 0, &NanoWebHandler::handleDcStatus, NULL},
+    {"/clearwifi", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleClearWifi, NULL},
+    {"/recovery", HTTP_GET, HTTP_GET, &NanoWebHandler::handleRecovery, NULL},
+    {"/rotate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleRotate, NULL},
+    {"/calibrate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleCalibrate, NULL},
+    {"/admin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
+    {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
+    // Body handler
+    {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
+    {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
+    {"/deletechannel", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::deleteChannel},
+    {"/setsystem", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setSystem},
+    {"/setpitmaster", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPitmaster},
+    {"/setpid", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPID},
+    {"/setIoT", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setIoT},
+    {"/setPush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
+    {"/setapi", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setServerAPI},
+    {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest}};
+
+NanoWebHandler::NanoWebHandler()
 {
 }
+
+void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
+{
+  for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
+  {
+    if (NULL == nanoWebHandlerList[i].requestHandlerFunc)
+      continue;
+
+    if (request->url().equals(nanoWebHandlerList[i].requestUrl))
+    {
+      if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
+      {
+        if ((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u)
+        {
+          if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+          {
+            request->requestAuthentication(WServer::getRealm());
+            break;
+          }
+        }
+
+        (this->*nanoWebHandlerList[i].requestHandlerFunc)(request);
+        break;
+      }
+      else
+      {
+        request->send(500, TEXTPLAIN, BAD_PATH);
+      }
+    }
+  }
+}
+
+void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
+  {
+    if (NULL == nanoWebHandlerList[i].bodyHandlerFunc)
+      continue;
+
+    if (request->url().equals(nanoWebHandlerList[i].requestUrl))
+    {
+      if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
+      {
+        if ((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u)
+        {
+          if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
+          {
+            request->requestAuthentication(WServer::getRealm());
+            break;
+          }
+        }
+
+        if ((this->*nanoWebHandlerList[i].bodyHandlerFunc)(request, data))
+        {
+          request->send(200, TEXTPLAIN, TEXTTRUE);
+        }
+        else
+        {
+          request->send(200, TEXTPLAIN, TEXTFALSE);
+        }
+
+        break;
+      }
+      else
+      {
+        request->send(500, TEXTPLAIN, BAD_PATH);
+      }
+    }
+  }
+}
+
+bool NanoWebHandler::canHandle(AsyncWebServerRequest *request)
+{
+  boolean supported = false;
+
+  for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
+  {
+    if ((request->url().equals(nanoWebHandlerList[i].requestUrl)) && ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u))
+    {
+      supported = true;
+      break;
+    }
+  }
+
+  return supported;
+}
+
 void NanoWebHandler::handleSettings(AsyncWebServerRequest *request)
 {
 
@@ -105,7 +198,6 @@ void NanoWebHandler::handleSettings(AsyncWebServerRequest *request)
   request->send(200, APPLICATIONJSON, jsonStr);
 }
 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void NanoWebHandler::handleData(AsyncWebServerRequest *request)
 {
 
@@ -115,12 +207,8 @@ void NanoWebHandler::handleData(AsyncWebServerRequest *request)
   request->send(200, APPLICATIONJSON, jsonStr);
 }
 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
 {
-
-  // https://github.com/me-no-dev/ESPAsyncWebServer/issues/85
-
   AsyncJsonResponse *response = new AsyncJsonResponse();
   response->addHeader("Server", "ESP Async Web Server");
 
@@ -151,7 +239,7 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     JsonArray &_scan = json.createNestedArray("Scan");
     for (uint8_t i = 0; i < n; i++)
     {
-      if(filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
+      if (filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
         continue;
 
       filterDuplicates += "||" + WiFi.SSID(i) + "||";
@@ -193,342 +281,172 @@ void NanoWebHandler::handleWifiScan(AsyncWebServerRequest *request)
   }
 }
 
-void NanoWebHandler::configreset()
-{
-  gSystem->resetConfig();
-  gSystem->temperatures.saveConfig();
-  //setconfig(eSYSTEM, {});
-  //loadconfig(eSYSTEM, 0);
-  // set_pitmaster(1); TODO reset pitmaster
-  // set_pid(0); ; TODO reset profiles
-  //set_iot(1); TODO reset iot config
-  //setconfig(eTHING, {}); TODO reset cloud config
-}
-
-void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
-{
-
-  if (request->method() == HTTP_POST || request->method() == HTTP_GET)
-  {
-
-    if (request->url() == DATA_PATH)
-    {
-      handleData(request);
-      return;
-    }
-    else if (request->url() == SETTING_PATH)
-    {
-      handleSettings(request);
-      return;
-    }
-    else if (request->url() == NETWORK_SCAN)
-    {
-      handleWifiScan(request);
-      return;
-    }
-    else if (request->url() == NETWORK_LIST)
-    {
-      handleWifiResult(request);
-      return;
-
-      // REQUEST: /stop wifi
-    }
-    else if (request->url() == NETWORK_STOP)
-    {
-      //TODO: stop wifi? wifi.mode = 4; // Turn Wifi off with timer
-      gSystem->wlan.setStopRequest();
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-      return;
-
-      // REQUEST: /checkupdate
-    }
-    else if (request->url() == UPDATE_CHECK)
-    {
-      gSystem->otaUpdate.resetUpdateInfo();
-      gSystem->otaUpdate.askUpdateInfo();
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-      return;
-    }
-  }
-
-  if (request->method() == HTTP_POST)
-  {
-
-    // REQUEST: /updatestatus
-    if (request->url() == UPDATE_STATUS)
-    {
-      DPRINTLN("... in process");
-      if (gSystem->otaUpdate.isUpdateInProgress())
-        request->send(200, TEXTPLAIN, TEXTTRUE);
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-      return;
-
-      // REQUEST: /dcstatus
-    }
-    else if (request->url() == DC_STATUS)
-    {
-      boolean dctRunning = false;
-      for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
-      {
-        Pitmaster *pm = gSystem->pitmasters[i];
-
-        if (pm != NULL)
-          if (true == pm->isDutyCycleTestRunning())
-            dctRunning = true;
-      }
-      if (true == dctRunning)
-        request->send(200, TEXTPLAIN, TEXTTRUE);
-      else
-        request->send(200, TEXTPLAIN, TEXTFALSE);
-      return;
-    }
-  }
-
-  // REQUEST: /clear wifi
-  if (request->url() == NETWORK_CLEAR)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      request->send(200, "text/html", "<form method='POST' action='/clearwifi'>Wifi-Speicher wirklich leeren?<br><br><input type='submit' value='Ja'></form>");
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-      gSystem->wlan.clearCredentials();
-      gSystem->restart();
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /configreset
-  }
-  else if (request->url() == CONFIG_RESET)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      request->send(200, "text/html", "<form method='POST' action='/configreset'>System-Speicher wirklich resetten?<br><br><input type='submit' value='Ja'></form>");
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      configreset();
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /recovery
-  }
-  else if (request->url() == RECOVERY)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-        return request->requestAuthentication(WServer::getRealm());
-      
-      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
-      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-
-      WlanCredentials credentials;
-      gSystem->wlan.getCredentials(&credentials);
-      RecoveryMode::runFromApp(credentials.ssid, credentials.password);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /rotate
-  }
-  else if (request->url() == ROTATE)
-  {
-    if (request->method() == HTTP_POST)
-    {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-        return request->requestAuthentication(WServer::getRealm());
-      
-      gDisplay->toggleOrientation();
-      gDisplay->saveConfig();
-      if(gDisplay->getUpdateName() != "")
-      {
-        gSystem->otaUpdate.resetUpdateInfo();
-        gSystem->otaUpdate.setForceFlag(true);
-        gSystem->otaUpdate.requestFile(gDisplay->getUpdateName());
-        gSystem->otaUpdate.requestVersion(FIRMWAREVERSION);
-        gSystem->otaUpdate.askUpdateInfo();
-      }
-
-      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
-      response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /calibrate
-  }
-  else if (request->url() == CALIBRATE)
-  {
-    if (request->method() == HTTP_POST)
-    {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-        return request->requestAuthentication(WServer::getRealm());
-      
-      gDisplay->calibrate();
-      request->send(200, TEXTPLAIN, TEXTTRUE);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-    // REQUEST: /admin
-  }
-  else if (request->url() == ADMIN)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      request->send(200, "text/html", "<form method='POST' action='/setadmin'>Neues Password eingeben (max. 10 Zeichen): <input type='text' name='wwwpw'><br><br><input type='submit' value='Change'></form>");
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-        return request->requestAuthentication(WServer::getRealm());
-      if (request->hasParam("wwwpw", true))
-      {
-        String password = request->getParam("wwwpw", true)->value();
-        if (password.length() < 11)
-        {
-          WServer::setPassword(password);
-          WServer::saveConfig();
-          request->send(200, TEXTPLAIN, TEXTTRUE);
-        }
-        request->send(200, TEXTPLAIN, TEXTFALSE);
-      }
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /update
-  }
-  else if (request->url() == UPDATE_PATH)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      request->send(200, "text/html", "<form method='POST' action='/update'>Version mit v eingeben: <input type='text' name='version'><br><br><input type='submit' value='Update'></form>");
-    }
-    else if (request->method() == HTTP_POST)
-    {
-      if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-        return request->requestAuthentication(WServer::getRealm());
-      if (request->hasParam("version", true))
-      {
-        String version = request->getParam("version", true)->value();
-        Serial.println(version);
-        if (version.indexOf("v") == 0)
-        {
-          gSystem->otaUpdate.requestVersion(version);
-          gSystem->otaUpdate.askUpdateInfo();
-        }
-        else
-          request->send(200, TEXTPLAIN, "Version unknown!");
-      }
-      else
-      {
-        gSystem->otaUpdate.startUpdate();
-      }
-      request->send(200, TEXTPLAIN, "Do Update...");
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: /upload
-  }
-  else if (request->url() == HISTORY)
-  {
-    if (request->method() == HTTP_GET)
-    {
-      File historyData = gSystem->sdCard->getHistoryData();
-      if (historyData)
-        request->send(historyData, "application/octet-stream");
-      else
-        request->send(500, TEXTPLAIN, BAD_PATH);
-    }
-    else
-      request->send(500, TEXTPLAIN, BAD_PATH);
-    return;
-
-    // REQUEST: File from SPIFFS
-  }
-  else if (request->method() == HTTP_GET)
-  {
-    String path = request->url();
-    if (path.endsWith("/"))
-      path += DEFAULT_INDEX_FILE;
-    //else if (path.endsWith(CHART_LIB_PATH)) path = CHART_LIB_PATH;
-    if (request->url().equals("/"))
-    {
-      //sendFile(request,path); //
-      request->send(SPIFFS, path);
-      return;
-    }
-    bool auth = true;
-    for (byte i = 0; i < sizeof(public_list) / sizeof(const char *); i++)
-    {
-      if (path.equals(public_list[i]))
-      {
-        auth = false;
-        break;
-      }
-    }
-    if (auth && !request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    //sendFile(request,path); //
-    request->send(SPIFFS, path);
-  }
-}
-
-bool NanoWebHandler::canHandle(AsyncWebServerRequest *request)
+void NanoWebHandler::handleConfigReset(AsyncWebServerRequest *request)
 {
   if (request->method() == HTTP_GET)
   {
-    if (request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == RECOVERY ||request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == ADMIN || request->url() == UPLOAD || request->url() == HISTORY
-        //|| request->url() == LOGGING_PATH
-    )
-    {
-      return true;
-    }
-    else
-    {
-      // get file
-      String path = request->url();
-      if (path.endsWith("/"))
-        path += DEFAULT_INDEX_FILE;
-
-      //if(fileExists(path)) return true;
-      if (SPIFFS.exists(path))
-        return true;
-    }
-  }
-  else if (request->method() == HTTP_DELETE && request->url() == DELETE_PATH)
-  {
-    return true;
+    request->send(200, "text/html", "<form method='POST' action='/configreset'>System-Speicher wirklich resetten?<br><br><input type='submit' value='Ja'></form>");
   }
   else if (request->method() == HTTP_POST)
   {
-    if (request->url() == FPUTS_PATH || request->url() == FLIST_PATH || request->url() == DATA_PATH || request->url() == SETTING_PATH || request->url() == NETWORK_LIST || request->url() == NETWORK_SCAN || request->url() == NETWORK_STOP || request->url() == NETWORK_CLEAR || request->url() == CONFIG_RESET || request->url() == UPDATE_PATH || request->url() == UPDATE_CHECK || request->url() == UPDATE_STATUS || request->url() == DC_STATUS || request->url() == ADMIN || request->url() == UPLOAD || request->url() == ROTATE || request->url() == CALIBRATE
-        //|| request->url() == LOGGING_PATH
-    )
-      return true;
+    gSystem->resetConfig();
+    gSystem->temperatures.saveConfig();
+    request->send(200, TEXTPLAIN, TEXTTRUE);
   }
-  return false;
+  else
+  {
+    request->send(500, TEXTPLAIN, BAD_PATH);
+  }
 }
 
-int BodyWebHandler::checkStringLength(String tex)
+void NanoWebHandler::handleStopWifi(AsyncWebServerRequest *request)
+{
+  gSystem->wlan.setStopRequest();
+  request->send(200, TEXTPLAIN, TEXTTRUE);
+}
+
+void NanoWebHandler::handleCheckUpdate(AsyncWebServerRequest *request)
+{
+  gSystem->otaUpdate.resetUpdateInfo();
+  gSystem->otaUpdate.askUpdateInfo();
+  request->send(200, TEXTPLAIN, TEXTTRUE);
+}
+
+void NanoWebHandler::handleUpdateStatus(AsyncWebServerRequest *request)
+{
+  DPRINTLN("... in process");
+  if (gSystem->otaUpdate.isUpdateInProgress())
+  {
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  }
+  else
+  {
+    request->send(200, TEXTPLAIN, TEXTFALSE);
+  }
+}
+
+void NanoWebHandler::handleDcStatus(AsyncWebServerRequest *request)
+{
+  boolean dctRunning = false;
+  for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
+  {
+    Pitmaster *pm = gSystem->pitmasters[i];
+
+    if (pm != NULL)
+      if (true == pm->isDutyCycleTestRunning())
+        dctRunning = true;
+  }
+  if (true == dctRunning)
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  else
+    request->send(200, TEXTPLAIN, TEXTFALSE);
+}
+
+void NanoWebHandler::handleClearWifi(AsyncWebServerRequest *request)
+{
+  if (request->method() == HTTP_GET)
+  {
+    request->send(200, "text/html", "<form method='POST' action='/clearwifi'>Wifi-Speicher wirklich leeren?<br><br><input type='submit' value='Ja'></form>");
+  }
+  else if (request->method() == HTTP_POST)
+  {
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+    gSystem->wlan.clearCredentials();
+    gSystem->restart();
+  }
+}
+
+void NanoWebHandler::handleRecovery(AsyncWebServerRequest *request)
+{
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+  response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);
+
+  WlanCredentials credentials;
+  gSystem->wlan.getCredentials(&credentials);
+  RecoveryMode::runFromApp(credentials.ssid, credentials.password);
+}
+
+void NanoWebHandler::handleRotate(AsyncWebServerRequest *request)
+{
+  gDisplay->toggleOrientation();
+  gDisplay->saveConfig();
+  if (gDisplay->getUpdateName() != "")
+  {
+    gSystem->otaUpdate.resetUpdateInfo();
+    gSystem->otaUpdate.setForceFlag(true);
+    gSystem->otaUpdate.requestFile(gDisplay->getUpdateName());
+    gSystem->otaUpdate.requestVersion(FIRMWAREVERSION);
+    gSystem->otaUpdate.askUpdateInfo();
+  }
+
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
+  response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);
+}
+
+void NanoWebHandler::handleCalibrate(AsyncWebServerRequest *request)
+{
+  gDisplay->calibrate();
+  request->send(200, TEXTPLAIN, TEXTTRUE);
+}
+
+void NanoWebHandler::handleAdmin(AsyncWebServerRequest *request)
+{
+  if (request->method() == HTTP_GET)
+  {
+    request->send(200, "text/html", "<form method='POST' action='/setadmin'>Neues Password eingeben (max. 10 Zeichen): <input type='text' name='wwwpw'><br><br><input type='submit' value='Change'></form>");
+  }
+  else if (request->method() == HTTP_POST)
+  {
+    if (request->hasParam("wwwpw", true))
+    {
+      String password = request->getParam("wwwpw", true)->value();
+      if (password.length() < 11)
+      {
+        WServer::setPassword(password);
+        WServer::saveConfig();
+        request->send(200, TEXTPLAIN, TEXTTRUE);
+      }
+      else
+      {
+        request->send(200, TEXTPLAIN, TEXTFALSE);
+      }
+    }
+  }
+}
+
+void NanoWebHandler::handleUpdate(AsyncWebServerRequest *request)
+{
+  if (request->method() == HTTP_GET)
+  {
+    request->send(200, "text/html", "<form method='POST' action='/update'>Version mit v eingeben: <input type='text' name='version'><br><br><input type='submit' value='Update'></form>");
+  }
+  else if (request->method() == HTTP_POST)
+  {
+    if (request->hasParam("version", true))
+    {
+      String version = request->getParam("version", true)->value();
+      Serial.println(version);
+      if (version.indexOf("v") == 0)
+      {
+        gSystem->otaUpdate.requestVersion(version);
+        gSystem->otaUpdate.askUpdateInfo();
+      }
+      else
+        request->send(200, TEXTPLAIN, "Version unknown!");
+    }
+    else
+    {
+      gSystem->otaUpdate.startUpdate();
+    }
+    request->send(200, TEXTPLAIN, "Do Update...");
+  }
+}
+
+int NanoWebHandler::checkStringLength(String tex)
 {
   int index = tex.length();
   while (tex.lastIndexOf(195) != -1)
@@ -539,7 +457,7 @@ int BodyWebHandler::checkStringLength(String tex)
   return index;
 }
 
-String BodyWebHandler::checkString(String tex)
+String NanoWebHandler::checkString(String tex)
 {
   tex.replace("&amp;", "&"); // &
   tex.replace("&lt;", "<");  // <
@@ -547,7 +465,7 @@ String BodyWebHandler::checkString(String tex)
   return tex;
 }
 
-bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -567,7 +485,7 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
     gSystem->otaUpdate.setAutoUpdate((boolean)_system["autoupd"]);
   if (_system.containsKey("prerelease"))
     gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
-    
+
   gSystem->otaUpdate.saveConfig();
 
   if (_system.containsKey("host"))
@@ -594,7 +512,7 @@ bool BodyWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
   return 1;
 }
 
-bool BodyWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   //  https://github.com/me-no-dev/ESPAsyncWebServer/issues/123
@@ -654,7 +572,35 @@ bool BodyWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
   return 1;
 }
 
-bool BodyWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::deleteChannel(AsyncWebServerRequest *request, uint8_t *datas)
+{
+
+  //  https://github.com/me-no-dev/ESPAsyncWebServer/issues/123
+
+  printRequest(datas);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject &_cha = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
+  if (!_cha.success())
+    return 0;
+
+  int num = _cha["number"];
+  num--; // Intern beginnt die Zählung bei 0
+
+  TemperatureBase *temperature = gSystem->temperatures[num];
+
+  if (temperature != NULL)
+  {
+    gSystem->temperatures.remove(num);
+  }
+  else
+    return 0;
+
+  gSystem->temperatures.saveConfig();
+  return 1;
+}
+
+bool NanoWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -681,7 +627,7 @@ bool BodyWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
   return 0;
 }
 
-bool BodyWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -708,7 +654,7 @@ bool BodyWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
   return 0;
 }
 
-bool BodyWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -751,7 +697,7 @@ bool BodyWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   return 1;
 }
 
-bool BodyWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -781,7 +727,7 @@ bool BodyWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
   return 1;
 }
 
-bool BodyWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -877,7 +823,7 @@ bool BodyWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
   return 1;
 }
 
-bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -919,8 +865,8 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     }
     if (_pid.containsKey("DCmmax"))
     {
-      val = _pid["DCmmax"] ;
-      profile->dcmax = constrain(val* 10, 0, 1000) / 10.0; // 1. Nachkommastelle
+      val = _pid["DCmmax"];
+      profile->dcmax = constrain(val * 10, 0, 1000) / 10.0; // 1. Nachkommastelle
     }
     if (_pid.containsKey("opl"))
       profile->opl = _pid["opl"];
@@ -959,7 +905,7 @@ bool BodyWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
   return 1;
 }
 
-bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   //printRequest(datas);
@@ -1071,7 +1017,7 @@ bool BodyWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   return 1;
 }
 
-bool BodyWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
+bool NanoWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
 {
 
   printRequest(datas);
@@ -1087,97 +1033,4 @@ bool BodyWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
   val /= 10;                                                      //TODO: why is value multiplied with 10 in frontend?
   byte id = 0;                                                    // Pitmaster0 // TODO: add id to frontend
   return gSystem->pitmasters[id]->startDutyCycleTest(aktor, val); //TODO NULL pointer!!!
-}
-
-BodyWebHandler::BodyWebHandler(void)
-{
-}
-
-void BodyWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-
-  if (request->url() == SET_NETWORK)
-  {
-    if (!setNetwork(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_CHANNELS)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setChannels(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_SYSTEM)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setSystem(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_PITMASTER)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setPitmaster(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_PID)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setPID(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_IOT)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setIoT(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_PUSH)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setPush(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-    return;
-  }
-  else if (request->url() == SET_API)
-  {
-    if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
-      return request->requestAuthentication(WServer::getRealm());
-    if (!setServerAPI(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-  }
-  else if (request->url() == SET_DC)
-  {
-    if (!setDCTest(request, data))
-      request->send(200, TEXTPLAIN, TEXTFALSE);
-    request->send(200, TEXTPLAIN, TEXTTRUE);
-  }
-}
-
-bool BodyWebHandler::canHandle(AsyncWebServerRequest *request)
-{
-  if (request->method() == HTTP_GET)
-    return false;
-  if (request->url() == SET_NETWORK || request->url() == SET_CHANNELS || request->url() == SET_SYSTEM || request->url() == SET_PITMASTER || request->url() == SET_PID || request->url() == SET_IOT || request->url() == SET_API || request->url() == SET_DC || request->url() == SET_PUSH || request->url() == SET_GOD)
-    return true;
-  return false;
 }
