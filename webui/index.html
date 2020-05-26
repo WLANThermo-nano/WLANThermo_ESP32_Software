@@ -4193,7 +4193,9 @@
 					byId('pitmaster_typ' + pitID.toString()).value = jr.pitmaster.pm[pitID].typ;
 					clearOption('pitmaster_channel' + pitID.toString());
 					for (var i = 0; i < jr.channel.length; i++) {
-						byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
+						if(jr.channel[i].typ != 16) {
+							byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
+						}
 					}
 					byId('pitmaster_channel' + pitID.toString()).value = jr.pitmaster.pm[pitID].channel;
 					byId('pitmaster_set' + pitID.toString()).value = jr.pitmaster.pm[pitID].set;
@@ -4596,7 +4598,7 @@
 							x[i].getElementsByClassName('chtitle')[0].innerHTML = jr.channel[i].name;
 						}
 
-						if (jr.channel[i].typ == '16')
+						if (jr.channel[i].typ == 16)
 						{
 							if(jr.channel[i].connected == true)
 								x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1') + '\t' +  "#" + jr.channel[i].number;
