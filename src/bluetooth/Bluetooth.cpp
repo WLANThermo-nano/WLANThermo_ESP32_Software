@@ -24,9 +24,6 @@
 #include "Temperature/TemperatureBase.h"
 #include <byteswap.h>
 
-#define BLE_UART_TX 12
-#define BLE_UART_RX 14
-#define BLE_RESET_PIN 4
 #define BLE_BAUD 115200u
 
 #define BLE_JSON_DEVICES "d"
@@ -39,11 +36,12 @@
 HardwareSerial *Bluetooth::serialBle = NULL;
 String Bluetooth::bleDeviceJson = "";
 
-Bluetooth::Bluetooth()
+Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
 {
     serialBle = new HardwareSerial(1);
-    serialBle->begin(BLE_BAUD, SERIAL_8N1, BLE_UART_RX, BLE_UART_TX);
-    pinMode(BLE_RESET_PIN, OUTPUT);
+    serialBle->begin(BLE_BAUD, SERIAL_8N1, rxPin, txPin);
+    this->resetPin = resetPin;
+    pinMode(this->resetPin, OUTPUT);
 }
 
 void Bluetooth::init()
@@ -277,9 +275,9 @@ boolean Bluetooth::doDfu()
         serialBle->read();
 
     serialBle->setTimeout(200);
-    digitalWrite(BLE_RESET_PIN, LOW);
+    digitalWrite(resetPin, LOW);
     delay(20);
-    digitalWrite(BLE_RESET_PIN, HIGH);
+    digitalWrite(resetPin, HIGH);
 
     if (serialBle->readString().startsWith("@@BOOTLOADER"))
     {

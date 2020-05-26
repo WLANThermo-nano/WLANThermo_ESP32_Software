@@ -30,7 +30,7 @@ typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
 class Bluetooth
 {
 public:
-    Bluetooth();
+    Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin);
     void init();
     static boolean isDeviceConnected(String peerAddress);
     static float getTemperatureValue(String peerAddress, uint8_t index);
@@ -44,6 +44,7 @@ private:
     void printResponseStatus();
     static void task(void *parameter);
     boolean doDfu();
+    uint8_t resetPin;
     static HardwareSerial *serialBle;
     static String bleDeviceJson;
 };

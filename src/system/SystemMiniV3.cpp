@@ -44,6 +44,11 @@
 // SD CARD
 #define CS_SD_CARD 5u
 
+// BLUETOOTH
+#define BLE_UART_TX 12
+#define BLE_UART_RX 14
+#define BLE_RESET_PIN 4u
+
 enum ledcChannels
 {
   ledcPitMaster0IO1 = 0,
@@ -138,7 +143,7 @@ void SystemMiniV3::init()
 
   sdCard = new SdCard(CS_SD_CARD);
 
-  bluetooth = new Bluetooth();
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
   bluetooth->init();
 
   powerSaveModeSupport = true;
