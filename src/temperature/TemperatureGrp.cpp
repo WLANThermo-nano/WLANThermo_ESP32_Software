@@ -21,7 +21,7 @@
 #include "TemperatureGrp.h"
 #include "TemperatureBle.h"
 #include "Settings.h"
-#include "bluetooth\Bluetooth.h"
+#include "bluetooth/Bluetooth.h"
 
 TemperatureGrp::TemperatureGrp()
 {
