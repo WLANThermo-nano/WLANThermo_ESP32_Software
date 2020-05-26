@@ -21,7 +21,7 @@
 #include "Bluetooth.h"
 #include "bleFirmwareDat.h"
 #include "bleFirmwareBin.h"
-#include "Temperature/TemperatureBase.h"
+#include "temperature/TemperatureBase.h"
 #include <byteswap.h>
 
 #define BLE_BAUD 115200u
