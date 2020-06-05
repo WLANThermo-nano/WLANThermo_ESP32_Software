@@ -462,8 +462,8 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
     if (gSystem->bluetooth->getDevice(deviceIndex, &bleDevice))
     {
       JsonObject &_device = _devices.createNestedObject();
-      _device["name"] = bleDevice.name;
-      _device["address"] = bleDevice.address;
+      _device["name"] = String(bleDevice.name);
+      _device["address"] = String(bleDevice.address);
       _device["count"] = bleDevice.count;
       _device["selected"] = bleDevice.selected;
     }

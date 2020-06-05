@@ -114,8 +114,8 @@ void SystemMiniV3::init()
   }
 
   bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
-  bluetooth->init();
   bluetooth->loadConfig(&temperatures);
+  bluetooth->init();
 
   // load config
   temperatures.loadConfig();
