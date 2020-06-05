@@ -43,8 +43,10 @@ TemperatureMax31855::TemperatureMax31855()
 {
 }
 
-TemperatureMax31855::TemperatureMax31855(uint8_t csPin) : TemperatureBase()
+TemperatureMax31855::TemperatureMax31855(uint8_t index, uint8_t csPin) : TemperatureBase()
 {
+  this->address = TEMPERATURE_ADDRESS_TYPE_K;
+  this->localIndex = index;
   this->csPin = csPin;
   this->fixedSensor = true;
   this->type = SensorType::TypeK;

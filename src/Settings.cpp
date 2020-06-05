@@ -30,18 +30,19 @@ typedef struct
   boolean exportEnabled;
 } NvsKeyConfig_t;
 
-static const NvsKeyConfig_t NvsKeyConfig[] =
-    {{STRINGIFY(kWifi), false},
-     {STRINGIFY(kMqtt), false},
-     {STRINGIFY(kCloud), false},
-     {STRINGIFY(kSystem), true},
-     {STRINGIFY(kChannels), true},
-     {STRINGIFY(kPitmasters), true},
-     {STRINGIFY(kPush), false},
-     {STRINGIFY(kDisplay), true},
-     {STRINGIFY(kBattery), true},
-     {STRINGIFY(kOtaUpdate), true},
-     {STRINGIFY(kServer), true}};
+static const NvsKeyConfig_t NvsKeyConfig[] = {
+    {STRINGIFY(kWifi), false},
+    {STRINGIFY(kMqtt), false},
+    {STRINGIFY(kCloud), false},
+    {STRINGIFY(kSystem), true},
+    {STRINGIFY(kChannels), true},
+    {STRINGIFY(kPitmasters), true},
+    {STRINGIFY(kPush), false},
+    {STRINGIFY(kDisplay), true},
+    {STRINGIFY(kBattery), true},
+    {STRINGIFY(kOtaUpdate), true},
+    {STRINGIFY(kServer), true},
+    {STRINGIFY(kBluetooth), true}};
 
 const char *Settings::nvsNamespace = "wlanthermo";
 const uint16_t Settings::jsonBufferSize = 3072u;

@@ -343,6 +343,11 @@ void API::settingsObj(JsonObject &jObj)
     _sensorObject["fixed"] = sensorTypeInfo[i].fixed;
   }
 
+  // FEATURES
+  JsonObject &_features = jObj.createNestedObject("features");
+  _features["bluetooth"] = (gSystem->bluetooth) ? (gSystem->bluetooth->isBuiltIn()) : false;
+  _features["pitmaster"] = (boolean)(gSystem->pitmasters.count() > 0u);
+
   // PID-PROFILS
   JsonArray &_pid = jObj.createNestedArray("pid");
   pidAry(_pid, gSystem->pitmasters.count());

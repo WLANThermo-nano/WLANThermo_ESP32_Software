@@ -19,6 +19,7 @@
 ****************************************************/
 
 #include "TemperatureBase.h"
+#include "Settings.h"
 
 #define LOWEST_VALUE -31
 #define HIGHEST_VALUE 999
@@ -65,14 +66,45 @@ void TemperatureBase::loadDefaultValues()
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
-  this->address = "";
   this->type = SensorType::Maverick;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
+
   if (this->globalIndex < MAX_COLORS)
+  {
     this->color = colors[this->globalIndex];
+  }
+  else
+  {
+    this->color = colors[random(0, MAX_COLORS - 1u)];
+  }
 
   settingsChanged = true;
+}
+
+void TemperatureBase::loadConfig()
+{
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = Settings::read(kChannels, &jsonBuffer);
+
+  if (json.success())
+  {
+    for (uint8_t i = 0u; i < json["tname"].size(); i++)
+    {
+      if (json.containsKey("taddress") && json.containsKey("tlindex"))
+      {
+        if ((this->address == json["taddress"][i].asString()) && (this->localIndex == json["tlindex"][i].as<uint8_t>()))
+        {
+          this->name = json["tname"][i].asString();
+          this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
+          this->minValue = json["tmin"][i];
+          this->maxValue = json["tmax"][i];
+          this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
+          this->color = json["tcolor"][i].asString();
+        }
+      }
+    }
+  }
 }
 
 void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)

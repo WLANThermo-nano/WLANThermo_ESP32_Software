@@ -87,6 +87,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/calibrate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleCalibrate, NULL},
     {"/admin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
+    {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
@@ -97,7 +98,8 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setIoT", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setIoT},
     {"/setPush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
     {"/setapi", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setServerAPI},
-    {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest}};
+    {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest},
+    {"/setbluetooth", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setBluetooth}};
 
 NanoWebHandler::NanoWebHandler()
 {
@@ -444,6 +446,31 @@ void NanoWebHandler::handleUpdate(AsyncWebServerRequest *request)
     }
     request->send(200, TEXTPLAIN, "Do Update...");
   }
+}
+
+void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
+{
+  AsyncJsonResponse *response = new AsyncJsonResponse();
+  response->addHeader("Server", "ESP Async Web Server");
+
+  JsonObject &json = response->getRoot();
+  JsonArray &_devices = json.createNestedArray("devices");
+
+  for (uint8_t deviceIndex = 0u; deviceIndex < gSystem->bluetooth->getDeviceCount(); deviceIndex++)
+  {
+    BleDeviceType bleDevice;
+    if (gSystem->bluetooth->getDevice(deviceIndex, &bleDevice))
+    {
+      JsonObject &_device = _devices.createNestedObject();
+      _device["name"] = bleDevice.name;
+      _device["address"] = bleDevice.address;
+      _device["count"] = bleDevice.count;
+      _device["selected"] = bleDevice.selected;
+    }
+  }
+
+  response->setLength();
+  request->send(response);
 }
 
 int NanoWebHandler::checkStringLength(String tex)
@@ -1033,4 +1060,45 @@ bool NanoWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
   val /= 10;                                                      //TODO: why is value multiplied with 10 in frontend?
   byte id = 0;                                                    // Pitmaster0 // TODO: add id to frontend
   return gSystem->pitmasters[id]->startDutyCycleTest(aktor, val); //TODO NULL pointer!!!
+}
+
+bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas)
+{
+  printRequest(datas);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject &json = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
+  if (!json.success())
+    return 0;
+
+  JsonArray &_devices = json["devices"].asArray();
+
+  for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
+  {
+    JsonObject &_device = itDevice->asObject();
+
+    if (_device.containsKey("address") == false || _device.containsKey("count") == false || _device.containsKey("selected") == false)
+    {
+      Serial.println("Invalid JSON!");
+      continue;
+    }
+
+    uint8_t count = _device["count"];
+    uint32_t selected = _device["selected"];
+
+    for (uint8_t i = 0u; i < count; i++)
+    {
+      if (selected & (1 << i))
+      {
+        gSystem->temperatures.add((uint8_t)SensorType::Ble, _device["address"], i);
+      }
+      else
+      {
+        gSystem->temperatures.remove((uint8_t)SensorType::Ble, _device["address"], i);
+      }
+    }
+
+    gSystem->bluetooth->setDeviceSelected(_device["address"], selected);
+    gSystem->bluetooth->saveConfig();
+  }
 }

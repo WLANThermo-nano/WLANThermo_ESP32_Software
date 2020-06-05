@@ -22,6 +22,7 @@
 #include "bleFirmwareDat.h"
 #include "bleFirmwareBin.h"
 #include "temperature/TemperatureBase.h"
+#include "Settings.h"
 #include <byteswap.h>
 
 #define BLE_BAUD 115200u
@@ -34,13 +35,14 @@
 #define BLE_JSON_TEMPERATURES "t"
 
 HardwareSerial *Bluetooth::serialBle = NULL;
-String Bluetooth::bleDeviceJson = "";
+std::vector<BleDeviceType *> Bluetooth::bleDevices;
 
 Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
 {
     serialBle = new HardwareSerial(1);
     serialBle->begin(BLE_BAUD, SERIAL_8N1, rxPin, txPin);
     this->resetPin = resetPin;
+    this->builtIn = false;
     pinMode(this->resetPin, OUTPUT);
 }
 
@@ -48,81 +50,96 @@ void Bluetooth::init()
 {
     if (this->doDfu())
     {
+        builtIn = true;
         xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, 1, NULL, 1);
     }
+}
+
+void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
+{
+    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+    JsonObject &json = Settings::read(kBluetooth, &jsonBuffer);
+
+    if (json.success())
+    {
+        for (uint8_t i = 0u; i < json["tname"].size(); i++)
+        {
+            if (json.containsKey("taddress") && json.containsKey("tcount") && json.containsKey("tselected"))
+            {
+                BleDeviceType *bleDevice = new BleDeviceType();
+                memset(bleDevice, 0, sizeof(BleDeviceType));
+
+                // reset temperatures
+                for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+                {
+                    bleDevice->temperatures[i] = INACTIVEVALUE;
+                }
+
+                strcpy(bleDevice->name, json["tname"][i]);
+                strcpy(bleDevice->address, json["taddress"][i]);
+                bleDevice->count = json["tcount"][i];
+                bleDevice->selected = json["tselected"][i];
+
+                for (uint8_t s = 0u; s < bleDevice->count; s++)
+                {
+                    if (bleDevice->selected & (1 << s))
+                    {
+                        temperatureGrp->add((uint8_t)SensorType::Ble, bleDevice->address, s);
+                    }
+                }
+                bleDevices.push_back(bleDevice);
+            }
+        }
+    }
+}
+
+void Bluetooth::saveConfig()
+{
+    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+    JsonObject &json = jsonBuffer.createObject();
+
+    JsonArray &_name = json.createNestedArray("tname");
+    JsonArray &_address = json.createNestedArray("taddress");
+    JsonArray &_count = json.createNestedArray("tcount");
+    JsonArray &_selected = json.createNestedArray("tselected");
+
+    for (uint8_t i = 0u; i < bleDevices.size(); i++)
+    {
+        BleDevice *bleDevice = bleDevices[i];
+
+        // only save device with selected channels
+        if (bleDevice->selected > 0u)
+        {
+            _name.add(bleDevice->name);
+            _address.add(bleDevice->address);
+            _count.add(bleDevice->count);
+            _selected.add(bleDevice->selected);
+        }
+    }
+    Settings::write(kBluetooth, json);
 }
 
 void Bluetooth::getDevices()
 {
     serialBle->setTimeout(100);
     serialBle->println("getDevices");
-    bleDeviceJson = serialBle->readStringUntil('\n');
+    String bleDeviceJson = serialBle->readStringUntil('\n');
     Serial.println(bleDeviceJson);
-}
 
-String Bluetooth::getDevicePeerAddress(uint8_t index)
-{
     DynamicJsonBuffer jsonBuffer;
-    String peerAddress = "";
 
     JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
 
     if (!json.success())
     {
-        //Serial.println("Invalid JSON");
-        return peerAddress;
+        Serial.println("Invalid JSON");
+        return;
     }
 
     if (json.containsKey(BLE_JSON_DEVICES) == false)
     {
         Serial.println("Invalid JSON: devices missing");
-        return peerAddress;
-    }
-
-    JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
-    uint8_t deviceIndex = 0u;
-
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
-    {
-
-        JsonObject &_device = itDevice->asObject();
-
-        if (_device.containsKey(BLE_JSON_ADDRESS) == false)
-        {
-            Serial.println("Invalid JSON: address missing");
-            deviceIndex++;
-            continue;
-        }
-
-        if (deviceIndex == index)
-        {
-            peerAddress = _device[BLE_JSON_ADDRESS].asString();
-            break;
-        }
-
-        deviceIndex++;
-    }
-
-    return peerAddress;
-}
-
-uint8_t Bluetooth::getDeviceTemperatureCount(String peerAddress)
-{
-    DynamicJsonBuffer jsonBuffer;
-    uint8_t temperatureCount = 0u;
-
-    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
-
-    if (!json.success())
-    {
-        //Serial.println("Invalid JSON");
-        return temperatureCount;
-    }
-
-    if (json.containsKey(BLE_JSON_DEVICES) == false)
-    {
-        Serial.println("Invalid JSON: devices missing");
-        return temperatureCount;
+        return;
     }
 
     JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
@@ -138,66 +155,99 @@ uint8_t Bluetooth::getDeviceTemperatureCount(String peerAddress)
             continue;
         }
 
-        if (peerAddress.equalsIgnoreCase(_device[BLE_JSON_ADDRESS]))
+        // check if device is known
+        String deviceAddress = _device[BLE_JSON_ADDRESS];
+        const auto isKnownDevice = [deviceAddress](BleDevice *d) {
+            return (deviceAddress.equalsIgnoreCase(d->address));
+        };
+
+        auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
+        BleDevice *bleDevice;
+
+        if (it != bleDevices.end())
         {
-            if (_device.containsKey(BLE_JSON_TEMPERATURES) == false)
-            {
-                Serial.println("Invalid JSON: temperatures missing");
-                break;
-            }
+            bleDevice = *it;
+        }
+        else
+        {
+            bleDevice = new BleDeviceType();
+            memset(bleDevice, 0, sizeof(BleDeviceType));
+            strcpy(bleDevice->address, deviceAddress.c_str());
+            bleDevices.push_back(bleDevice);
+        }
 
-            JsonArray &_temperatures = _device[BLE_JSON_TEMPERATURES].asArray();
+        if (_device.containsKey(BLE_JSON_NAME) == true)
+        {
+            strcpy(bleDevice->name, _device[BLE_JSON_NAME]);
+        }
 
-            temperatureCount = _temperatures.size();
-            break;
+        if (_device.containsKey(BLE_JSON_STATUS) == true)
+        {
+            bleDevice->status = _device[BLE_JSON_STATUS];
+        }
+
+        if (_device.containsKey(BLE_JSON_COUNT) == true)
+        {
+            bleDevice->count = _device[BLE_JSON_COUNT];
+        }
+
+        // reset temperatures before updating
+        for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+        {
+            bleDevice->temperatures[i] = INACTIVEVALUE;
+        }
+
+        if (_device.containsKey(BLE_JSON_TEMPERATURES) == true)
+        {
+            _device[BLE_JSON_TEMPERATURES].asArray().copyTo(bleDevice->temperatures, BLE_TEMPERATURE_MAX_COUNT);
         }
     }
+}
 
-    return temperatureCount;
+uint8_t Bluetooth::getDeviceCount()
+{
+    return bleDevices.size();
+}
+
+boolean Bluetooth::getDevice(uint8_t index, BleDevice *device)
+{
+    boolean success = false;
+
+    if ((device != NULL) && (index < bleDevices.size()))
+    {
+        memcpy(device, bleDevices[index], sizeof(BleDevice));
+        success = true;
+    }
+
+    return success;
+}
+
+void Bluetooth::setDeviceSelected(String peerAddress, uint8_t selected)
+{
+    const auto isKnownDevice = [peerAddress](BleDevice *d) {
+        return (peerAddress.equalsIgnoreCase(d->address));
+    };
+
+    auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
+
+    if (it != bleDevices.end())
+    {
+        (*it)->selected = selected;
+    }
 }
 
 boolean Bluetooth::isDeviceConnected(String peerAddress)
 {
-    DynamicJsonBuffer jsonBuffer;
     boolean isConnected = false;
+    const auto isKnownDevice = [peerAddress](BleDevice *d) {
+        return (peerAddress.equalsIgnoreCase(d->address));
+    };
 
-    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
+    auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
-    if (!json.success())
+    if (it != bleDevices.end())
     {
-        //Serial.println("Invalid JSON");
-        return isConnected;
-    }
-
-    if (json.containsKey(BLE_JSON_DEVICES) == false)
-    {
-        Serial.println("Invalid JSON: devices missing");
-        return isConnected;
-    }
-
-    JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
-
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
-    {
-
-        JsonObject &_device = itDevice->asObject();
-
-        if (_device.containsKey(BLE_JSON_ADDRESS) == false)
-        {
-            Serial.println("Invalid JSON: address missing");
-            continue;
-        }
-
-        if (_device.containsKey(BLE_JSON_STATUS) == false)
-        {
-            Serial.println("Invalid JSON: status missing");
-            continue;
-        }
-
-        if (peerAddress.equalsIgnoreCase(_device[BLE_JSON_ADDRESS]))
-        {
-            isConnected = _device[BLE_JSON_STATUS].as<boolean>();
-        }
+        isConnected = (boolean)(*it)->status;
     }
 
     return isConnected;
@@ -205,53 +255,19 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
 
 float Bluetooth::getTemperatureValue(String peerAddress, uint8_t index)
 {
-    DynamicJsonBuffer jsonBuffer;
+    float value = INACTIVEVALUE;
+    const auto isKnownDevice = [peerAddress](BleDevice *d) {
+        return (peerAddress.equalsIgnoreCase(d->address));
+    };
 
-    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
+    auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
-    if (!json.success())
+    if ((it != bleDevices.end()) && (index < BLE_TEMPERATURE_MAX_COUNT))
     {
-        //Serial.println("Invalid JSON");
-        return INACTIVEVALUE;
+        value = (*it)->temperatures[index];
     }
 
-    if (json.containsKey(BLE_JSON_DEVICES) == false)
-    {
-        Serial.println("Invalid JSON: devices missing");
-        return INACTIVEVALUE;
-    }
-
-    JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
-
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
-    {
-
-        JsonObject &_device = itDevice->asObject();
-
-        if (_device.containsKey(BLE_JSON_ADDRESS) == false)
-        {
-            Serial.println("Invalid JSON: address missing");
-            continue;
-        }
-
-        if (peerAddress.equalsIgnoreCase(_device[BLE_JSON_ADDRESS]))
-        {
-            if (_device.containsKey(BLE_JSON_TEMPERATURES) == false)
-            {
-                Serial.println("Invalid JSON: temperatures missing");
-                continue;
-            }
-
-            JsonArray &_temperatures = _device[BLE_JSON_TEMPERATURES].asArray();
-
-            if (index < _temperatures.size())
-            {
-                return _temperatures[index].as<float>();
-            }
-        }
-    }
-
-    return INACTIVEVALUE;
+    return value;
 }
 
 void Bluetooth::task(void *parameter)

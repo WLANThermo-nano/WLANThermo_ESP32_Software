@@ -123,6 +123,10 @@ void SystemNanoVx::init()
   temperatures.add(new TemperatureMax11615(7u, &Wire));
   this->wireRelease();
 
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->init();
+  bluetooth->loadConfig(&temperatures);
+
   // load config
   temperatures.loadConfig();
 
@@ -146,9 +150,6 @@ void SystemNanoVx::init()
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
-
-  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
-  bluetooth->init();
 
   powerSaveModeSupport = true;
   setPowerSaveMode(true);

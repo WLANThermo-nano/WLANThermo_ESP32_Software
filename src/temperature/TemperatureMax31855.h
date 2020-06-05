@@ -19,17 +19,18 @@
 ****************************************************/
 #pragma once
 
-#include "TemperatureBase.h" 
+#include "TemperatureBase.h"
 
 class TemperatureMax31855 : public TemperatureBase
 {
-  public:
-    TemperatureMax31855();
-    TemperatureMax31855(uint8_t csPin);
-    void update();
-    boolean isBuiltIn();
-  private:
-    uint32_t readChip();
-    float calcTemperatureTypeK(uint32_t rawValue);
-    uint8_t csPin;
+public:
+  TemperatureMax31855();
+  TemperatureMax31855(uint8_t index, uint8_t csPin);
+  void update();
+  boolean isBuiltIn();
+
+private:
+  uint32_t readChip();
+  float calcTemperatureTypeK(uint32_t rawValue);
+  uint8_t csPin;
 };

@@ -10,7 +10,7 @@
         "language": "de"
     },
     "system": {
-        "time": "1589999177",
+        "time": "1591215343",
         "unit": "C",
         "ap": "WLANTHERMO-AP",
         "host": "MINI-c82b96995b70",
@@ -114,6 +114,10 @@
             "fixed": true
         }
     ],
+    "features": {
+        "bluetooth": true,
+        "pitmaster": true
+    },
     "pid": [
         {
             "name": "SSR SousVide",
@@ -199,7 +203,7 @@
         "PMQon": false,
         "PMQint": 30,
         "CLon": false,
-        "CLtoken": "c82b96995b70034f4a1c",
+        "CLtoken": "c82b96995b705ec91d87bb",
         "CLint": 30,
         "CLurl": "dev-cloud.wlanthermo.de/index.html"
     },

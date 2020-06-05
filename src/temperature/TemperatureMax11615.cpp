@@ -40,6 +40,7 @@ TemperatureMax11615::TemperatureMax11615()
 
 TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : TemperatureBase()
 {
+  this->address = TEMPERATURE_ADDRESS_INTERNAL;
   this->localIndex = index;
   this->twoWire = twoWire;
 

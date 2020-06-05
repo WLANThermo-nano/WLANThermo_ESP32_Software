@@ -95,7 +95,7 @@ void SystemMiniV2::init()
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
   //check if thermocouple is built in
-  TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(CS_MAX31855_N1);
+  TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(0u, CS_MAX31855_N1);
   if (checkThermocouple->isBuiltIn())
   {
     temperatures.add(checkThermocouple);
@@ -105,7 +105,7 @@ void SystemMiniV2::init()
     delete (checkThermocouple);
   }
 
-  checkThermocouple = new TemperatureMax31855(CS_MAX31855_N2);
+  checkThermocouple = new TemperatureMax31855(1u, CS_MAX31855_N2);
   if (checkThermocouple->isBuiltIn())
   {
     temperatures.add(checkThermocouple);
@@ -114,6 +114,10 @@ void SystemMiniV2::init()
   {
     delete (checkThermocouple);
   }
+
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->init();
+  bluetooth->loadConfig(&temperatures);
 
   // load config
   temperatures.loadConfig();
@@ -144,9 +148,6 @@ void SystemMiniV2::init()
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
-
-  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
-  bluetooth->init();
 
   initDone = true;
 }

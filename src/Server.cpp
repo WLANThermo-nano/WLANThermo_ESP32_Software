@@ -129,18 +129,6 @@ void WServer::init()
     gSystem->cloud.saveConfig();
   });
 
-  webServer->on("/addble", [](AsyncWebServerRequest *request) {
-    gSystem->temperatures.addBle();
-    gSystem->temperatures.saveConfig();
-    request->send(200, TEXTPLAIN, "ok");
-  });
-
-  webServer->on("/clearble", [](AsyncWebServerRequest *request) {
-    gSystem->temperatures.removeBle();
-    gSystem->temperatures.saveConfig();
-    request->send(200, TEXTPLAIN, "ok");
-  });
-
   webServer->on("/rr", [](AsyncWebServerRequest *request) {
     String response = "\nCPU0: " + gSystem->getResetReason(0);
     response += "\nCPU1: " + gSystem->getResetReason(1);

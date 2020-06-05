@@ -11,7 +11,7 @@
 	<link rel="apple-touch-icon-precomposed"
 		href="https://raw.githubusercontent.com/WLANThermo-nano/WLANThermo_nano_Logos/master/apple-touch-icon-180x180-precomposed.png">
 	<!-- <link rel="apple-touch-startup-image" href="startupimagename.png" > -->
-	<script src="jquery.min.js"></script>
+	<!--script src="jquery.min.js"></script-->
 	<script src="language.js"></script>
 	<script
 		type="text/javascript">!function (e) { function t(e, t, o) { var n = this; o = o || {}, o.open = n.getElm(o.open), o.openEvent = o.openEvent || "click", o.style = Object(o.style), o.style.display = o.style.display || "block", o.closeOnBlur = o.closeOnBlur || !1, o.template = o.template || '<div data-col="{color}" style="background-color: {color}"></div>', n.elm = n.getElm(e), n.cbs = [], n.isOpen = !0, n.colors = t, n.options = o, n.render(), o.open && o.open.addEventListener(o.openEvent, function (e) { n.isOpen ? n.close() : n.open() }), n.elm.addEventListener("click", function (e) { var t = e.target.getAttribute("data-col"); t && (n.set(t), n.close()) }), o.closeOnBlur && window.addEventListener("click", function (e) { e.target != o.open && e.target != n.elm && n.isOpen && n.close() }), o.autoclose !== !1 && n.close() } t.prototype.getElm = function (e) { return "string" == typeof e ? document.querySelector(e) : e }, t.prototype.render = function () { var e = this, t = ""; e.colors.forEach(function (o) { t += e.options.template.replace(/\{color\}/g, o) }), e.elm.innerHTML = t }, t.prototype.close = function () { this.elm.style.display = "none", this.isOpen = !1 }, t.prototype.open = function () { this.elm.style.display = this.options.style.display, this.isOpen = !0 }, t.prototype.colorChosen = function (e) { this.cbs.push(e) }, t.prototype.set = function (e, t) { var o = this; o.color = e, t !== !1 && o.cbs.forEach(function (t) { t.call(o, e) }) }, e.Piklor = t }(this);</script>
@@ -78,7 +78,7 @@
 			color: #FF0000;
 		}
 
-		
+
 		.icon-disabled:before {
 			color: #808080;
 		}
@@ -1248,6 +1248,10 @@
 			display: inline-block;
 			zoom: 1;
 			vertical-align: middle
+		}
+
+		.pure-menu-item .pure-menu-item {
+			display: block
 		}
 
 		.pure-menu-item .pure-menu-item {
@@ -2487,6 +2491,23 @@
 			transition-delay: 1s;
 		}
 
+		#loader {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			height: 28px;
+			width: 28px;
+			margin-left: -14px;
+			margin-top: -14px;
+			animation: rotate 0.8s infinite linear;
+			border: 8px solid #fff;
+			border-right-color: transparent;
+			border-radius: 50%;
+			-webkit-transition-delay: 1s;
+			/* Safari */
+			transition-delay: 1s;
+		}
+
 		@keyframes rotate {
 			0% {
 				transform: rotate(0deg);
@@ -2672,7 +2693,6 @@
 </head>
 
 <body>
-
 	<div id="layout">
 		<div class="headmenu">
 			<!-- Menu toggle -->
@@ -2693,16 +2713,19 @@
 				<a class="pure-menu-heading" href="javascript:showIndex()">
 					<img src="WLANThermoLogo.png" alt="WLANThermo" height="58" width="130">
 				</a>
-				<p id="menuVersion">version</p>
-				<ul class="pure-menu-list">
+				<p id="menuVersion">&nbsp;</p>
+				<ul id="menulist" class="pure-menu-list" style="display: none;">
 					<li id="menuHome" class="pure-menu-item"><a href="javascript:showIndex()" class="pure-menu-link"
 							data-tag="menuHome">Home</a></li>
 					<li id="menuWlan" class="pure-menu-item"><a href="javascript:showWLAN()" class="pure-menu-link"
 							data-tag="menuWlan">WLAN</a></li>
+					<li id="menuBluetooth" class="pure-menu-item"><a href="javascript:showBluetooth()"
+							class="pure-menu-link" data-tag="menuBluetooth">Bluetooth</a></li>
 					<li id="menuSystem" class="pure-menu-item"><a href="javascript:showSystem()" class="pure-menu-link"
 							data-tag="menuSystem">System</a></li>
-					<li id="menuPitmaster" class="pure-menu-item"><a href="javascript:showPitmaster()"
-							class="pure-menu-link" data-tag="menuPitmaster">Pitmaster</a></li>
+					<li id="menuPitmaster" class="pure-menu-item" style="display:none"><a
+							href="javascript:showPitmaster()" class="pure-menu-link"
+							data-tag="menuPitmaster">Pitmaster</a></li>
 					<li id="menuIOT" class="pure-menu-item"><a href="javascript:showIOT()" class="pure-menu-link"
 							data-tag="menuIOT">IoT</a></li>
 					<li id="menuHistory" class="pure-menu-item" style="display:none"><a href="javascript:showHistory()"
@@ -2714,7 +2737,6 @@
 				</ul>
 			</div>
 		</div>
-
 		<div id="main">
 			<div class="header">
 				<h1>WLANThermo - Nano</h1>
@@ -2816,6 +2838,53 @@
 											data-tag="wlanPwd">Passwort</span></label><i class="bar"></i>
 								</div>
 							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- ################################################### -->
+			<div id="bluetooth_config" class="content" style="display:none">
+				<table class="table_nav" cellpadding="0" cellspacing="0" width="100%" border="0">
+					<tr>
+						<td><span onclick="showIndex()"><span class="icon-arrow_left"></span><span
+									data-tag="back">Zurück</span></span></td>
+						<td><span onclick="btSave();"><span data-tag="save">Speichern</span><span
+									class="icon-arrow_right"></span></span></td>
+					</tr>
+				</table>
+				<div class="float-left text-align-left">
+					<h3 class="headtitle" data-tag="bluetoothTitle">Bluetooth-Einstellungen</h3>
+				</div>
+				<div class="float-right text-align-right"><span onclick="setHelpBox('WLAN Einstellungen',help_wifi)"
+						class="icon-question_sign"></span></div>
+				<div style="clear:both;"></div>
+				<div class="pure-g">
+					<div class="pure-u-1-1 pure-u-lg-1-1">
+						<div class="1-box wlan_conf">
+							<div class="checkbox">
+								<label>
+									<input id="bluetooth_active" onclick="bluetooth_active();" type="checkbox"
+										checked /><i class="helper"></i><span data-tag="bluetoothActivate">Bluetooth
+										aktivieren</span>
+								</label>
+							</div>
+							<hr id="hr_wifi" style="display:none" />
+							<table id="networkconnect" class="wlantable" width="100%">
+								<!-- Bluetooth-Liste -->
+							</table>
+							<hr />
+							<table width="100%">
+								<tr>
+									<td align="left">
+										<h3 data-tag="chooseDevice">Kanäle auswählen...</h3>
+									</td>
+									<td id="devicerefresh" align="right"></td>
+								</tr>
+							</table>
+							<table id="bluetoothlist" class="wlantable" width="100%">
+								<!-- Bluetooth-Liste -->
+							</table>
+							<hr />
 						</div>
 					</div>
 				</div>
@@ -3451,6 +3520,39 @@
 						</div>
 					</div>
 				</div>
+				<div id="bluetoothheader">
+					<div class="float-left text-align-left">
+						<h3 class="headtitle">Bluetooth</h3>
+					</div>
+					<div class="float-right text-align-right"><span
+							onclick="setHelpBox('Private MQTT Client',help_mqtt)" class="icon-question_sign"></span>
+					</div>
+					<div style="clear:both;"></div>
+					<div class="pure-g">
+						<div class="pure-u-1-1 pure-u-lg-1-1">
+							<div class="1-box wlan_conf">
+								<div class="checkbox">
+									<label>
+										<input id="bluetooth_active" onclick="bt_active();" type="checkbox" checked /><i
+											class="helper"></i><span data-tag="btActivate">Bluetooth aktivieren</span>
+									</label>
+								</div>
+								<table width="100%">
+									<tr>
+										<td align="left">
+											<h3 data-tag="btDevices"></h3>Gerät auswählen...</h3>
+										</td>
+										<td id="bluetoothrefresh" align="right"></td>
+									</tr>
+								</table>
+								<table id="btdevicelist" class="wlantable" width="100%">
+									<!-- Bluteooth-Liste -->
+								</table>
+								<hr />
+							</div>
+						</div>
+					</div>
+				</div>
 
 			</div>
 			<!-- ################################################### -->
@@ -3647,7 +3749,7 @@
 		var help_channel = '<p><span>Mit Hilfe der Kanal-Einstellungen passt du den Messkanal an den angeschlossenen F&uuml;hler an. Zus&auml;tzlich kannst du Grenzwerte für die Alarmfunktion vorgeben.</span></p><p><span>Siehe auch: </span><a href="https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Kanal-Einstellungen" target="_blank"><span style="color:#3366ff">Wiki - Kanal</span></a></p>';
 		// -----------------------------------------------------------------------------------
 		(function (window, document) {
-			var layout = byId('layout'), menu = byId('menu'), menuLink = byId('menuLink'), menuHome = byId('menuHome'), menuPitmaster = byId('menuPitmaster'), menuNotification = byId('menuNotification'), menuWlan = byId('menuWlan'), menuSystem = byId('menuSystem'), menuIOT = byId('menuIOT'), menuHistory = byId('menuHistory'), menuAbout = byId('menuAbout'), content = byId('main');
+			var layout = byId('layout'), menu = byId('menu'), menuLink = byId('menuLink'), menuHome = byId('menuHome'), menuPitmaster = byId('menuPitmaster'), menuNotification = byId('menuNotification'), menuWlan = byId('menuWlan'), menuBluetooth = byId('menuBluetooth'), menuSystem = byId('menuSystem'), menuIOT = byId('menuIOT'), menuHistory = byId('menuHistory'), menuAbout = byId('menuAbout'), content = byId('main');
 			function toggleClass(element, className) {
 				var classes = element.className.split(/\s+/), length = classes.length, i = 0;
 				for (; i < length; i++) {
@@ -3674,6 +3776,7 @@
 			menuLink.onclick = function (e) { toggleAll(e); };
 			menuHome.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showIndex(); } };
 			menuWlan.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showWLAN(); } };
+			menuBluetooth.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showBluetooth(); } };
 			menuIOT.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showIOT(); } };
 			menuPitmaster.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showPitmaster(0); } };
 			menuNotification.onclick = function (e) { if (menu.className.indexOf('active') !== -1) { toggleAll(e); showPushNotification(); } };
@@ -3720,6 +3823,24 @@
 						self.location.href = 'about:blank'
 					}
 				});
+			}
+		}
+
+		function showBluetooth() {
+			hideAll();
+			byId('bluetooth_config').style.display = "inline";
+			loadBluetoothList();
+		}
+
+		function bt_active() {
+			if (byId('bt_active').checked) {
+				loadJSON('btdevices', '', '60000', function (response) {
+					if (response == 'true') {
+						self.location.href = 'about:blank'
+					}
+				});
+			} else {
+
 			}
 		}
 
@@ -3933,12 +4054,10 @@
 					byId('btn-color-picker').setAttribute('data-color', jr.channel[channel].color);
 					document.getElementsByClassName("color_border")[0].style.borderColor = jr.channel[channel].color;
 
-					if(jr.channel[channel].typ == 16)
-					{
+					if (jr.channel[channel].typ == 16) {
 						byId('channel_delete').style.display = "inline-block";
 					}
-					else
-					{
+					else {
 						byId('channel_delete').style.display = "none";
 					}
 
@@ -3982,7 +4101,7 @@
 		function deleteChannel(channel) {
 			if (confirm(de.channel_delete_msg) == true) {
 				showLoader('true');
-				var number = {number: channel+1};
+				var number = { number: channel + 1 };
 				var json = JSON.stringify(number);
 				loadJSON('deletechannel', json, '60000', function (response) {
 					location.reload(true);
@@ -4038,12 +4157,25 @@
 				if (jr.system.language != "de") {
 					loadTranslation(jr.system.language);
 				}
+
 				if (jr.system.getupdate == 'false') {
 					byClass("notification")[0].style.display = "none";
 				} else {
 					byClass("notification")[0].style.display = "inline";
 				}
+
 				byId('menuVersion').innerHTML = jr.device.sw_version;
+
+				if(jr.features.pitmaster) {
+					byId("menuPitmaster").style.display = "block";
+				}
+
+				if(jr.features.bluetooth) {
+					byId("menuBluetooth").style.display = "block";
+				}
+
+				byId('menulist').style.display = "block";
+
 				showLoader('false');
 			})
 		}
@@ -4193,7 +4325,7 @@
 					byId('pitmaster_typ' + pitID.toString()).value = jr.pitmaster.pm[pitID].typ;
 					clearOption('pitmaster_channel' + pitID.toString());
 					for (var i = 0; i < jr.channel.length; i++) {
-						if(jr.channel[i].typ != 16) {
+						if (jr.channel[i].typ != 16) {
 							byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
 						}
 					}
@@ -4431,7 +4563,7 @@
 		}
 
 		function hideAll() {
-			hideIDs = ['index', 'wlan_config', 'system_config', 'system_config', 'history', 'about', 'wlan_set', 'thingspeak', 'push_notification', 'channel_settings', 'pitmaster_settings', 'pitmaster_profile', 'extended_settings'];
+			hideIDs = ['index', 'wlan_config', 'bluetooth_config', 'system_config', 'system_config', 'history', 'about', 'wlan_set', 'thingspeak', 'push_notification', 'channel_settings', 'pitmaster_settings', 'pitmaster_profile', 'extended_settings'];
 			for (var i = 0; i < hideIDs.length; i++) {
 				byId(hideIDs[i]).style.display = "none";
 			}
@@ -4598,15 +4730,13 @@
 							x[i].getElementsByClassName('chtitle')[0].innerHTML = jr.channel[i].name;
 						}
 
-						if (jr.channel[i].typ == 16)
-						{
-							if(jr.channel[i].connected == true)
-								x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1') + '\t' +  "#" + jr.channel[i].number;
+						if (jr.channel[i].typ == 16) {
+							if (jr.channel[i].connected == true)
+								x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1') + '\t' + "#" + jr.channel[i].number;
 							else
-								x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1 icon-disabled') + '\t' +  "#" + jr.channel[i].number;
+								x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1 icon-disabled') + '\t' + "#" + jr.channel[i].number;
 						}
-						else
-						{
+						else {
 							x[i].getElementsByClassName('chnumber')[0].innerHTML = "#" + jr.channel[i].number;
 						}
 
@@ -4798,6 +4928,55 @@
 			}
 		}
 
+		// Bluetooth connection
+		// -----------------------------------------------------------------------------------
+		var bluetoothlist = null;
+		function loadBluetoothList() {
+			btDevices = null;
+			loadJSON('bluetooth', '', '3000', function (response) {
+				try {
+					bluetoothlist = JSON.parse(response);
+					byId('bluetoothlist').innerHTML = '';
+					var table_bluetoothlist = byId('bluetoothlist');
+
+					for (var deviceIndex = 0; deviceIndex < bluetoothlist.devices.length; deviceIndex++) {
+						var deviceRow = table_bluetoothlist.insertRow(-1);
+
+						addCellBtDeviceCheckbox(deviceRow, bluetoothlist.devices, deviceIndex, 'row-Check', '0');
+						addCell(deviceRow, "", 'row-Check', '1');
+						addCell(deviceRow, bluetoothlist.devices[deviceIndex].name + " (" + bluetoothlist.devices[deviceIndex].address + ")", 'row-SSID', '2');
+
+						for (var i = 0; i < bluetoothlist.devices[deviceIndex].count; i++) {
+							var row = table_bluetoothlist.insertRow(-1);
+							addCell(row, "", 'row-Check', '0');
+							addCellBtChannelCheckbox(row, bluetoothlist.devices, deviceIndex, i, 'row-Check', '1');
+							addCell(row, "Kanal " + (i + 1), 'row-SSID', '2');
+						}
+					}
+
+					//byId('networkrefresh').innerHTML = '<h3><span class="icon-refresh" onclick="networkscan();"></span></h3>'
+
+				} catch (e) {
+					// error in the above string (in this case, yes)!
+					//alert(e);
+				}
+			})
+		}
+		function btSave() {
+			if(bluetoothlist != null)
+			{
+				showLoader('true');
+				var data = JSON.stringify(bluetoothlist);
+				loadJSON('setbluetooth', data, '60000', function (response) {
+					location.reload(true);
+					showLoader('false');
+				});
+				showLoader('false');
+			}
+		}
+
+		// -----------------------------------------------------------------------------------
+
 		var dcActivated = 'false';
 		function checkDCActivated() {
 			loadJSON('dcstatus', '', '3000', function (response) {
@@ -4811,6 +4990,74 @@
 			})
 		}
 		// -----------------------------------------------------------------------------------
+
+		function addCellBtDeviceCheckbox(row, devices, deviceIndex, cellClass, nr) {
+			var checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.checked = (devices[deviceIndex].selected > 0);
+			checkbox.onclick = function(evt) {
+				checkbox.checked = !checkbox.checked;
+				};
+			var cell = row.insertCell(nr);
+			cell.appendChild(checkbox);
+			if (cellClass != '') {
+				cell.className = cellClass;
+			}
+
+			row.onclick = function () {
+				return function () {
+					checkbox.checked = !checkbox.checked;
+					if(checkbox.checked)
+					{
+						devices[deviceIndex].selected = (1 << devices[deviceIndex].count) - 1;
+						for(var i = 1; i <= devices[deviceIndex].count; i++)
+						{
+							var table = byId('bluetoothlist');
+							table.rows[row.rowIndex + i].cells[1].childNodes[0].checked = true;
+						}
+					}
+					else
+					{
+						devices[deviceIndex].selected = 0;
+						for(var i = 1; i <= devices[deviceIndex].count; i++)
+						{
+							var table = byId('bluetoothlist');
+							table.rows[row.rowIndex + i].cells[1].childNodes[0].checked = false;
+						}
+					}
+					
+				};
+			}(row);
+		}
+
+		function addCellBtChannelCheckbox(row, devices, deviceIndex, channelIndex, cellClass, nr) {
+			var checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			checkbox.checked = (devices[deviceIndex].selected & (1<<channelIndex)) > 0;
+			checkbox.onclick = function(evt) {
+				checkbox.checked = !checkbox.checked;
+				};
+			var cell = row.insertCell(nr);
+			cell.appendChild(checkbox);
+			if (cellClass != '') {
+				cell.className = cellClass;
+			}
+
+			row.onclick = function () {
+				return function () {
+					checkbox.checked = !checkbox.checked;
+					if(checkbox.checked)
+					{
+						devices[deviceIndex].selected |= (1 << channelIndex);
+					}
+					else
+					{
+						devices[deviceIndex].selected &= ~(1 << channelIndex);
+					}
+					
+				};
+			}(row);
+		}
 
 		function addCell(row, cellinnerHtml, cellClass, nr) {
 			var cell = row.insertCell(nr);
