@@ -49,6 +49,7 @@ Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
 Bluetooth::Bluetooth(HardwareSerial *serial, uint8_t resetPin)
 {
     serialBle = serial;
+    serialBle->begin(BLE_BAUD);
     this->resetPin = resetPin;
     this->builtIn = false;
     pinMode(this->resetPin, OUTPUT);
