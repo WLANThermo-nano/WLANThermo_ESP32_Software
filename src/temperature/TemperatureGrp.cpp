@@ -254,25 +254,6 @@ void TemperatureGrp::loadConfig()
   }
 }
 
-TemperatureBase *TemperatureGrp::addRemote(uint8_t type, const char *address, uint8_t localIndex)
-{
-  TemperatureBase *temperature = NULL;
-
-  Serial.printf("addRemote: type = %d, address = %s, localIndex = %d\n", (uint8_t)type, address, localIndex);
-
-  switch ((SensorType)type)
-  {
-  case SensorType::Ble:
-    temperature = new TemperatureBle(address, localIndex);
-    add(temperature);
-    break;
-  default:
-    break;
-  }
-
-  return temperature;
-}
-
 void TemperatureGrp::saveConfig()
 {
   DynamicJsonBuffer jsonBuffer;
