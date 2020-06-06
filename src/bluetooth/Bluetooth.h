@@ -46,6 +46,7 @@ class Bluetooth
 {
 public:
     Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin);
+    Bluetooth(HardwareSerial *serial, uint8_t resetPin);
     void init();
     void loadConfig(TemperatureGrp *temperatureGrp);
     void saveConfig();
