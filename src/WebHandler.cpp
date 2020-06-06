@@ -1100,5 +1100,6 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
 
     gSystem->bluetooth->setDeviceSelected(_device["address"], selected);
     gSystem->bluetooth->saveConfig();
+    gSystem->temperatures.saveConfig();
   }
 }
