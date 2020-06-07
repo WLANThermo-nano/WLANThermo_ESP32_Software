@@ -2855,7 +2855,8 @@
 				<div class="float-left text-align-left">
 					<h3 class="headtitle" data-tag="bluetoothTitle">Bluetooth-Einstellungen</h3>
 				</div>
-				<div class="float-right text-align-right"><span onclick="setHelpBox('Bluetooth-Einstellungen',help_bluetooth)"
+				<div class="float-right text-align-right"><span
+						onclick="setHelpBox('Bluetooth-Einstellungen',help_bluetooth)"
 						class="icon-question_sign"></span></div>
 				<div style="clear:both;"></div>
 				<div class="pure-g">
@@ -3264,8 +3265,6 @@
 											class="helper"></i>
 										<p data-tag="buzzer_alarm">Piepser-Alarm</p>
 									</label></div>
-								<p class="pure-button pure-button-primary" id="channel_delete"
-									data-tag="channel_delete">Kanal löschen</p>
 							</form>
 						</div>
 					</div>
@@ -4012,7 +4011,6 @@
 				loadJSON('data', '', '3000', function (response) {
 					jr = JSON.parse(response);
 					byId('channel_settings_save').setAttribute('onclick', 'setChannel(' + channel + ');');
-					byId('channel_delete').setAttribute('onclick', 'deleteChannel(' + channel + ');');
 					byId('channel_settings_headtitle').innerHTML = jr.channel[channel].name;
 					byId('channel_name').value = jr.channel[channel].name;
 					byId('temp_max').value = jr.channel[channel].max;
@@ -4020,13 +4018,6 @@
 					byId('btn-color-picker').style.color = jr.channel[channel].color;
 					byId('btn-color-picker').setAttribute('data-color', jr.channel[channel].color);
 					document.getElementsByClassName("color_border")[0].style.borderColor = jr.channel[channel].color;
-
-					if (jr.channel[channel].typ == 16) {
-						byId('channel_delete').style.display = "inline-block";
-					}
-					else {
-						byId('channel_delete').style.display = "none";
-					}
 
 					if (jr.channel[channel].fixed) {
 						clearOption('sensor');
@@ -4063,17 +4054,6 @@
 					showLoader('false');
 				})
 			})
-		}
-
-		function deleteChannel(channel) {
-			if (confirm(de.channel_delete_msg) == true) {
-				showLoader('true');
-				var number = { number: channel + 1 };
-				var json = JSON.stringify(number);
-				loadJSON('deletechannel', json, '60000', function (response) {
-					location.reload(true);
-				});
-			}
 		}
 
 		function setChannel(channel) {
@@ -4133,11 +4113,11 @@
 
 				byId('menuVersion').innerHTML = jr.device.sw_version;
 
-				if(jr.features.pitmaster) {
+				if (jr.features.pitmaster) {
 					byId("menuPitmaster").style.display = "block";
 				}
 
-				if(jr.features.bluetooth) {
+				if (jr.features.bluetooth) {
 					byId("menuBluetooth").style.display = "block";
 				}
 
@@ -4930,8 +4910,7 @@
 			})
 		}
 		function btSave() {
-			if(bluetoothlist != null)
-			{
+			if (bluetoothlist != null) {
 				showLoader('true');
 				var data = JSON.stringify(bluetoothlist);
 				loadJSON('setbluetooth', data, '60000', function (response) {
@@ -4962,9 +4941,9 @@
 			var checkbox = document.createElement("input");
 			checkbox.type = "checkbox";
 			checkbox.checked = (devices[deviceIndex].selected > 0);
-			checkbox.onclick = function(evt) {
+			checkbox.onclick = function (evt) {
 				checkbox.checked = !checkbox.checked;
-				};
+			};
 			var cell = row.insertCell(nr);
 			cell.appendChild(checkbox);
 			if (cellClass != '') {
@@ -4974,25 +4953,21 @@
 			row.onclick = function () {
 				return function () {
 					checkbox.checked = !checkbox.checked;
-					if(checkbox.checked)
-					{
+					if (checkbox.checked) {
 						devices[deviceIndex].selected = (1 << devices[deviceIndex].count) - 1;
-						for(var i = 1; i <= devices[deviceIndex].count; i++)
-						{
+						for (var i = 1; i <= devices[deviceIndex].count; i++) {
 							var table = byId('bluetoothlist');
 							table.rows[row.rowIndex + i].cells[1].childNodes[0].checked = true;
 						}
 					}
-					else
-					{
+					else {
 						devices[deviceIndex].selected = 0;
-						for(var i = 1; i <= devices[deviceIndex].count; i++)
-						{
+						for (var i = 1; i <= devices[deviceIndex].count; i++) {
 							var table = byId('bluetoothlist');
 							table.rows[row.rowIndex + i].cells[1].childNodes[0].checked = false;
 						}
 					}
-					
+
 				};
 			}(row);
 		}
@@ -5000,10 +4975,10 @@
 		function addCellBtChannelCheckbox(row, devices, deviceIndex, channelIndex, cellClass, nr) {
 			var checkbox = document.createElement("input");
 			checkbox.type = "checkbox";
-			checkbox.checked = (devices[deviceIndex].selected & (1<<channelIndex)) > 0;
-			checkbox.onclick = function(evt) {
+			checkbox.checked = (devices[deviceIndex].selected & (1 << channelIndex)) > 0;
+			checkbox.onclick = function (evt) {
 				checkbox.checked = !checkbox.checked;
-				};
+			};
 			var cell = row.insertCell(nr);
 			cell.appendChild(checkbox);
 			if (cellClass != '') {
@@ -5013,15 +4988,13 @@
 			row.onclick = function () {
 				return function () {
 					checkbox.checked = !checkbox.checked;
-					if(checkbox.checked)
-					{
+					if (checkbox.checked) {
 						devices[deviceIndex].selected |= (1 << channelIndex);
 					}
-					else
-					{
+					else {
 						devices[deviceIndex].selected &= ~(1 << channelIndex);
 					}
-					
+
 				};
 			}(row);
 		}
