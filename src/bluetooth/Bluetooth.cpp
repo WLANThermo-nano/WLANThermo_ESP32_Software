@@ -27,12 +27,14 @@
 
 #define BLE_BAUD 115200u
 
-#define BLE_JSON_DEVICES "d"
+#define BLE_JSON_DEVICE "d"
 #define BLE_JSON_NAME "n"
 #define BLE_JSON_ADDRESS "a"
 #define BLE_JSON_STATUS "s"
 #define BLE_JSON_COUNT "c"
 #define BLE_JSON_TEMPERATURES "t"
+#define BLE_JSON_LAST_SEEN "ls"
+#define BLE_JSON_RSSI "r"
 
 HardwareSerial *Bluetooth::serialBle = NULL;
 std::vector<BleDeviceType *> Bluetooth::bleDevices;
@@ -77,6 +79,7 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
             {
                 BleDeviceType *bleDevice = new BleDeviceType();
                 memset(bleDevice, 0, sizeof(BleDeviceType));
+                bleDevice->remoteIndex = BLE_DEVICE_REMOTE_INDEX_INIT;
 
                 // reset temperatures
                 for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
@@ -130,8 +133,17 @@ void Bluetooth::saveConfig()
 
 void Bluetooth::getDevices()
 {
-    serialBle->setTimeout(100);
-    serialBle->println("getDevices");
+    uint32_t requestedDevices = 0u;
+
+    for (uint8_t devIndex = 0u; devIndex < bleDevices.size(); devIndex++)
+    {
+        if (bleDevices[devIndex]->selected > 0u)
+        {
+            requestedDevices |= (1u << bleDevices[devIndex]->remoteIndex);
+        }
+    }
+
+    serialBle->printf("getDevices=%d\n", requestedDevices);
     String bleDeviceJson = serialBle->readStringUntil('\n');
     Serial.println(bleDeviceJson);
 
@@ -145,15 +157,16 @@ void Bluetooth::getDevices()
         return;
     }
 
-    if (json.containsKey(BLE_JSON_DEVICES) == false)
+    if (json.containsKey(BLE_JSON_DEVICE) == false)
     {
         Serial.println("Invalid JSON: devices missing");
         return;
     }
 
-    JsonArray &_devices = json[BLE_JSON_DEVICES].asArray();
+    JsonArray &_devices = json[BLE_JSON_DEVICE].asArray();
+    uint8_t deviceIndex = 0u;
 
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
+    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice, deviceIndex++)
     {
 
         JsonObject &_device = itDevice->asObject();
@@ -181,8 +194,14 @@ void Bluetooth::getDevices()
         {
             bleDevice = new BleDeviceType();
             memset(bleDevice, 0, sizeof(BleDeviceType));
+            bleDevice->remoteIndex = BLE_DEVICE_REMOTE_INDEX_INIT;
             strcpy(bleDevice->address, deviceAddress.c_str());
             bleDevices.push_back(bleDevice);
+        }
+
+        if (BLE_DEVICE_REMOTE_INDEX_INIT == bleDevice->remoteIndex)
+        {
+            bleDevice->remoteIndex = deviceIndex;
         }
 
         if (_device.containsKey(BLE_JSON_NAME) == true)
@@ -360,6 +379,8 @@ boolean Bluetooth::doDfu()
             }
         }
     }
+
+    serialBle->setTimeout(100);
 
     return success;
 }

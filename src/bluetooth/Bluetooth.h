@@ -30,6 +30,8 @@
 #define BLE_NAME_STRING_MAX_SIZE 18u
 #define BLE_TEMPERATURE_MAX_COUNT 8u
 
+#define BLE_DEVICE_REMOTE_INDEX_INIT 0xFFu
+
 typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
 
 typedef struct BleDevice
@@ -40,6 +42,7 @@ typedef struct BleDevice
     uint8_t count;
     uint8_t selected;
     uint8_t status;
+    uint8_t remoteIndex;
 } BleDeviceType;
 
 class Bluetooth
