@@ -37,9 +37,6 @@
 // BUZZER
 #define BUZZER_IO 2u
 
-// SD CARD
-#define CS_SD_CARD 5u
-
 // BLUETOOTH
 #define BLE_RESET_PIN 4u
 
@@ -146,8 +143,6 @@ void SystemNanoVx::init()
   pitmasters[0u]->assignTemperature(temperatures[0]);
 
   pitmasters.loadConfig();
-
-  sdCard = new SdCard(CS_SD_CARD);
 
   powerSaveModeSupport = true;
   setPowerSaveMode(true);
