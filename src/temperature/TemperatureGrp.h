@@ -28,9 +28,10 @@ public:
   TemperatureGrp();
   void virtual update();
   void add(TemperatureBase *temperature);
+  void add(uint8_t type, String address, uint8_t localIndex);
+  void remove(uint8_t type, String address, uint8_t localIndex);
   void remove(uint8_t index);
-  void addBle();
-  void removeBle();
+  boolean exists(uint8_t type, String address, uint8_t localIndex);
   TemperatureBase *operator[](int index);
   uint8_t count();
   boolean setUnit(TemperatureUnit unit);
@@ -44,7 +45,6 @@ public:
   void loadConfig();
 
 private:
-  TemperatureBase *addRemote(uint8_t type, const char *address, uint8_t localIndex);
   std::vector<TemperatureBase *> temperatures;
   TemperatureUnit currentUnit;
 };

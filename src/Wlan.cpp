@@ -80,7 +80,7 @@ void Wlan::loadConfig()
     JsonArray &_wifi = json["wifi"];
     for (JsonArray::iterator it = _wifi.begin(); (it != _wifi.end()) && (i < NUM_OF_WLAN_CREDENTIALS); ++it)
     {
-      if((strlen(_wifi[i]["SSID"].asString()) >= WLAN_SSID_MAX_LENGTH) || (strlen(_wifi[i]["PASS"].asString()) >= WLAN_PASS_MAX_LENGTH))
+      if ((strlen(_wifi[i]["SSID"].asString()) >= WLAN_SSID_MAX_LENGTH) || (strlen(_wifi[i]["PASS"].asString()) >= WLAN_PASS_MAX_LENGTH))
       {
         Serial.println("Wlan::loadConfig: credentials invalid");
       }
@@ -194,7 +194,7 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 
 void Wlan::getCredentials(WlanCredentials *credentials)
 {
-  if(credentials != NULL)
+  if (credentials != NULL)
   {
     memcpy(credentials, &wlanCredentials[credentialIndex], sizeof(WlanCredentials));
   }
@@ -204,17 +204,17 @@ WifiStrength Wlan::getSignalStrength()
 {
   WifiStrength strength = WifiStrength::None;
 
-  if(WiFi.isConnected())
+  if (WiFi.isConnected())
   {
-    if(WiFi.RSSI() >= -80)
+    if (WiFi.RSSI() >= -80)
     {
       strength = WifiStrength::High;
     }
-    else if(WiFi.RSSI() >= -95)
+    else if (WiFi.RSSI() >= -95)
     {
       strength = WifiStrength::Medium;
     }
-    else if(WiFi.RSSI() >= -105)
+    else if (WiFi.RSSI() >= -105)
     {
       strength = WifiStrength::Low;
     }
@@ -326,9 +326,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
   }
   else
   {
-    
   }
-  
 
   if (!MDNS.begin(hostName.c_str()))
   {

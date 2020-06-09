@@ -23,11 +23,12 @@
 
 class TemperatureMcp3208 : public TemperatureBase
 {
-  public:
-    TemperatureMcp3208();
-    TemperatureMcp3208(uint8_t index, uint8_t csPin);
-    void update();
-  private:
-    uint16_t readChip();
-    uint8_t csPin;
+public:
+  TemperatureMcp3208();
+  TemperatureMcp3208(uint8_t index, uint8_t csPin);
+  void update();
+
+private:
+  uint16_t readChip();
+  uint8_t csPin;
 };

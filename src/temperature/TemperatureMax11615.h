@@ -26,12 +26,13 @@
 
 class TemperatureMax11615 : public TemperatureBase
 {
-  public:
-    TemperatureMax11615();
-    TemperatureMax11615(uint8_t index, TwoWire *twoWire);
-    void update();
-  private:
-    uint16_t readChip();
-    TwoWire *twoWire;
-    const uint8_t chipAddress = MAX11615_ADDRESS;
+public:
+  TemperatureMax11615();
+  TemperatureMax11615(uint8_t index, TwoWire *twoWire);
+  void update();
+
+private:
+  uint16_t readChip();
+  TwoWire *twoWire;
+  const uint8_t chipAddress = MAX11615_ADDRESS;
 };

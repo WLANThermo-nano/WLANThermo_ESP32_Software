@@ -37,12 +37,7 @@
 // BUZZER
 #define BUZZER_IO 2u
 
-// SD CARD
-#define CS_SD_CARD 5u
-
 // BLUETOOTH
-#define BLE_UART_TX 17
-#define BLE_UART_RX 16
 #define BLE_RESET_PIN 4u
 
 #define STANDBY_SLEEP_CYCLE_TIME 500000u // 500ms
@@ -123,6 +118,10 @@ void SystemNanoVx::init()
   temperatures.add(new TemperatureMax11615(7u, &Wire));
   this->wireRelease();
 
+  bluetooth = new Bluetooth(&Serial2, BLE_RESET_PIN);
+  bluetooth->loadConfig(&temperatures);
+  bluetooth->init();
+
   // load config
   temperatures.loadConfig();
 
@@ -144,11 +143,6 @@ void SystemNanoVx::init()
   pitmasters[0u]->assignTemperature(temperatures[0]);
 
   pitmasters.loadConfig();
-
-  sdCard = new SdCard(CS_SD_CARD);
-
-  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
-  bluetooth->init();
 
   powerSaveModeSupport = true;
   setPowerSaveMode(true);
