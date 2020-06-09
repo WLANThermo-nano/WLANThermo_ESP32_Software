@@ -25,6 +25,8 @@
 
 #ifdef HW_NANO_VX
 #define DEFAULT_HOSTNAME "NANO-"
+#elif HW_LINK_V1
+#define DEFAULT_HOSTNAME "LINK-"
 #else
 #define DEFAULT_HOSTNAME "MINI-"
 #endif

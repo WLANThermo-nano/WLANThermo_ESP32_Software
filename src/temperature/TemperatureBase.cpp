@@ -19,6 +19,7 @@
 ****************************************************/
 
 #include "TemperatureBase.h"
+#include "Settings.h"
 
 #define LOWEST_VALUE -31
 #define HIGHEST_VALUE 999
@@ -35,7 +36,7 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC,
-    NULL};
+    NULL, NULL};
 uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
@@ -50,6 +51,7 @@ TemperatureBase::TemperatureBase()
   this->calcTemperature = typeFunctions[0];
   this->fixedSensor = false;
   this->acknowledgedAlarm = false;
+  this->connected = false;
 }
 
 TemperatureBase::~TemperatureBase()
@@ -67,10 +69,42 @@ void TemperatureBase::loadDefaultValues()
   this->type = SensorType::Maverick;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
+
   if (this->globalIndex < MAX_COLORS)
+  {
     this->color = colors[this->globalIndex];
+  }
+  else
+  {
+    this->color = colors[random(0, MAX_COLORS - 1u)];
+  }
 
   settingsChanged = true;
+}
+
+void TemperatureBase::loadConfig()
+{
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = Settings::read(kChannels, &jsonBuffer);
+
+  if (json.success())
+  {
+    for (uint8_t i = 0u; i < json["tname"].size(); i++)
+    {
+      if (json.containsKey("taddress") && json.containsKey("tlindex"))
+      {
+        if ((this->address == json["taddress"][i].asString()) && (this->localIndex == json["tlindex"][i].as<uint8_t>()))
+        {
+          this->name = json["tname"][i].asString();
+          this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
+          this->minValue = json["tmin"][i];
+          this->maxValue = json["tmax"][i];
+          this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
+          this->color = json["tcolor"][i].asString();
+        }
+      }
+    }
+  }
 }
 
 void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)
@@ -125,6 +159,11 @@ String TemperatureBase::getName()
   return this->name;
 }
 
+String TemperatureBase::getAddress()
+{
+  return this->address;
+}
+
 String TemperatureBase::getColor()
 {
   return this->color;
@@ -162,7 +201,7 @@ uint8_t TemperatureBase::getGlobalIndex()
 
 void TemperatureBase::setType(uint8_t type)
 {
-  if(false == this->fixedSensor)
+  if (false == this->fixedSensor)
   {
     this->type = (SensorType)type;
     this->calcTemperature = (type < NUM_OF_TYPES) ? typeFunctions[type] : NULL;
@@ -190,6 +229,12 @@ void TemperatureBase::setMaxValue(float value)
 void TemperatureBase::setName(const char *name)
 {
   this->name = name;
+  settingsChanged = true;
+}
+
+void TemperatureBase::setAddress(const char *address)
+{
+  this->address = address;
   settingsChanged = true;
 }
 
@@ -238,7 +283,7 @@ AlarmStatus TemperatureBase::getAlarmStatus()
   else if (this->currentValue >= this->maxValue)
     status = MaxAlarm;
 
-  if(NoAlarm == status)
+  if (NoAlarm == status)
     acknowledgedAlarm = false;
 
   return status;

@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2016  Steffen Ochs
+    Copyright (C) 2020  Steffen Ochs
     Copyright (C) 2019  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     
 ****************************************************/
 
-#include "TemperatureMax11615.h"
+#include "TemperatureMax11613.h"
 
 #define MAX1161X_SGL_DIF_BIT 0x01u
 #define MAX1161X_SCAN0_BIT 0x20u
@@ -34,17 +34,16 @@ union SplitTwoBytes {
   };
 };
 
-TemperatureMax11615::TemperatureMax11615()
+TemperatureMax11613::TemperatureMax11613()
 {
 }
 
-TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : TemperatureBase()
+TemperatureMax11613::TemperatureMax11613(uint8_t index, TwoWire *twoWire) : TemperatureBase()
 {
-  this->address = TEMPERATURE_ADDRESS_INTERNAL;
   this->localIndex = index;
   this->twoWire = twoWire;
 
-  // MAX11615
+  // MAX11613
   byte reg = 0xA0; // A0 = 10100000
   // page 14
   // 1: setup mode
@@ -59,7 +58,7 @@ TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : Temp
   this->twoWire->endTransmission();
 }
 
-void TemperatureMax11615::update()
+void TemperatureMax11613::update()
 {
   if (this->calcTemperature != NULL)
   {
@@ -67,7 +66,7 @@ void TemperatureMax11615::update()
   }
 }
 
-uint16_t TemperatureMax11615::readChip()
+uint16_t TemperatureMax11613::readChip()
 {
   byte config;
   SplitTwoBytes receive;

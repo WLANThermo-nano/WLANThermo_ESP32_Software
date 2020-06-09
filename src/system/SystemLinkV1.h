@@ -19,20 +19,15 @@
 ****************************************************/
 #pragma once
 
-#include "TemperatureBase.h"
-#include "Wire.h"
+#include "SystemBase.h"
+#include "temperature/TemperatureBase.h"
 
-#define MAX11615_ADDRESS 0x33u
-
-class TemperatureMax11615 : public TemperatureBase
+class SystemLinkV1 : public SystemBase
 {
-public:
-  TemperatureMax11615();
-  TemperatureMax11615(uint8_t index, TwoWire *twoWire);
-  void update();
-
-private:
-  uint16_t readChip();
-  TwoWire *twoWire;
-  const uint8_t chipAddress = MAX11615_ADDRESS;
+  public:
+    SystemLinkV1();
+    void init();
+    void hwInit();
 };
+
+extern SystemBase* gSystem;

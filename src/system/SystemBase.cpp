@@ -34,6 +34,7 @@ SystemBase::SystemBase()
 {
   buzzer = NULL;
   battery = NULL;
+  bluetooth = NULL;
   sdCard = NULL;
   deviceName = "undefined";
   cpuName = "esp32";
@@ -58,7 +59,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 2, NULL, 1);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 30, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
@@ -273,25 +274,58 @@ String SystemBase::getResetReason(uint8_t cpuId)
   RESET_REASON reason = rtc_get_reset_reason(cpuId);
   String resetString;
 
-  switch ( reason)
+  switch (reason)
   {
-    case NO_MEAN: resetString = STRINGIFY(NO_MEAN); break;
-    case POWERON_RESET: resetString = STRINGIFY(POWERON_RESET); break;
-    case SW_RESET: resetString = STRINGIFY(SW_RESET); break;
-    case OWDT_RESET: resetString = STRINGIFY(OWDT_RESET); break;
-    case DEEPSLEEP_RESET: resetString = STRINGIFY(DEEPSLEEP_RESET); break;
-    case SDIO_RESET: resetString = STRINGIFY(SDIO_RESET); break;
-    case TG0WDT_SYS_RESET: resetString = STRINGIFY(TG0WDT_SYS_RESET); break;
-    case TG1WDT_SYS_RESET: resetString = STRINGIFY(TG1WDT_SYS_RESET); break;
-    case RTCWDT_SYS_RESET: resetString = STRINGIFY(RTCWDT_SYS_RESET); break;
-    case INTRUSION_RESET: resetString = STRINGIFY(INTRUSION_RESET); break;
-    case TGWDT_CPU_RESET: resetString = STRINGIFY(TGWDT_CPU_RESET); break;
-    case SW_CPU_RESET: resetString = STRINGIFY(SW_CPU_RESET); break;
-    case RTCWDT_CPU_RESET: resetString = STRINGIFY(RTCWDT_CPU_RESET); break;
-    case EXT_CPU_RESET: resetString = STRINGIFY(EXT_CPU_RESET); break;
-    case RTCWDT_BROWN_OUT_RESET: resetString = STRINGIFY(RTCWDT_BROWN_OUT_RESET); break;
-    case RTCWDT_RTC_RESET: resetString = STRINGIFY(RTCWDT_RTC_RESET); break;
-    default: resetString = "UNKNOWN";
+  case NO_MEAN:
+    resetString = STRINGIFY(NO_MEAN);
+    break;
+  case POWERON_RESET:
+    resetString = STRINGIFY(POWERON_RESET);
+    break;
+  case SW_RESET:
+    resetString = STRINGIFY(SW_RESET);
+    break;
+  case OWDT_RESET:
+    resetString = STRINGIFY(OWDT_RESET);
+    break;
+  case DEEPSLEEP_RESET:
+    resetString = STRINGIFY(DEEPSLEEP_RESET);
+    break;
+  case SDIO_RESET:
+    resetString = STRINGIFY(SDIO_RESET);
+    break;
+  case TG0WDT_SYS_RESET:
+    resetString = STRINGIFY(TG0WDT_SYS_RESET);
+    break;
+  case TG1WDT_SYS_RESET:
+    resetString = STRINGIFY(TG1WDT_SYS_RESET);
+    break;
+  case RTCWDT_SYS_RESET:
+    resetString = STRINGIFY(RTCWDT_SYS_RESET);
+    break;
+  case INTRUSION_RESET:
+    resetString = STRINGIFY(INTRUSION_RESET);
+    break;
+  case TGWDT_CPU_RESET:
+    resetString = STRINGIFY(TGWDT_CPU_RESET);
+    break;
+  case SW_CPU_RESET:
+    resetString = STRINGIFY(SW_CPU_RESET);
+    break;
+  case RTCWDT_CPU_RESET:
+    resetString = STRINGIFY(RTCWDT_CPU_RESET);
+    break;
+  case EXT_CPU_RESET:
+    resetString = STRINGIFY(EXT_CPU_RESET);
+    break;
+  case RTCWDT_BROWN_OUT_RESET:
+    resetString = STRINGIFY(RTCWDT_BROWN_OUT_RESET);
+    break;
+  case RTCWDT_RTC_RESET:
+    resetString = STRINGIFY(RTCWDT_RTC_RESET);
+    break;
+  default:
+    resetString = "UNKNOWN";
   }
 
   return resetString;

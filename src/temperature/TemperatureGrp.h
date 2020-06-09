@@ -22,19 +22,21 @@
 #include "Arduino.h"
 #include "TemperatureBase.h"
 
-#define MAX_TEMPERATURES 12u
-
 class TemperatureGrp
 {
 public:
   TemperatureGrp();
   void virtual update();
   void add(TemperatureBase *temperature);
-  TemperatureBase* operator[](int index);
+  void add(uint8_t type, String address, uint8_t localIndex);
+  void remove(uint8_t type, String address, uint8_t localIndex);
+  void remove(uint8_t index);
+  boolean exists(uint8_t type, String address, uint8_t localIndex);
+  TemperatureBase *operator[](int index);
   uint8_t count();
   boolean setUnit(TemperatureUnit unit);
   TemperatureUnit getUnit();
-  TemperatureBase* getNextActive(uint8_t index);
+  TemperatureBase *getNextActive(uint8_t index);
   uint32_t getActiveBits();
   uint8_t getActiveCount();
   boolean hasAlarm();
@@ -43,7 +45,6 @@ public:
   void loadConfig();
 
 private:
-  TemperatureBase *temperatures[MAX_TEMPERATURES];
-  uint8_t addIndex;
+  std::vector<TemperatureBase *> temperatures;
   TemperatureUnit currentUnit;
 };

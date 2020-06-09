@@ -19,25 +19,95 @@
 ****************************************************/
 
 #include "TemperatureGrp.h"
+#include "TemperatureBle.h"
 #include "Settings.h"
+#include "bluetooth/Bluetooth.h"
 
 TemperatureGrp::TemperatureGrp()
 {
   this->currentUnit = Celsius;
-  this->addIndex = 0u;
-
-  for (uint8_t i = 0u; i < MAX_TEMPERATURES; i++)
-    temperatures[i] = NULL;
 }
 
 void TemperatureGrp::add(TemperatureBase *temperature)
 {
-  temperatures[addIndex++] = temperature;
+  temperatures.push_back(temperature);
+}
+
+void TemperatureGrp::add(uint8_t type, String address, uint8_t localIndex)
+{
+  const auto isTemperature = [type, address, localIndex](TemperatureBase *t) {
+    return (t->getType() == type) && (t->getAddress() == address) && (t->getLocalIndex() == localIndex);
+  };
+
+  auto it = std::find_if(temperatures.begin(), temperatures.end(), isTemperature);
+
+  TemperatureBase *temperature = NULL;
+
+  if (it == temperatures.end())
+  {
+    /* Temperature has not been found, we will add it */
+    switch ((SensorType)type)
+    {
+    case SensorType::Ble:
+      temperature = new TemperatureBle(address, localIndex);
+      add(temperature);
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+void TemperatureGrp::remove(uint8_t type, String address, uint8_t localIndex)
+{
+  const auto isTemperature = [type, address, localIndex](TemperatureBase *t) {
+    return (t->getType() == type) && (t->getAddress() == address) && (t->getLocalIndex() == localIndex);
+  };
+
+  auto it = std::find_if(temperatures.begin(), temperatures.end(), isTemperature);
+
+  TemperatureBase *temperature = NULL;
+
+  if (it != temperatures.end())
+  {
+    /* Temperature has been found, we will remove it */
+    temperature = *it;
+
+    switch ((SensorType)type)
+    {
+    case SensorType::Ble:
+      delete temperature;
+      temperatures.erase(it);
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+void TemperatureGrp::remove(uint8_t index)
+{
+  if (index < temperatures.size())
+  {
+    delete temperatures[index];
+    temperatures.erase(temperatures.begin() + index);
+  }
+}
+
+boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
+{
+  const auto isTemperature = [type, address, localIndex](TemperatureBase *t) {
+    return (t->getType() == type) && (t->getAddress() == address) && (t->getLocalIndex() == localIndex);
+  };
+
+  auto it = std::find_if(temperatures.begin(), temperatures.end(), isTemperature);
+
+  return (it != temperatures.end());
 }
 
 void TemperatureGrp::update()
 {
-  for (uint8_t i = 0u; i < addIndex; i++)
+  for (uint8_t i = 0u; i < count(); i++)
   {
     if (temperatures[i] != NULL)
     {
@@ -132,7 +202,7 @@ uint8_t TemperatureGrp::getActiveCount()
 
 uint8_t TemperatureGrp::count()
 {
-  return this->addIndex;
+  return temperatures.size();
 }
 
 boolean TemperatureGrp::hasAlarm()
@@ -176,21 +246,10 @@ void TemperatureGrp::loadConfig()
   {
     if (json.containsKey("temp_unit"))
       this->setUnit((TemperatureUnit)json["temp_unit"].asString()[0u]);
-    else
-      return;
 
-    for (int i = 0; i < count(); i++)
+    for (uint8_t i = 0u; i < temperatures.size(); i++)
     {
-      TemperatureBase *temperature = temperatures[i];
-      if (temperature != NULL)
-      {
-        temperature->setName(json["tname"][i].asString());
-        temperature->setType(json["ttyp"][i]);
-        temperature->setMinValue(json["tmin"][i]);
-        temperature->setMaxValue(json["tmax"][i]);
-        temperature->setAlarmSetting((AlarmSetting)json["talarm"][i].as<uint8_t>());
-        temperature->setColor(json["tcolor"][i].asString());
-      }
+      temperatures[i]->loadConfig();
     }
   }
 }
@@ -208,6 +267,8 @@ void TemperatureGrp::saveConfig()
   JsonArray &_max = json.createNestedArray("tmax");
   JsonArray &_alarm = json.createNestedArray("talarm");
   JsonArray &_color = json.createNestedArray("tcolor");
+  JsonArray &_address = json.createNestedArray("taddress");
+  JsonArray &_lindex = json.createNestedArray("tlindex");
 
   for (int i = 0; i < count(); i++)
   {
@@ -220,6 +281,8 @@ void TemperatureGrp::saveConfig()
       _max.add(temperature->getMaxValue(), 1);
       _alarm.add((uint8_t)temperature->getAlarmSetting());
       _color.add(temperature->getColor());
+      _address.add(temperature->getAddress());
+      _lindex.add(temperature->getLocalIndex());
     }
   }
   Settings::write(kChannels, json);

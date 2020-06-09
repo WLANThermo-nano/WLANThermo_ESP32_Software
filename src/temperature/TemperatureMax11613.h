@@ -1,4 +1,5 @@
 /*************************************************** 
+    Copyright (C) 2020  Steffen Ochs
     Copyright (C) 2019  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -22,17 +23,16 @@
 #include "TemperatureBase.h"
 #include "Wire.h"
 
-#define MAX11615_ADDRESS 0x33u
+#define MAX11613_ADDRESS 0x34u
 
-class TemperatureMax11615 : public TemperatureBase
+class TemperatureMax11613 : public TemperatureBase
 {
-public:
-  TemperatureMax11615();
-  TemperatureMax11615(uint8_t index, TwoWire *twoWire);
-  void update();
-
-private:
-  uint16_t readChip();
-  TwoWire *twoWire;
-  const uint8_t chipAddress = MAX11615_ADDRESS;
+  public:
+    TemperatureMax11613();
+    TemperatureMax11613(uint8_t index, TwoWire *twoWire);
+    void update();
+  private:
+    uint16_t readChip();
+    TwoWire *twoWire;
+    const uint8_t chipAddress = MAX11613_ADDRESS;
 };

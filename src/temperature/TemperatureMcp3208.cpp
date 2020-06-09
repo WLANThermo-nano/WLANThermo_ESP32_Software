@@ -37,6 +37,7 @@ TemperatureMcp3208::TemperatureMcp3208()
 
 TemperatureMcp3208::TemperatureMcp3208(uint8_t index, uint8_t csPin) : TemperatureBase()
 {
+  this->address = TEMPERATURE_ADDRESS_INTERNAL;
   this->localIndex = index;
   this->csPin = csPin;
 }

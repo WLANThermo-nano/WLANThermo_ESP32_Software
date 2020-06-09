@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 
-#define NUM_OF_TYPES 16u
+#define NUM_OF_TYPES 17u
 
 enum class SensorType
 {
@@ -41,6 +41,7 @@ enum class SensorType
   PT1000 = 13,
   ThermoWorks = 14,
   TypeK = 15,
+  Ble = 16
 };
 
 typedef struct
@@ -51,19 +52,20 @@ typedef struct
 } SensorTypeInfoType;
 
 const SensorTypeInfoType sensorTypeInfo[NUM_OF_TYPES] = {
-    {SensorType::Maverick    , "1000K/Maverick"  , false},
-    {SensorType::FantastNeu  , "Fantast-Neu"     , false},
-    {SensorType::Fantast     , "Fantast"         , false},
-    {SensorType::iGrill2     , "100K/iGrill2"    , false},
-    {SensorType::ET73        , "ET-73"           , false},
-    {SensorType::PERFEKTION  , "Perfektion"      , false},
-    {SensorType::_50K        , "50K"             , false},
-    {SensorType::INKBIRD     , "Inkbird"         , false},
-    {SensorType::NTC100K6A1B , "100K6A1B"        , false},
-    {SensorType::Weber6743   , "Weber_6743"      , false},
-    {SensorType::Santos      , "Santos"          , false},
-    {SensorType::NTC5K3A1B   , "5K3A1B"          , false},
-    {SensorType::PT100       , "PT100"           , false},
-    {SensorType::PT1000      , "PT1000"          , false},
-    {SensorType::ThermoWorks , "ThermoWorks"     , false},
-    {SensorType::TypeK       , "Typ K"           , true } };
+    {SensorType::Maverick, "1000K/Maverick", false},
+    {SensorType::FantastNeu, "Fantast-Neu", false},
+    {SensorType::Fantast, "Fantast", false},
+    {SensorType::iGrill2, "100K/iGrill2", false},
+    {SensorType::ET73, "ET-73", false},
+    {SensorType::PERFEKTION, "Perfektion", false},
+    {SensorType::_50K, "50K", false},
+    {SensorType::INKBIRD, "Inkbird", false},
+    {SensorType::NTC100K6A1B, "100K6A1B", false},
+    {SensorType::Weber6743, "Weber_6743", false},
+    {SensorType::Santos, "Santos", false},
+    {SensorType::NTC5K3A1B, "5K3A1B", false},
+    {SensorType::PT100, "PT100", false},
+    {SensorType::PT1000, "PT1000", false},
+    {SensorType::ThermoWorks, "ThermoWorks", false},
+    {SensorType::TypeK, "Typ K", true},
+    {SensorType::Ble, "Bluetooth", true}};

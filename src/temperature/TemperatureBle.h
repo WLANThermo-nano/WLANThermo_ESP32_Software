@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,19 +20,11 @@
 #pragma once
 
 #include "TemperatureBase.h"
-#include "Wire.h"
 
-#define MAX11615_ADDRESS 0x33u
-
-class TemperatureMax11615 : public TemperatureBase
+class TemperatureBle : public TemperatureBase
 {
 public:
-  TemperatureMax11615();
-  TemperatureMax11615(uint8_t index, TwoWire *twoWire);
+  TemperatureBle();
+  TemperatureBle(String peerAddress, uint8_t index);
   void update();
-
-private:
-  uint16_t readChip();
-  TwoWire *twoWire;
-  const uint8_t chipAddress = MAX11615_ADDRESS;
 };

@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,22 +17,24 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#pragma once
 
-#include "TemperatureBase.h"
-#include "Wire.h"
+#include "TemperatureBle.h"
+#include "bluetooth/Bluetooth.h"
 
-#define MAX11615_ADDRESS 0x33u
-
-class TemperatureMax11615 : public TemperatureBase
+TemperatureBle::TemperatureBle()
 {
-public:
-  TemperatureMax11615();
-  TemperatureMax11615(uint8_t index, TwoWire *twoWire);
-  void update();
+}
 
-private:
-  uint16_t readChip();
-  TwoWire *twoWire;
-  const uint8_t chipAddress = MAX11615_ADDRESS;
-};
+TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureBase()
+{
+  this->address = peerAddress;
+  this->localIndex = index;
+  this->type = SensorType::Ble;
+  this->fixedSensor = true;
+}
+
+void TemperatureBle::update()
+{
+  this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
+  this->connected = Bluetooth::isDeviceConnected(this->address);
+}

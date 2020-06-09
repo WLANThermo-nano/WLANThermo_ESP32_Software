@@ -1,4 +1,4 @@
- /*************************************************** 
+/*************************************************** 
     Copyright (C) 2016  Steffen Ochs
 
     This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
     
  ****************************************************/
 
- // HELP: https://github.com/bblanchon/ArduinoJson
+// HELP: https://github.com/bblanchon/ArduinoJson
 
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
@@ -27,40 +27,46 @@
 #include "DbgPrint.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// React to Serial Input 
-void read_serial(char *buffer) {
+// React to Serial Input
+void read_serial(char *buffer)
+{
 
   // Commando auslesen
   String str(buffer);
   int index = str.indexOf(':');
 
   // Falls zusätzliche Attribute vorhanden
-  if (index > 0) {
-    String command = str.substring(0,index);
+  if (index > 0)
+  {
+    String command = str.substring(0, index);
     IPRINTP("Serial: ");
     DPRINTLN(command);
 
     // Umsortieren
-    for (int i = 0;i<index+1;i++) {
+    for (int i = 0; i < index + 1; i++)
+    {
       *buffer++;
     }
-    uint8_t * PM_buffer = reinterpret_cast<uint8_t *>(buffer);
+    uint8_t *PM_buffer = reinterpret_cast<uint8_t *>(buffer);
 
     // ADD WIFI SETTINGS
-    if (command == "setnetwork") {
-       bodyWebHandler.setNetwork(NULL, PM_buffer);
-       return;
+    if (command == "setnetwork")
+    {
+      nanoWebHandler.setNetwork(NULL, PM_buffer);
+      return;
     }
-    else if (command == "addnetwork") {
-       bodyWebHandler.addNetwork(NULL, PM_buffer);
-       return;
+    else if (command == "addnetwork")
+    {
+      nanoWebHandler.addNetwork(NULL, PM_buffer);
+      return;
     }
 
     // set item string
-    else if (command == "item") {
-      String payload((char*)buffer);
+    else if (command == "item")
+    {
+      String payload((char *)buffer);
       gSystem->item.write(ItemNvsKeys::kItem, payload);
-      return;    
+      return;
     }
 
     // UPDATE auf bestimmte Version
@@ -83,42 +89,51 @@ void read_serial(char *buffer) {
     }
 
     // Battery MIN
-    else if (command == "setbattmin") {
-      String payload((char*)buffer);
-      if ((payload.length() == 4) && gSystem->battery) {
+    else if (command == "setbattmin")
+    {
+      String payload((char *)buffer);
+      if ((payload.length() == 4) && gSystem->battery)
+      {
         gSystem->battery->min = payload.toInt();
         gSystem->battery->saveConfig();
       }
-      return;    
+      return;
     }
 
     // Battery MAX
-    else if (command == "setbattmax") {
-      String payload((char*)buffer);
-      if ((payload.length() == 4) && gSystem->battery) {
+    else if (command == "setbattmax")
+    {
+      String payload((char *)buffer);
+      if ((payload.length() == 4) && gSystem->battery)
+      {
         gSystem->battery->max = payload.toInt();
         gSystem->battery->saveConfig();
       }
-      return;    
+      return;
     }
-  } else {
-  
+  }
+  else
+  {
+
     // set item string
-    if (str == "item") {
+    if (str == "item")
+    {
       Serial.println(gSystem->item.read(ItemNvsKeys::kItem));
-      return;    
+      return;
     }
 
-    else if (str == "data") {
+    else if (str == "data")
+    {
       Serial.println(API::apiData(APIDATA));
       return;
     }
-  
-    else if (str == "settings") {
+
+    else if (str == "settings")
+    {
       Serial.println(API::apiData(APISETTINGS));
       return;
     }
-  /*
+    /*
     else if (str == "networklist") {
       nanoWebHandler.handleWifiResult(false);
       return;
@@ -129,37 +144,43 @@ void read_serial(char *buffer) {
       return;
     }
 */
-    
-    else if (str == "clearwifi") {
+
+    else if (str == "clearwifi")
+    {
       gSystem->wlan.clearCredentials();
       gSystem->restart();
       return;
     }
-  
-    else if (str == "configreset") {
-      nanoWebHandler.configreset();
+
+    else if (str == "configreset")
+    {
+      gSystem->resetConfig();
+      gSystem->temperatures.saveConfig();
       return;
     }
 #if defined HW_MINI_V2 || defined HW_MINI_V3
-    else if (str == "enabledisplay") {
+    else if (str == "enabledisplay")
+    {
       gDisplay->disable(false);
       gDisplay->saveConfig();
       gSystem->restart();
       return;
     }
-    else if (str == "disabledisplay") {
+    else if (str == "disabledisplay")
+    {
       gDisplay->disable(true);
       gDisplay->saveConfig();
       gSystem->restart();
       return;
     }
-        else if (str == "calibratedisplay") {
+    else if (str == "calibratedisplay")
+    {
       gDisplay->disable(true);
       gDisplay->calibrate();
       return;
     }
 #endif
-/*
+    /*
     else if (str == "battery") {
       notification.type = 2;
       Serial.println("Test");
@@ -167,12 +188,13 @@ void read_serial(char *buffer) {
     }
 */
     // RESTART SYSTEM
-    else if (str == "restart") {
+    else if (str == "restart")
+    {
       gSystem->restart();
       return;
     }
 
-/*
+    /*
     // LET ESP SLEEP
     else if (str == "sleep") {
       display.displayOff();
@@ -182,12 +204,13 @@ void read_serial(char *buffer) {
 */
 
     // STOP PITMASTER
-    else if (str == "stop") {
-      for(uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
+    else if (str == "stop")
+    {
+      for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
       {
         Pitmaster *pm = gSystem->pitmasters[i];
 
-        if(pm != NULL)
+        if (pm != NULL)
           pm->setType(pm_off);
       }
       gSystem->pitmasters.saveConfig();
@@ -195,11 +218,12 @@ void read_serial(char *buffer) {
     }
 
     // Get free heap size
-    else if (str == "heap") {
+    else if (str == "heap")
+    {
       Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
       return;
     }
-/*
+    /*
     else if (str == "pittest") {
       pitMaster[0].active = AUTO;
       pitMaster[0].set = 110;
@@ -215,52 +239,52 @@ void read_serial(char *buffer) {
 */
 
     // CHECK HTTP UPDATE
-    else if (str == "checkupdate") {
+    else if (str == "checkupdate")
+    {
       gSystem->otaUpdate.resetUpdateInfo();
       gSystem->otaUpdate.askUpdateInfo();
       return;
     }
 
     // Test Wifi Flash Clear
-    else if (str == "erasewifi") {
+    else if (str == "erasewifi")
+    {
       //EraseWiFiFlash();
       return;
     }
-    
   }
 
   IPRINTP("You entered: >");
   DPRINT(buffer);
   DPRINTPLN("<");
-  DPRINTPLN("Unkwown command");     // Befehl nicht erkannt  
+  DPRINTPLN("Unkwown command"); // Befehl nicht erkannt
 }
 
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Put together Serial Input 
-int readline(int readch, char *buffer, int len) {
-  
+// Put together Serial Input
+int readline(int readch, char *buffer, int len)
+{
+
   static int pos = 0;
   int rpos;
 
-  if (readch > 0) {
-    switch (readch) {
-      case '\n': // Ignore new-lines
-        break;
-      case '\r': // Return on CR
-        rpos = pos;
-        pos = 0;  // Reset position index ready for next time
-        return rpos;
-      default:
-        if (pos < len-1) {
-          buffer[pos++] = readch;
-          buffer[pos] = 0;
-        }
+  if (readch > 0)
+  {
+    switch (readch)
+    {
+    case '\n': // Ignore new-lines
+      break;
+    case '\r': // Return on CR
+      rpos = pos;
+      pos = 0; // Reset position index ready for next time
+      return rpos;
+    default:
+      if (pos < len - 1)
+      {
+        buffer[pos++] = readch;
+        buffer[pos] = 0;
+      }
     }
   }
-  return -1;    // No end of line has been found, so return -1.
+  return -1; // No end of line has been found, so return -1.
 }
-
-
-
-

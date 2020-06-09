@@ -25,10 +25,10 @@
 // NOTIFICATION
 struct NotificationData
 {
-  byte index; // INDEX BIN
-  byte ch;    // CHANNEL BIN
-  byte limit; // LIMIT: 0 = LOW TEMPERATURE, 1 = HIGH TEMPERATURE
-  byte type;  // TYPE: 0 = NORMAL MODE, 1 = TEST MESSAGE
+  uint32_t index; // INDEX BIN
+  uint8_t ch;     // CHANNEL BIN
+  uint32_t limit; // LIMIT: 0 = LOW TEMPERATURE, 1 = HIGH TEMPERATURE
+  byte type;      // TYPE: 0 = NORMAL MODE, 1 = TEST MESSAGE
 };
 
 struct PushService
