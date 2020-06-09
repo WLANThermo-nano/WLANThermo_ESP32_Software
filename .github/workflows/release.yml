@@ -24,7 +24,7 @@ jobs:
       - name: Build firmware
         run: |
           sed -i -e 's/\/\*REL_VER\*\//#define FIRMWAREVERSION  "${{ steps.get_version.outputs.version }}"/g' ./src/Version.h
-          platformio run -e miniV1 -e miniV2 -e miniV3 -e nano
+          platformio run -e miniV1 -e miniV2 -e miniV3 -e nano -e linkV1
       - shell: bash
         run: |
           mkdir ./artifacts
@@ -32,6 +32,7 @@ jobs:
           cp ./.pio/build/miniV2/firmware.bin ./artifacts/miniV2.bin
           cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3.bin
           cp ./.pio/build/nano/firmware.bin ./artifacts/nano.bin
+          cp ./.pio/build/linkV1/firmware.bin ./artifacts/linkV1.bin
       - uses: actions/upload-artifact@v1
         with:
             name: firmware
@@ -115,6 +116,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./firmware/nano.bin
           asset_name: nano_v3_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./firmware/linkV1.bin
+          asset_name: link_v1_esp32_firmware_${{ steps.get_version.outputs.version }}.bin
           asset_content_type: application/octet-stream
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.2
