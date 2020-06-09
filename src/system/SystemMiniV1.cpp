@@ -91,6 +91,7 @@ void SystemMiniV1::init()
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
+  // add blutetooth feature
   bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
   bluetooth->loadConfig(&temperatures);
   bluetooth->init();

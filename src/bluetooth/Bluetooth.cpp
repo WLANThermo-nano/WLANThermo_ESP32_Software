@@ -323,7 +323,10 @@ boolean Bluetooth::doDfu()
     delay(20);
     digitalWrite(resetPin, HIGH);
 
-    if (serialBle->readString().startsWith("@@BOOTLOADER"))
+    String bootloaderResponse = serialBle->readString();
+    Serial.println(bootloaderResponse);
+
+    if (bootloaderResponse.startsWith("@@BOOTLOADER"))
     {
         Serial.println("Hello from BLE bootloader");
 

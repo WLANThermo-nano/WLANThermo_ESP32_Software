@@ -40,6 +40,11 @@
 // SD CARD
 #define CS_SD_CARD 5u
 
+// BLUETOOTH
+#define BLE_UART_TX 12
+#define BLE_UART_RX 14
+#define BLE_RESET_PIN 4u
+
 enum ledcChannels
 {
   // Channel 0, Timer0
@@ -74,8 +79,12 @@ void SystemLinkV1::init()
   temperatures.add(new TemperatureMax11613(0u, &Wire));
   temperatures.add(new TemperatureMax11613(1u, &Wire));
   temperatures.add(new TemperatureMax11613(2u, &Wire));
-
   this->wireRelease();
+
+  // add blutetooth feature
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->loadConfig(&temperatures);
+  bluetooth->init();
 
   // load config
   temperatures.loadConfig();
@@ -100,9 +109,6 @@ void SystemLinkV1::init()
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
-
-  //powerSaveModeSupport = true;
-  //setPowerSaveMode(true);
 
   initDone = true;
 }

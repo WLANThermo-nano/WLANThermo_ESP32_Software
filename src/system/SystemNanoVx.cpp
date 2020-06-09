@@ -118,6 +118,7 @@ void SystemNanoVx::init()
   temperatures.add(new TemperatureMax11615(7u, &Wire));
   this->wireRelease();
 
+  // add blutetooth feature
   bluetooth = new Bluetooth(&Serial2, BLE_RESET_PIN);
   bluetooth->loadConfig(&temperatures);
   bluetooth->init();

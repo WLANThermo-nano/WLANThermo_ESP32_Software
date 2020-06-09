@@ -115,6 +115,7 @@ void SystemMiniV2::init()
     delete (checkThermocouple);
   }
 
+  // add blutetooth feature
   bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
   bluetooth->loadConfig(&temperatures);
   bluetooth->init();
