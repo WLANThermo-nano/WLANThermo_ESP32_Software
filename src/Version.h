@@ -1,4 +1,4 @@
- /*************************************************** 
+/*************************************************** 
     Copyright (C) 2018  Steffen Ochs
 
     This program is free software: you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 /*REL_VER*/
 
 #ifndef FIRMWAREVERSION
-#define FIRMWAREVERSION  "v0.9.9"
+#define FIRMWAREVERSION "v1.0.5"
 #endif
-#define GUIAPIVERSION    "1"
+#define GUIAPIVERSION "1"
 #define SERVERAPIVERSION "1"
 
 #endif /* C_VERSION_H_ */
