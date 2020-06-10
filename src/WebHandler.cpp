@@ -85,7 +85,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/recovery", HTTP_GET, HTTP_GET, &NanoWebHandler::handleRecovery, NULL},
     {"/rotate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleRotate, NULL},
     {"/calibrate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleCalibrate, NULL},
-    {"/admin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
+    {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
     // Body handler
