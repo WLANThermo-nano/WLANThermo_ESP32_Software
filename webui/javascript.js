@@ -18,7 +18,7 @@ var help_channel = '<p><span>Mit Hilfe der Kanal-Einstellungen passt du den Mess
 (function (window, document) {
     var layout = byId('layout'), menu = byId('menu'), menuLink = byId('menuLink'), menuHome = byId('menuHome'), menuPitmaster = byId('menuPitmaster'), menuNotification = byId('menuNotification'), menuWlan = byId('menuWlan'), menuBluetooth = byId('menuBluetooth'), menuSystem = byId('menuSystem'), menuIOT = byId('menuIOT'), menuHistory = byId('menuHistory'), menuAbout = byId('menuAbout'), content = byId('main');
     function toggleClass(element, className) {
-        var classes = element.className.split('/\s+/'), length = classes.length;
+        var classes = element.className.split(/\s+/), length = classes.length;
         for (var i = 0; i < length; i++) {
             if (classes[i] === className) {
                 classes.splice(i, 1);
