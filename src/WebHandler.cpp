@@ -434,6 +434,8 @@ void NanoWebHandler::handleUpdate(AsyncWebServerRequest *request)
       Serial.println(version);
       if (version.indexOf("v") == 0)
       {
+        gSystem->otaUpdate.resetUpdateInfo();
+        gSystem->otaUpdate.setForceFlag(true);
         gSystem->otaUpdate.requestVersion(version);
         gSystem->otaUpdate.askUpdateInfo();
       }
