@@ -54,7 +54,6 @@ void WServer::init()
   loadConfig();
   webServer = new AsyncWebServer(80);
   webServer->addHandler(&nanoWebHandler);
-  webServer->addHandler(&nanoWebHandler);
 
   webServer->on("/help", HTTP_GET, [](AsyncWebServerRequest *request) {
              request->redirect("https://github.com/WLANThermo-nano/WLANThermo_nano_Software/blob/master/README.md");
