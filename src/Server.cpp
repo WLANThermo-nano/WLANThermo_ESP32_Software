@@ -169,7 +169,7 @@ void WServer::loadConfig()
   {
 
     if (json.containsKey("password"))
-      this->password = json["password"].as<boolean>();
+      this->password = json["password"].asString();
   }
 }
 
