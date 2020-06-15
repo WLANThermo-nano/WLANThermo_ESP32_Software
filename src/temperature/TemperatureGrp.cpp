@@ -107,12 +107,21 @@ boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
 
 void TemperatureGrp::update()
 {
+  boolean settingsChanged;
+  boolean newValue;
+
   for (uint8_t i = 0u; i < count(); i++)
   {
-    if (temperatures[i] != NULL)
+    temperatures[i]->update();
+    newValue = temperatures[i]->checkNewValue();
+    settingsChanged = temperatures[i]->checkNewSettings();
+
+    if (newValue || settingsChanged)
     {
-      temperatures[i]->update();
-      temperatures[i]->handleCallbacks();
+      for (auto const &cbData : registeredCb)
+      {
+        cbData.cb(i, temperatures[i], settingsChanged, cbData.userData);
+      }
     }
   }
 }
@@ -291,4 +300,10 @@ void TemperatureGrp::saveConfig()
 TemperatureBase *TemperatureGrp::operator[](int index)
 {
   return (index < count()) ? temperatures[index] : NULL;
+}
+
+void TemperatureGrp::registerCallback(TemperatureCallback_t callback, void *userData)
+{
+  TemperatureCallbackDataType newCallbackData = {callback, userData};
+  registeredCb.push_back(newCallbackData);
 }

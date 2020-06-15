@@ -216,14 +216,7 @@ boolean DisplayNextion::initDisplay()
     menuPitmaster2Settings.attachPop(DisplayNextion::enterPitmasterSettingsPage, this);
 
     // register for all temperature callbacks
-    for (uint8_t i = 0; i < system->temperatures.count(); i++)
-    {
-      TemperatureBase *temperature = system->temperatures[i];
-      if (temperature != NULL)
-      {
-        temperature->registerCallback(temperatureUpdateCb, this);
-      }
-    }
+    system->temperatures.registerCallback(temperatureUpdateCb, this);
 
     // register for all pitmaster callbacks
     for (uint8_t i = 0; i < system->pitmasters.count(); i++)
@@ -258,7 +251,7 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
   boolean updatePage = forceUpdate;
   uint32_t skippedTemperatures = 0u;
 
-  if((activeBits != activeBitsOld) || (UPDATE_ALL == updateTemperature) || (UPDATE_ALL == updatePitmaster))
+  if ((activeBits != activeBitsOld) || (UPDATE_ALL == updateTemperature) || (UPDATE_ALL == updatePitmaster))
     updatePage = true;
 
   if (updatePage)
@@ -288,7 +281,7 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
           setTemperatureAllItems(visibleCount, system->temperatures[i]);
         else if (updateTemperature & (1u << i))
           setTemperatureCurrent(visibleCount, system->temperatures[i]);
-        
+
         if (updatePitmaster & (1u << i))
           setTemperaturePitmasterName(visibleCount, system->temperatures[i]);
 
@@ -370,18 +363,18 @@ uint8_t DisplayNextion::getCurrentPageNumber()
   return pageNumber;
 }
 
-void DisplayNextion::temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData)
+void DisplayNextion::temperatureUpdateCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData)
 {
   DisplayNextion *displayNextion = (DisplayNextion *)userData;
 
-  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL: (1u << temperature->getGlobalIndex());
+  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL : (1u << index);
 }
 
 void DisplayNextion::pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData)
 {
   TemperatureBase *temperature = pitmaster->getAssignedTemperature();
 
-  updatePitmaster |= (true == settingsChanged) ? UPDATE_ALL: (1u << temperature->getGlobalIndex());
+  updatePitmaster |= (true == settingsChanged) ? UPDATE_ALL : (1u << temperature->getGlobalIndex());
 }
 
 void DisplayNextion::update()
@@ -820,7 +813,7 @@ void DisplayNextion::setTemperaturePitmasterName(uint8_t nexIndex, TemperatureBa
 
   if (pitmaster != NULL)
   {
-    if(pitmaster->getType() == PitmasterType::pm_auto)
+    if (pitmaster->getType() == PitmasterType::pm_auto)
     {
       sprintf(text, "P%d:%i\xb0/%d%%", pitmaster->getGlobalIndex() + 1u, (int)pitmaster->getTargetTemperature(), (uint8_t)pitmaster->getValue());
       sprintf(item, "temp_main.%s%d", "Name", nexIndex);
@@ -927,7 +920,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
       wifiSymbol = '\0';
       break;
     }
-    if((millis() - debounceWifiSymbol) >= 1000u)
+    if ((millis() - debounceWifiSymbol) >= 1000u)
     {
       wifiStrength = newWifiStrength;
       forceUpdate = true;

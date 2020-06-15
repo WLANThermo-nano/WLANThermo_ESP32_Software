@@ -41,7 +41,6 @@ uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
 {
-  this->registeredCb = NULL;
   this->globalIndex = this->globalIndexTracker++;
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
   this->loadDefaultValues();
@@ -107,31 +106,28 @@ void TemperatureBase::loadConfig()
   }
 }
 
-void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)
+boolean TemperatureBase::checkNewValue()
 {
-  this->registeredCb = callback;
-  this->registeredCbUserData = userData;
-}
+  boolean newValue = false;
 
-void TemperatureBase::unregisterCallback()
-{
-  this->registeredCb = NULL;
-}
-
-void TemperatureBase::handleCallbacks()
-{
   AlarmStatus newAlarmStatus = getAlarmStatus();
 
-  if ((this->registeredCb != NULL))
+  if ((cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
   {
-    if ((true == settingsChanged) || (cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
-    {
-      this->registeredCb(this, settingsChanged, this->registeredCbUserData);
-      cbAlarmStatus = newAlarmStatus;
-      settingsChanged = false;
-      cbCurrentValue = getValue();
-    }
+    cbAlarmStatus = newAlarmStatus;
+    cbCurrentValue = getValue();
+    newValue = true;
   }
+
+  return newValue;
+}
+
+boolean TemperatureBase::checkNewSettings()
+{
+  boolean newSettings = settingsChanged;
+  settingsChanged = false;
+
+  return newSettings;
 }
 
 float TemperatureBase::getValue()
