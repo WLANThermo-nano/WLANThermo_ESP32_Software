@@ -30,6 +30,7 @@ var en = {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
+	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
 	menuIOT: "IoT",
@@ -83,6 +84,10 @@ var en = {
 	wlanConnect: "Connect network",
 	wlanSSID: "SSID",
 	wlanPwd: "Password",
+	// Menu Bluetooth
+	bluetoothActivate: "Activate Bluetooth",
+	bluetoothChannels: "Select channels...",
+	bluetoothTitle: "Bluetooth settings",
 	// Menü Pitmaster
 	pitTitle: "Pitmaster settings",
 	pitPitmaster: "Pitmaster",
@@ -143,6 +148,7 @@ var de = {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
+	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
 	menuIOT: "IoT",
@@ -196,6 +202,10 @@ var de = {
 	wlanConnect: "Netzwerk verbinden",
 	wlanSSID: "SSID",
 	wlanPwd: "Passwort",
+	// Menu Bluetooth
+	bluetoothActivate: "Bluetooth aktivieren",
+	bluetoothChannels: "Kanäle auswählen...",
+	bluetoothTitle: "Bluetooth - Einstellungen",
 	// Menü Pitmaster
 	pitTitle: "Pitmaster-Einstellungen",
 	pitPitmaster: "Pitmaster",

@@ -46,7 +46,7 @@ private:
   static void setTemperatureNumber(uint8_t nexIndex, TemperatureBase *temperature);
   static void setTemperatureCurrent(uint8_t nexIndex, TemperatureBase *temperature);
   static void updateTemperaturePage(boolean forceUpdate = false);
-  
+
   static void setSymbols(boolean forceUpdate = false);
   static uint8_t getCurrentPageNumber();
   static uint32_t htmlColorToRgb565(String htmlColor);
@@ -65,7 +65,7 @@ private:
   static void updatePitmasterChannel(void *ptr);
   void updateWifiSettingsPage();
   boolean initDisplay();
-  static void temperatureUpdateCb(TemperatureBase *temperature, boolean settingsChanged, void *userData);
+  static void temperatureUpdateCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData);
   static void pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData);
   static void task(void *parameter);
   static SystemBase *system;
