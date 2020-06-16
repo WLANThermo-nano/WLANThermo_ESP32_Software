@@ -180,6 +180,20 @@ void read_serial(char *buffer)
       return;
     }
 #endif
+
+#if defined HW_NANO_VX
+    else if (str == "resetoled")
+    {
+    Serial.println("Reset OLED");
+    pinMode(4u, OUTPUT);
+    digitalWrite(4u, LOW);
+    delay(100);
+    digitalWrite(4u, HIGH);
+    delay(100);
+    return;
+    }
+
+#endif
     /*
     else if (str == "battery") {
       notification.type = 2;

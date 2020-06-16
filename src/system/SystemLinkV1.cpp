@@ -32,7 +32,7 @@
 #define PITMASTERSUPPLY 13u // StepUp Pin
 
 // OLED
-#define OLED_RESET_IO 4u
+//#define OLED_RESET_IO 4u
 
 // BUZZER
 #define BUZZER_IO 2u
