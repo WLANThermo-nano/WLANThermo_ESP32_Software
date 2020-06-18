@@ -21,6 +21,7 @@
 #include "PitmasterGrp.h"
 #include "system/SystemBase.h"
 #include "Settings.h"
+#include "ArduinoLog.h"
 
 PitmasterGrp::PitmasterGrp()
 {
@@ -40,6 +41,8 @@ void PitmasterGrp::update()
 {
   if (this->enabled != true)
     return;
+
+  Log.verbose("PitmasterGrp::update()" CR);
 
   for (uint8_t i = 0; i < MAX_PITMASTERS; i++)
   {
@@ -179,15 +182,15 @@ void PitmasterGrp::enable(boolean enabled)
   this->enabled = enabled;
 }
 
-Pitmaster* PitmasterGrp::getActivePitmaster(TemperatureBase *temperature)
+Pitmaster *PitmasterGrp::getActivePitmaster(TemperatureBase *temperature)
 {
-  Pitmaster* pit = NULL;
+  Pitmaster *pit = NULL;
 
   for (uint8_t i = 0u; i < MAX_PITMASTERS; i++)
   {
     if (pitmasters[i] != NULL)
     {
-      if((pitmasters[i]->getAssignedTemperature()) == temperature && (PitmasterType::pm_auto == pitmasters[i]->getType()))
+      if ((pitmasters[i]->getAssignedTemperature()) == temperature && (PitmasterType::pm_auto == pitmasters[i]->getType()))
       {
         pit = pitmasters[i];
         break;

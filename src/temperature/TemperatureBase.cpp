@@ -26,7 +26,7 @@
 #define DEFAULT_MIN_VALUE 10.0
 #define DEFAULT_MAX_VALUE 35.0
 #define MAX_COLORS 12u
-#define MEDIAN_SIZE 10u
+#define MEDIAN_SIZE 9u
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
 const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
@@ -133,11 +133,6 @@ boolean TemperatureBase::checkNewSettings()
 float TemperatureBase::getValue()
 {
   return (this->currentValue == INACTIVEVALUE) ? INACTIVEVALUE : getUnitValue(this->currentValue);
-}
-
-float TemperatureBase::GetMedianValue()
-{
-  return getUnitValue(medianValue->AddValue(this->currentValue));
 }
 
 float TemperatureBase::getMinValue()
@@ -288,6 +283,11 @@ AlarmStatus TemperatureBase::getAlarmStatus()
 boolean TemperatureBase::isActive()
 {
   return (INACTIVEVALUE != this->currentValue);
+}
+
+void TemperatureBase::refresh()
+{
+  this->currentValue = this->medianValue->GetFiltered();
 }
 
 void TemperatureBase::update()

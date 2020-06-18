@@ -21,6 +21,7 @@
 
 #include "Arduino.h"
 #include "temperature/TemperatureBase.h"
+#include "MedianFilterLib.h"
 
 #define SERVOPULSMIN 550u
 #define SERVOPULSMAX 2250u
@@ -33,12 +34,12 @@ typedef struct TPitmasterProfile
   float kp;
   float ki;
   float kd;
-  float dcmin;              // Duty Cycle Min (FAN / SSR)
-  float dcmax;              // Duty Cylce Max (FAM / SSR)
+  float dcmin; // Duty Cycle Min (FAN / SSR)
+  float dcmax; // Duty Cylce Max (FAM / SSR)
   byte jumppw;
-  float spmin;              // Servo Pulse Min
-  float spmax;              // Servo Pulse Max
-  byte link;                // Link between Actuators
+  float spmin; // Servo Pulse Min
+  float spmax; // Servo Pulse Max
+  byte link;   // Link between Actuators
   byte opl;
   byte autotune;
   float jumpth;
@@ -56,25 +57,25 @@ typedef struct TDutyCycleTest
 // AUTOTUNE
 struct AutoTune
 {
-   uint32_t set;                // BETRIEBS-TEMPERATUR
-   unsigned long time[3];       // TIME VECTOR
-   float temp[3];               // TEMPERATURE VECTOR
-   float value;                 // CURRENT AUTOTUNE VALUE
-   byte run;                    // WAIT FOR AUTOTUNE START: 0:off, 1:init, 2:run
-   byte stop;                   // STOP AUTOTUNE: 1: normal, 2: overtemp, 3: timeout               
-   float Kp;
-   float Ki;
-   float Kd;
-   float vmax;
-   uint8_t max;               // MAXIMAL AUTOTUNE PITMASTER VALUE
+  uint32_t set;          // BETRIEBS-TEMPERATUR
+  unsigned long time[3]; // TIME VECTOR
+  float temp[3];         // TEMPERATURE VECTOR
+  float value;           // CURRENT AUTOTUNE VALUE
+  byte run;              // WAIT FOR AUTOTUNE START: 0:off, 1:init, 2:run
+  byte stop;             // STOP AUTOTUNE: 1: normal, 2: overtemp, 3: timeout
+  float Kp;
+  float Ki;
+  float Kd;
+  float vmax;
+  uint8_t max; // MAXIMAL AUTOTUNE PITMASTER VALUE
 };
 
 typedef struct TOpenLid
 {
-   bool detected;         // Open Lid Detected
-   float ref[5] = {0.0, 0.0, 0.0, 0.0, 0.0};          // Open Lid Temperatur Memory
-   float temp;            // Temperatur by Open Lid
-   int  count;            // Open Lid Count
+  bool detected;                            // Open Lid Detected
+  float ref[5] = {0.0, 0.0, 0.0, 0.0, 0.0}; // Open Lid Temperatur Memory
+  float temp;                               // Temperatur by Open Lid
+  int count;                                // Open Lid Count
 } OpenLid;
 
 typedef void (*PitmasterCallback_t)(class Pitmaster *, boolean, void *);
@@ -153,21 +154,22 @@ private:
   boolean settingsChanged;
   void *registeredCbUserData;
   float cbValue;
+  MedianFilter<float> *medianValue;
 
   // all pitmasters objects will share one supply IO
   static uint8_t ioSupply;
   static uint8_t ioSupplyRequested;
-  
+
   static uint8_t globalIndexTracker;
   uint8_t globalIndex;
 
   float value;
-  
+
   float esum;   // PITMASTER I-PART DIFFERENZ SUM
   float elast;  // PITMASTER D-PART DIFFERENZ LAST
   float Ki_alt; // PITMASTER I-PART CACHE
   bool jump;
-  
+
   uint16_t pause;
   uint previousMillis;
 };

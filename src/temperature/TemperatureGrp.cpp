@@ -22,6 +22,7 @@
 #include "TemperatureBle.h"
 #include "Settings.h"
 #include "bluetooth/Bluetooth.h"
+#include "ArduinoLog.h"
 
 TemperatureGrp::TemperatureGrp()
 {
@@ -107,14 +108,25 @@ boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
 
 void TemperatureGrp::update()
 {
-  boolean settingsChanged;
-  boolean newValue;
+  Log.verbose("TemperatureGrp::update()" CR);
 
   for (uint8_t i = 0u; i < count(); i++)
   {
+    // get values form hardware
     temperatures[i]->update();
-    newValue = temperatures[i]->checkNewValue();
-    settingsChanged = temperatures[i]->checkNewSettings();
+  }
+}
+
+void TemperatureGrp::refresh()
+{
+  Log.verbose("TemperatureGrp::refresh()" CR);
+
+  for (uint8_t i = 0u; i < count(); i++)
+  {
+    temperatures[i]->refresh();
+
+    boolean newValue = temperatures[i]->checkNewValue();
+    boolean settingsChanged = temperatures[i]->checkNewSettings();
 
     if (newValue || settingsChanged)
     {

@@ -18,23 +18,15 @@
     
 ****************************************************/
 
-#include "TemperatureBle.h"
-#include "bluetooth/Bluetooth.h"
+#define TASK_PRIORITY_OTA_UPDATE 100
+#define TASK_PRIORITY_SYSTEM_TASK 30
+#define TASK_PRIORITY_MAIN_TASK 3
+#define TASK_PRIORITY_CONNECT_TASK 1
+#define TASK_PRIORITY_DISPLAY_TASK 1
+#define TASK_PRIORITY_BLUETOOTH_TASK 1
 
-TemperatureBle::TemperatureBle()
-{
-}
-
-TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureBase()
-{
-  this->address = peerAddress;
-  this->localIndex = index;
-  this->type = SensorType::Ble;
-  this->fixedSensor = true;
-}
-
-void TemperatureBle::refresh()
-{
-  this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
-  this->connected = Bluetooth::isDeviceConnected(this->address);
-}
+#define TASK_CYCLE_TIME_SYSTEM_TASK 200
+#define TASK_CYCLE_TIME_MAIN_TASK 100
+#define TASK_CYCLE_TIME_CONNECT_TASK 1000
+#define TASK_CYCLE_TIME_DISPLAY_TASK 10
+#define TASK_CYCLE_TIME_BLUETOOTH_TASK 1000

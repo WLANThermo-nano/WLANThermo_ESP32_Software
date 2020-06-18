@@ -25,8 +25,15 @@
 #include "SystemBase.h"
 #include "Constants.h"
 #include "RecoveryMode.h"
+#include "TaskConfig.h"
 
 #define STRINGIFY(s) #s
+
+#define CHECK_CYCLE(a, b) (!(a % b))
+#define BATTERY_UPDATE_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
+#define TEMPERATURE_REFRESH_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
+#define TEMPERATURE_ALARM_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
+#define PITMASTER_UPDATE_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
 
 char SystemBase::serialNumber[13] = "";
 
@@ -59,7 +66,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, 30, NULL, 1);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 5000, this, TASK_PRIORITY_SYSTEM_TASK, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
@@ -75,7 +82,7 @@ void SystemBase::task(void *parameter)
     //printf("Performance: %dus\n", time);
 
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, 1000);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_SYSTEM_TASK);
   }
 }
 
@@ -98,9 +105,13 @@ uint8_t SystemBase::getPitmasterProfileCount()
 
 void SystemBase::update()
 {
+  static uint8_t cycleCounter = 0u;
   boolean buzzerAlarm = false;
 
-  if (battery != NULL)
+  // Increment cycle counter
+  cycleCounter++;
+
+  if ((battery != NULL) && (CHECK_CYCLE(cycleCounter, BATTERY_UPDATE_CYCLE)))
   {
     battery->update();
 
@@ -120,19 +131,31 @@ void SystemBase::update()
   this->wireLock();
   temperatures.update();
   this->wireRelease();
-  pitmasters.update();
 
-  for (uint8_t i = 0; i < temperatures.count(); i++)
+  if (CHECK_CYCLE(cycleCounter, TEMPERATURE_REFRESH_CYCLE))
   {
-    if (temperatures[i] != NULL)
-    {
-      this->notification.check(temperatures[i]);
-      AlarmStatus alarmStatus = temperatures[i]->getAlarmStatus();
-      AlarmSetting alarmSetting = temperatures[i]->getAlarmSetting();
-      boolean acknowledged = temperatures[i]->isAlarmAcknowledged();
+    temperatures.refresh();
+  }
 
-      if ((alarmStatus != NoAlarm) && (false == acknowledged) && ((AlarmViaSummer == alarmSetting) || (AlarmAll == alarmSetting)))
-        buzzerAlarm = true;
+  if (CHECK_CYCLE(cycleCounter, PITMASTER_UPDATE_CYCLE))
+  {
+    pitmasters.update();
+  }
+
+  if (CHECK_CYCLE(cycleCounter, TEMPERATURE_ALARM_CYCLE))
+  {
+    for (uint8_t i = 0; i < temperatures.count(); i++)
+    {
+      if (temperatures[i] != NULL)
+      {
+        this->notification.check(temperatures[i]);
+        AlarmStatus alarmStatus = temperatures[i]->getAlarmStatus();
+        AlarmSetting alarmSetting = temperatures[i]->getAlarmSetting();
+        boolean acknowledged = temperatures[i]->isAlarmAcknowledged();
+
+        if ((alarmStatus != NoAlarm) && (false == acknowledged) && ((AlarmViaSummer == alarmSetting) || (AlarmAll == alarmSetting)))
+          buzzerAlarm = true;
+      }
     }
   }
 

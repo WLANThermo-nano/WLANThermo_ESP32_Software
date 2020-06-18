@@ -61,7 +61,6 @@ public:
   void loadDefaultValues();
   void loadConfig();
   float getValue();
-  float GetMedianValue();
   float getMinValue();
   float getMaxValue();
   String getName();
@@ -93,6 +92,7 @@ public:
   boolean checkNewSettings();
   AlarmStatus getAlarmStatus();
   boolean isActive();
+  void virtual refresh();
   void virtual update();
 
 protected:

@@ -28,6 +28,7 @@
 #include "RecoveryMode.h"
 #include "Settings.h"
 #include "DbgPrint.h"
+#include "TaskConfig.h"
 
 OtaUpdate::OtaUpdate()
 {
@@ -45,7 +46,7 @@ OtaUpdate::OtaUpdate()
 void OtaUpdate::startUpdate()
 {
   otaUpdateState = OtaUpdateState::UpdateInProgress;
-  xTaskCreatePinnedToCore(OtaUpdate::task, "OtaUpdate::task", 10000, this, 100, NULL, 1);
+  xTaskCreatePinnedToCore(OtaUpdate::task, "OtaUpdate::task", 10000, this, TASK_PRIORITY_OTA_UPDATE, NULL, 1);
 }
 
 void OtaUpdate::task(void *parameter)
@@ -57,18 +58,18 @@ void OtaUpdate::task(void *parameter)
   Serial.println("OTA update has been started.");
 
   success = otaUpdate->doFirmwareUpdate();
-  
-  if(success)
+
+  if (success)
     success = otaUpdate->doDisplayUpdate();
 
-  if(success)
+  if (success)
   {
     Serial.println("OTA update finished.");
     RecoveryMode::zeroResetCounter();
     ESP.restart();
   }
 
-  if(!success)
+  if (!success)
   {
     Serial.println("OTA update failed.");
     otaUpdate->otaUpdateState = OtaUpdateState::UpdateFailed;
@@ -100,11 +101,11 @@ void OtaUpdate::loadConfig()
   }
 }
 
-boolean OtaUpdate:: checkForUpdate(String version)
+boolean OtaUpdate::checkForUpdate(String version)
 {
   boolean doUpdate = false;
 
-  if((this->version != "false") && (this->version == this->requestedVersion))
+  if ((this->version != "false") && (this->version == this->requestedVersion))
   {
     doUpdate = true;
     startUpdate();
@@ -137,27 +138,27 @@ void OtaUpdate::resetUpdateInfo()
 
 void OtaUpdate::update()
 {
-  switch(otaUpdateState)
+  switch (otaUpdateState)
   {
-    case OtaUpdateState::Idle:
-      otaUpdateState = (this->autoUpdate) ? OtaUpdateState::GetUpdateInfo : OtaUpdateState::Idle;
-      break;
-    case OtaUpdateState::GetUpdateInfo:
-      Cloud::sendAPI(APIUPDATE, APILINK, NOPARA);
-      otaUpdateState = OtaUpdateState::NoUpdateInfo;
-      break;
-    case OtaUpdateState::NoUpdateInfo:
-      otaUpdateState = (version != "false") ? OtaUpdateState::UpdateAvailable : OtaUpdateState::NoUpdateInfo;
-      break;
-    case OtaUpdateState::UpdateAvailable:
-      break;
-    case OtaUpdateState::UpdateInProgress:
-      break;
-    case OtaUpdateState::UpdateFinished:
-      break;
-    case OtaUpdateState::UpdateFailed:
-    default:
-      break;
+  case OtaUpdateState::Idle:
+    otaUpdateState = (this->autoUpdate) ? OtaUpdateState::GetUpdateInfo : OtaUpdateState::Idle;
+    break;
+  case OtaUpdateState::GetUpdateInfo:
+    Cloud::sendAPI(APIUPDATE, APILINK, NOPARA);
+    otaUpdateState = OtaUpdateState::NoUpdateInfo;
+    break;
+  case OtaUpdateState::NoUpdateInfo:
+    otaUpdateState = (version != "false") ? OtaUpdateState::UpdateAvailable : OtaUpdateState::NoUpdateInfo;
+    break;
+  case OtaUpdateState::UpdateAvailable:
+    break;
+  case OtaUpdateState::UpdateInProgress:
+    break;
+  case OtaUpdateState::UpdateFinished:
+    break;
+  case OtaUpdateState::UpdateFailed:
+  default:
+    break;
   }
 }
 
@@ -173,7 +174,7 @@ void OtaUpdate::setDisplayUrl(const char *url)
 
 void OtaUpdate::setAutoUpdate(boolean enable)
 {
-  if((false == this->autoUpdate) && (true == enable))
+  if ((false == this->autoUpdate) && (true == enable))
   {
     resetUpdateInfo();
     askUpdateInfo();
@@ -191,7 +192,7 @@ boolean OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
 {
   boolean success = false;
 
-   if (!SPIFFS.begin(true))
+  if (!SPIFFS.begin(true))
   {
     Serial.println("An Error has occurred while mounting SPIFFS");
     return false;
@@ -216,7 +217,7 @@ boolean OtaUpdate::downloadFileToSPIFFS(const char *url, const char *fileName)
 
     if (httpCode == HTTP_CODE_OK)
     {
-      if(http.writeToStream(&nextionFile) > 0)
+      if (http.writeToStream(&nextionFile) > 0)
         success = true;
     }
   }
@@ -284,6 +285,6 @@ boolean OtaUpdate::setPrerelease(boolean prerelease)
   boolean checkForUpdate = (false == this->prerelease) && (true == prerelease) && (true == this->autoUpdate);
   this->prerelease = prerelease;
 
-  if(checkForUpdate)
+  if (checkForUpdate)
     resetUpdateInfo();
 }

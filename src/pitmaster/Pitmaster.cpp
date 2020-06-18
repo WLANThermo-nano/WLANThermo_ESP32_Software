@@ -45,6 +45,8 @@
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
+#define MEDIAN_SIZE 5u
+
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
 uint8_t Pitmaster::globalIndexTracker = 0u;
@@ -69,6 +71,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->settingsChanged = false;
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
+    this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -227,7 +230,7 @@ boolean Pitmaster::startAutoTune()
     memset(this->autoTune, 0u, sizeof(AutoTune));
 
     this->autoTune->set = this->targetTemperature * 0.9; // ist INT damit nach unten gerundet  // SET TEMPERTURE: 10% weniger als Reserve
-    float currenttemp = this->temperature->GetMedianValue();
+    float currenttemp = this->temperature->getValue();
 
     // macht Autotune überhaupt Sinn?
     if (this->autoTune->set - currenttemp > (this->targetTemperature * 0.05))
@@ -323,7 +326,7 @@ boolean Pitmaster::checkAutoTune()
         return true;
     }
 
-    float currentTemp = this->temperature->GetMedianValue();
+    float currentTemp = this->temperature->getValue();
     unsigned long time = millis();
 
     // Startbedingungen herstellen
@@ -776,8 +779,8 @@ float Pitmaster::pidCalc()
     // see: http://rn-wissen.de/wiki/index.php/Regelungstechnik
     // see: http://www.ni.com/white-paper/3782/en/
 
-    float x = this->temperature->GetMedianValue(); // IST
-    //Serial.printf("GetMedianValue: %f\n", x);
+    float x = medianValue->AddValue(this->temperature->getValue()); // IST
+    Serial.printf("GetMedianValue: %f\n", x);
     float w = this->targetTemperature; // SOLL
 
     // PID Parameter

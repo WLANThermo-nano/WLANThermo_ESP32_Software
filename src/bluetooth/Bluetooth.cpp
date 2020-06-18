@@ -23,6 +23,7 @@
 #include "bleFirmwareBin.h"
 #include "temperature/TemperatureBase.h"
 #include "Settings.h"
+#include "TaskConfig.h"
 #include <byteswap.h>
 
 #define BLE_BAUD 115200u
@@ -62,7 +63,7 @@ void Bluetooth::init()
     if (this->doDfu())
     {
         builtIn = true;
-        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, 1, NULL, 1);
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
     }
 }
 
@@ -306,7 +307,7 @@ void Bluetooth::task(void *parameter)
     while (1)
     {
         bluetooth->getDevices();
-        vTaskDelay(1000u);
+        vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
 }
 

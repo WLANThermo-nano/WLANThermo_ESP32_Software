@@ -26,5 +26,5 @@ class TemperatureBle : public TemperatureBase
 public:
   TemperatureBle();
   TemperatureBle(String peerAddress, uint8_t index);
-  void update();
+  void refresh();
 };
