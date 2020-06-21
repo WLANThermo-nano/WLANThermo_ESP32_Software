@@ -61,6 +61,8 @@ public:
   void loadDefaultValues();
   void loadConfig();
   float getValue();
+  float getPreValue();
+  int8_t getGradient();
   float getMinValue();
   float getMaxValue();
   String getName();
@@ -99,6 +101,8 @@ protected:
   uint8_t localIndex;
   uint8_t globalIndex;
   float currentValue;
+  float preValue;
+  int8_t currentGradient;
   MedianFilter<float> *medianValue;
   float minValue;
   float maxValue;
@@ -122,6 +126,7 @@ private:
   static uint8_t globalIndexTracker;
   float getUnitValue(float value);
   float setUnitValue(float value);
+  float decimalPlace(float value);
   static float calcTemperatureNTC(uint16_t rawValue, SensorType type);
   static float calcTemperaturePTx(uint16_t rawValue, SensorType type);
 };

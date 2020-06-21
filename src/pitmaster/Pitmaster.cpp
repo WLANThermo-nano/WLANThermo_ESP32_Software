@@ -459,7 +459,7 @@ boolean Pitmaster::checkAutoTune()
 
     return false;
 }
-
+/*
 boolean Pitmaster::checkOpenLid()
 {
     if ((pm_auto == this->type) && (true == this->profile->opl))
@@ -502,6 +502,55 @@ boolean Pitmaster::checkOpenLid()
     else
     {
         openLid.detected = false;
+    }
+
+    return openLid.detected;
+}*/
+
+boolean Pitmaster::checkOpenLid()
+{
+    if ((pm_auto == this->type) && (true == this->profile->opl) && true == this->temperature->isActive())
+    {
+        if(this->temperature->getGradient() == -1) openLid.fall_c ++;
+        else openLid.fall_c = 0;
+
+        Serial.println(openLid.fall_c);
+
+        // erkennen ob Temperatur wieder eingependelt oder Timeout
+        if (openLid.detected)
+        { // Open Lid Detected
+
+            openLid.count--;
+            openLid.fall_c = 0;
+
+            // extremes Überschwingen vermeiden
+            if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
+                openLid.temp = this->targetTemperature;
+
+            if (openLid.count <= 0) // Timeout
+                openLid.detected = false;
+
+            else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
+                openLid.detected = false;
+        }
+        else if (openLid.fall_c == 1) 
+        {
+            openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
+        }
+        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > 4)
+        { // Opened lid detected!
+            openLid.detected = true;
+            openLid.temp = openLid.ref;
+            openLid.count = OPL_PAUSE; // TODO: check pause
+
+            Serial.print("OPL: ");
+            Serial.println(openLid.temp);
+        }      
+    }
+    else
+    {
+        openLid.detected = false;
+        openLid.fall_c = 0;
     }
 
     return openLid.detected;
@@ -780,7 +829,7 @@ float Pitmaster::pidCalc()
     // see: http://www.ni.com/white-paper/3782/en/
 
     float x = medianValue->AddValue(this->temperature->getValue()); // IST
-    Serial.printf("GetMedianValue: %f\n", x);
+    //Serial.printf("GetMedianValue: %f\n", x);
     float w = this->targetTemperature; // SOLL
 
     // PID Parameter

@@ -73,9 +73,10 @@ struct AutoTune
 typedef struct TOpenLid
 {
   bool detected;                            // Open Lid Detected
-  float ref[5] = {0.0, 0.0, 0.0, 0.0, 0.0}; // Open Lid Temperatur Memory
+  float ref;                                // Open Lid Temperatur Memory
   float temp;                               // Temperatur by Open Lid
   int count;                                // Open Lid Count
+  int fall_c;
 } OpenLid;
 
 typedef void (*PitmasterCallback_t)(class Pitmaster *, boolean, void *);

@@ -62,6 +62,8 @@ void TemperatureBase::loadDefaultValues()
 {
   this->currentUnit = Celsius;
   this->currentValue = INACTIVEVALUE;
+  this->preValue = INACTIVEVALUE;
+  this->currentGradient = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
@@ -133,6 +135,16 @@ boolean TemperatureBase::checkNewSettings()
 float TemperatureBase::getValue()
 {
   return (this->currentValue == INACTIVEVALUE) ? INACTIVEVALUE : getUnitValue(this->currentValue);
+}
+
+float TemperatureBase::getPreValue()
+{
+  return (this->preValue == INACTIVEVALUE) ? INACTIVEVALUE : getUnitValue(this->preValue);
+}
+
+int8_t TemperatureBase::getGradient()
+{
+  return this->currentGradient;
 }
 
 float TemperatureBase::getMinValue()
@@ -287,11 +299,19 @@ boolean TemperatureBase::isActive()
 
 void TemperatureBase::refresh()
 {
+  this->preValue = this->currentValue;
   this->currentValue = this->medianValue->GetFiltered();
+  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0; 
+  this->currentGradient = (0 == gradient) ? 0 : gradient/abs(gradient);
 }
 
 void TemperatureBase::update()
 {
+}
+
+float TemperatureBase::decimalPlace(float value)
+{
+  return (((int) value*10.0)/10.0);
 }
 
 float TemperatureBase::getUnitValue(float value)
