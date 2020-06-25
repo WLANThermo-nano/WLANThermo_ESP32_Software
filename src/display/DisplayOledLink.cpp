@@ -24,6 +24,7 @@
 #include "DisplayOledIcons.h"
 #include "Settings.h"
 #include "Version.h"
+#include "TaskConfig.h"
 
 #define MAXBATTERYBAR 13u
 #define OLIMITMIN 35.0
@@ -71,24 +72,21 @@ MenuItem DisplayOledLink::menuItem = MenuItem::Boot;
 uint8_t DisplayOledLink::currentChannel = 0u;
 boolean DisplayOledLink::flashIndicator = false;
 
-
 DisplayOledLink::DisplayOledLink()
 {
 }
 
-
 void DisplayOledLink::init()
 {
   xTaskCreatePinnedToCore(
-      DisplayOledLink::task,   // Task function.
-      "DisplayOledLink::task",      // String with name of task.
-      10000,                    // Stack size in bytes.
-      this,                     // Parameter passed as input of the task
-      1,                        // Priority of the task.
-      NULL,                     // Task handle.
-      1);                       // CPU Core
+      DisplayOledLink::task,      // Task function.
+      "DisplayOledLink::task",    // String with name of task.
+      10000,                      // Stack size in bytes.
+      this,                       // Parameter passed as input of the task
+      TASK_PRIORITY_DISPLAY_TASK, // Priority of the task.
+      NULL,                       // Task handle.
+      1);                         // CPU Core
 }
-
 
 boolean DisplayOledLink::initDisplay()
 {
@@ -132,8 +130,6 @@ void DisplayOledLink::task(void *parameter)
 
   for (;;)
   {
-    vTaskDelayUntil(&xLastWakeTime, 10);
-
     display->system->wireLock();
     display->update();
     display->system->wireRelease();
@@ -143,6 +139,9 @@ void DisplayOledLink::task(void *parameter)
       flashTimeout = OLED_FLASH_INTERVAL;
       display->flashIndicator = !display->flashIndicator;
     }
+
+    // Wait for the next cycle.
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
   }
 }
 
@@ -174,7 +173,6 @@ void DisplayOledLink::update()
   }
 }
 
-
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Frame while system start
 void DisplayOledLink::drawConnect()
@@ -187,7 +185,6 @@ void DisplayOledLink::drawConnect()
   oled.drawXbm(7, 4, nano_width, nano_height, xbmnano);
   oled.display();
 }
-
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // STATUS ROW
@@ -224,7 +221,6 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     case pm_auto:
       display->drawString(33, 0, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
       break;
-
     }
   }
 
@@ -252,7 +248,6 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
   {
     display->drawString(128, 0, "");
   }
-
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -342,8 +337,6 @@ void DisplayOledLink::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, 
     }
   }
 }
-
-
 
 /*
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++

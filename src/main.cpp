@@ -24,9 +24,16 @@
 #include "SerialCmd.h"
 #include "Server.h"
 #include "DbgPrint.h"
+#include "ArduinoLog.h"
+#include "TaskConfig.h"
 
 // Forward declaration
 void createTasks();
+
+void loggingPrefix(Print *p)
+{
+  p->printf("%08dms:", millis());
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // SETUP
@@ -37,6 +44,8 @@ void setup()
   // Initialize Serial
   Serial.begin(115200);
   Serial.setDebugOutput(true);
+  Log.begin(LOG_LEVEL_NOTICE, &Serial);
+  Log.setPrefix(loggingPrefix);
 
   gSystem->hwInit();
   gDisplay->loadConfig();
@@ -72,9 +81,6 @@ void MainTask(void *parameter)
   for (;;)
   {
 
-    // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, 100);
-
     // Detect Serial Input
     static char serialbuffer[300];
     if (readline(Serial.read(), serialbuffer, 300) > 0)
@@ -83,6 +89,9 @@ void MainTask(void *parameter)
     }
 
     dbgPrintMain();
+
+    // Wait for the next cycle.
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_MAIN_TASK);
 
 // Detect OTA
 #ifdef OTA
@@ -109,29 +118,29 @@ void ConnectTask(void *parameter)
     }
 
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, 1000);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_CONNECT_TASK);
   }
 }
 
 void createTasks()
 {
   xTaskCreatePinnedToCore(
-      MainTask,   /* Task function. */
-      "MainTask", /* String with name of task. */
-      10000,      /* Stack size in bytes. */
-      NULL,       /* Parameter passed as input of the task */
-      3,          /* Priority of the task. */
-      NULL,       /* Task handle. */
-      1);         /* CPU Core */
+      MainTask,                /* Task function. */
+      "MainTask",              /* String with name of task. */
+      10000,                   /* Stack size in bytes. */
+      NULL,                    /* Parameter passed as input of the task */
+      TASK_PRIORITY_MAIN_TASK, /* Priority of the task. */
+      NULL,                    /* Task handle. */
+      1);                      /* CPU Core */
 
   xTaskCreatePinnedToCore(
-      ConnectTask,   /* Task function. */
-      "ConnectTask", /* String with name of task. */
-      10000,         /* Stack size in bytes. */
-      NULL,          /* Parameter passed as input of the task */
-      1,             /* Priority of the task. */
-      NULL,          /* Task handle. */
-      1);            /* CPU Core */
+      ConnectTask,                /* Task function. */
+      "ConnectTask",              /* String with name of task. */
+      10000,                      /* Stack size in bytes. */
+      NULL,                       /* Parameter passed as input of the task */
+      TASK_PRIORITY_CONNECT_TASK, /* Priority of the task. */
+      NULL,                       /* Task handle. */
+      1);                         /* CPU Core */
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++

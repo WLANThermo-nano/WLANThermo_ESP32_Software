@@ -24,6 +24,7 @@
 #include "DisplayOledIcons.h"
 #include "Settings.h"
 #include "Version.h"
+#include "TaskConfig.h"
 
 #define MAXBATTERYBAR 13u
 #define OLIMITMIN 35.0
@@ -77,13 +78,13 @@ DisplayOled::DisplayOled()
 void DisplayOled::init()
 {
   xTaskCreatePinnedToCore(
-      DisplayOled::task,   /* Task function. */
-      "DisplayOled::task", /* String with name of task. */
-      10000,               /* Stack size in bytes. */
-      this,                /* Parameter passed as input of the task */
-      1,                   /* Priority of the task. */
-      NULL,                   /* Task handle. */
-      1);                     /* CPU Core */
+      DisplayOled::task,          /* Task function. */
+      "DisplayOled::task",        /* String with name of task. */
+      10000,                      /* Stack size in bytes. */
+      this,                       /* Parameter passed as input of the task */
+      TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
+      NULL,                       /* Task handle. */
+      1);                         /* CPU Core */
 }
 
 boolean DisplayOled::initDisplay()
@@ -149,8 +150,6 @@ void DisplayOled::task(void *parameter)
 
   for (;;)
   {
-    vTaskDelayUntil(&xLastWakeTime, 10);
-
     display->system->wireLock();
     display->update();
     display->system->wireRelease();
@@ -160,6 +159,9 @@ void DisplayOled::task(void *parameter)
       flashTimeout = OLED_FLASH_INTERVAL;
       display->flashIndicator = !display->flashIndicator;
     }
+
+    // Wait for the next cycle.
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
   }
 }
 
@@ -484,22 +486,22 @@ void DisplayOled::drawCharging()
 
   if (gSystem->battery->isCharging())
   {
-    oled.fillRect(18,3,2,4);              //Draw battery end button
-    oled.drawRect(0,1,17,8);              //Draw Outline Battery
-    
+    oled.fillRect(18, 3, 2, 4); //Draw battery end button
+    oled.drawRect(0, 1, 17, 8); //Draw Outline Battery
+
     oled.setColor(BLACK);
-    oled.fillRect(4,0,8,10);              //Lücke für Pfeil
+    oled.fillRect(4, 0, 8, 10); //Lücke für Pfeil
     oled.setColor(WHITE);
-    
+
     oled.drawXbm(4, 0, 8, 10, xbmcharge); // Ladepfeilspitze
-    oled.fillRect(2,3,6,4);               // Ladepfeilstiel
+    oled.fillRect(2, 3, 6, 4);            // Ladepfeilstiel
     oled.drawString(64, 30, "WIRD GELADEN...");
   }
   else
   {
-    oled.fillRect(18,3,2,4);         //Draw battery end button
-    oled.drawRect(0,1,17,8);         //Draw Outline
-    oled.fillRect(2,3,MAXBATTERYBAR-1,4);  // Draw Battery Status
+    oled.fillRect(18, 3, 2, 4);                //Draw battery end button
+    oled.drawRect(0, 1, 17, 8);                //Draw Outline
+    oled.fillRect(2, 3, MAXBATTERYBAR - 1, 4); // Draw Battery Status
     oled.drawString(64, 30, "LADEN BEENDET");
   }
 
@@ -655,7 +657,7 @@ void DisplayOled::drawMenu()
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // STATUS ROW
 void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state)
-{ 
+{
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
 
@@ -673,7 +675,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
     switch (pit->getType())
     {
     case pm_off:
-      if(millis() > OLED_BATTERY_PERCENTAGE_DELAY)
+      if (millis() > OLED_BATTERY_PERCENTAGE_DELAY)
         showbattery = true;
       break;
     case pm_manual:

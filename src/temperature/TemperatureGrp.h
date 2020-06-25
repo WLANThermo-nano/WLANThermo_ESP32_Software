@@ -35,6 +35,7 @@ class TemperatureGrp
 public:
   TemperatureGrp();
   void update();
+  void refresh();
   void add(TemperatureBase *temperature);
   void add(uint8_t type, String address, uint8_t localIndex);
   void remove(uint8_t type, String address, uint8_t localIndex);

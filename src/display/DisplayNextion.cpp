@@ -21,6 +21,7 @@
 #include "Settings.h"
 #include "Nextion.h"
 #include "SPIFFS.h"
+#include "TaskConfig.h"
 
 extern "C"
 {
@@ -161,13 +162,13 @@ void DisplayNextion::init()
   updateFromSPIFFS();
 
   xTaskCreatePinnedToCore(
-      DisplayNextion::task,   /* Task function. */
-      "DisplayNextion::task", /* String with name of task. */
-      10000,                  /* Stack size in bytes. */
-      this,                   /* Parameter passed as input of the task */
-      1,                      /* Priority of the task. */
-      NULL,                   /* Task handle. */
-      1);                     /* CPU Core */
+      DisplayNextion::task,       /* Task function. */
+      "DisplayNextion::task",     /* String with name of task. */
+      10000,                      /* Stack size in bytes. */
+      this,                       /* Parameter passed as input of the task */
+      TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
+      NULL,                       /* Task handle. */
+      1);                         /* CPU Core */
 }
 
 boolean DisplayNextion::initDisplay()
@@ -335,9 +336,9 @@ void DisplayNextion::task(void *parameter)
 
   for (;;)
   {
-    // Wait for the next cycle.
-    vTaskDelay(10);
     display->update();
+    // Wait for the next cycle.
+    vTaskDelay(TASK_CYCLE_TIME_DISPLAY_TASK);
   }
 }
 
