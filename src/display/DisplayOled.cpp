@@ -694,20 +694,20 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   if (system->wlan.isConnected())
   {
-    display->fillRect(116, 8, 2, 1); //Draw ground line
-    display->fillRect(120, 8, 2, 1); //Draw ground line
-    display->fillRect(124, 8, 2, 1); //Draw ground line
+    display->fillRect(116, 9, 2, 1); //Draw ground line
+    display->fillRect(120, 9, 2, 1); //Draw ground line
+    display->fillRect(124, 9, 2, 1); //Draw ground line
 
     if (system->wlan.getRssi() > -105)
-      display->fillRect(116, 5, 2, 3); //Draw 1 line
+      display->fillRect(116, 6, 2, 3); //Draw 1 line
     if (system->wlan.getRssi() > -95)
-      display->fillRect(120, 3, 2, 5); //Draw 2 line
+      display->fillRect(120, 4, 2, 5); //Draw 2 line
     if (system->wlan.getRssi() > -80)
-      display->fillRect(124, 1, 2, 7); //Draw 3 line
+      display->fillRect(124, 2, 2, 7); //Draw 3 line
   }
   else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
   {
-    display->drawString(128, 0, "AP");
+    display->drawString(128, 1, "AP");
   }
   else
   {
@@ -721,32 +721,32 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
     display->setTextAlignment(TEXT_ALIGN_LEFT);
 
     if (showbattery)
-      display->drawString(24, 0, String(system->battery->percentage));
-
+      display->drawString(24, 1, String(system->battery->percentage));
+  
     if (flashIndicator && gSystem->battery->percentage < 10)
     {
     } // nothing for flash effect
     else if (gSystem->battery->isCharging())
     {
-      display->fillRect(18, 4, 2, 4); //Draw battery end button
-      display->drawRect(0, 2, 17, 8); //Draw Outline Battery
-
+      display->fillRect(18,5,2,4);              //Draw battery end button
+      display->drawRect(0,3,17,8);              //Draw Outline Battery
+    
       display->setColor(BLACK);
-      display->fillRect(4, 1, 8, 10); //Lücke für Pfeil
+      display->fillRect(4,2,8,10);              //Lücke für Pfeil
       display->setColor(WHITE);
-
-      display->drawXbm(4, 1, 8, 10, xbmcharge); // Ladepfeilspitze
-      display->fillRect(2, 4, 6, 4);            // Ladepfeilstiel
+    
+      display->drawXbm(4, 2, 8, 10, xbmcharge); // Ladepfeilspitze
+      display->fillRect(2,5,6,4);               // Ladepfeilstiel
     }
     else if (gSystem->battery->isUsbPowered())
     {
-      display->drawString(1, 0, "USB");
+      display->drawString(1,1,"USB");
     }
     else
     {
-      display->fillRect(18, 3, 2, 4);        //Draw battery end button
-      display->drawRect(0, 1, 17, 8);        //Draw Outline
-      display->fillRect(2, 3, battPixel, 4); // Draw Battery Status
+      display->fillRect(18,5,2,4);         //Draw battery end button
+      display->drawRect(0,3,17,8);         //Draw Outline
+      display->fillRect(2,5,battPixel,4);  // Draw Battery Status
     }
   }
 }
