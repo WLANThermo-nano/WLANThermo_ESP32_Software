@@ -21,26 +21,26 @@
 #ifdef HW_MINI_V1
 #include "system/SystemMiniV1.h"
 #include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV1();
+SystemBase *gSystem = new SystemMiniV1();
 DisplayBase *gDisplay = new DisplayNextion();
 #elif HW_MINI_V2
 #include "system/SystemMiniV2.h"
 #include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV2();
+SystemBase *gSystem = new SystemMiniV2();
 DisplayBase *gDisplay = new DisplayNextion();
 #elif HW_MINI_V3
 #include "system/SystemMiniV3.h"
-#include "display/DisplayNextion.h"
-SystemBase* gSystem = new SystemMiniV3();
-DisplayBase *gDisplay = new DisplayNextion();
+#include "display/DisplayTft.h"
+SystemBase *gSystem = new SystemMiniV3();
+DisplayBase *gDisplay = new DisplayTft();
 #elif HW_NANO_VX
 #include "system/SystemNanoVx.h"
 #include "display/DisplayOled.h"
-SystemBase* gSystem = new SystemNanoVx();
+SystemBase *gSystem = new SystemNanoVx();
 DisplayBase *gDisplay = new DisplayOled();
 #elif HW_LINK_V1
 #include "system/SystemLinkV1.h"
 #include "display/DisplayOledLink.h"
-SystemBase* gSystem = new SystemLinkV1();
+SystemBase *gSystem = new SystemLinkV1();
 DisplayBase *gDisplay = new DisplayOledLink();
 #endif
