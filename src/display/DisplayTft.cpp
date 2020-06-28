@@ -23,6 +23,7 @@
 
 #define LVGL_TICK_PERIOD 60
 
+LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
 
@@ -226,6 +227,7 @@ void DisplayTft::createTemperatureScreen()
 
     tile->labelName = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelName, system->temperatures[i]->getName().c_str());
+    lv_obj_set_style_local_text_font(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelName, 109, 21);
     lv_obj_set_pos(tile->labelName, 15, 0);
@@ -234,6 +236,7 @@ void DisplayTft::createTemperatureScreen()
     lv_label_set_align(tile->labelNumber, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelNumber, LV_LABEL_LONG_BREAK);
     lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
+    lv_obj_set_style_local_text_font(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelNumber, 28, 21);
     lv_obj_set_pos(tile->labelNumber, 124, 0);
@@ -248,6 +251,7 @@ void DisplayTft::createTemperatureScreen()
     tile->labelMax = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelMax, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelMax, LV_LABEL_LONG_BREAK);
+    lv_obj_set_style_local_text_font(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMax, "%i°", (int)system->temperatures[i]->getMaxValue());
     lv_obj_set_size(tile->labelMax, 30, 21);
@@ -263,6 +267,7 @@ void DisplayTft::createTemperatureScreen()
     tile->labelMin = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelMin, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelMin, LV_LABEL_LONG_BREAK);
+    lv_obj_set_style_local_text_font(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)system->temperatures[i]->getMinValue());
     lv_obj_set_size(tile->labelMin, 30, 21);
