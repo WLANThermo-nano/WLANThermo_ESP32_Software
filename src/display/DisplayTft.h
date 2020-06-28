@@ -57,7 +57,7 @@ private:
   static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
   static void temperatureTileEvent(lv_obj_t *obj, lv_event_t event);
   void createTemperatureScreen();
-
+  lv_color_t htmlColorToLvColor(String htmlColor);
   static SystemBase *system;
 
   static TFT_eSPI tft;

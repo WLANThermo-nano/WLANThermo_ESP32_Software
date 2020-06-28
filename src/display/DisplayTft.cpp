@@ -189,7 +189,6 @@ void DisplayTft::createTemperatureScreen()
 
   lv_obj_t *contTemperature = lv_cont_create(lv_scr_act(), NULL);
   lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_bg_grad_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
   lv_obj_set_style_local_border_width(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_clip_corner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
   lv_obj_set_style_local_radius(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
@@ -210,7 +209,6 @@ void DisplayTft::createTemperatureScreen()
 
     tile->objTile = lv_obj_create(contTemperature, NULL);
     lv_obj_set_style_local_bg_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x4A, 0x4A, 0x4A));
-    lv_obj_set_style_local_bg_grad_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x4A, 0x4A, 0x4A));
     lv_obj_set_style_local_border_width(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_clip_corner(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
     lv_obj_set_style_local_radius(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
@@ -219,8 +217,7 @@ void DisplayTft::createTemperatureScreen()
     lv_obj_set_event_cb(tile->objTile, DisplayTft::temperatureTileEvent);
 
     tile->objColor = lv_obj_create(tile->objTile, NULL);
-    lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
-    lv_obj_set_style_local_bg_grad_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
+    lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(system->temperatures[i]->getColor()));
     lv_obj_set_style_local_border_width(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_clip_corner(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
     lv_obj_set_style_local_radius(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
@@ -296,4 +293,17 @@ void DisplayTft::temperatureTileEvent(lv_obj_t *obj, lv_event_t event)
   case LV_EVENT_REFRESH:
     break;
   }
+}
+
+lv_color_t DisplayTft::htmlColorToLvColor(String htmlColor)
+{
+  // Get rid of '#' and convert it to integer
+  uint32_t number = (uint32_t)strtol(htmlColor.substring(1).c_str(), NULL, 16);
+
+  // Split them up into r, g, b values
+  uint8_t r = number >> 16;
+  uint8_t g = number >> 8 & 0xFF;
+  uint8_t b = number & 0xFF;
+
+  return LV_COLOR_MAKE(r, g, b);
 }
