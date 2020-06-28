@@ -143,7 +143,8 @@ void DisplayTft::update()
         sprintf(currentString, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
       }
 
-      //lv_label_set_text(tile->labelCurrent, currentString);
+      //lv_event_send(tile->objTile, LV_EVENT_REFRESH, tile);
+      lv_label_set_text(tile->labelCurrent, currentString);
     }
   }
 
@@ -215,6 +216,7 @@ void DisplayTft::createTemperatureScreen()
     lv_obj_set_style_local_radius(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_text_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->objTile, 156, 63);
+    lv_obj_set_event_cb(tile->objTile, DisplayTft::temperatureTileEvent);
 
     tile->objColor = lv_obj_create(tile->objTile, NULL);
     lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
@@ -284,5 +286,14 @@ void DisplayTft::createTemperatureScreen()
     lv_obj_set_style_local_text_color(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelCurrent, 82, 42);
     lv_obj_set_pos(tile->labelCurrent, 71, 37);
+  }
+}
+
+void DisplayTft::temperatureTileEvent(lv_obj_t *obj, lv_event_t event)
+{
+  switch (event)
+  {
+  case LV_EVENT_REFRESH:
+    break;
   }
 }
