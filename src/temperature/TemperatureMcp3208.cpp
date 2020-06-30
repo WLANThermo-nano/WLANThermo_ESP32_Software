@@ -60,21 +60,20 @@ uint16_t TemperatureMcp3208::readChip()
   // set channel
   command.value |= ((this->localIndex + 8u) << 6u);
 
+  SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
   // write CS
   digitalWrite(csPin, LOW);
-
   // send first byte
-  SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
   SPI.transfer(command.highByte);
   // send second byte and receive first 4 bits
   receive.highByte = SPI.transfer(command.lowByte) & 0x0Fu;
   // receive last 8 bits
   receive.lowByte = SPI.transfer(0x00u);
 
-  SPI.endTransaction();
-
   // write CS
   digitalWrite(csPin, HIGH);
+
+  SPI.endTransaction();
 
   return receive.value;
 }

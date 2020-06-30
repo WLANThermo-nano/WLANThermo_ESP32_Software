@@ -42,6 +42,19 @@ typedef struct lvTemperatureTile
   lv_obj_t *labelCurrent;
 } lvTemperatureTileType;
 
+typedef struct lvSymbol
+{
+  lv_obj_t *btnMenu;
+  lv_obj_t *labelMenu;
+  lv_obj_t *btnLeft;
+  lv_obj_t *labelLeft;
+  lv_obj_t *btnRight;
+  lv_obj_t *labelRight;
+  lv_obj_t *labelAlarm;
+  lv_obj_t *labelCloud;
+  lv_obj_t *labelWifi;
+} lvSymbolType;
+
 class DisplayTft : public DisplayBase
 {
 public:
@@ -54,10 +67,18 @@ private:
   boolean initDisplay();
   static void task(void *parameter);
 
+  static void temperatureUpdateCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData);
+
   static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
   static void temperatureTileEvent(lv_obj_t *obj, lv_event_t event);
+  static void temperatureNavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
+  static void temperatureNavigationRightEvent(lv_obj_t *obj, lv_event_t event);
   void createTemperatureScreen();
-  lv_color_t htmlColorToLvColor(String htmlColor);
+  void updateTemperatureScreenTiles(boolean forceUpdate);
+  void updateTemperatureScreenSymbols(boolean forceUpdate);
+  lv_color_t
+  htmlColorToLvColor(String htmlColor);
   static SystemBase *system;
 
   static TFT_eSPI tft;
@@ -65,6 +86,7 @@ private:
   lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
 
   lvTemperatureTileType lvTemperatureTiles[DISPLAY_TFT_TEMPERATURES_PER_PAGE];
+  lvSymbolType lvSymbols;
   static uint32_t updateTemperature;
   static uint32_t updatePitmaster;
   static uint8_t serialTimeout;

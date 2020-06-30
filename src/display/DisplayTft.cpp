@@ -20,12 +20,15 @@
 #include "DisplayTft.h"
 #include "Settings.h"
 #include "TaskConfig.h"
+#include "Preferences.h"
 
-#define LVGL_TICK_PERIOD 60
+#define UPDATE_ALL 0xFFFFFFFFu
+#define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
+LV_FONT_DECLARE(Font_Nano_h24);
 
 uint32_t DisplayTft::updateTemperature = 0u;
 uint32_t DisplayTft::updatePitmaster = 0u;
@@ -63,10 +66,20 @@ boolean DisplayTft::initDisplay()
     return true;
   }
 
+  // configure PIN mode
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+
+  // set initial PIN state
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
+
   lv_init();
 
   tft.init();
   tft.setRotation(3);
+
+  calibrate();
 
   lv_disp_buf_init(&lvDispBuffer, lvBuffer, NULL, LV_HOR_RES_MAX * 10);
 
@@ -81,12 +94,47 @@ boolean DisplayTft::initDisplay()
   lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
   indev_drv.type = LV_INDEV_TYPE_POINTER;
-  //indev_drv.read_cb = TODO;
+  indev_drv.read_cb = DisplayTft::touchRead;
   lv_indev_drv_register(&indev_drv);
 
   createTemperatureScreen();
+  updateTemperatureScreenSymbols(true);
+
+  // register for all temperature callbacks
+  system->temperatures.registerCallback(temperatureUpdateCb, this);
 
   return true;
+}
+
+void DisplayTft::calibrate()
+{
+  Preferences prefs;
+  uint16_t touchCalibration[TFT_TOUCH_CALIBRATION_ARRAY_SIZE];
+  size_t touchCalibrationSize;
+
+  prefs.begin("TFT", true);
+  touchCalibrationSize = prefs.getBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
+  prefs.end();
+
+  if (((sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE) == touchCalibrationSize))
+  {
+    tft.setTouch(touchCalibration);
+  }
+  else
+  {
+    tft.fillScreen((0xFFFF));
+
+    tft.setCursor(20, 0, 2);
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    tft.setTextSize(1);
+    tft.println("calibration run");
+
+    tft.calibrateTouch(touchCalibration, TFT_RED, TFT_BLACK, 15);
+
+    prefs.begin("TFT", false);
+    touchCalibrationSize = prefs.putBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
+    prefs.end();
+  }
 }
 
 void DisplayTft::task(void *parameter)
@@ -130,31 +178,11 @@ void DisplayTft::update()
     return;
   }
 
-  static uint32_t lastMillis = 0u;
-  if ((millis() - lastMillis) >= 1000u)
-  {
-    lastMillis = millis();
-
-    for (uint8_t i = 0u; (i < DISPLAY_TFT_TEMPERATURES_PER_PAGE) && (i < system->temperatures.count()); i++)
-    {
-      lvTemperatureTileType *tile = &lvTemperatureTiles[i];
-      char currentString[10] = "OFF";
-      if (system->temperatures[i]->isActive())
-      {
-        sprintf(currentString, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
-      }
-
-      //lv_event_send(tile->objTile, LV_EVENT_REFRESH, tile);
-      lv_label_set_text(tile->labelCurrent, currentString);
-    }
-  }
+  updateTemperatureScreenTiles(false);
+  updateTemperatureScreenSymbols(false);
 
   lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_TASK);
   lv_task_handler();
-}
-
-void DisplayTft::calibrate()
-{
 }
 
 void DisplayTft::displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -170,39 +198,146 @@ void DisplayTft::displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_
   lv_disp_flush_ready(disp);
 }
 
+bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+{
+  uint16_t touchX, touchY;
+
+  bool touched = tft.getTouch(&touchX, &touchY);
+
+  if (!touched)
+  {
+    return false;
+  }
+
+  if (touchX > 320 || touchY > 240)
+  {
+    Serial.printf("Touch coordinates issue: x: %d, y: %d\n", touchX, touchY);
+  }
+  else
+  {
+
+    data->state = touched ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+
+    data->point.x = touchX;
+    data->point.y = touchY;
+  }
+
+  return false;
+}
+
 void DisplayTft::createTemperatureScreen()
 {
-  lv_obj_t *contHeader = lv_cont_create(lv_scr_act(), NULL);
+  static lv_obj_t *contHeader = lv_cont_create(lv_scr_act(), NULL);
   lv_obj_set_style_local_bg_color(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
   lv_obj_set_style_local_bg_grad_color(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
   lv_obj_set_style_local_border_width(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_clip_corner(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
   lv_obj_set_style_local_radius(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_pad_bottom(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_inner(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_left(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_right(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_top(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_bottom(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
   lv_obj_set_click(contHeader, false);
-  lv_obj_set_size(contHeader, 320, 37);
-  lv_cont_set_layout(contHeader, LV_LAYOUT_PRETTY_TOP);
+  lv_obj_set_size(contHeader, 320, 38);
 
-  lv_obj_t *contTemperature = lv_cont_create(lv_scr_act(), NULL);
+  lvSymbols.btnMenu = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnMenu, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_bg_color(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_border_width(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_size(lvSymbols.btnMenu, 40, 38);
+  lv_obj_set_pos(lvSymbols.btnMenu, 0, 0);
+  lvSymbols.labelMenu = lv_label_create(lvSymbols.btnMenu, NULL);
+  lv_obj_set_style_local_text_font(lvSymbols.labelMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_label_set_align(lvSymbols.labelMenu, LV_LABEL_ALIGN_CENTER);
+  lv_label_set_long_mode(lvSymbols.labelMenu, LV_LABEL_LONG_BREAK);
+  lv_label_set_text_static(lvSymbols.labelMenu, "f");
+
+  lvSymbols.btnLeft = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnLeft, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_bg_color(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_border_width(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_size(lvSymbols.btnLeft, 40, 38);
+  lv_obj_set_pos(lvSymbols.btnLeft, 40, 0);
+  lv_obj_set_click(lvSymbols.btnLeft, true);
+  lv_obj_set_event_cb(lvSymbols.btnLeft, DisplayTft::temperatureNavigationLeftEvent);
+  lvSymbols.labelLeft = lv_label_create(lvSymbols.btnLeft, NULL);
+  lv_obj_set_style_local_text_font(lvSymbols.labelLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_label_set_align(lvSymbols.labelLeft, LV_LABEL_ALIGN_CENTER);
+  lv_label_set_long_mode(lvSymbols.labelLeft, LV_LABEL_LONG_BREAK);
+  lv_label_set_text_static(lvSymbols.labelLeft, "S");
+
+  lvSymbols.btnRight = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnRight, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_bg_color(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_border_width(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_size(lvSymbols.btnRight, 40, 38);
+  lv_obj_set_pos(lvSymbols.btnRight, 80, 0);
+  lv_obj_set_click(lvSymbols.btnRight, true);
+  lv_obj_set_event_cb(lvSymbols.btnRight, DisplayTft::temperatureNavigationRightEvent);
+  lvSymbols.labelRight = lv_label_create(lvSymbols.btnRight, NULL);
+  lv_obj_set_style_local_text_font(lvSymbols.labelRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_label_set_align(lvSymbols.labelRight, LV_LABEL_ALIGN_CENTER);
+  lv_label_set_long_mode(lvSymbols.labelRight, LV_LABEL_LONG_BREAK);
+  lv_label_set_text_static(lvSymbols.labelRight, "Q");
+
+  lvSymbols.labelAlarm = lv_label_create(contHeader, NULL);
+  lv_obj_set_style_local_border_width(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_text_font(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
+  lv_obj_set_size(lvSymbols.labelAlarm, 40, 38);
+  lv_obj_set_pos(lvSymbols.labelAlarm, 200, 6);
+  lv_obj_set_click(lvSymbols.labelAlarm, true);
+  lv_label_set_text_static(lvSymbols.labelAlarm, "O");
+  lv_label_set_long_mode(lvSymbols.labelAlarm, LV_LABEL_LONG_BREAK);
+
+  lvSymbols.labelCloud = lv_label_create(contHeader, NULL);
+  lv_obj_set_style_local_border_width(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_text_font(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
+  lv_obj_set_size(lvSymbols.labelCloud, 40, 38);
+  lv_obj_set_pos(lvSymbols.labelCloud, 240, 6);
+  lv_obj_set_click(lvSymbols.labelCloud, true);
+  lv_label_set_text_static(lvSymbols.labelCloud, "h");
+  lv_label_set_long_mode(lvSymbols.labelCloud, LV_LABEL_LONG_BREAK);
+
+  lvSymbols.labelWifi = lv_label_create(contHeader, NULL);
+  lv_obj_set_style_local_border_width(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_text_font(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_text_color(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_set_size(lvSymbols.labelWifi, 40, 38);
+  lv_obj_set_pos(lvSymbols.labelWifi, 280, 6);
+  lv_obj_set_click(lvSymbols.labelWifi, true);
+  lv_obj_set_hidden(lvSymbols.labelWifi, true);
+  lv_label_set_long_mode(lvSymbols.labelWifi, LV_LABEL_LONG_BREAK);
+
+  static lv_obj_t *contTemperature = lv_cont_create(lv_scr_act(), NULL);
   lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
   lv_obj_set_style_local_border_width(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_clip_corner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
   lv_obj_set_style_local_radius(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_pad_bottom(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_inner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
+  lv_obj_set_style_local_pad_inner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 4);
   lv_obj_set_style_local_pad_left(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
   lv_obj_set_style_local_pad_right(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_top(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
+  lv_obj_set_style_local_pad_top(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_pad_bottom(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
   lv_obj_set_click(contTemperature, false);
-  lv_obj_set_size(contTemperature, 320, 203);
-  lv_obj_set_pos(contTemperature, 0, 37);
-  lv_cont_set_layout(contTemperature, LV_LAYOUT_PRETTY_TOP);
+  lv_obj_set_size(contTemperature, 330, 203);
+  lv_obj_set_pos(contTemperature, 0, 38);
+  lv_cont_set_layout(contTemperature, LV_LAYOUT_GRID);
 
   for (uint8_t i = 0u; i < DISPLAY_TFT_TEMPERATURES_PER_PAGE; i++)
   {
@@ -277,13 +412,12 @@ void DisplayTft::createTemperatureScreen()
     lv_label_set_align(tile->labelCurrent, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelCurrent, LV_LABEL_LONG_BREAK);
 
-    char currentString[10] = "OFF";
-    if (system->temperatures[i]->isActive())
-    {
-      sprintf(currentString, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
-    }
+    char labelCurrentText[10] = "OFF";
 
-    lv_label_set_text(tile->labelCurrent, currentString);
+    if (system->temperatures[i]->isActive())
+      sprintf(labelCurrentText, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
+
+    lv_label_set_text(tile->labelCurrent, labelCurrentText);
     lv_obj_set_style_local_text_font(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h21);
     lv_obj_set_style_local_text_color(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelCurrent, 82, 42);
@@ -291,12 +425,187 @@ void DisplayTft::createTemperatureScreen()
   }
 }
 
-void DisplayTft::temperatureTileEvent(lv_obj_t *obj, lv_event_t event)
+void DisplayTft::updateTemperatureScreenTiles(boolean forceUpdate)
 {
-  switch (event)
+  static uint32_t activeBitsOld = 0u;
+
+  uint8_t visibleCount = 0u;
+  uint32_t activeBits = system->temperatures.getActiveBits();
+  boolean updatePage = forceUpdate;
+  uint32_t skippedTemperatures = 0u;
+
+  if ((activeBits != activeBitsOld) || (UPDATE_ALL == updateTemperature) || (UPDATE_ALL == updatePitmaster))
+    updatePage = true;
+
+  if (updatePage)
   {
-  case LV_EVENT_REFRESH:
-    break;
+    uint32_t numOfTemperatures = system->temperatures.getActiveCount();
+    numOfTemperatures = (0u == numOfTemperatures) ? system->temperatures.count() : numOfTemperatures;
+    uint8_t numOfPages = (numOfTemperatures / DISPLAY_TFT_TEMPERATURES_PER_PAGE) + 1u;
+    // check if page index is still valid
+    tempPageIndex = (tempPageIndex < numOfPages) ? tempPageIndex : numOfPages - 1u;
+  }
+
+  activeBitsOld = activeBits;
+
+  // set all active bits when no temperature is active
+  activeBits = (0u == activeBits) ? ((1 << system->temperatures.count()) - 1u) : activeBits;
+
+  for (uint8_t i = 0; (i < system->temperatures.count()) && (visibleCount < DISPLAY_TFT_TEMPERATURES_PER_PAGE); i++)
+  {
+    if (activeBits & (1u << i))
+    {
+      if (skippedTemperatures >= tempPageIndex * DISPLAY_TFT_TEMPERATURES_PER_PAGE)
+      {
+        lvTemperatureTileType *tile = &lvTemperatureTiles[visibleCount];
+
+        if (updatePage)
+        {
+          char labelCurrentText[10] = "OFF";
+
+          if (system->temperatures[i]->isActive())
+            sprintf(labelCurrentText, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
+
+          lv_label_set_text(tile->labelCurrent, labelCurrentText);
+
+          lv_label_set_text(tile->labelName, system->temperatures[i]->getName().c_str());
+          lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(system->temperatures[i]->getColor()));
+          lv_label_set_text_fmt(tile->labelMax, "%i°", (int)system->temperatures[i]->getMaxValue());
+          lv_label_set_text_fmt(tile->labelMin, "%i°", (int)system->temperatures[i]->getMinValue());
+          lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
+          lv_obj_set_hidden(tile->objTile, false);
+        }
+        else if (updateTemperature & (1u << i))
+        {
+          char labelCurrentText[10] = "OFF";
+
+          if (system->temperatures[i]->isActive())
+            sprintf(labelCurrentText, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
+
+          lv_label_set_text(tile->labelCurrent, labelCurrentText);
+        }
+
+        /*if (updatePitmaster & (1u << i))
+          setTemperaturePitmasterName(visibleCount, system->temperatures[i]);*/
+
+        visibleCount++;
+      }
+      else
+      {
+        skippedTemperatures++;
+      }
+    }
+  }
+
+  if (updatePage)
+  {
+    for (uint8_t i = visibleCount; i < DISPLAY_TFT_TEMPERATURES_PER_PAGE; i++)
+    {
+      lvTemperatureTileType *tile = &lvTemperatureTiles[i];
+      lv_obj_set_hidden(tile->objTile, true);
+    }
+  }
+
+  updateTemperature = 0u;
+  updatePitmaster = 0u;
+}
+
+void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
+{
+  boolean newHasAlarm = system->temperatures.hasAlarm();
+  WifiState newWifiState = system->wlan.getWifiState();
+  WifiStrength newWifiStrength = system->wlan.getSignalStrength();
+  char wifiSymbol = 'I';
+  static uint8_t cloudState = system->cloud.state;
+  static boolean hasAlarm = newHasAlarm;
+  static WifiState wifiState = newWifiState;
+  static WifiStrength wifiStrength = newWifiStrength;
+  static uint32_t debounceWifiSymbol = millis();
+  static boolean delayApSymbol = true;
+
+  if ((cloudState != system->cloud.state) || forceUpdate)
+  {
+    lv_obj_set_hidden(lvSymbols.labelCloud, (system->cloud.state != 2));
+    cloudState = system->cloud.state;
+  }
+
+  if ((hasAlarm != newHasAlarm) || forceUpdate)
+  {
+    lv_obj_set_hidden(lvSymbols.labelAlarm, !newHasAlarm);
+    hasAlarm = newHasAlarm;
+  }
+
+  if (delayApSymbol && (millis() > 10000u))
+  {
+    forceUpdate = true;
+    delayApSymbol = false;
+  }
+
+  if ((wifiStrength != newWifiStrength) || forceUpdate)
+  {
+    switch (newWifiStrength)
+    {
+    case WifiStrength::High:
+      wifiSymbol = 'I';
+      break;
+    case WifiStrength::Medium:
+      wifiSymbol = 'H';
+      break;
+    case WifiStrength::Low:
+      wifiSymbol = 'G';
+      break;
+    default:
+      wifiSymbol = '\0';
+      break;
+    }
+    if ((millis() - debounceWifiSymbol) >= 1000u)
+    {
+      wifiStrength = newWifiStrength;
+      forceUpdate = true;
+      debounceWifiSymbol = millis();
+    }
+  }
+
+  if ((wifiState != newWifiState) || forceUpdate)
+  {
+    String info;
+
+    switch (newWifiState)
+    {
+    case WifiState::SoftAPNoClient:
+      if (delayApSymbol)
+        break;
+      lv_label_set_text(lvSymbols.labelWifi, "l");
+      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName().c_str());
+      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
+      break;
+    case WifiState::SoftAPClientConnected:
+      if (delayApSymbol)
+        break;
+      lv_label_set_text(lvSymbols.labelWifi, "l");
+      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
+      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("http://192.168.66.1");
+      break;
+    case WifiState::ConnectedToSTA:
+      //info = "http://" + WiFi.localIP().toString();
+      lv_label_set_text(lvSymbols.labelWifi, String(wifiSymbol).c_str());
+      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(WiFi.SSID().c_str());
+      //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText(info.c_str());
+      break;
+    case WifiState::ConnectingToSTA:
+    case WifiState::AddCredentials:
+      break;
+    default:
+      lv_label_set_text(lvSymbols.labelWifi, "");
+      lv_obj_set_hidden(lvSymbols.labelWifi, true);
+      //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
+      //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("");
+      break;
+    }
+    wifiState = newWifiState;
   }
 }
 
@@ -311,4 +620,76 @@ lv_color_t DisplayTft::htmlColorToLvColor(String htmlColor)
   uint8_t b = number & 0xFF;
 
   return LV_COLOR_MAKE(r, g, b);
+}
+
+void DisplayTft::temperatureUpdateCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData)
+{
+  updateTemperature |= (true == settingsChanged) ? UPDATE_ALL : (1u << index);
+}
+
+void DisplayTft::temperatureTileEvent(lv_obj_t *obj, lv_event_t event)
+{
+  switch (event)
+  {
+  case LV_EVENT_REFRESH:
+    break;
+  }
+}
+
+void DisplayTft::temperatureNavigationLeftEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    DisplayTft *displayTft = (DisplayTft *)gDisplay;
+
+    int8_t newPageIndex = tempPageIndex - 1;
+    uint32_t numOfTemperatures = gSystem->temperatures.getActiveCount();
+
+    numOfTemperatures = (0u == numOfTemperatures) ? gSystem->temperatures.count() : numOfTemperatures;
+    uint8_t numOfPages = (numOfTemperatures / DISPLAY_TFT_TEMPERATURES_PER_PAGE) + 1u;
+
+    if (newPageIndex < 0)
+    {
+      newPageIndex = numOfPages - 1u;
+    }
+    else if (newPageIndex >= numOfPages)
+    {
+      newPageIndex = 0u;
+    }
+
+    if (tempPageIndex != newPageIndex)
+    {
+      tempPageIndex = newPageIndex;
+      displayTft->updateTemperatureScreenTiles(true);
+    }
+  }
+}
+
+void DisplayTft::temperatureNavigationRightEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    DisplayTft *displayTft = (DisplayTft *)gDisplay;
+
+    int8_t newPageIndex = tempPageIndex + 1;
+    uint32_t numOfTemperatures = gSystem->temperatures.getActiveCount();
+
+    numOfTemperatures = (0u == numOfTemperatures) ? gSystem->temperatures.count() : numOfTemperatures;
+    uint8_t numOfPages = (numOfTemperatures / DISPLAY_TFT_TEMPERATURES_PER_PAGE) + 1u;
+
+    if (newPageIndex < 0)
+    {
+      newPageIndex = numOfPages - 1u;
+    }
+    else if (newPageIndex >= numOfPages)
+    {
+      newPageIndex = 0u;
+    }
+
+    if (tempPageIndex != newPageIndex)
+    {
+      tempPageIndex = newPageIndex;
+      displayTft->updateTemperatureScreenTiles(true);
+    }
+  }
 }

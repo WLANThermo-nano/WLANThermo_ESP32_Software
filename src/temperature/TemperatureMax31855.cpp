@@ -28,7 +28,8 @@
 #define MAX31855_NEGATIVE_SIGN_BIT 0x2000u
 #define MAX31855_TEMPERATURE_UNIT 0.25
 
-union SplitFourBytes {
+union SplitFourBytes
+{
   uint32_t value;
   struct
   {
@@ -80,6 +81,7 @@ uint32_t TemperatureMax31855::readChip()
 {
   SplitFourBytes receive;
 
+  SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
   // write CS
   digitalWrite(csPin, LOW);
   delay(1u);
@@ -91,6 +93,8 @@ uint32_t TemperatureMax31855::readChip()
 
   // write CS
   digitalWrite(csPin, HIGH);
+
+  SPI.endTransaction();
 
   return receive.value;
 }
