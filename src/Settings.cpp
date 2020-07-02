@@ -43,7 +43,8 @@ static const NvsKeyConfig_t NvsKeyConfig[] = {
     {STRINGIFY(kBattery), true, true},
     {STRINGIFY(kOtaUpdate), true, true},
     {STRINGIFY(kServer), true, true},
-    {STRINGIFY(kBluetooth), true, true}};
+    {STRINGIFY(kBluetooth), true, true},
+    {STRINGIFY(kUrl), true, true}};
 
 const char *Settings::nvsNamespace = "wlanthermo";
 const uint16_t Settings::jsonBufferSize = 3072u;

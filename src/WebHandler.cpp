@@ -947,24 +947,6 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   if (!json.success())
     return 0;
 
-  // URL
-  if (json.containsKey("url"))
-  {
-    Serial.println("Server-URL");
-    JsonObject &_url = json["url"];
-
-    for (int i = 0; i < Cloud::serverurlCount; i++)
-    { // nur bekannte auslesen
-      JsonObject &_link = _url[Cloud::serverurl[i].typ];
-      if (_link.containsKey("host"))
-        Cloud::serverurl[i].host = _link["host"].asString();
-      if (_link.containsKey("page"))
-        Cloud::serverurl[i].page = _link["page"].asString();
-    }
-
-    gSystem->cloud.saveUrl();
-  }
-
   // UPDATE
   bool available = false;
   if (json.containsKey("update"))

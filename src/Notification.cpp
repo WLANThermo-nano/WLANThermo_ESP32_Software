@@ -82,7 +82,7 @@ void Notification::update()
   if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
   {
     // Testnachricht
-    Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
+    Cloud::sendAPI(APINOTE, Url::Note);
   }
   else if (this->notificationData.index > 0)
   { // CHANNEL NOTIFICATION
@@ -94,7 +94,7 @@ void Notification::update()
         if (this->pushService.on > 0)
         {
           this->notificationData.ch = i;
-          Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
+          Cloud::sendAPI(APINOTE, Url::Note);
         }
       }
     }

@@ -27,9 +27,11 @@
 #include <SPIFFS.h>
 
 // API
-#define APISERVER "dev-api.wlanthermo.de"
+#define APISERVER "http://api.wlanthermo.de"
+#define APIDEVSERVER "http://dev-api.wlanthermo.de"
 #define CHECKAPI "/"
-#define URL_FILE "/url.json"
+
+#define DEFAULT_DEV_URL_ENABLED true
 #define DEFAULT_INTERVAL 30u
 
 #define READY_STATE_UNSENT 0
@@ -37,7 +39,6 @@
 #define READY_STATE_HEADERS_RECEIVED 2
 #define READY_STATE_LOADING 3
 #define READY_STATE_DONE 4
-
 #define HTTP_STATUS_OK 200
 
 #define API_QUEUE_SIZE 10u
@@ -47,12 +48,6 @@ enum
   GETMETH,
   POSTMETH
 };
-
-uint8_t Cloud::serverurlCount = 3u;
-ServerData Cloud::serverurl[3] = {
-    {APISERVER, CHECKAPI, "api"},
-    {APISERVER, CHECKAPI, "note"},
-    {APISERVER, CHECKAPI, "cloud"}};
 
 asyncHTTPrequest Cloud::apiClient = asyncHTTPrequest();
 QueueHandle_t Cloud::apiQueue = xQueueCreate(API_QUEUE_SIZE, sizeof(CloudData));
@@ -94,6 +89,9 @@ Cloud::Cloud()
   config.interval = DEFAULT_INTERVAL;
   intervalCounter = 0u;
   state = 0;
+  devUrlEnabled = DEFAULT_DEV_URL_ENABLED;
+  userNoteUrl = "";
+  userCloudUrl = "";
 }
 
 void Cloud::update()
@@ -103,12 +101,12 @@ void Cloud::update()
     // First get time from server before sending data
     if (now() < 31536000)
     {
-      Cloud::sendAPI(NOAPI, APILINK, NOPARA);
+      Cloud::sendAPI(NOAPI, Url::Api);
     }
     else if (0u == intervalCounter)
     {
       intervalCounter = config.interval;
-      Cloud::sendAPI(APICLOUD, CLOUDLINK, NOPARA);
+      Cloud::sendAPI(APICLOUD, Url::Cloud);
     }
   }
   else
@@ -144,6 +142,25 @@ String Cloud::createToken()
   return (String)(gSystem->getSerialNumber() + stamp);
 }
 
+String Cloud::getUrl(Url cloudUrl)
+{
+  String url = (false == devUrlEnabled) ? APISERVER : APIDEVSERVER;
+
+  switch (cloudUrl)
+  {
+  case Url::Api:
+    break;
+  case Url::Note:
+    url = (userNoteUrl == "") ? url : userNoteUrl;
+    break;
+  case Url::Cloud:
+    url = (userCloudUrl == "") ? url : userCloudUrl;
+    break;
+  }
+
+  return url;
+}
+
 void Cloud::saveConfig()
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
@@ -155,28 +172,6 @@ void Cloud::saveConfig()
 
   // trigger send after config update
   intervalCounter = 0u;
-}
-
-void Cloud::saveUrl()
-{
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
-
-  for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
-  {
-
-    JsonObject &_obj = json.createNestedObject(serverurl[i].typ);
-    _obj["host"] = serverurl[i].host;
-    _obj["page"] = serverurl[i].page;
-  }
-
-  File file = SPIFFS.open(URL_FILE, "w");
-
-  if (file)
-  {
-    json.printTo(file);
-    file.close();
-  }
 }
 
 void Cloud::loadConfig()
@@ -194,31 +189,22 @@ void Cloud::loadConfig()
       config.interval = json["interval"];
   }
 
-  File file = SPIFFS.open(URL_FILE, "r");
+  loadUrlConfig();
+}
 
-  if (file)
+void Cloud::loadUrlConfig()
+{
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = Settings::read(kUrl, &jsonBuffer);
+
+  if (json.success())
   {
-    String jsonString = file.readString();
-    Serial.printf("url.json: %s\n", jsonString.c_str());
-    JsonObject &json = jsonBuffer.parseObject(file.readString().c_str());
-
-    if (json.success())
-    {
-      for (int i = 0; i < Cloud::serverurlCount; i++)
-      {
-        JsonObject &_link = json[Cloud::serverurl[i].typ];
-
-        if (_link.containsKey("host"))
-          Cloud::serverurl[i].host = _link["host"].asString();
-        else
-          break;
-
-        if (_link.containsKey("page"))
-          Cloud::serverurl[i].page = _link["page"].asString();
-      }
-    }
-
-    file.close();
+    if (json.containsKey("dev"))
+      devUrlEnabled = json["dev"].as<boolean>();
+    if (json.containsKey("note"))
+      userNoteUrl = json["note"].asString();
+    if (json.containsKey("cloud"))
+      userCloudUrl = json["cloud"].asString();
   }
 }
 
@@ -305,18 +291,18 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
     if (request->respHeaderExists("Date"))
       readUTCfromHeader(request->respHeaderValue("Date"));
 
-    if(request->responseHTTPcode() == HTTP_STATUS_OK)
+    if (request->responseHTTPcode() == HTTP_STATUS_OK)
       nanoWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
-    
+
     *requestDone = true;
   }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Send to API
-void Cloud::sendAPI(int apiIndex, int urlIndex, int parIndex)
+void Cloud::sendAPI(uint8_t apiIndex, Url urlIndex)
 {
-  CloudData data = {apiIndex, urlIndex, parIndex};
+  CloudData data = {apiIndex, urlIndex};
   xQueueSend(apiQueue, &data, 0u);
 }
 
@@ -330,7 +316,7 @@ void Cloud::handleQueue()
 
   if (requestDone)
   {
-    if(xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
+    if (xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
       return;
 
     requestDone = false;
@@ -339,7 +325,7 @@ void Cloud::handleQueue()
       apiClient.setDebug(true);
 
     apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
-    apiClient.open("POST", String("http://" + serverurl[cloudData.urlIndex].host + "/").c_str());
+    apiClient.open("POST", String(getUrl(cloudData.urlIndex) + CHECKAPI).c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
     apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());

@@ -26,17 +26,17 @@
 
 typedef struct
 {
-  bool enabled;
+  boolean enabled;
   String token;
   uint16_t interval;
 } CloudConfig;
 
-typedef struct
+enum class Url
 {
-  int apiIndex;
-  int urlIndex;
-  int parIndex;
-} CloudData;
+  Api,
+  Note,
+  Cloud
+};
 
 enum
 {
@@ -49,28 +49,11 @@ enum
   APIALEXA
 };
 
-// URL
-struct ServerData
+typedef struct
 {
-  String host; // nur die Adresse ohne Anhang
-  String page; // alles was nach de, com etc. kommt
-  String typ;
-};
-
-enum
-{
-  APILINK,
-  NOTELINK,
-  CLOUDLINK
-};
-
-enum
-{
-  NOPARA,
-  TESTPARA,
-  SENDTS,
-  THINGHTTP
-}; // Config GET/POST Request
+  uint8_t apiIndex;
+  Url urlIndex;
+} CloudData;
 
 class Cloud
 {
@@ -79,20 +62,19 @@ public:
   void update();
   void loadConfig();
   void saveConfig();
-  void saveUrl();
   CloudConfig getConfig();
   void setConfig(CloudConfig newConfig);
   String newToken();
   uint8_t state;
   static void checkAPI();
-  static void sendAPI(int apiIndex, int urlIndex, int parIndex);
+  static void sendAPI(uint8_t apiIndex, Url urlIndex);
 
-  static uint8_t serverurlCount;
-  static ServerData serverurl[]; // 0:api, 1: note, 2:cloud
   static bool clientlog;
 
 private:
   String createToken();
+  String getUrl(Url cloudUrl);
+  void loadUrlConfig();
   static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
   static void readUTCfromHeader(String payload);
   static tmElements_t *string_to_tm(tmElements_t *tme, char *str);
@@ -101,4 +83,9 @@ private:
   static asyncHTTPrequest apiClient;
   static QueueHandle_t apiQueue;
   uint16_t intervalCounter;
+  boolean devUrlEnabled;
+  String noteUrl;
+  String cloudUrl;
+  String userNoteUrl;
+  String userCloudUrl;
 };

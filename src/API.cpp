@@ -279,15 +279,6 @@ void API::alexaObj(JsonObject &jObj)
 // URL JSON Object
 void API::urlObj(JsonObject &jObj)
 {
-
-  /*
-  for (int i = 0; i < NUMITEMS(serverurl); i++) {
-  
-    JsonObject& _obj = jObj.createNestedObject(serverurl[i].typ);
-    _obj["host"] =  serverurl[i].host;
-    _obj["page"] =  serverurl[i].page;
-  }
-*/
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

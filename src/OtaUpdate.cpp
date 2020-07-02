@@ -144,7 +144,7 @@ void OtaUpdate::update()
     otaUpdateState = (this->autoUpdate) ? OtaUpdateState::GetUpdateInfo : OtaUpdateState::Idle;
     break;
   case OtaUpdateState::GetUpdateInfo:
-    Cloud::sendAPI(APIUPDATE, APILINK, NOPARA);
+    Cloud::sendAPI(APIUPDATE, Url::Api);
     otaUpdateState = OtaUpdateState::NoUpdateInfo;
     break;
   case OtaUpdateState::NoUpdateInfo:
