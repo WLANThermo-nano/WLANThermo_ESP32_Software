@@ -44,15 +44,13 @@ typedef struct lvTemperatureTile
 
 typedef struct lvSymbol
 {
+  lv_style_t *style;
   lv_obj_t *btnMenu;
-  lv_obj_t *labelMenu;
   lv_obj_t *btnLeft;
-  lv_obj_t *labelLeft;
   lv_obj_t *btnRight;
-  lv_obj_t *labelRight;
-  lv_obj_t *labelAlarm;
-  lv_obj_t *labelCloud;
-  lv_obj_t *labelWifi;
+  lv_obj_t *btnAlarm;
+  lv_obj_t *btnCloud;
+  lv_obj_t *btnWifi;
 } lvSymbolType;
 
 class DisplayTft : public DisplayBase

@@ -30,6 +30,8 @@ LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
 LV_FONT_DECLARE(Font_Nano_h24);
 
+static const char *wifiSymbolText[4] = {"I", "H", "G", ""};
+
 uint32_t DisplayTft::updateTemperature = 0u;
 uint32_t DisplayTft::updatePitmaster = 0u;
 SystemBase *DisplayTft::system = gSystem;
@@ -227,102 +229,76 @@ bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
 void DisplayTft::createTemperatureScreen()
 {
-  static lv_obj_t *contHeader = lv_cont_create(lv_scr_act(), NULL);
-  lv_obj_set_style_local_bg_color(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_bg_grad_color(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_border_width(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(contHeader, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_click(contHeader, false);
-  lv_obj_set_size(contHeader, 320, 38);
+  /* create style for symbols */
+  lvSymbols.style = new lv_style_t();
+  lv_style_init(lvSymbols.style);
+  lv_style_set_bg_color(lvSymbols.style, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_style_set_bg_grad_color(lvSymbols.style, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_style_set_border_width(lvSymbols.style, LV_STATE_DEFAULT, 0);
+  lv_style_set_clip_corner(lvSymbols.style, LV_STATE_DEFAULT, false);
+  lv_style_set_radius(lvSymbols.style, LV_STATE_DEFAULT, 0);
+  lv_style_set_value_font(lvSymbols.style, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_style_set_value_color(lvSymbols.style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_style_set_value_align(lvSymbols.style, LV_STATE_DEFAULT, LV_ALIGN_CENTER);
 
+  /* create container for symbols */
+  static lv_obj_t *contHeader = lv_cont_create(lv_scr_act(), NULL);
+  lv_obj_add_style(contHeader, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_click(contHeader, false);
+  lv_obj_set_size(contHeader, 320, 40);
+
+  /* create menu symbol */
   lvSymbols.btnMenu = lv_btn_create(contHeader, NULL);
   lv_obj_add_protect(lvSymbols.btnMenu, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_set_style_local_bg_color(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_border_width(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.btnMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_size(lvSymbols.btnMenu, 40, 38);
+  lv_obj_add_style(lvSymbols.btnMenu, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnMenu, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "f");
+  lv_obj_set_size(lvSymbols.btnMenu, 40, 40);
   lv_obj_set_pos(lvSymbols.btnMenu, 0, 0);
-  lvSymbols.labelMenu = lv_label_create(lvSymbols.btnMenu, NULL);
-  lv_obj_set_style_local_text_font(lvSymbols.labelMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelMenu, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_label_set_align(lvSymbols.labelMenu, LV_LABEL_ALIGN_CENTER);
-  lv_label_set_long_mode(lvSymbols.labelMenu, LV_LABEL_LONG_BREAK);
-  lv_label_set_text_static(lvSymbols.labelMenu, "f");
 
+  /* create left navigation symbol */
   lvSymbols.btnLeft = lv_btn_create(contHeader, NULL);
   lv_obj_add_protect(lvSymbols.btnLeft, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_set_style_local_bg_color(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_border_width(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.btnLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_size(lvSymbols.btnLeft, 40, 38);
+  lv_obj_add_style(lvSymbols.btnLeft, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnLeft, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "S");
+  lv_obj_set_size(lvSymbols.btnLeft, 40, 40);
   lv_obj_set_pos(lvSymbols.btnLeft, 40, 0);
-  lv_obj_set_click(lvSymbols.btnLeft, true);
   lv_obj_set_event_cb(lvSymbols.btnLeft, DisplayTft::temperatureNavigationLeftEvent);
-  lvSymbols.labelLeft = lv_label_create(lvSymbols.btnLeft, NULL);
-  lv_obj_set_style_local_text_font(lvSymbols.labelLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelLeft, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_label_set_align(lvSymbols.labelLeft, LV_LABEL_ALIGN_CENTER);
-  lv_label_set_long_mode(lvSymbols.labelLeft, LV_LABEL_LONG_BREAK);
-  lv_label_set_text_static(lvSymbols.labelLeft, "S");
 
+  /* create right navigation symbol */
   lvSymbols.btnRight = lv_btn_create(contHeader, NULL);
   lv_obj_add_protect(lvSymbols.btnRight, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_set_style_local_bg_color(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_bg_grad_color(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_obj_set_style_local_border_width(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.btnRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_size(lvSymbols.btnRight, 40, 38);
+  lv_obj_add_style(lvSymbols.btnRight, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnRight, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Q");
+  lv_obj_set_size(lvSymbols.btnRight, 40, 40);
   lv_obj_set_pos(lvSymbols.btnRight, 80, 0);
-  lv_obj_set_click(lvSymbols.btnRight, true);
   lv_obj_set_event_cb(lvSymbols.btnRight, DisplayTft::temperatureNavigationRightEvent);
-  lvSymbols.labelRight = lv_label_create(lvSymbols.btnRight, NULL);
-  lv_obj_set_style_local_text_font(lvSymbols.labelRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelRight, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_label_set_align(lvSymbols.labelRight, LV_LABEL_ALIGN_CENTER);
-  lv_label_set_long_mode(lvSymbols.labelRight, LV_LABEL_LONG_BREAK);
-  lv_label_set_text_static(lvSymbols.labelRight, "Q");
 
-  lvSymbols.labelAlarm = lv_label_create(contHeader, NULL);
-  lv_obj_set_style_local_border_width(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_text_font(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelAlarm, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
-  lv_obj_set_size(lvSymbols.labelAlarm, 40, 38);
-  lv_obj_set_pos(lvSymbols.labelAlarm, 200, 6);
-  lv_obj_set_click(lvSymbols.labelAlarm, true);
-  lv_label_set_text_static(lvSymbols.labelAlarm, "O");
-  lv_label_set_long_mode(lvSymbols.labelAlarm, LV_LABEL_LONG_BREAK);
+  /* create alarm symbol */
+  lvSymbols.btnAlarm = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnAlarm, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_add_style(lvSymbols.btnAlarm, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "O");
+  lv_obj_set_style_local_value_color(lvSymbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
+  lv_obj_set_size(lvSymbols.btnAlarm, 40, 40);
+  lv_obj_set_pos(lvSymbols.btnAlarm, 200, 0);
 
-  lvSymbols.labelCloud = lv_label_create(contHeader, NULL);
-  lv_obj_set_style_local_border_width(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_text_font(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelCloud, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
-  lv_obj_set_size(lvSymbols.labelCloud, 40, 38);
-  lv_obj_set_pos(lvSymbols.labelCloud, 240, 6);
-  lv_obj_set_click(lvSymbols.labelCloud, true);
-  lv_label_set_text_static(lvSymbols.labelCloud, "h");
-  lv_label_set_long_mode(lvSymbols.labelCloud, LV_LABEL_LONG_BREAK);
+  /* create cloud symbol */
+  lvSymbols.btnCloud = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnCloud, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_add_style(lvSymbols.btnCloud, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "O");
+  lv_obj_set_style_local_value_color(lvSymbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
+  lv_obj_set_size(lvSymbols.btnCloud, 40, 40);
+  lv_obj_set_pos(lvSymbols.btnCloud, 240, 0);
 
-  lvSymbols.labelWifi = lv_label_create(contHeader, NULL);
-  lv_obj_set_style_local_border_width(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_text_font(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_obj_set_style_local_text_color(lvSymbols.labelWifi, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_obj_set_size(lvSymbols.labelWifi, 40, 38);
-  lv_obj_set_pos(lvSymbols.labelWifi, 280, 6);
-  lv_obj_set_click(lvSymbols.labelWifi, true);
-  lv_obj_set_hidden(lvSymbols.labelWifi, true);
-  lv_label_set_long_mode(lvSymbols.labelWifi, LV_LABEL_LONG_BREAK);
+  /* create wifi symbol */
+  lvSymbols.btnWifi = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvSymbols.btnWifi, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_add_style(lvSymbols.btnWifi, LV_CONT_PART_MAIN, lvSymbols.style);
+  lv_obj_set_style_local_value_str(lvSymbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
+  lv_obj_set_size(lvSymbols.btnWifi, 40, 40);
+  lv_obj_set_pos(lvSymbols.btnWifi, 280, 0);
+  lv_obj_set_hidden(lvSymbols.btnWifi, true);
 
   static lv_obj_t *contTemperature = lv_cont_create(lv_scr_act(), NULL);
   lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
@@ -335,8 +311,8 @@ void DisplayTft::createTemperatureScreen()
   lv_obj_set_style_local_pad_top(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_pad_bottom(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
   lv_obj_set_click(contTemperature, false);
-  lv_obj_set_size(contTemperature, 330, 203);
-  lv_obj_set_pos(contTemperature, 0, 38);
+  lv_obj_set_size(contTemperature, 330, 200);
+  lv_obj_set_pos(contTemperature, 0, 40);
   lv_cont_set_layout(contTemperature, LV_LAYOUT_GRID);
 
   for (uint8_t i = 0u; i < DISPLAY_TFT_TEMPERATURES_PER_PAGE; i++)
@@ -350,6 +326,7 @@ void DisplayTft::createTemperatureScreen()
     lv_obj_set_style_local_radius(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_text_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->objTile, 156, 63);
+    lv_obj_set_click(tile->objTile, true);
     lv_obj_set_event_cb(tile->objTile, DisplayTft::temperatureTileEvent);
 
     tile->objColor = lv_obj_create(tile->objTile, NULL);
@@ -515,6 +492,7 @@ void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
   boolean newHasAlarm = system->temperatures.hasAlarm();
   WifiState newWifiState = system->wlan.getWifiState();
   WifiStrength newWifiStrength = system->wlan.getSignalStrength();
+  const char *newWifiSymbolText = wifiSymbolText[(uint8_t)WifiStrength::None];
   char wifiSymbol = 'I';
   static uint8_t cloudState = system->cloud.state;
   static boolean hasAlarm = newHasAlarm;
@@ -525,13 +503,13 @@ void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
 
   if ((cloudState != system->cloud.state) || forceUpdate)
   {
-    lv_obj_set_hidden(lvSymbols.labelCloud, (system->cloud.state != 2));
+    lv_obj_set_hidden(lvSymbols.btnCloud, (system->cloud.state != 2));
     cloudState = system->cloud.state;
   }
 
   if ((hasAlarm != newHasAlarm) || forceUpdate)
   {
-    lv_obj_set_hidden(lvSymbols.labelAlarm, !newHasAlarm);
+    lv_obj_set_hidden(lvSymbols.btnAlarm, !newHasAlarm);
     hasAlarm = newHasAlarm;
   }
 
@@ -546,16 +524,9 @@ void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
     switch (newWifiStrength)
     {
     case WifiStrength::High:
-      wifiSymbol = 'I';
-      break;
     case WifiStrength::Medium:
-      wifiSymbol = 'H';
-      break;
     case WifiStrength::Low:
-      wifiSymbol = 'G';
-      break;
-    default:
-      wifiSymbol = '\0';
+      newWifiSymbolText = wifiSymbolText[(uint8_t)newWifiStrength];
       break;
     }
     if ((millis() - debounceWifiSymbol) >= 1000u)
@@ -575,23 +546,23 @@ void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
     case WifiState::SoftAPNoClient:
       if (delayApSymbol)
         break;
-      lv_label_set_text(lvSymbols.labelWifi, "l");
-      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      lv_obj_set_style_local_value_str(lvSymbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
+      lv_obj_set_hidden(lvSymbols.btnWifi, false);
       //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName().c_str());
       //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
       break;
     case WifiState::SoftAPClientConnected:
       if (delayApSymbol)
         break;
-      lv_label_set_text(lvSymbols.labelWifi, "l");
-      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      lv_obj_set_style_local_value_str(lvSymbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
+      lv_obj_set_hidden(lvSymbols.btnWifi, false);
       //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
       //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("http://192.168.66.1");
       break;
     case WifiState::ConnectedToSTA:
       //info = "http://" + WiFi.localIP().toString();
-      lv_label_set_text(lvSymbols.labelWifi, String(wifiSymbol).c_str());
-      lv_obj_set_hidden(lvSymbols.labelWifi, false);
+      lv_obj_set_style_local_value_str(lvSymbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, newWifiSymbolText);
+      lv_obj_set_hidden(lvSymbols.btnWifi, false);
       //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(WiFi.SSID().c_str());
       //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText(info.c_str());
       break;
@@ -599,8 +570,8 @@ void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
     case WifiState::AddCredentials:
       break;
     default:
-      lv_label_set_text(lvSymbols.labelWifi, "");
-      lv_obj_set_hidden(lvSymbols.labelWifi, true);
+      lv_obj_set_style_local_value_str(lvSymbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
+      lv_obj_set_hidden(lvSymbols.btnWifi, true);
       //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
       //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("");
       break;
@@ -629,10 +600,17 @@ void DisplayTft::temperatureUpdateCb(uint8_t index, TemperatureBase *temperature
 
 void DisplayTft::temperatureTileEvent(lv_obj_t *obj, lv_event_t event)
 {
-  switch (event)
+  DisplayTft *tftDisplay = (DisplayTft *)gDisplay;
+
+  if (LV_EVENT_CLICKED == event)
   {
-  case LV_EVENT_REFRESH:
-    break;
+    lv_obj_t *win = lv_win_create(lv_scr_act(), NULL);
+    lv_win_set_title(win, "Settings");
+    lv_win_set_header_height(win, 40);
+    lv_obj_add_style(win, LV_WIN_PART_HEADER, tftDisplay->lvSymbols.style);
+
+    lv_obj_t *btnClose = lv_win_add_btn(win, LV_SYMBOL_CLOSE);
+    lv_obj_t *btnOk = lv_win_add_btn(win, LV_SYMBOL_OK);
   }
 }
 
