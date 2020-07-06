@@ -157,16 +157,16 @@ void SystemBase::update()
           buzzerAlarm = true;
       }
     }
-  }
 
-  if (buzzer != NULL)
-  {
-    if (buzzerAlarm)
-      buzzer->enable();
-    else
-      buzzer->disable();
+    if (buzzer != NULL)
+    {
+      if (buzzerAlarm)
+        buzzer->enable();
+      else
+        buzzer->disable();
 
-    buzzer->update();
+      buzzer->update();
+    }
   }
 }
 

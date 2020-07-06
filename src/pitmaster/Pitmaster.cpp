@@ -41,6 +41,7 @@
 #define OPL_FALL 97   // OPEN LID LIMIT FALLING
 #define OPL_RISE 100  // OPEN LID LIMIT RISING
 #define OPL_PAUSE 300 // OPEN LID PAUSE
+#define OPL_THRESHOLD 4
 
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
@@ -514,8 +515,6 @@ boolean Pitmaster::checkOpenLid()
         if(this->temperature->getGradient() == -1) openLid.fall_c ++;
         else openLid.fall_c = 0;
 
-        Serial.println(openLid.fall_c);
-
         // erkennen ob Temperatur wieder eingependelt oder Timeout
         if (openLid.detected)
         { // Open Lid Detected
@@ -537,7 +536,7 @@ boolean Pitmaster::checkOpenLid()
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
         }
-        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > 4)
+        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
         { // Opened lid detected!
             openLid.detected = true;
             openLid.temp = openLid.ref;

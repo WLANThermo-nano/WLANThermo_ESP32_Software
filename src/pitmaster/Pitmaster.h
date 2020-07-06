@@ -76,7 +76,7 @@ typedef struct TOpenLid
   float ref;                                // Open Lid Temperatur Memory
   float temp;                               // Temperatur by Open Lid
   int count;                                // Open Lid Count
-  int fall_c;
+  int fall_c;                               // Count falling events
 } OpenLid;
 
 typedef void (*PitmasterCallback_t)(class Pitmaster *, boolean, void *);
