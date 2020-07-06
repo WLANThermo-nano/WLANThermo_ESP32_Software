@@ -14,6 +14,9 @@ $sikulixScript = $PSScriptRoot + "\nextion.sikuli"
 $jythonUrl = "https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.1/jython-standalone-2.7.1.jar"
 $jython = $PSScriptRoot + "\jython-standalone-2.7.1.jar"
 
+#list env
+gci env:
+
 (New-Object System.Net.WebClient).DownloadFile($nextionEditorUrl, $nextionEditorZip)
 (New-Object System.Net.WebClient).DownloadFile($sikulixUrl, $sikulix)
 (New-Object System.Net.WebClient).DownloadFile($jythonUrl, $jython)
