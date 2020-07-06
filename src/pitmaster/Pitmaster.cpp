@@ -41,9 +41,12 @@
 #define OPL_FALL 97   // OPEN LID LIMIT FALLING
 #define OPL_RISE 100  // OPEN LID LIMIT RISING
 #define OPL_PAUSE 300 // OPEN LID PAUSE
+#define OPL_THRESHOLD 4
 
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
+
+#define MEDIAN_SIZE 5u
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -69,6 +72,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->settingsChanged = false;
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
+    this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -227,7 +231,7 @@ boolean Pitmaster::startAutoTune()
     memset(this->autoTune, 0u, sizeof(AutoTune));
 
     this->autoTune->set = this->targetTemperature * 0.9; // ist INT damit nach unten gerundet  // SET TEMPERTURE: 10% weniger als Reserve
-    float currenttemp = this->temperature->GetMedianValue();
+    float currenttemp = this->temperature->getValue();
 
     // macht Autotune überhaupt Sinn?
     if (this->autoTune->set - currenttemp > (this->targetTemperature * 0.05))
@@ -323,7 +327,7 @@ boolean Pitmaster::checkAutoTune()
         return true;
     }
 
-    float currentTemp = this->temperature->GetMedianValue();
+    float currentTemp = this->temperature->getValue();
     unsigned long time = millis();
 
     // Startbedingungen herstellen
@@ -456,7 +460,7 @@ boolean Pitmaster::checkAutoTune()
 
     return false;
 }
-
+/*
 boolean Pitmaster::checkOpenLid()
 {
     if ((pm_auto == this->type) && (true == this->profile->opl))
@@ -499,6 +503,53 @@ boolean Pitmaster::checkOpenLid()
     else
     {
         openLid.detected = false;
+    }
+
+    return openLid.detected;
+}*/
+
+boolean Pitmaster::checkOpenLid()
+{
+    if ((pm_auto == this->type) && (true == this->profile->opl) && true == this->temperature->isActive())
+    {
+        if(this->temperature->getGradient() == -1) openLid.fall_c ++;
+        else openLid.fall_c = 0;
+
+        // erkennen ob Temperatur wieder eingependelt oder Timeout
+        if (openLid.detected)
+        { // Open Lid Detected
+
+            openLid.count--;
+            openLid.fall_c = 0;
+
+            // extremes Überschwingen vermeiden
+            if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
+                openLid.temp = this->targetTemperature;
+
+            if (openLid.count <= 0) // Timeout
+                openLid.detected = false;
+
+            else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
+                openLid.detected = false;
+        }
+        else if (openLid.fall_c == 1) 
+        {
+            openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
+        }
+        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
+        { // Opened lid detected!
+            openLid.detected = true;
+            openLid.temp = openLid.ref;
+            openLid.count = OPL_PAUSE; // TODO: check pause
+
+            Serial.print("OPL: ");
+            Serial.println(openLid.temp);
+        }      
+    }
+    else
+    {
+        openLid.detected = false;
+        openLid.fall_c = 0;
     }
 
     return openLid.detected;
@@ -776,7 +827,7 @@ float Pitmaster::pidCalc()
     // see: http://rn-wissen.de/wiki/index.php/Regelungstechnik
     // see: http://www.ni.com/white-paper/3782/en/
 
-    float x = this->temperature->GetMedianValue(); // IST
+    float x = medianValue->AddValue(this->temperature->getValue()); // IST
     //Serial.printf("GetMedianValue: %f\n", x);
     float w = this->targetTemperature; // SOLL
 

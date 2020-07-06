@@ -17,7 +17,7 @@
 	</script>
 	<link rel="stylesheet" type="text/css" href="icon-font.css">
 	<link rel="stylesheet" type="text/css" href="pure.css">
-	<title>WLANThermo - Nano</title>
+	<title>WLANThermo</title>
 	<style>
 		/*	----------------------------------------------------------------------------------- */
 
@@ -1344,8 +1344,9 @@
 							data-tag="menuHome">Home</a></li>
 					<li id="menuWlan" class="pure-menu-item"><a href="javascript:showWLAN()" class="pure-menu-link"
 							data-tag="menuWlan">WLAN</a></li>
-					<li id="menuBluetooth" class="pure-menu-item" style="display: none;"><a href="javascript:showBluetooth()"
-							class="pure-menu-link" data-tag="menuBluetooth">Bluetooth</a></li>
+					<li id="menuBluetooth" class="pure-menu-item" style="display: none;"><a
+							href="javascript:showBluetooth()" class="pure-menu-link"
+							data-tag="menuBluetooth">Bluetooth</a></li>
 					<li id="menuSystem" class="pure-menu-item"><a href="javascript:showSystem()" class="pure-menu-link"
 							data-tag="menuSystem">System</a></li>
 					<li id="menuPitmaster" class="pure-menu-item" style="display:none"><a
@@ -1364,7 +1365,7 @@
 		</div>
 		<div id="main">
 			<div class="header">
-				<h1>WLANThermo - Nano</h1>
+				<h1>WLANThermo</h1>
 			</div>
 			<!-- ################################################### -->
 			<div id="channel_template" style="display:none">
@@ -1502,7 +1503,7 @@
 							<table width="100%">
 								<tr>
 									<td align="left">
-										<h3 data-tag="chooseDevice">Kanäle auswählen...</h3>
+										<h3 data-tag="bluetoothChannels">Kanäle auswählen...</h3>
 									</td>
 									<td id="devicerefresh" align="right"></td>
 								</tr>
@@ -1992,7 +1993,7 @@
 					<div class="pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
 						<div class="1-box channel_conf">
 							<form>
-								<p class="pure-button pure-button-primary" onclick="restart();">Restart Nano</p>
+								<p class="pure-button pure-button-primary" onclick="restart();">Restart Wlanthermo</p>
 								<p class="pure-button pure-button-primary" onclick="setgodmode(0);">Start-Ton</p>
 								<p class="pure-button pure-button-primary" onclick="setgodmode(1);">Nobattery</p>
 								<p class="pure-button pure-button-primary" onclick="setgodmode(2);">V2</p>
@@ -2015,9 +2016,9 @@
 					</tr>
 				</table>
 				<div class="float-left text-align-left">
-					<h3 class="headtitle" data-tag="cloudTitle">Nano-Cloud</h3>
+					<h3 class="headtitle" data-tag="cloudTitle">WLANThermo-Cloud</h3>
 				</div>
-				<div class="float-right text-align-right"><span onclick="setHelpBox('Nano Cloud',help_cloud)"
+				<div class="float-right text-align-right"><span onclick="setHelpBox('WLANThermo Cloud',help_cloud)"
 						class="icon-question_sign"></span></div>
 				<div style="clear:both;"></div>
 				<div class="pure-g">
@@ -2027,7 +2028,7 @@
 								<div class="checkbox">
 									<label>
 										<input id="CLon" type="checkbox" checked="checked" /><i class="helper"></i><span
-											data-tag="cloudActivate">Nano-Cloud aktivieren</span>
+											data-tag="cloudActivate">WLANThermo-Cloud aktivieren</span>
 									</label>
 								</div>
 								<div class="form-group">

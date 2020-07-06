@@ -51,7 +51,6 @@ enum TemperatureUnit
   Celsius = 'C',
 };
 
-typedef void (*TemperatureCallback_t)(class TemperatureBase *, boolean, void *);
 typedef float (*TemperatureCalculation_t)(uint16_t, SensorType);
 
 class TemperatureBase
@@ -62,7 +61,8 @@ public:
   void loadDefaultValues();
   void loadConfig();
   float getValue();
-  float GetMedianValue();
+  float getPreValue();
+  int8_t getGradient();
   float getMinValue();
   float getMaxValue();
   String getName();
@@ -90,17 +90,19 @@ public:
   void acknowledgeAlarm() { acknowledgedAlarm = true; };
   boolean isAlarmAcknowledged() { return acknowledgedAlarm; };
   void updateNotificationCounter();
-  void registerCallback(TemperatureCallback_t callback, void *userData);
-  void unregisterCallback();
-  void handleCallbacks();
+  boolean checkNewValue();
+  boolean checkNewSettings();
   AlarmStatus getAlarmStatus();
   boolean isActive();
+  void virtual refresh();
   void virtual update();
 
 protected:
   uint8_t localIndex;
   uint8_t globalIndex;
   float currentValue;
+  float preValue;
+  int8_t currentGradient;
   MedianFilter<float> *medianValue;
   float minValue;
   float maxValue;
@@ -117,15 +119,14 @@ private:
   TemperatureUnit currentUnit;
   uint8_t notificationCounter;
   static TemperatureCalculation_t typeFunctions[NUM_OF_TYPES];
-  TemperatureCallback_t registeredCb;
   boolean settingsChanged;
-  void *registeredCbUserData;
   AlarmStatus cbAlarmStatus;
   boolean acknowledgedAlarm;
   float cbCurrentValue;
   static uint8_t globalIndexTracker;
   float getUnitValue(float value);
   float setUnitValue(float value);
+  float decimalPlace(float value);
   static float calcTemperatureNTC(uint16_t rawValue, SensorType type);
   static float calcTemperaturePTx(uint16_t rawValue, SensorType type);
 };

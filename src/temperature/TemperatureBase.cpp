@@ -26,7 +26,7 @@
 #define DEFAULT_MIN_VALUE 10.0
 #define DEFAULT_MAX_VALUE 35.0
 #define MAX_COLORS 12u
-#define MEDIAN_SIZE 10u
+#define MEDIAN_SIZE 9u
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
 const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
@@ -41,7 +41,6 @@ uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
 {
-  this->registeredCb = NULL;
   this->globalIndex = this->globalIndexTracker++;
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
   this->loadDefaultValues();
@@ -63,6 +62,8 @@ void TemperatureBase::loadDefaultValues()
 {
   this->currentUnit = Celsius;
   this->currentValue = INACTIVEVALUE;
+  this->preValue = INACTIVEVALUE;
+  this->currentGradient = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
@@ -107,31 +108,28 @@ void TemperatureBase::loadConfig()
   }
 }
 
-void TemperatureBase::registerCallback(TemperatureCallback_t callback, void *userData)
+boolean TemperatureBase::checkNewValue()
 {
-  this->registeredCb = callback;
-  this->registeredCbUserData = userData;
-}
+  boolean newValue = false;
 
-void TemperatureBase::unregisterCallback()
-{
-  this->registeredCb = NULL;
-}
-
-void TemperatureBase::handleCallbacks()
-{
   AlarmStatus newAlarmStatus = getAlarmStatus();
 
-  if ((this->registeredCb != NULL))
+  if ((cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
   {
-    if ((true == settingsChanged) || (cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
-    {
-      this->registeredCb(this, settingsChanged, this->registeredCbUserData);
-      cbAlarmStatus = newAlarmStatus;
-      settingsChanged = false;
-      cbCurrentValue = getValue();
-    }
+    cbAlarmStatus = newAlarmStatus;
+    cbCurrentValue = getValue();
+    newValue = true;
   }
+
+  return newValue;
+}
+
+boolean TemperatureBase::checkNewSettings()
+{
+  boolean newSettings = settingsChanged;
+  settingsChanged = false;
+
+  return newSettings;
 }
 
 float TemperatureBase::getValue()
@@ -139,9 +137,14 @@ float TemperatureBase::getValue()
   return (this->currentValue == INACTIVEVALUE) ? INACTIVEVALUE : getUnitValue(this->currentValue);
 }
 
-float TemperatureBase::GetMedianValue()
+float TemperatureBase::getPreValue()
 {
-  return getUnitValue(medianValue->AddValue(this->currentValue));
+  return (this->preValue == INACTIVEVALUE) ? INACTIVEVALUE : getUnitValue(this->preValue);
+}
+
+int8_t TemperatureBase::getGradient()
+{
+  return this->currentGradient;
 }
 
 float TemperatureBase::getMinValue()
@@ -294,8 +297,21 @@ boolean TemperatureBase::isActive()
   return (INACTIVEVALUE != this->currentValue);
 }
 
+void TemperatureBase::refresh()
+{
+  this->preValue = this->currentValue;
+  this->currentValue = this->medianValue->GetFiltered();
+  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0; 
+  this->currentGradient = (0 == gradient) ? 0 : gradient/abs(gradient);
+}
+
 void TemperatureBase::update()
 {
+}
+
+float TemperatureBase::decimalPlace(float value)
+{
+  return (((int) value*10.0)/10.0);
 }
 
 float TemperatureBase::getUnitValue(float value)

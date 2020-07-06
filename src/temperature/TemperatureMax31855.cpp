@@ -54,7 +54,7 @@ TemperatureMax31855::TemperatureMax31855(uint8_t index, uint8_t csPin) : Tempera
 
 void TemperatureMax31855::update()
 {
-  this->currentValue = this->calcTemperatureTypeK(this->readChip());
+  this->medianValue->AddValue(this->calcTemperatureTypeK(this->readChip()));
 }
 
 boolean TemperatureMax31855::isBuiltIn()

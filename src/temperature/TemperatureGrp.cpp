@@ -22,6 +22,7 @@
 #include "TemperatureBle.h"
 #include "Settings.h"
 #include "bluetooth/Bluetooth.h"
+#include "ArduinoLog.h"
 
 TemperatureGrp::TemperatureGrp()
 {
@@ -107,12 +108,32 @@ boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
 
 void TemperatureGrp::update()
 {
+  Log.verbose("TemperatureGrp::update()" CR);
+
   for (uint8_t i = 0u; i < count(); i++)
   {
-    if (temperatures[i] != NULL)
+    // get values form hardware
+    temperatures[i]->update();
+  }
+}
+
+void TemperatureGrp::refresh()
+{
+  Log.verbose("TemperatureGrp::refresh()" CR);
+
+  for (uint8_t i = 0u; i < count(); i++)
+  {
+    temperatures[i]->refresh();
+
+    boolean newValue = temperatures[i]->checkNewValue();
+    boolean settingsChanged = temperatures[i]->checkNewSettings();
+
+    if (newValue || settingsChanged)
     {
-      temperatures[i]->update();
-      temperatures[i]->handleCallbacks();
+      for (auto const &cbData : registeredCb)
+      {
+        cbData.cb(i, temperatures[i], settingsChanged, cbData.userData);
+      }
     }
   }
 }
@@ -291,4 +312,10 @@ void TemperatureGrp::saveConfig()
 TemperatureBase *TemperatureGrp::operator[](int index)
 {
   return (index < count()) ? temperatures[index] : NULL;
+}
+
+void TemperatureGrp::registerCallback(TemperatureCallback_t callback, void *userData)
+{
+  TemperatureCallbackDataType newCallbackData = {callback, userData};
+  registeredCb.push_back(newCallbackData);
 }

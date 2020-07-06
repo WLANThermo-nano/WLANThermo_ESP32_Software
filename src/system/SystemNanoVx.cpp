@@ -62,6 +62,7 @@ SystemNanoVx::SystemNanoVx() : SystemBase()
 void SystemNanoVx::hwInit()
 {
   // only init oled reset pin when coming from cold start
+  /*
   if (didSleep != true)
   {
     pinMode(OLED_RESET_IO, OUTPUT);
@@ -70,6 +71,7 @@ void SystemNanoVx::hwInit()
     digitalWrite(OLED_RESET_IO, HIGH);
     delay(100);
   }
+  */
 
   // initialize battery in hwInit!
   battery = new Battery();
@@ -136,7 +138,7 @@ void SystemNanoVx::init()
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"Kamado 50x50", 2, 1, 7.0, 0.019, 130, 25, 100, 70};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Custom", 3, 1, 7.0, 0.2, 0, 0, 100, 100, 0, 100};
 
   // default profiles and temperatures, will be overwritten when config exists
@@ -145,8 +147,8 @@ void SystemNanoVx::init()
 
   pitmasters.loadConfig();
 
-  powerSaveModeSupport = true;
-  setPowerSaveMode(true);
+  //powerSaveModeSupport = true;
+  //setPowerSaveMode(true);
 
   initDone = true;
 }

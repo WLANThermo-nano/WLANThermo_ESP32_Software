@@ -64,7 +64,7 @@ private:
     static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
     uint8_t dfuRxFunction(uint8_t *data, int maxLen);
     void getDevices();
-    void printResponseStatus();
+    boolean waitForBootloader(uint32_t timeoutInMs);
     static void task(void *parameter);
     boolean doDfu();
     uint8_t resetPin;

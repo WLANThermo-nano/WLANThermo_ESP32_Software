@@ -46,7 +46,7 @@ void TemperatureMcp3208::update()
 {
   if (this->calcTemperature != NULL)
   {
-    this->currentValue = this->calcTemperature(this->readChip(), this->type);
+    this->medianValue->AddValue(this->calcTemperature(this->readChip(), this->type));
   }
 }
 

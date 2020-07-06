@@ -23,6 +23,7 @@
 #include "bleFirmwareBin.h"
 #include "temperature/TemperatureBase.h"
 #include "Settings.h"
+#include "TaskConfig.h"
 #include <byteswap.h>
 
 #define BLE_BAUD 115200u
@@ -62,7 +63,7 @@ void Bluetooth::init()
     if (this->doDfu())
     {
         builtIn = true;
-        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, 1, NULL, 1);
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
     }
 }
 
@@ -306,27 +307,62 @@ void Bluetooth::task(void *parameter)
     while (1)
     {
         bluetooth->getDevices();
-        vTaskDelay(1000u);
+        vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
+}
+
+boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)
+{
+    const char bootloaderString[] = {'@', '@', 'B', 'O', 'O', 'T', 'L', 'O', 'A', 'D', 'E', 'R'};
+    uint32_t currentMillis = millis();
+    uint32_t serialStringIndex = 0u;
+    uint32_t bootloaderStringIndex = 0u;
+    boolean success = false;
+
+    while ((millis() - currentMillis) < timeoutInMs)
+    {
+        if (serialBle->available())
+        {
+            if (bootloaderString[bootloaderStringIndex++] == (char)serialBle->read())
+            {
+                if (sizeof(bootloaderString) == bootloaderStringIndex)
+                {
+                    success = true;
+                    break;
+                }
+            }
+            else
+            {
+                bootloaderStringIndex = 0u;
+            }
+        }
+    }
+
+    // Empty the RX buffer
+    while (serialBle->available())
+        serialBle->read();
+
+    return success;
 }
 
 boolean Bluetooth::doDfu()
 {
     boolean success = false;
 
-    //empty rx buffer
+    // Empty the RX buffer
     while (serialBle->available())
         serialBle->read();
 
-    serialBle->setTimeout(200);
+    // Toggle reset pin
     digitalWrite(resetPin, LOW);
     delay(20);
     digitalWrite(resetPin, HIGH);
 
-    String bootloaderResponse = serialBle->readString();
-    Serial.println(bootloaderResponse);
+    // Give the bootloader some time to start
+    delay(200);
 
-    if (bootloaderResponse.startsWith("@@BOOTLOADER"))
+    // check for startup string of bootloader
+    if (waitForBootloader(500u))
     {
         Serial.println("Hello from BLE bootloader");
 

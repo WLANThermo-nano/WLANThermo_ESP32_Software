@@ -24,6 +24,7 @@
 #include "DisplayOledIcons.h"
 #include "Settings.h"
 #include "Version.h"
+#include "TaskConfig.h"
 
 #define MAXBATTERYBAR 13u
 #define OLIMITMIN 35.0
@@ -33,8 +34,7 @@
 #define OLIMITMINF 95.0
 #define OLIMITMAXF 392.0
 #define DISPLAY_I2C_ADDRESS 0x3cu
-#define LBUTTON_IO 14u
-#define RBUTTON_IO 12u
+#define LBUTTON_IO 32u
 #define OLED_TASK_CYCLE_TIME 10u   // 10ms
 #define OLED_BOOT_SCREEN_TIME 100u // 100 * 10ms = 1s
 #define OLED_FLASH_INTERVAL 50u    // 50 * 10ms = 500ms
@@ -61,34 +61,29 @@ boolean DisplayOledLink::oledBlocked = false;
 SystemBase *DisplayOledLink::system = gSystem;
 SH1106Wire DisplayOledLink::oled = SH1106Wire(DISPLAY_I2C_ADDRESS, SDA, SCL);
 OLEDDisplayUi DisplayOledLink::ui = OLEDDisplayUi(&DisplayOledLink::oled);
-//FrameCallback DisplayOledLink::frames[] = {DisplayOledLink::drawTemp, DisplayOledLink::drawTempSettings, DisplayOledLink::drawPitmasterSettings, DisplayOledLink::drawSystemSettings};
 FrameCallback DisplayOledLink::frames[] = {DisplayOledLink::drawTemp};
 OverlayCallback DisplayOledLink::overlays[] = {drawOverlayBar};
-//OneButton DisplayOledLink::lButton = OneButton(LBUTTON_IO, true, true);
-//OneButton DisplayOledLink::rButton = OneButton(RBUTTON_IO, true, true);
+OneButton DisplayOledLink::lButton = OneButton(LBUTTON_IO, true, true);
 MenuItem DisplayOledLink::menuItem = MenuItem::Boot;
 //MenuMode DisplayOledLink::menuMode = MenuMode::Show;
 uint8_t DisplayOledLink::currentChannel = 0u;
 boolean DisplayOledLink::flashIndicator = false;
 
-
 DisplayOledLink::DisplayOledLink()
 {
 }
 
-
 void DisplayOledLink::init()
 {
   xTaskCreatePinnedToCore(
-      DisplayOledLink::task,   // Task function.
-      "DisplayOledLink::task",      // String with name of task.
-      10000,                    // Stack size in bytes.
-      this,                     // Parameter passed as input of the task
-      1,                        // Priority of the task.
-      NULL,                     // Task handle.
-      1);                       // CPU Core
+      DisplayOledLink::task,      // Task function.
+      "DisplayOledLink::task",    // String with name of task.
+      10000,                      // Stack size in bytes.
+      this,                       // Parameter passed as input of the task
+      TASK_PRIORITY_DISPLAY_TASK, // Priority of the task.
+      NULL,                       // Task handle.
+      1);                         // CPU Core
 }
-
 
 boolean DisplayOledLink::initDisplay()
 {
@@ -107,6 +102,15 @@ boolean DisplayOledLink::initDisplay()
   oled.clear();
   oled.display();
   drawConnect();
+
+  lButton.attachClick(this->lButtonClick);
+  lButton.attachLongPressStart(this->lButtonLongClickStart);
+  lButton.attachLongPressStop(this->lButtonLongClickEnd);
+  lButton.attachDoubleClick(this->lButtonDoubleClick);
+  lButton.attachDuringLongPress(this->lButtonLongClickOnGoing);
+  lButton.setDebounceTicks(BUTTON_DEBOUNCE_TICKS);
+  lButton.setClickTicks(BUTTON_CLICK_TICKS);
+  lButton.setPressTicks(BUTTON_PRESS_TICKS);
 
   return true;
 }
@@ -132,8 +136,6 @@ void DisplayOledLink::task(void *parameter)
 
   for (;;)
   {
-    vTaskDelayUntil(&xLastWakeTime, 10);
-
     display->system->wireLock();
     display->update();
     display->system->wireRelease();
@@ -143,6 +145,9 @@ void DisplayOledLink::task(void *parameter)
       flashTimeout = OLED_FLASH_INTERVAL;
       display->flashIndicator = !display->flashIndicator;
     }
+
+    // Wait for the next cycle.
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
   }
 }
 
@@ -168,12 +173,41 @@ void DisplayOledLink::update()
   // check global block
   if (!blocked)
   {
+    lButton.tick();
+
     //check oled block
     if (!oledBlocked)
       ui.update();
   }
 }
 
+void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
+{
+  if (ButtonEvent::Click == buttonEvent)
+  {
+    handleTemperatureNavigation(buttonId);
+  }
+  else if (ButtonEvent::LongClickStart == buttonEvent)
+  {
+  }
+  else if (ButtonEvent::LongClickEnd == buttonEvent)
+  {
+  }
+  else if (ButtonEvent::LongClickOnGoing == buttonEvent)
+  {
+  }
+}
+
+void DisplayOledLink::handleTemperatureNavigation(ButtonId buttonId)
+{
+  if (ButtonId::Left == buttonId)
+  {
+    if (currentChannel < system->temperatures.count() - 1u)
+      currentChannel++;
+    else
+      currentChannel = 0u;
+  }
+}
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Frame while system start
@@ -187,7 +221,6 @@ void DisplayOledLink::drawConnect()
   oled.drawXbm(7, 4, nano_width, nano_height, xbmnano);
   oled.display();
 }
-
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // STATUS ROW
@@ -224,7 +257,6 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     case pm_auto:
       display->drawString(33, 0, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
       break;
-
     }
   }
 
@@ -252,7 +284,6 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
   {
     display->drawString(128, 0, "");
   }
-
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -342,8 +373,6 @@ void DisplayOledLink::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, 
     }
   }
 }
-
-
 
 /*
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -6,13 +6,16 @@ $nextionHmiFile = $PSScriptRoot + "\miniVx.HMI"
 $nextionTftFile = $PSScriptRoot + "\miniVx.tft"
 $nextionArtifactsFolder = $PSScriptRoot + "\artifacts"
 $nextionDataFolder = $PSScriptRoot + "\data"
-$javaBin = "C:\Program Files\Java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe"
+$javaBin = $env:JAVA_HOME_11_X64 + "\bin\java.exe"
 #$javaBin = "C:\Program Files\Java\jdk-13.0.1\bin\java.exe"
 $sikulixUrl = "https://launchpad.net/sikuli/sikulix/2.0.2/+download/sikulix-2.0.2.jar"
 $sikulix = $PSScriptRoot + "\sikulix-2.0.2.jar"
 $sikulixScript = $PSScriptRoot + "\nextion.sikuli"
 $jythonUrl = "https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.1/jython-standalone-2.7.1.jar"
 $jython = $PSScriptRoot + "\jython-standalone-2.7.1.jar"
+
+#list env
+gci env:
 
 (New-Object System.Net.WebClient).DownloadFile($nextionEditorUrl, $nextionEditorZip)
 (New-Object System.Net.WebClient).DownloadFile($sikulixUrl, $sikulix)
