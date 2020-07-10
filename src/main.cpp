@@ -25,6 +25,7 @@
 #include "Server.h"
 #include "DbgPrint.h"
 #include "ArduinoLog.h"
+#include "LogRingBuffer.h"
 #include "TaskConfig.h"
 
 // Forward declaration
@@ -44,8 +45,9 @@ void setup()
   // Initialize Serial
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  Log.begin(LOG_LEVEL_NOTICE, &Serial);
-  Log.setPrefix(loggingPrefix);
+  Log.begin(LOG_LEVEL_TRACE, &gLogRingBuffer);
+  //Log.setPrefix(loggingPrefix);
+  Log.notice("Start logging" CR);
 
   gSystem->hwInit();
   gDisplay->loadConfig();
