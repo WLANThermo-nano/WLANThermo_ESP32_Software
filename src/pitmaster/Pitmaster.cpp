@@ -111,8 +111,9 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
-    // Skip BLE temperatures for assignment
-    if (temperature->getType() != (uint8_t)SensorType::Ble)
+    // Skip BLE and Maverick Radio temperatures for assignment
+    if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
+        (temperature->getType() != (uint8_t)SensorType::MaverickRadio))
     {
         this->temperature = temperature;
         memset((void *)&this->openLid, 0u, sizeof(this->openLid));
@@ -512,8 +513,10 @@ boolean Pitmaster::checkOpenLid()
 {
     if ((pm_auto == this->type) && (true == this->profile->opl) && true == this->temperature->isActive())
     {
-        if(this->temperature->getGradient() == -1) openLid.fall_c ++;
-        else openLid.fall_c = 0;
+        if (this->temperature->getGradient() == -1)
+            openLid.fall_c++;
+        else
+            openLid.fall_c = 0;
 
         // erkennen ob Temperatur wieder eingependelt oder Timeout
         if (openLid.detected)
@@ -532,7 +535,7 @@ boolean Pitmaster::checkOpenLid()
             else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
                 openLid.detected = false;
         }
-        else if (openLid.fall_c == 1) 
+        else if (openLid.fall_c == 1)
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
         }
@@ -544,7 +547,7 @@ boolean Pitmaster::checkOpenLid()
 
             Serial.print("OPL: ");
             Serial.println(openLid.temp);
-        }      
+        }
     }
     else
     {
