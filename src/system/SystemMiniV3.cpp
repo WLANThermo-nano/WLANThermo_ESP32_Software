@@ -102,15 +102,18 @@ void SystemMiniV3::init()
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
-  //check if thermocouple is built in
-  TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(0u, CS_MAX31855_N1);
-  if (checkThermocouple->isBuiltIn())
+  if (false == disableTypeK)
   {
-    temperatures.add(checkThermocouple);
-  }
-  else
-  {
-    delete (checkThermocouple);
+    //check if thermocouple is built in
+    TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(0u, CS_MAX31855_N1);
+    if (checkThermocouple->isBuiltIn())
+    {
+      temperatures.add(checkThermocouple);
+    }
+    else
+    {
+      delete (checkThermocouple);
+    }
   }
 
   // add blutetooth feature

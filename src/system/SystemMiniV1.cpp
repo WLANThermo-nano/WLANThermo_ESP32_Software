@@ -95,11 +95,14 @@ void SystemMiniV1::init()
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
-  // check if 433Mhz receiver is available
-  if (TemperatureMavRadio::initReceiver(MAVERICK_RX_PIN))
+  if (false == disableReceiver)
   {
-    temperatures.add(new TemperatureMavRadio(0u));
-    temperatures.add(new TemperatureMavRadio(1u));
+    // check if 433Mhz receiver is available
+    if (TemperatureMavRadio::initReceiver(MAVERICK_RX_PIN))
+    {
+      temperatures.add(new TemperatureMavRadio(0u));
+      temperatures.add(new TemperatureMavRadio(1u));
+    }
   }
 
   // add blutetooth feature
