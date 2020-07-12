@@ -986,9 +986,9 @@ function readTemp() {
                 }
                 else if (jr.channel[i].typ == 17) {
                     if (jr.channel[i].connected == true)
-                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('Wlan100') + '\t' + "#" + jr.channel[i].number;
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio') + '\t' + "#" + jr.channel[i].number;
                     else
-                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('Wlan100 icon-disabled') + '\t' + "#" + jr.channel[i].number;
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio icon-disabled') + '\t' + "#" + jr.channel[i].number;
                 }
                 else {
                     x[i].getElementsByClassName('chnumber')[0].innerHTML = "#" + jr.channel[i].number;

@@ -149,6 +149,12 @@
 			content: "\e913";
 		}
 
+		.icon-radio:before {
+			display:inline-block;
+			transform:rotate(-90deg);
+			content: "\e907";
+		}
+
 		.icon-wifi-off:before {
 			content: "\e915";
 		}
