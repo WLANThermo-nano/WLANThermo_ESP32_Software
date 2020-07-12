@@ -61,6 +61,7 @@ public:
   void handleAdmin(AsyncWebServerRequest *request);
   void handleUpdate(AsyncWebServerRequest *request);
   void handleBluetooth(AsyncWebServerRequest *request);
+  void handleLog(AsyncWebServerRequest *request);
 
   // Body handler
   bool setServerAPI(AsyncWebServerRequest *request, uint8_t *datas);
