@@ -24,6 +24,7 @@
 #include "SystemMiniV2.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
+#include "temperature/TemperatureMavRadio.h"
 #include "display/DisplayNextion.h"
 #include "Constants.h"
 
@@ -48,6 +49,9 @@
 #define BLE_UART_TX 12
 #define BLE_UART_RX 14
 #define BLE_RESET_PIN 4u
+
+// MAVERICK RADIO
+#define MAVERICK_RX_PIN 36u
 
 enum ledcChannels
 {
@@ -94,25 +98,38 @@ void SystemMiniV2::init()
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
 
-  //check if thermocouple is built in
-  TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(0u, CS_MAX31855_N1);
-  if (checkThermocouple->isBuiltIn())
+  if (false == disableTypeK)
   {
-    temperatures.add(checkThermocouple);
-  }
-  else
-  {
-    delete (checkThermocouple);
+    //check if thermocouple is built in
+    TemperatureMax31855 *checkThermocouple = new TemperatureMax31855(0u, CS_MAX31855_N1);
+    if (checkThermocouple->isBuiltIn())
+    {
+      temperatures.add(checkThermocouple);
+    }
+    else
+    {
+      delete (checkThermocouple);
+    }
+
+    checkThermocouple = new TemperatureMax31855(1u, CS_MAX31855_N2);
+    if (checkThermocouple->isBuiltIn())
+    {
+      temperatures.add(checkThermocouple);
+    }
+    else
+    {
+      delete (checkThermocouple);
+    }
   }
 
-  checkThermocouple = new TemperatureMax31855(1u, CS_MAX31855_N2);
-  if (checkThermocouple->isBuiltIn())
+  if (false == disableReceiver)
   {
-    temperatures.add(checkThermocouple);
-  }
-  else
-  {
-    delete (checkThermocouple);
+    // check if 433Mhz receiver is available
+    if (TemperatureMavRadio::initReceiver(MAVERICK_RX_PIN))
+    {
+      temperatures.add(new TemperatureMavRadio(0u));
+      temperatures.add(new TemperatureMavRadio(1u));
+    }
   }
 
   // add blutetooth feature
