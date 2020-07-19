@@ -22,6 +22,7 @@
 #include "bleFirmwareDat.h"
 #include "bleFirmwareBin.h"
 #include "temperature/TemperatureBase.h"
+#include "system/SystemBase.h"
 #include "Settings.h"
 #include "TaskConfig.h"
 #include <byteswap.h>
@@ -144,8 +145,10 @@ void Bluetooth::getDevices()
         }
     }
 
+    gSystem->wireLock();
     serialBle->printf("getDevices=%d\n", requestedDevices);
     String bleDeviceJson = serialBle->readStringUntil('\n');
+    gSystem->wireRelease();
     Serial.println(bleDeviceJson);
 
     DynamicJsonBuffer jsonBuffer;
@@ -357,6 +360,10 @@ boolean Bluetooth::doDfu()
     digitalWrite(resetPin, LOW);
     delay(20);
     digitalWrite(resetPin, HIGH);
+
+    // Set reset pin to input after reset, this is IMPORTANT!!!
+    // Otherwise the nrf52 will reset when power save mode is enabled
+    pinMode(resetPin, INPUT);
 
     // Give the bootloader some time to start
     delay(200);
