@@ -36,9 +36,8 @@
 #define DISPLAY_I2C_ADDRESS 0x3cu
 #define LBUTTON_IO 14u
 #define RBUTTON_IO 12u
-#define OLED_TASK_CYCLE_TIME 10u   // 10ms
-#define OLED_BOOT_SCREEN_TIME 100u // 100 * 10ms = 1s
-#define OLED_FLASH_INTERVAL 50u    // 50 * 10ms = 500ms
+#define OLED_BOOT_SCREEN_TIME 200u // 200 * 10ms = 2s
+#define OLED_FLASH_INTERVAL 500u   // in ms
 #define OLED_WIFI_AP_DELAY 10000u
 #define OLED_BATTERY_PERCENTAGE_DELAY 10000u
 #define BUTTON_DEBOUNCE_TICKS 10u
@@ -57,6 +56,7 @@ enum class Frames
 float DisplayOled::currentData = 0; // Zwischenspeichervariable
 uint8_t DisplayOled::buttonMupi = 1u;
 boolean DisplayOled::oledBlocked = false;
+TaskHandle_t DisplayOled::taskHandle = NULL;
 String alarmname[4] = {"off", "push", "summer", "all"};
 
 SystemBase *DisplayOled::system = gSystem;
@@ -83,7 +83,7 @@ void DisplayOled::init()
       10000,                      /* Stack size in bytes. */
       this,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
-      NULL,                       /* Task handle. */
+      &taskHandle,                /* Task handle. */
       1);                         /* CPU Core */
 }
 
@@ -126,12 +126,20 @@ boolean DisplayOled::initDisplay()
   rButton.setClickTicks(BUTTON_CLICK_TICKS);
   rButton.setPressTicks(BUTTON_PRESS_TICKS);
 
+  attachInterrupt(LBUTTON_IO, buttonInterruptHandler, CHANGE);
+  attachInterrupt(RBUTTON_IO, buttonInterruptHandler, CHANGE);
+
   return true;
+}
+
+void DisplayOled::buttonInterruptHandler()
+{
+  vTaskNotifyGiveFromISR(taskHandle, NULL);
 }
 
 void DisplayOled::task(void *parameter)
 {
-  uint8_t flashTimeout = OLED_FLASH_INTERVAL;
+  uint32_t flashTimeout = millis();
   TickType_t xLastWakeTime = xTaskGetTickCount();
   uint8_t bootScreenTimeout = OLED_BOOT_SCREEN_TIME;
   DisplayOled *display = (DisplayOled *)parameter;
@@ -143,25 +151,33 @@ void DisplayOled::task(void *parameter)
   // show boot screen
   while (bootScreenTimeout || display->system->isInitDone() != true)
   {
-    vTaskDelayUntil(&xLastWakeTime, OLED_TASK_CYCLE_TIME);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
     if (bootScreenTimeout)
       bootScreenTimeout--;
   }
 
+  TickType_t timeout = TASK_CYCLE_TIME_DISPLAY_FAST_TASK;
+
   for (;;)
   {
+
+    // This function will block until notify or timeout
+    if (ulTaskNotifyTake(pdTRUE, timeout) != 0)
+    {
+      /* Do nothing */
+    }
+
     display->system->wireLock();
     display->update();
     display->system->wireRelease();
 
-    if (!flashTimeout--)
+    if ((millis() - flashTimeout) >= OLED_FLASH_INTERVAL)
     {
-      flashTimeout = OLED_FLASH_INTERVAL;
+      flashTimeout = millis();
       display->flashIndicator = !display->flashIndicator;
     }
 
-    // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
+    timeout = (MenuItem::TempShow == menuItem) ? TASK_CYCLE_TIME_DISPLAY_SLOW_TASK : TASK_CYCLE_TIME_DISPLAY_FAST_TASK;
   }
 }
 
@@ -722,31 +738,31 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
 
     if (showbattery)
       display->drawString(24, 1, String(system->battery->percentage));
-  
+
     if (flashIndicator && gSystem->battery->percentage < 10)
     {
     } // nothing for flash effect
     else if (gSystem->battery->isCharging())
     {
-      display->fillRect(18,5,2,4);              //Draw battery end button
-      display->drawRect(0,3,17,8);              //Draw Outline Battery
-    
+      display->fillRect(18, 5, 2, 4); //Draw battery end button
+      display->drawRect(0, 3, 17, 8); //Draw Outline Battery
+
       display->setColor(BLACK);
-      display->fillRect(4,2,8,10);              //Lücke für Pfeil
+      display->fillRect(4, 2, 8, 10); //Lücke für Pfeil
       display->setColor(WHITE);
-    
+
       display->drawXbm(4, 2, 8, 10, xbmcharge); // Ladepfeilspitze
-      display->fillRect(2,5,6,4);               // Ladepfeilstiel
+      display->fillRect(2, 5, 6, 4);            // Ladepfeilstiel
     }
     else if (gSystem->battery->isUsbPowered())
     {
-      display->drawString(1,1,"USB");
+      display->drawString(1, 1, "USB");
     }
     else
     {
-      display->fillRect(18,5,2,4);         //Draw battery end button
-      display->drawRect(0,3,17,8);         //Draw Outline
-      display->fillRect(2,5,battPixel,4);  // Draw Battery Status
+      display->fillRect(18, 5, 2, 4);        //Draw battery end button
+      display->drawRect(0, 3, 17, 8);        //Draw Outline
+      display->fillRect(2, 5, battPixel, 4); // Draw Battery Status
     }
   }
 }
