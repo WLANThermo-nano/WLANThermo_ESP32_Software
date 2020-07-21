@@ -23,6 +23,7 @@
 #include <driver/ledc.h>
 #include "SystemMiniV1.h"
 #include "temperature/TemperatureMcp3208.h"
+#include "temperature/TemperatureMavRadio.h"
 #include "display/DisplayNextion.h"
 #include "Constants.h"
 
@@ -45,6 +46,9 @@
 #define BLE_UART_TX 12
 #define BLE_UART_RX 14
 #define BLE_RESET_PIN 4u
+
+// MAVERICK RADIO
+#define MAVERICK_RX_PIN 36u
 
 enum ledcChannels
 {
@@ -90,6 +94,16 @@ void SystemMiniV1::init()
   temperatures.add(new TemperatureMcp3208(5u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(6u, CS_MCP3208));
   temperatures.add(new TemperatureMcp3208(7u, CS_MCP3208));
+
+  if (false == disableReceiver)
+  {
+    // check if 433Mhz receiver is available
+    if (TemperatureMavRadio::initReceiver(MAVERICK_RX_PIN))
+    {
+      temperatures.add(new TemperatureMavRadio(0u));
+      temperatures.add(new TemperatureMavRadio(1u));
+    }
+  }
 
   // add blutetooth feature
   bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);

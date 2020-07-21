@@ -104,6 +104,8 @@ protected:
   boolean powerSaveModeEnabled;
   boolean damperSupport;
   boolean initDone;
+  boolean disableTypeK;
+  boolean disableReceiver;
   SemaphoreHandle_t wireSemaHandle;
   esp_pm_lock_handle_t wirePmHandle;
 

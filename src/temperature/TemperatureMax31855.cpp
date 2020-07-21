@@ -20,6 +20,7 @@
 
 #include <SPI.h>
 #include "TemperatureMax31855.h"
+#include "ArduinoLog.h"
 
 #define MAX31855_FAULT_BITS 0x07u
 #define MAX31855_TEMPERATURE_MASK 0x1FFFu
@@ -72,6 +73,12 @@ boolean TemperatureMax31855::isBuiltIn()
   else if (value >> MAX31855_BUILT_IN_TEST_SHIFT)
   {
     chipAvailable = true;
+  }
+
+  if (chipAvailable)
+  {
+    Log.notice("Type K has been detected" CR);
+    Log.trace("Type K readChip: %X" CR, value);
   }
 
   return chipAvailable;

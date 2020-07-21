@@ -32,6 +32,7 @@
 #include "display/DisplayBase.h"
 #include "Version.h"
 #include "RecoveryMode.h"
+#include "LogRingBuffer.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 #include "webui/restart.html.gz.h"
@@ -88,6 +89,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
+    {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
@@ -476,6 +478,11 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
 
   response->setLength();
   request->send(response);
+}
+
+void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
+{
+  request->send(200, TEXTPLAIN, gLogRingBuffer.get());
 }
 
 int NanoWebHandler::checkStringLength(String tex)

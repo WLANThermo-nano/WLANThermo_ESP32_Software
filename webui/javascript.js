@@ -573,7 +573,7 @@ function showPitmaster() {
             byId('pitmaster_typ' + pitID.toString()).value = jr.pitmaster.pm[pitID].typ;
             clearOption('pitmaster_channel' + pitID.toString());
             for (var i = 0; i < jr.channel.length; i++) {
-                if (jr.channel[i].typ != 16) {
+                if ((jr.channel[i].typ != 16) && (jr.channel[i].typ != 17)) {
                     byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
                 }
             }
@@ -983,6 +983,12 @@ function readTemp() {
                         x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1') + '\t' + "#" + jr.channel[i].number;
                     else
                         x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1 icon-disabled') + '\t' + "#" + jr.channel[i].number;
+                }
+                else if (jr.channel[i].typ == 17) {
+                    if (jr.channel[i].connected == true)
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio') + '\t' + "#" + jr.channel[i].number;
+                    else
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio icon-disabled') + '\t' + "#" + jr.channel[i].number;
                 }
                 else {
                     x[i].getElementsByClassName('chnumber')[0].innerHTML = "#" + jr.channel[i].number;
