@@ -24,6 +24,7 @@
 #include "temperature/TemperatureBase.h"
 #include "system/SystemBase.h"
 #include "Settings.h"
+#include "ArduinoLog.h"
 #include "TaskConfig.h"
 #include <byteswap.h>
 
@@ -351,6 +352,7 @@ boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)
 boolean Bluetooth::doDfu()
 {
     boolean success = false;
+    boolean flashed = false;
 
     // Empty the RX buffer
     while (serialBle->available())
@@ -372,8 +374,8 @@ boolean Bluetooth::doDfu()
     if (waitForBootloader(500u))
     {
         Serial.println("Hello from BLE bootloader");
-
         Serial.println("Start flashing of BLE application");
+        Log.notice("BLE chip detected" CR);
         uint32_t flashStart = millis();
 
         TFwu sFwu;
@@ -409,10 +411,13 @@ boolean Bluetooth::doDfu()
                 if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
                 {
                     Serial.println("\nFlashing skipped, version already up to date");
+                    Log.notice("BLE chip already up-to-date" CR);
                 }
                 else
                 {
                     Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
+                    Log.notice("BLE chip successfully flashed in %dms" CR, (millis() - flashStart));
+                    flashed = true;
                 }
 
                 success = true;
@@ -421,8 +426,23 @@ boolean Bluetooth::doDfu()
             else if (status == FWU_STATUS_FAILURE)
             {
                 Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
+                Log.error("BLE chip flashing failed after %dms" CR, (millis() - flashStart));
                 break;
             }
+        }
+    }
+
+    // Wait again for the bootloader after update
+    if ((true == success) && (true == flashed))
+    {
+        if (waitForBootloader(5000u))
+        {
+            Serial.println("Hello from BLE bootloader again");
+            Log.notice("BLE chip detected after flashing" CR);
+        }
+        else
+        {
+            success = false;
         }
     }
 
