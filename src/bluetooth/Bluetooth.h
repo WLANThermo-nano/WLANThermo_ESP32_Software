@@ -53,7 +53,9 @@ public:
     void init();
     void loadConfig(TemperatureGrp *temperatureGrp);
     void saveConfig();
-    boolean isBuiltIn() { return builtIn; };
+    boolean isBuiltIn() { return builtIn; }
+    void enable(boolean enable);
+    boolean isEnabled() { return enabled; }
     uint8_t getDeviceCount();
     boolean getDevice(uint8_t index, BleDevice *device);
     void setDeviceSelected(String peerAddress, uint8_t selected);
@@ -67,8 +69,11 @@ private:
     boolean waitForBootloader(uint32_t timeoutInMs);
     static void task(void *parameter);
     boolean doDfu();
+    void enableChip(boolean enable);
     uint8_t resetPin;
     boolean builtIn;
+    static boolean enabled;
+    boolean chipEnabled;
     static std::vector<BleDeviceType *> bleDevices;
     static HardwareSerial *serialBle;
 };
