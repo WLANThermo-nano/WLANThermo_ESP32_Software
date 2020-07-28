@@ -21,6 +21,7 @@
 #include "Pitmaster.h"
 #include "DbgPrint.h"
 #include "math.h"
+#include "ArduinoLog.h"
 
 #define PIDKIMAX 95 // ANTI WINDUP LIMIT MAX
 #define PIDKIMIN 0  // ANTI WINDUP LIMIT MIN
@@ -527,26 +528,43 @@ boolean Pitmaster::checkOpenLid()
 
             // extremes Überschwingen vermeiden
             if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
+            {    
                 openLid.temp = this->targetTemperature;
+                Log.notice("OPL Reference: %X" CR, openLid.temp);
+            }
 
             if (openLid.count <= 0) // Timeout
+            {
                 openLid.detected = false;
+                Log.notice("OPL finished: Timeout" CR);
+            }    
 
             else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
+            {    
                 openLid.detected = false;
+                Log.notice("OPL finished: Lid closed" CR);
+            }
         }
         else if (openLid.fall_c == 1)
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
+            Log.notice("OPL 1: %X" CR, openLid.temp);
+        }
+        else if (openLid.fall_c == 2)
+        {
+            Log.notice("OPL 1: %X" CR, openLid.ref);
+            Log.notice("OPL 2: %X" CR, this->temperature->getPreValue());
+            Log.notice("OPL 3: %X" CR, this->temperature->getValue());
         }
         else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
-        { // Opened lid detected!
+        { // Opened lid detected!            
             openLid.detected = true;
             openLid.temp = openLid.ref;
             openLid.count = OPL_PAUSE; // TODO: check pause
+            
+            Log.notice("OPL detected" CR);
+            Log.notice("OPL Reference: %X" CR, openLid.temp);
 
-            Serial.print("OPL: ");
-            Serial.println(openLid.temp);
         }
     }
     else
