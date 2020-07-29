@@ -1,7 +1,7 @@
 import sys.argv
 
-wait("Update.png", 10)
-click("Update.png")
+if exists("Update.png", 10):
+    click("Update.png")
 wait("Device_ID.png", 10)
 click("Device_ID.png")
 click("Dummy_Direction.png")
