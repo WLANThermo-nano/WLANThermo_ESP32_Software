@@ -2,6 +2,7 @@ import sys.argv
 
 if exists("Update.png", 10):
     click("Update.png")
+sleep(20)
 wait("Device_ID.png", 10)
 click("Device_ID.png")
 click("Dummy_Direction.png")
