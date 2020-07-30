@@ -519,6 +519,9 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (_system.containsKey("language"))
     gSystem->setLanguage(_system["language"].asString());
+
+  gSystem->saveConfig();
+
   if (_system.containsKey("unit"))
     unit = _system["unit"].asString();
   if (_system.containsKey("autoupd"))

@@ -188,6 +188,12 @@ void SystemBase::resetConfig()
 
 void SystemBase::saveConfig()
 {
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = jsonBuffer.createObject();
+  json["DisableTypeK"] = disableTypeK;
+  json["DisableReceiver"] = disableReceiver;
+  json["language"] = language;
+  Settings::write(kSystem, json);
 }
 
 void SystemBase::loadConfig()
@@ -201,6 +207,8 @@ void SystemBase::loadConfig()
       disableTypeK = json["DisableTypeK"].as<boolean>();
     if (json.containsKey("DisableReceiver"))
       disableReceiver = json["DisableReceiver"].as<boolean>();
+    if (json.containsKey("language"))
+      language = json["language"].asString();
   }
 
   SPIFFS.begin();
