@@ -91,6 +91,13 @@ void WServer::init()
     request->send(200, TEXTPLAIN, "Done");
   });
 
+  webServer->on("/settestmode", [](AsyncWebServerRequest *request) {
+    CloudConfig cloudConfig = gSystem->cloud.getConfig();
+    cloudConfig.interval = 3;
+    gSystem->cloud.setConfig(cloudConfig);
+    request->send(200, TEXTPLAIN, "3 Sekunden");
+  });
+
   webServer->on("/stop", [](AsyncWebServerRequest *request) {
     for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
     {
