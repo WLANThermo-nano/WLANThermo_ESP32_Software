@@ -113,6 +113,8 @@ public:
   void setValue(float value);
   void setTargetTemperature(float temperature);
   float getTargetTemperature();
+  boolean getOPLStatus();
+  float getOPLTemperature();
   uint8_t getGlobalIndex() { return this->globalIndex; };
   bool startDutyCycleTest(uint8_t actuator, uint8_t value);
   bool startAutoTune();

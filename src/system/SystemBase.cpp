@@ -52,6 +52,8 @@ SystemBase::SystemBase()
   powerSaveModeEnabled = false;
   damperSupport = false;
   initDone = false;
+  disableTypeK = false;
+  disableReceiver = false;
   wireSemaHandle = xSemaphoreCreateMutex();
   esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "NULL", &this->wirePmHandle);
 }
@@ -186,10 +188,29 @@ void SystemBase::resetConfig()
 
 void SystemBase::saveConfig()
 {
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = jsonBuffer.createObject();
+  json["DisableTypeK"] = disableTypeK;
+  json["DisableReceiver"] = disableReceiver;
+  json["language"] = language;
+  Settings::write(kSystem, json);
 }
 
 void SystemBase::loadConfig()
 {
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = Settings::read(kSystem, &jsonBuffer);
+
+  if (json.success())
+  {
+    if (json.containsKey("DisableTypeK"))
+      disableTypeK = json["DisableTypeK"].as<boolean>();
+    if (json.containsKey("DisableReceiver"))
+      disableReceiver = json["DisableReceiver"].as<boolean>();
+    if (json.containsKey("language"))
+      language = json["language"].asString();
+  }
+
   SPIFFS.begin();
   cloud.loadConfig();
   mqtt.loadConfig();

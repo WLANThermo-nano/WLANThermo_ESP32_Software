@@ -55,6 +55,10 @@
 			margin-left: 2px;
 		}
 
+		.icon-disabled:before {
+			color: #808080;
+		}
+
 		.icon-red:before {
 			color: #FF0000;
 		}
@@ -143,6 +147,12 @@
 
 		.icon-fan:before {
 			content: "\e913";
+		}
+
+		.icon-radio:before {
+			display:inline-block;
+			transform:rotate(-45deg);
+			content: "\e907";
 		}
 
 		.icon-wifi-off:before {

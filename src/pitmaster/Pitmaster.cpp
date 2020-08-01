@@ -21,6 +21,7 @@
 #include "Pitmaster.h"
 #include "DbgPrint.h"
 #include "math.h"
+#include "ArduinoLog.h"
 
 #define PIDKIMAX 95 // ANTI WINDUP LIMIT MAX
 #define PIDKIMIN 0  // ANTI WINDUP LIMIT MIN
@@ -111,8 +112,9 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
-    // Skip BLE temperatures for assignment
-    if (temperature->getType() != (uint8_t)SensorType::Ble)
+    // Skip BLE and Maverick Radio temperatures for assignment
+    if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
+        (temperature->getType() != (uint8_t)SensorType::MaverickRadio))
     {
         this->temperature = temperature;
         memset((void *)&this->openLid, 0u, sizeof(this->openLid));
@@ -512,8 +514,10 @@ boolean Pitmaster::checkOpenLid()
 {
     if ((pm_auto == this->type) && (true == this->profile->opl) && true == this->temperature->isActive())
     {
-        if(this->temperature->getGradient() == -1) openLid.fall_c ++;
-        else openLid.fall_c = 0;
+        if (this->temperature->getGradient() == -1)
+            openLid.fall_c++;
+        else
+            openLid.fall_c = 0;
 
         // erkennen ob Temperatur wieder eingependelt oder Timeout
         if (openLid.detected)
@@ -524,27 +528,44 @@ boolean Pitmaster::checkOpenLid()
 
             // extremes Überschwingen vermeiden
             if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
+            {    
                 openLid.temp = this->targetTemperature;
+                Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
+            }
 
             if (openLid.count <= 0) // Timeout
+            {
                 openLid.detected = false;
+                Log.notice("OPL finished: Timeout" CR);
+            }    
 
             else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
+            {    
                 openLid.detected = false;
+                Log.notice("OPL finished: Lid closed" CR);
+            }
         }
-        else if (openLid.fall_c == 1) 
+        else if (openLid.fall_c == 1)
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
         }
+        else if (openLid.fall_c == 2)
+        {
+            Log.notice("OPL 1: %F" CR, (float)(openLid.ref));
+            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getPreValue()));
+            Log.notice("OPL 3: %F" CR, (float)(this->temperature->getValue()));
+        }
+        // wenn in 4 Schritten nicht unter Threshold, dann ist es auch keine Deckelöffnung
         else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
-        { // Opened lid detected!
+        { // Opened lid detected!            
             openLid.detected = true;
             openLid.temp = openLid.ref;
             openLid.count = OPL_PAUSE; // TODO: check pause
+            
+            Log.notice("OPL detected" CR);
+            Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
 
-            Serial.print("OPL: ");
-            Serial.println(openLid.temp);
-        }      
+        }
     }
     else
     {
@@ -553,6 +574,16 @@ boolean Pitmaster::checkOpenLid()
     }
 
     return openLid.detected;
+}
+
+boolean Pitmaster::getOPLStatus()
+{
+    return openLid.detected;
+}
+
+float Pitmaster::getOPLTemperature()
+{
+    return openLid.temp;
 }
 
 void Pitmaster::update()

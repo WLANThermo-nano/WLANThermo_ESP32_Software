@@ -301,8 +301,8 @@ void TemperatureBase::refresh()
 {
   this->preValue = this->currentValue;
   this->currentValue = this->medianValue->GetFiltered();
-  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0; 
-  this->currentGradient = (0 == gradient) ? 0 : gradient/abs(gradient);
+  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0;
+  this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
 }
 
 void TemperatureBase::update()
@@ -311,7 +311,7 @@ void TemperatureBase::update()
 
 float TemperatureBase::decimalPlace(float value)
 {
-  return (((int) value*10.0)/10.0);
+  return (((int)value * 10.0) / 10.0);
 }
 
 float TemperatureBase::getUnitValue(float value)
@@ -320,7 +320,7 @@ float TemperatureBase::getUnitValue(float value)
 
   if (this->currentUnit == Fahrenheit)
   {
-    convertedValue = ((value * (9 / 5)) + 32);
+    convertedValue = ((value * (1.8)) + 32);
   }
 
   return convertedValue;
@@ -332,7 +332,7 @@ float TemperatureBase::setUnitValue(float value)
 
   if (this->currentUnit == Fahrenheit)
   {
-    convertedValue = (value - 32) * (5 / 9);
+    convertedValue = (value - 32) * (5.0 / 9);
   }
 
   return convertedValue;

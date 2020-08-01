@@ -17,20 +17,61 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#include "LogRingBuffer.h"
 
-#define TASK_PRIORITY_OTA_UPDATE 100
-#define TASK_PRIORITY_SYSTEM_TASK 30
-#define TASK_PRIORITY_MAIN_TASK 3
-#define TASK_PRIORITY_CONNECT_TASK 1
-#define TASK_PRIORITY_DISPLAY_TASK 1
-#define TASK_PRIORITY_BLUETOOTH_TASK 1
+LogRingBuffer::LogRingBuffer()
+{
+  bufferIndex = 0u;
+  isFull = false;
+}
 
-#define TASK_CYCLE_TIME_SYSTEM_TASK 200
-#define TASK_CYCLE_TIME_MAIN_TASK 200
+LogRingBuffer::~LogRingBuffer()
+{
+  if (buffer != NULL)
+  {
+    delete (buffer);
+  }
+}
 
-#define TASK_CYCLE_TIME_CONNECT_TASK 1000
+size_t LogRingBuffer::write(uint8_t character)
+{
+  buffer[bufferIndex++] = character;
 
-#define TASK_CYCLE_TIME_DISPLAY_FAST_TASK 10
-#define TASK_CYCLE_TIME_DISPLAY_SLOW_TASK 100
+  // Check for overflow
+  if (bufferIndex >= LOG_BUFFER_SIZE)
+  {
+    bufferIndex = 0u;
+    isFull = true;
+  }
+}
 
-#define TASK_CYCLE_TIME_BLUETOOTH_TASK 1000
+String LogRingBuffer::get()
+{
+  String logString;
+
+  if ((false == isFull))
+  {
+    for (size_t i = 0u; i < bufferIndex; i++)
+    {
+      logString += buffer[i];
+    }
+  }
+  else
+  {
+    for (size_t i = 0; i < LOG_BUFFER_SIZE; i++)
+    {
+      size_t index = bufferIndex + i;
+
+      if (index >= LOG_BUFFER_SIZE)
+      {
+        index -= LOG_BUFFER_SIZE;
+      }
+
+      logString += buffer[index];
+    }
+  }
+
+  return logString;
+}
+
+LogRingBuffer gLogRingBuffer;

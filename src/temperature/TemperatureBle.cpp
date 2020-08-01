@@ -35,6 +35,14 @@ TemperatureBle::TemperatureBle(String peerAddress, uint8_t index) : TemperatureB
 
 void TemperatureBle::refresh()
 {
-  this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
   this->connected = Bluetooth::isDeviceConnected(this->address);
+
+  if (this->connected)
+  {
+    this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
+  }
+  else
+  {
+    this->currentValue = INACTIVEVALUE;
+  }
 }

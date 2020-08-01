@@ -17,20 +17,25 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#pragma once
 
-#define TASK_PRIORITY_OTA_UPDATE 100
-#define TASK_PRIORITY_SYSTEM_TASK 30
-#define TASK_PRIORITY_MAIN_TASK 3
-#define TASK_PRIORITY_CONNECT_TASK 1
-#define TASK_PRIORITY_DISPLAY_TASK 1
-#define TASK_PRIORITY_BLUETOOTH_TASK 1
+#include <Arduino.h>
 
-#define TASK_CYCLE_TIME_SYSTEM_TASK 200
-#define TASK_CYCLE_TIME_MAIN_TASK 200
+#define LOG_BUFFER_SIZE 5000u
 
-#define TASK_CYCLE_TIME_CONNECT_TASK 1000
+class LogRingBuffer : public Print
+{
+public:
+  LogRingBuffer();
+  ~LogRingBuffer();
+  size_t write(uint8_t character);
+  String get();
 
-#define TASK_CYCLE_TIME_DISPLAY_FAST_TASK 10
-#define TASK_CYCLE_TIME_DISPLAY_SLOW_TASK 100
+private:
+  char buffer[LOG_BUFFER_SIZE];
+  size_t bufferSize;
+  size_t bufferIndex;
+  boolean isFull;
+};
 
-#define TASK_CYCLE_TIME_BLUETOOTH_TASK 1000
+extern LogRingBuffer gLogRingBuffer;

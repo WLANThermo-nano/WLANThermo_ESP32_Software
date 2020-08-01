@@ -32,6 +32,7 @@
 #include "display/DisplayBase.h"
 #include "Version.h"
 #include "RecoveryMode.h"
+#include "LogRingBuffer.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 #include "webui/restart.html.gz.h"
@@ -88,6 +89,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
+    {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
@@ -456,6 +458,7 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
   response->addHeader("Server", "ESP Async Web Server");
 
   JsonObject &json = response->getRoot();
+  json["enabled"] = gSystem->bluetooth->isEnabled();
   JsonArray &_devices = json.createNestedArray("devices");
 
   for (uint8_t deviceIndex = 0u; deviceIndex < gSystem->bluetooth->getDeviceCount(); deviceIndex++)
@@ -476,6 +479,11 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
 
   response->setLength();
   request->send(response);
+}
+
+void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
+{
+  request->send(200, TEXTPLAIN, gLogRingBuffer.get());
 }
 
 int NanoWebHandler::checkStringLength(String tex)
@@ -511,6 +519,9 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (_system.containsKey("language"))
     gSystem->setLanguage(_system["language"].asString());
+
+  gSystem->saveConfig();
+
   if (_system.containsKey("unit"))
     unit = _system["unit"].asString();
   if (_system.containsKey("autoupd"))
@@ -1076,6 +1087,11 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
   if (!json.success())
     return 0;
 
+  if (json.containsKey("enabled"))
+  {
+    gSystem->bluetooth->enable(json["enabled"].as<boolean>());
+  }
+
   JsonArray &_devices = json["devices"].asArray();
 
   for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
@@ -1104,7 +1120,8 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
     }
 
     gSystem->bluetooth->setDeviceSelected(_device["address"], selected);
-    gSystem->bluetooth->saveConfig();
-    gSystem->temperatures.saveConfig();
   }
+
+  gSystem->temperatures.saveConfig();
+  gSystem->bluetooth->saveConfig();
 }

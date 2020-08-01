@@ -22,7 +22,9 @@
 #include "bleFirmwareDat.h"
 #include "bleFirmwareBin.h"
 #include "temperature/TemperatureBase.h"
+#include "system/SystemBase.h"
 #include "Settings.h"
+#include "ArduinoLog.h"
 #include "TaskConfig.h"
 #include <byteswap.h>
 
@@ -39,6 +41,7 @@
 
 HardwareSerial *Bluetooth::serialBle = NULL;
 std::vector<BleDeviceType *> Bluetooth::bleDevices;
+boolean Bluetooth::enabled = true;
 
 Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
 {
@@ -46,7 +49,9 @@ Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
     serialBle->begin(BLE_BAUD, SERIAL_8N1, rxPin, txPin);
     this->resetPin = resetPin;
     this->builtIn = false;
+    this->chipEnabled = false;
     pinMode(this->resetPin, OUTPUT);
+    digitalWrite(this->resetPin, LOW);
 }
 
 Bluetooth::Bluetooth(HardwareSerial *serial, uint8_t resetPin)
@@ -55,7 +60,9 @@ Bluetooth::Bluetooth(HardwareSerial *serial, uint8_t resetPin)
     serialBle->begin(BLE_BAUD);
     this->resetPin = resetPin;
     this->builtIn = false;
+    this->chipEnabled = false;
     pinMode(this->resetPin, OUTPUT);
+    digitalWrite(this->resetPin, LOW);
 }
 
 void Bluetooth::init()
@@ -74,6 +81,11 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
 
     if (json.success())
     {
+        if (json.containsKey("enabled"))
+        {
+            enabled = json["enabled"].as<boolean>();
+        }
+
         for (uint8_t i = 0u; i < json["tname"].size(); i++)
         {
             if (json.containsKey("taddress") && json.containsKey("tcount") && json.containsKey("tselected"))
@@ -111,6 +123,7 @@ void Bluetooth::saveConfig()
     DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
     JsonObject &json = jsonBuffer.createObject();
 
+    json["enabled"] = enabled;
     JsonArray &_name = json.createNestedArray("tname");
     JsonArray &_address = json.createNestedArray("taddress");
     JsonArray &_count = json.createNestedArray("tcount");
@@ -132,6 +145,37 @@ void Bluetooth::saveConfig()
     Settings::write(kBluetooth, json);
 }
 
+void Bluetooth::enable(boolean enable)
+{
+    this->enabled = enable;
+}
+
+void Bluetooth::enableChip(boolean enable)
+{
+    if (chipEnabled != enable)
+    {
+        chipEnabled = enable;
+
+        if (enable)
+        {
+            // Toggle reset pin
+            pinMode(resetPin, OUTPUT);
+            digitalWrite(resetPin, LOW);
+            delay(20);
+            digitalWrite(resetPin, HIGH);
+
+            // Set reset pin to input after reset, this is IMPORTANT!!!
+            // Otherwise the nrf52 will reset when power save mode is enabled
+            pinMode(resetPin, INPUT);
+        }
+        else
+        {
+            pinMode(resetPin, OUTPUT);
+            digitalWrite(resetPin, LOW);
+        }
+    }
+}
+
 void Bluetooth::getDevices()
 {
     uint32_t requestedDevices = 0u;
@@ -144,8 +188,10 @@ void Bluetooth::getDevices()
         }
     }
 
+    gSystem->wireLock();
     serialBle->printf("getDevices=%d\n", requestedDevices);
     String bleDeviceJson = serialBle->readStringUntil('\n');
+    gSystem->wireRelease();
     Serial.println(bleDeviceJson);
 
     DynamicJsonBuffer jsonBuffer;
@@ -277,6 +323,17 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
     if (it != bleDevices.end())
     {
         isConnected = (boolean)(*it)->status;
+
+        // overwrite connection status when bluetooth has been disabled
+        if (false == enabled)
+        {
+            isConnected = false;
+            // reset temperatures
+            for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+            {
+                (*it)->temperatures[i] = INACTIVEVALUE;
+            }
+        }
     }
 
     return isConnected;
@@ -306,7 +363,17 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
-        bluetooth->getDevices();
+        // check if bluetooth has been enabled or disabled
+        if (bluetooth->enabled != bluetooth->chipEnabled)
+        {
+            bluetooth->enableChip(bluetooth->enabled);
+        }
+
+        // get devices only when bluetooth is enabled
+        if (bluetooth->chipEnabled)
+        {
+            bluetooth->getDevices();
+        }
         vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
 }
@@ -348,15 +415,13 @@ boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)
 boolean Bluetooth::doDfu()
 {
     boolean success = false;
+    boolean flashed = false;
 
     // Empty the RX buffer
     while (serialBle->available())
         serialBle->read();
 
-    // Toggle reset pin
-    digitalWrite(resetPin, LOW);
-    delay(20);
-    digitalWrite(resetPin, HIGH);
+    enableChip(true);
 
     // Give the bootloader some time to start
     delay(200);
@@ -365,8 +430,8 @@ boolean Bluetooth::doDfu()
     if (waitForBootloader(500u))
     {
         Serial.println("Hello from BLE bootloader");
-
         Serial.println("Start flashing of BLE application");
+        Log.notice("BLE chip detected" CR);
         uint32_t flashStart = millis();
 
         TFwu sFwu;
@@ -402,10 +467,13 @@ boolean Bluetooth::doDfu()
                 if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
                 {
                     Serial.println("\nFlashing skipped, version already up to date");
+                    Log.notice("BLE chip already up-to-date" CR);
                 }
                 else
                 {
                     Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
+                    Log.notice("BLE chip successfully flashed in %dms" CR, (millis() - flashStart));
+                    flashed = true;
                 }
 
                 success = true;
@@ -414,8 +482,23 @@ boolean Bluetooth::doDfu()
             else if (status == FWU_STATUS_FAILURE)
             {
                 Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
+                Log.error("BLE chip flashing failed after %dms" CR, (millis() - flashStart));
                 break;
             }
+        }
+    }
+
+    // Wait again for the bootloader after update
+    if ((true == success) && (true == flashed))
+    {
+        if (waitForBootloader(5000u))
+        {
+            Serial.println("Hello from BLE bootloader again");
+            Log.notice("BLE chip detected after flashing" CR);
+        }
+        else
+        {
+            success = false;
         }
     }
 

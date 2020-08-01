@@ -1,4 +1,4 @@
- /*************************************************** 
+/*************************************************** 
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 
 #define DEFAULT_APNAME "WLANTHERMO-AP"
 
-#ifdef HW_NANO_VX
+#ifdef HW_NANO_V3
 #define DEFAULT_HOSTNAME "NANO-"
 #elif HW_LINK_V1
 #define DEFAULT_HOSTNAME "LINK-"

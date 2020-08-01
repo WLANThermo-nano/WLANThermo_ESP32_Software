@@ -17,20 +17,23 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#pragma once
 
-#define TASK_PRIORITY_OTA_UPDATE 100
-#define TASK_PRIORITY_SYSTEM_TASK 30
-#define TASK_PRIORITY_MAIN_TASK 3
-#define TASK_PRIORITY_CONNECT_TASK 1
-#define TASK_PRIORITY_DISPLAY_TASK 1
-#define TASK_PRIORITY_BLUETOOTH_TASK 1
+#include "TemperatureBase.h"
 
-#define TASK_CYCLE_TIME_SYSTEM_TASK 200
-#define TASK_CYCLE_TIME_MAIN_TASK 200
+#define NUM_OF_MAV_RADIO_TEMPERATURES 2u
 
-#define TASK_CYCLE_TIME_CONNECT_TASK 1000
+class TemperatureMavRadio : public TemperatureBase
+{
+public:
+  TemperatureMavRadio();
+  TemperatureMavRadio(uint8_t index);
+  void update();
+  void refresh();
+  static boolean initReceiver(uint8_t rxPin);
 
-#define TASK_CYCLE_TIME_DISPLAY_FAST_TASK 10
-#define TASK_CYCLE_TIME_DISPLAY_SLOW_TASK 100
-
-#define TASK_CYCLE_TIME_BLUETOOTH_TASK 1000
+private:
+  static int getTemperatureValue(uint8_t index);
+  static uint32_t lastUpdateMillis;
+  static int temperatureValue[NUM_OF_MAV_RADIO_TEMPERATURES];
+};

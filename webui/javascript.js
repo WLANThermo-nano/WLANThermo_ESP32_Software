@@ -99,18 +99,6 @@ function showBluetooth() {
     loadBluetoothList();
 }
 
-function bt_active() {
-    if (byId('bt_active').checked) {
-        loadJSON('btdevices', '', '60000', function (response) {
-            if (response == 'true') {
-                self.location.href = 'about:blank'
-            }
-        });
-    } else {
-
-    }
-}
-
 function showIOT() {
     hideAll();
     showLoader('true');
@@ -573,7 +561,7 @@ function showPitmaster() {
             byId('pitmaster_typ' + pitID.toString()).value = jr.pitmaster.pm[pitID].typ;
             clearOption('pitmaster_channel' + pitID.toString());
             for (var i = 0; i < jr.channel.length; i++) {
-                if (jr.channel[i].typ != 16) {
+                if ((jr.channel[i].typ != 16) && (jr.channel[i].typ != 17)) {
                     byId('pitmaster_channel' + pitID.toString()).options[byId('pitmaster_channel' + pitID.toString()).options.length] = new Option('#' + jr.channel[i].number + ' - ' + jr.channel[i].name, jr.channel[i].number);
                 }
             }
@@ -984,6 +972,12 @@ function readTemp() {
                     else
                         x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('bluetooth_1 icon-disabled') + '\t' + "#" + jr.channel[i].number;
                 }
+                else if (jr.channel[i].typ == 17) {
+                    if (jr.channel[i].connected == true)
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio') + '\t' + "#" + jr.channel[i].number;
+                    else
+                        x[i].getElementsByClassName('chnumber')[0].innerHTML = getIcon('radio icon-disabled') + '\t' + "#" + jr.channel[i].number;
+                }
                 else {
                     x[i].getElementsByClassName('chnumber')[0].innerHTML = "#" + jr.channel[i].number;
                 }
@@ -1180,10 +1174,14 @@ function getWifiSecureIcon(data) {
 // -----------------------------------------------------------------------------------
 var bluetoothlist = null;
 function loadBluetoothList() {
-    btDevices = null;
+    hideAll();
+    showLoader('true');
     loadJSON('bluetooth', '', '3000', function (response) {
         try {
             bluetoothlist = JSON.parse(response);
+
+            byId('bluetooth_active').checked = bluetoothlist.enabled;
+
             byId('bluetoothlist').innerHTML = '';
             var table_bluetoothlist = byId('bluetoothlist');
 
@@ -1201,18 +1199,17 @@ function loadBluetoothList() {
                     addCell(row, "Kanal " + (i + 1), 'row-SSID', '2');
                 }
             }
-
-            //byId('networkrefresh').innerHTML = '<h3><span class="icon-refresh" onclick="networkscan();"></span></h3>'
-
+            byId('bluetooth_config').style.display = "inline";
+            showLoader('false');
         } catch (e) {
-            // error in the above string (in this case, yes)!
-            //alert(e);
+            showLoader('false');
         }
     })
 }
 function btSave() {
     if (bluetoothlist != null) {
         showLoader('true');
+        bluetoothlist.enabled = byId('bluetooth_active').checked;
         var data = JSON.stringify(bluetoothlist);
         loadJSON('setbluetooth', data, '60000', function (response) {
             location.reload(true);
