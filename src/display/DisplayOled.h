@@ -113,7 +113,8 @@ private:
 
   void loadConfig();
   boolean initDisplay();
-  
+  static void buttonInterruptHandler();
+
   /* Non UI draws */
   void drawConnect();
   void drawQuestion(int counter);
@@ -133,4 +134,5 @@ private:
   static float currentData;
   static uint8_t buttonMupi;
   static boolean oledBlocked;
+  static TaskHandle_t taskHandle;
 };

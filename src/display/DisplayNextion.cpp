@@ -338,7 +338,7 @@ void DisplayNextion::task(void *parameter)
   {
     display->update();
     // Wait for the next cycle.
-    vTaskDelay(TASK_CYCLE_TIME_DISPLAY_TASK);
+    vTaskDelay(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   }
 }
 

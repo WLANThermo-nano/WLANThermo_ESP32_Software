@@ -147,7 +147,7 @@ void DisplayOledLink::task(void *parameter)
     }
 
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   }
 }
 
