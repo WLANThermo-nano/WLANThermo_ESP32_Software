@@ -181,16 +181,16 @@ void read_serial(char *buffer)
     }
 #endif
 
-#if defined HW_NANO_VX
+#if defined HW_NANO_V3
     else if (str == "resetoled")
     {
-    Serial.println("Reset OLED");
-    pinMode(4u, OUTPUT);
-    digitalWrite(4u, LOW);
-    delay(100);
-    digitalWrite(4u, HIGH);
-    delay(100);
-    return;
+      Serial.println("Reset OLED");
+      pinMode(4u, OUTPUT);
+      digitalWrite(4u, LOW);
+      delay(100);
+      digitalWrite(4u, HIGH);
+      delay(100);
+      return;
     }
 
 #endif
