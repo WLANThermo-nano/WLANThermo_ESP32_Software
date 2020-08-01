@@ -679,13 +679,13 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
         showbattery = true;
       break;
     case pm_manual:
-      display->drawString(33, 0, "M  " + String(pit->getValue(), 0) + "%");
+      display->drawString(33, 1, "M  " + String(pit->getValue(), 0) + "%");
       break;
     case pm_auto:
-      /*if (pit->getAssignedProfile()->opl)
-        display->drawString(33, 0, "OPL: " + String(opl.temp, 1));
-      else*/
-      display->drawString(33, 0, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
+      if (pit->getOPLStatus())
+        display->drawString(33, 1, "OPL: " + String(pit->getOPLTemperature(), 1));
+      else
+        display->drawString(33, 1, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
       break;
     }
   }
@@ -758,7 +758,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
   menuItem = MenuItem::TempShow;
   int match = 0;
   TemperatureBase *temperature = system->temperatures[currentChannel];
-  display->drawXbm(x + 19, 18 + y, 20, 36, xbmtemp); // Symbol
+  display->drawXbm(x + 19, 19 + y, 20, 36, xbmtemp); // Symbol
 
   // Show limits in OLED
   if ((temperature->getMaxValue() > temperature->getMinValue()) && temperature->isActive())

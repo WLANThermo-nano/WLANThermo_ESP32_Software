@@ -530,7 +530,7 @@ boolean Pitmaster::checkOpenLid()
             if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
             {    
                 openLid.temp = this->targetTemperature;
-                Log.notice("OPL Reference: %X" CR, openLid.temp);
+                Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
             }
 
             if (openLid.count <= 0) // Timeout
@@ -548,14 +548,14 @@ boolean Pitmaster::checkOpenLid()
         else if (openLid.fall_c == 1)
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
-            Log.notice("OPL 1: %X" CR, openLid.temp);
         }
         else if (openLid.fall_c == 2)
         {
-            Log.notice("OPL 1: %X" CR, openLid.ref);
-            Log.notice("OPL 2: %X" CR, this->temperature->getPreValue());
-            Log.notice("OPL 3: %X" CR, this->temperature->getValue());
+            Log.notice("OPL 1: %F" CR, (float)(openLid.ref));
+            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getPreValue()));
+            Log.notice("OPL 3: %F" CR, (float)(this->temperature->getValue()));
         }
+        // wenn in 4 Schritten nicht unter Threshold, dann ist es auch keine Deckelöffnung
         else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
         { // Opened lid detected!            
             openLid.detected = true;
@@ -563,7 +563,7 @@ boolean Pitmaster::checkOpenLid()
             openLid.count = OPL_PAUSE; // TODO: check pause
             
             Log.notice("OPL detected" CR);
-            Log.notice("OPL Reference: %X" CR, openLid.temp);
+            Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
 
         }
     }
@@ -574,6 +574,16 @@ boolean Pitmaster::checkOpenLid()
     }
 
     return openLid.detected;
+}
+
+boolean Pitmaster::getOPLStatus()
+{
+    return openLid.detected;
+}
+
+float Pitmaster::getOPLTemperature()
+{
+    return openLid.temp;
 }
 
 void Pitmaster::update()
