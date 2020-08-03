@@ -99,7 +99,6 @@ public:
 
 protected:
   uint8_t localIndex;
-  uint8_t globalIndex;
   float currentValue;
   float preValue;
   int8_t currentGradient;
@@ -123,7 +122,6 @@ private:
   AlarmStatus cbAlarmStatus;
   boolean acknowledgedAlarm;
   float cbCurrentValue;
-  static uint8_t globalIndexTracker;
   float getUnitValue(float value);
   float setUnitValue(float value);
   float decimalPlace(float value);

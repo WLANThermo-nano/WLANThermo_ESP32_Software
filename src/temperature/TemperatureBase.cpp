@@ -19,17 +19,18 @@
 ****************************************************/
 
 #include "TemperatureBase.h"
+#include "TemperatureGrp.h"
 #include "Settings.h"
 
 #define LOWEST_VALUE -31
 #define HIGHEST_VALUE 999
 #define DEFAULT_MIN_VALUE 10.0
 #define DEFAULT_MAX_VALUE 35.0
-#define MAX_COLORS 12u
+#define MAX_COLORS 8u
 #define MEDIAN_SIZE 9u
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
-const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
+const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148"};
 TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
@@ -37,11 +38,9 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC,
     NULL, NULL};
-uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
 {
-  this->globalIndex = this->globalIndexTracker++;
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
   this->loadDefaultValues();
   this->settingsChanged = false;
@@ -55,7 +54,6 @@ TemperatureBase::TemperatureBase()
 
 TemperatureBase::~TemperatureBase()
 {
-  this->globalIndexTracker--;
 }
 
 void TemperatureBase::loadDefaultValues()
@@ -66,14 +64,14 @@ void TemperatureBase::loadDefaultValues()
   this->currentGradient = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
-  this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
+  this->name = DEFAULT_CHANNEL_NAME + String(TemperatureGrp::count() + 1u);
   this->type = SensorType::Maverick;
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
 
-  if (this->globalIndex < MAX_COLORS)
+  if (TemperatureGrp::count() < MAX_COLORS)
   {
-    this->color = colors[this->globalIndex];
+    this->color = colors[TemperatureGrp::count()];
   }
   else
   {
