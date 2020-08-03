@@ -59,7 +59,7 @@ class TemperatureBase
 public:
   TemperatureBase();
   ~TemperatureBase();
-  void loadDefaultValues();
+  void loadDefaultValues(uint8_t index);
   void loadConfig();
   float getValue();
   float getPreValue();

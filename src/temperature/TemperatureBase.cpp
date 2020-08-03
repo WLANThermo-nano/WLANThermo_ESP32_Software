@@ -42,7 +42,7 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
 TemperatureBase::TemperatureBase()
 {
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
-  this->loadDefaultValues();
+  this->loadDefaultValues(TemperatureGrp::count());
   this->settingsChanged = false;
   this->cbCurrentValue = INACTIVEVALUE;
   this->cbAlarmStatus = NoAlarm;
@@ -56,7 +56,7 @@ TemperatureBase::~TemperatureBase()
 {
 }
 
-void TemperatureBase::loadDefaultValues()
+void TemperatureBase::loadDefaultValues(uint8_t index)
 {
   this->currentUnit = Celsius;
   this->currentValue = INACTIVEVALUE;
@@ -64,14 +64,19 @@ void TemperatureBase::loadDefaultValues()
   this->currentGradient = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
-  this->name = DEFAULT_CHANNEL_NAME + String(TemperatureGrp::count() + 1u);
-  this->type = SensorType::Maverick;
+  this->name = DEFAULT_CHANNEL_NAME + String(index + 1u);
+
+  if (false == this->isFixedSensor())
+  {
+    this->type = SensorType::Maverick;
+  }
+
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
 
-  if (TemperatureGrp::count() < MAX_COLORS)
+  if (index < MAX_COLORS)
   {
-    this->color = colors[TemperatureGrp::count()];
+    this->color = colors[index];
   }
   else
   {

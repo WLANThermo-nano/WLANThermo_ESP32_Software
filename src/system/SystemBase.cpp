@@ -178,7 +178,7 @@ void SystemBase::resetConfig()
   {
     if (temperatures[i] != NULL)
     {
-      temperatures[i]->loadDefaultValues();
+      temperatures[i]->loadDefaultValues(i);
     }
   }
 
