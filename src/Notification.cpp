@@ -22,6 +22,7 @@
 #include "Notification.h"
 #include "Cloud.h"
 #include "Settings.h"
+#include "temperature/TemperatureGrp.h"
 
 Notification::Notification()
 {
@@ -46,7 +47,7 @@ void Notification::check(TemperatureBase *temperature)
 
   AlarmStatus alarmStatus = temperature->getAlarmStatus();
   AlarmSetting alarmSetting = temperature->getAlarmSetting();
-  uint8_t index = temperature->getGlobalIndex();
+  uint8_t index = TemperatureGrp::getIndex(temperature);
 
   if (alarmStatus != NoAlarm)
   {

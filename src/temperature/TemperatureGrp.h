@@ -54,8 +54,10 @@ public:
   void loadConfig();
   void registerCallback(TemperatureCallback_t callback, void *userData = NULL);
 
+  static uint8_t getIndex(TemperatureBase *temperature);
+
 private:
-  std::vector<TemperatureBase *> temperatures;
+  static std::vector<TemperatureBase *> temperatures;
   std::vector<TemperatureCallbackDataType> registeredCb;
   TemperatureUnit currentUnit;
 };

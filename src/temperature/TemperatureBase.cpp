@@ -197,11 +197,6 @@ String TemperatureBase::getTypeName(uint8_t index)
   return (index < NUM_OF_TYPES) ? sensorTypeInfo[index].name : "";
 }
 
-uint8_t TemperatureBase::getGlobalIndex()
-{
-  return this->globalIndex;
-}
-
 void TemperatureBase::setType(uint8_t type)
 {
   if (false == this->fixedSensor)

@@ -373,9 +373,9 @@ void DisplayNextion::temperatureUpdateCb(uint8_t index, TemperatureBase *tempera
 
 void DisplayNextion::pitmasterUpdateCb(Pitmaster *pitmaster, boolean settingsChanged, void *userData)
 {
-  TemperatureBase *temperature = pitmaster->getAssignedTemperature();
+  uint8_t index = TemperatureGrp::getIndex(pitmaster->getAssignedTemperature());
 
-  updatePitmaster |= (true == settingsChanged) ? UPDATE_ALL : (1u << temperature->getGlobalIndex());
+  updatePitmaster |= (true == settingsChanged) ? UPDATE_ALL : (1u << index);
 }
 
 void DisplayNextion::update()
@@ -647,7 +647,7 @@ void DisplayNextion::enterPitmasterSettingsPage(void *ptr)
     NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.Value").setText(text);
 
     // Channel
-    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(system->pitmasters[id]->getAssignedTemperature()->getGlobalIndex());
+    NexVariable(DONT_CARE, DONT_CARE, "pitm_settings.TempIndex").setValue(TemperatureGrp::getIndex(system->pitmasters[id]->getAssignedTemperature()));
     NexText(DONT_CARE, DONT_CARE, "pitm_settings.Channel").setText(system->pitmasters[id]->getAssignedTemperature()->getName().c_str());
 
     // Temperature
@@ -854,7 +854,7 @@ void DisplayNextion::setTemperatureNumber(uint8_t nexIndex, TemperatureBase *tem
 
   sprintf(item, "temp_main.%s%d", "Number", nexIndex);
 
-  sprintf(text, "#%d", (int32_t)temperature->getGlobalIndex() + 1);
+  sprintf(text, "#%d", (int32_t)TemperatureGrp::getIndex(temperature) + 1);
 
   NexText(DONT_CARE, DONT_CARE, item).setText(text);
 }

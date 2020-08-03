@@ -143,7 +143,7 @@ void API::pitAry(JsonArray &jAry, int cc)
     {
       JsonObject &ma = jAry.createNestedObject();
       ma["id"] = i;
-      ma["channel"] = pm->getAssignedTemperature()->getGlobalIndex() + 1;
+      ma["channel"] = TemperatureGrp::getIndex(pm->getAssignedTemperature()) + 1u;
       ma["pid"] = pm->getAssignedProfile()->id;
       ma["value"] = (uint8_t)pm->getValue();
       ma["set"] = pm->getTargetTemperature();

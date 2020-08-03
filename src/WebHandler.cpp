@@ -93,7 +93,6 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
-    {"/deletechannel", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::deleteChannel},
     {"/setsystem", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setSystem},
     {"/setpitmaster", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPitmaster},
     {"/setpid", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPID},
@@ -607,34 +606,6 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
       temperature->setAlarmSetting((AlarmSetting)_cha["alarm"].as<uint8_t>()); // ALARM
     if (_cha.containsKey("color"))
       temperature->setColor(_cha["color"].asString()); // COLOR
-  }
-  else
-    return 0;
-
-  gSystem->temperatures.saveConfig();
-  return 1;
-}
-
-bool NanoWebHandler::deleteChannel(AsyncWebServerRequest *request, uint8_t *datas)
-{
-
-  //  https://github.com/me-no-dev/ESPAsyncWebServer/issues/123
-
-  printRequest(datas);
-
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &_cha = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_cha.success())
-    return 0;
-
-  int num = _cha["number"];
-  num--; // Intern beginnt die Zählung bei 0
-
-  TemperatureBase *temperature = gSystem->temperatures[num];
-
-  if (temperature != NULL)
-  {
-    gSystem->temperatures.remove(num);
   }
   else
     return 0;
