@@ -467,9 +467,9 @@ void DisplayOled::handleTemperatureNavigation(ButtonId buttonId)
     TemperatureBase *firstActiveTemperature = system->temperatures.getNextActive(0u);
 
     if (nextActiveTemperature != NULL)
-      currentChannel = nextActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(nextActiveTemperature);
     else if (firstActiveTemperature != NULL)
-      currentChannel = firstActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(firstActiveTemperature);
     else if (currentChannel >= system->temperatures.count())
       currentChannel = 0u;
   }
@@ -834,7 +834,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
     // Show Pitmaster Activity on Icon
     if (pm_auto == pitmaster->getType())
     {
-      if (currentChannel == temperature->getGlobalIndex())
+      if (currentChannel == TemperatureGrp::getIndex(temperature))
       {
         display->setFont(ArialMT_Plain_10);
         if (pitmaster->isAutoTuneRunning())
@@ -997,7 +997,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
     display->drawString(116, 20, "CHANNEL:");
     if (MenuMode::Show == menuMode)
     {
-      currentData = pm->getAssignedTemperature()->getGlobalIndex();
+      currentData = TemperatureGrp::getIndex(pm->getAssignedTemperature());
     }
     else if (MenuMode::Edit == menuMode)
     {
@@ -1012,7 +1012,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
       menuMode = MenuMode::Show;
       system->pitmasters.saveConfig();
     }
-    display->drawString(116 + x, 36 + y, String(system->temperatures[(uint8_t)currentData]->getGlobalIndex() + 1));
+    display->drawString(116 + x, 36 + y, String(TemperatureGrp::getIndex(system->temperatures[(uint8_t)currentData]) + 1));
     break;
 
   case MenuItem::PitmasterSettingsTemperature: // SET TEMPERATUR

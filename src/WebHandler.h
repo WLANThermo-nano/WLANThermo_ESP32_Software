@@ -69,7 +69,6 @@ public:
   bool setPID(AsyncWebServerRequest *request, uint8_t *datas);
   bool setSystem(AsyncWebServerRequest *request, uint8_t *datas);
   bool setChannels(AsyncWebServerRequest *request, uint8_t *datas);
-  bool deleteChannel(AsyncWebServerRequest *request, uint8_t *datas);
   bool setNetwork(AsyncWebServerRequest *request, uint8_t *datas);
   bool addNetwork(AsyncWebServerRequest *request, uint8_t *datas);
   bool setIoT(AsyncWebServerRequest *request, uint8_t *datas);
