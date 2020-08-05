@@ -59,9 +59,6 @@ void setup()
   // Initialize Wifi
   gSystem->wlan.init();
 
-  // Initialize Debug
-  dbgPrintInit();
-
   // Initialize WebServer
   gWebServer.init();
 
@@ -89,8 +86,6 @@ void MainTask(void *parameter)
     {
       read_serial(serialbuffer);
     }
-
-    dbgPrintMain();
 
     // Wait for the next cycle.
     vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_MAIN_TASK);

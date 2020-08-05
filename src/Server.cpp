@@ -26,9 +26,6 @@
 #include "WebHandler.h"
 #include "Cloud.h"
 #include "system/SystemBase.h"
-#if defined HW_MINI_V2 || defined HW_MINI_V3
-#include "display/DisplayNextion.h"
-#endif
 #include "DbgPrint.h"
 #include "Settings.h"
 #include "RecoveryMode.h"
