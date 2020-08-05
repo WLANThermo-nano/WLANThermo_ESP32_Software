@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<style>
-.centered {
-  font-size: 100px;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
+	<style>
+		.centered {
+			font-size: 100px;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
 
-html {
-  font-family: sans-serif;
-  ms-text-size-adjust: 100%;
-}
+		html {
+			font-family: sans-serif;
+			ms-text-size-adjust: 100%;
+		}
 
-body {
-  background-color: #333333;
-  color: #FFFFFF;
-}
+		body {
+			background-color: #333333;
+			color: #FFFFFF;
+		}
 
-.cover_active {
+		.cover_active {
 			position: fixed;
 			top: 0;
 			left: 0;
@@ -54,40 +55,42 @@ body {
 			0% {
 				transform: rotate(0deg);
 			}
+
 			100% {
 				transform: rotate(360deg);
 			}
 		}
-</style>
+	</style>
 </head>
 
 <body>
 
-<!--div class="centered" id="counter">10</div-->
-<div id="cover">
-	<div id="spinner"></div>
-</div>
+	<!--div class="centered" id="counter">10</div-->
+	<div id="cover">
+		<div id="spinner"></div>
+	</div>
 
-<script>
-document.getElementById('cover').classList.add("cover_active");
-document.getElementById('spinner').classList.add("spinner");
+	<script>
+		document.getElementById('cover').classList.add("cover_active");
+		document.getElementById('spinner').classList.add("spinner");
 
-const xhr = new XMLHttpRequest();
-xhr.open("GET", "/ping");
-xhr.timeout = 20000; // 20s timeout
+		const xhr = new XMLHttpRequest();
+		xhr.open("GET", "/ping");
+		xhr.timeout = 1000; // 1s timeout
 
-xhr.onload = function () {
-  if (xhr.readyState === xhr.DONE) {
-        if (xhr.status === 200) {
-            window.location.href = "/";
-        }
-    }
-};
+		xhr.onload = function () {
+			if (xhr.readyState === xhr.DONE) {
+				if (xhr.status === 200) {
+					window.location.href = "/";
+				}
+			}
+		};
 
-xhr.ontimeout = function (e) {
-  
-};
+		xhr.ontimeout = function (e) {
+			xhr.open("GET", "/ping");
+			xhr.send(null);
+		};
 
-xhr.send(null);
-</script>
+		xhr.send(null);
+	</script>
 </body>
