@@ -66,6 +66,7 @@ FrameCallback DisplayOled::frames[] = {DisplayOled::drawTemp, DisplayOled::drawT
 OverlayCallback DisplayOled::overlays[] = {drawOverlayBar};
 OneButton DisplayOled::lButton = OneButton(LBUTTON_IO, true, true);
 OneButton DisplayOled::rButton = OneButton(RBUTTON_IO, true, true);
+ButtonId DisplayOled::lastButtonId = ButtonId::None;
 MenuItem DisplayOled::menuItem = MenuItem::Boot;
 MenuMode DisplayOled::menuMode = MenuMode::Show;
 uint8_t DisplayOled::currentChannel = 0u;
@@ -214,6 +215,8 @@ void DisplayOled::update()
 
 void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
 {
+  lastButtonId = buttonId;
+
   if (ButtonEvent::Click == buttonEvent)
   {
     switch (menuItem)
@@ -920,6 +923,16 @@ void DisplayOled::drawTempSettings(OLEDDisplay *display, OLEDDisplayUiState *sta
         currentData = temperature->getTypeCount() - 1;
       else if (currentData >= temperature->getTypeCount())
         currentData = 0;
+
+      while (temperature->isTypeFixed((uint8_t)currentData))
+      {
+        currentData += (ButtonId::Left == lastButtonId) ? -1 : 1;
+
+        if (currentData < 0)
+          currentData = temperature->getTypeCount() - 1;
+        else if (currentData >= temperature->getTypeCount())
+          currentData = 0;
+      }
     }
     else if (MenuMode::Set == menuMode)
     {

@@ -75,6 +75,7 @@ public:
   static uint8_t getTypeCount();
   String getTypeName();
   static String getTypeName(uint8_t index);
+  static boolean isTypeFixed(uint8_t index);
   boolean isFixedSensor() { return this->fixedSensor; }
   boolean isConnected() { return this->connected; }
   virtual void setType(uint8_t type);
