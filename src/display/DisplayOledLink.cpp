@@ -55,7 +55,7 @@ enum class Frames
 
 float DisplayOledLink::currentData = 0; // Zwischenspeichervariable
 //uint8_t DisplayOledLink::buttonMupi = 1u;
-boolean DisplayOledLink::oledBlocked = false;
+DisplayPopUpType DisplayOledLink::displayPopUp = DisplayPopUpType::None;
 //String alarmname[4] = {"off", "push", "summer", "all"};
 
 SystemBase *DisplayOledLink::system = gSystem;
@@ -176,7 +176,7 @@ void DisplayOledLink::update()
     lButton.tick();
 
     //check oled block
-    if (!oledBlocked)
+    if (displayPopUp != DisplayPopUpType::None)
       ui.update();
   }
 }
