@@ -1,0 +1,36 @@
+@import "./external/pure.scss";
+
+// from https://colorhunt.co/palettes/dark
+// https://colorhunt.co/palette/181367
+$medium: #222831;
+$lighter: #00adb5;
+$light: #eeeeee;
+$dar_medium: #474a4e;
+$dark: #393e46;
+$primary: #00adb5;
+
+$nav_width: 250px;
+
+/*
+ * -- BASE STYLES --
+ * Most of these are inherited from Base, but I want to change a few.
+ */
+body {
+    background-color: $dark;
+}
+
+#layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+#nav {
+    flex: 0 0 $nav_width;
+    min-height: 100vh;
+    background-color: $medium;
+}
+
+#main {
+    flex: 1 1 auto;
+}
