@@ -7,5 +7,8 @@ module.exports = {
             new CompressionPlugin(),
             new BundleAnalyzerPlugin()
         ]
+    },
+    devServer: {
+        proxy: 'http://localhost'
     }
 };

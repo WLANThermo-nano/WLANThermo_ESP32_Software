@@ -1,12 +1,12 @@
 <template>
-  <div id="layout">
+  <div id="layout" v-if="settings !== null">
     <div class="headmenu">
       <span id="menuLink" class="menu-link" @click="navActive = !navActive">
         <!-- Hamburger icon -->
         <span></span>
       </span>
       <div class="title">
-        NANO-84b3ec
+        {{ settings.system.host }}
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
@@ -14,10 +14,10 @@
       <div class="pure-menu">
         <ul class="pure-menu-list">
           <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">Home</a>
+            <a @click="page = 'home'" href="#" class="pure-menu-link">{{ $t("menuHome") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">WLAN</a>
+          <li @click="page = 'wlan'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
           </li>
           <li class="pure-menu-item">
             <a href="#" class="pure-menu-link">System</a>
@@ -41,11 +41,8 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <div class="pure-g">
-            <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(b, i) in boxes" :key="b">
-              <div class="info-box" v-bind:style="{borderColor: colors[i]}">{{b}} some info</div>
-            </div>
-          </div>
+          <Home v-if="page === 'home'" />
+          <Wlan v-else-if="page === 'wlan'" />
         </div>
       </div>
     </div>
@@ -53,12 +50,18 @@
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
+import Home from './components/Home.vue'
+import Wlan from './components/Wlan.vue'
 
 export default {
   name: "App",
   data: () => {
     return {
+      settings: {},
+      system: null,
+      channel: [],
+      pitmaster: null,
+      page: 'home',
       navActive: false,
       boxes: [1, 2, 3, 4, 5, 6, 7, 8],
       colors: [
@@ -74,8 +77,31 @@ export default {
     };
   },
   components: {
-    // HelloWorld
+    Home, Wlan
   },
+  methods: {
+    getData: function() {
+      setInterval(() => {
+        this.axios.get('/data').then((response) => {
+          const data = response.data
+          this.system = data.system
+          this.channel = data.channel
+          this.pitmaster = data.pitmaster
+        })
+      }, 2000)
+    },
+    getSettings: function() {
+      this.axios.get('/settings').then((response) => {
+        const data = response.data
+        this.settings = data
+        this.$i18n.locale = this.settings.system.language
+      })
+    },
+  },
+  mounted: function() {
+    this.getSettings();
+    this.getData();
+  }
 };
 </script>
 
