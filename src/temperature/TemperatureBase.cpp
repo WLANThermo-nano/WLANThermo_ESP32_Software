@@ -42,12 +42,12 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
 TemperatureBase::TemperatureBase()
 {
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
+  this->fixedSensor = false;
   this->loadDefaultValues(TemperatureGrp::count());
   this->settingsChanged = false;
   this->cbCurrentValue = INACTIVEVALUE;
   this->cbAlarmStatus = NoAlarm;
   this->calcTemperature = typeFunctions[0];
-  this->fixedSensor = false;
   this->acknowledgedAlarm = false;
   this->connected = false;
 }
