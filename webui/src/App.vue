@@ -1,5 +1,5 @@
 <template>
-  <div id="layout" v-if="settings !== null">
+  <div id="layout">
     <div class="headmenu">
       <span id="menuLink" class="menu-link" @click="navActive = !navActive">
         <!-- Hamburger icon -->
@@ -7,6 +7,23 @@
       </span>
       <div class="title">
         {{ settings.system.host }}
+      </div>
+      <div class="status" v-if="system">
+        <!-- to do update notice -->
+        
+        <Icon v-if="cloudIconClass !== null" class="cursor-pointer" @click="handleCloudIconClick" :iconClass="cloudIconClass" />
+        <!-- charging -->
+        <Icon v-if="system.charge" iconClass="power-cord" />
+        <!-- battery -->
+        <template v-if="system && system.soc >= 0">
+          <div class="mr5" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
+          <Icon class="cursor-pointer" @click="switchToBatteryText" v-else :iconClass="batteryIconClass" />
+        </template>
+        <!-- wifi -->
+        <template v-if="system && system.rssi">
+          <div class="mr5" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
+          <Icon class="cursor-pointer" @click="switchToWifiStrength" v-else :iconClass="wifiIconClass" />
+        </template>
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
@@ -19,20 +36,23 @@
           <li @click="page = 'wlan'" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">System</a>
+          <li @click="page = 'wlan'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuBluetooth") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">Pitmaster</a>
+          <li @click="page = 'system'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuSystem") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">IoT</a>
+          <li @click="page = 'pitmaster'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuPitmaster") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">Push Notification</a>
+          <li @click="page = 'iot'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuIOT") }}</a>
           </li>
-          <li class="pure-menu-item">
-            <a href="#" class="pure-menu-link">Über</a>
+          <li @click="page = 'notification'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuNotification") }}</a>
+          </li>
+          <li @click="page = 'about'" class="pure-menu-item">
+            <a href="#" class="pure-menu-link">{{ $t("menuAbout") }}</a>
           </li>
         </ul>
       </div>
@@ -43,6 +63,9 @@
         <div class="content-body">
           <Home v-if="page === 'home'" />
           <Wlan v-else-if="page === 'wlan'" />
+          <div v-else>
+            {{ page }} comming soon
+          </div>
         </div>
       </div>
     </div>
@@ -52,32 +75,35 @@
 <script>
 import Home from './components/Home.vue'
 import Wlan from './components/Wlan.vue'
+import Icon from './components/Icon.vue'
 
 export default {
   name: "App",
   data: () => {
     return {
-      settings: {},
+      // wifi icon
+      wifiIconClass: null,
+      showWifiStrength: false,
+      // Battery
+      showBatteryPercentage: false,
+      batteryIconClass: null,
+      // cloud
+      cloudIconClass: null,
+
+      settings: {
+        system: {
+          host: 'N.C'
+        }
+      },
       system: null,
       channel: [],
       pitmaster: null,
       page: 'home',
-      navActive: false,
-      boxes: [1, 2, 3, 4, 5, 6, 7, 8],
-      colors: [
-        "#a349a4",
-        "#22b14c",
-        "#ef562d",
-        "#ffc100",
-        "#0c4c88",
-        "#804000",
-        "#5587a2",
-        "#a4ca81",
-      ],
+      navActive: false
     };
   },
   components: {
-    Home, Wlan
+    Home, Wlan, Icon
   },
   methods: {
     getData: function() {
@@ -87,6 +113,7 @@ export default {
           this.system = data.system
           this.channel = data.channel
           this.pitmaster = data.pitmaster
+          this.prepareStatusIcons()
         })
       }, 2000)
     },
@@ -97,6 +124,61 @@ export default {
         this.$i18n.locale = this.settings.system.language
       })
     },
+    handleCloudIconClick: function() {
+      this.axios.get('/settings').then((response) => {
+        const data = response.data
+        this.settings = data
+        window.location = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken;
+      })
+    },
+    prepareStatusIcons: function() {
+      // wifi icon
+      const dbm = this.system.rssi
+      if (dbm >= '-80') {
+        this.wifiIconClass = 'Wlan100'
+      } else if (dbm >= '-95') {
+        this.wifiIconClass = 'Wlan66'
+      } else if (dbm >= '-105') {
+        this.wifiIconClass = 'Wlan33'
+      }
+
+      // Battery
+      const percent = this.system.soc
+      if (percent >= '90') {
+        this.batteryIconClass = 'battery-100'
+      } else if (percent >= '75') {
+        this.batteryIconClass = 'battery-75'
+      } else if (percent >= '50') {
+        this.batteryIconClass = 'battery-50'
+      } else if (percent >= '15') {
+        this.batteryIconClass = 'battery-25'
+      } else if (percent >= '10') {
+        this.batteryIconClass = 'battery-0 icon-red'
+      } else {
+        this.batteryIconClass = 'battery-0 icon-red icon-blinker'
+      }
+      // cloud
+      const online = this.system.online
+      if (online == 1) {
+        this.cloudIconClass = 'cloud icon-red'
+      } else if (online == 2) {
+        this.cloudIconClass = 'cloud icon-green'
+      } else {
+        this.cloudIconClass = null
+      }
+    },
+    switchToWifiStrength: function() {
+      this.showWifiStrength = true;
+      setTimeout(() => {
+        this.showWifiStrength = false;
+      }, 5000)
+    },
+    switchToBatteryText: function() {
+      this.showBatteryPercentage = true;
+      setTimeout(() => {
+        this.showBatteryPercentage = false;
+      }, 5000)
+    }
   },
   mounted: function() {
     this.getSettings();
@@ -125,11 +207,20 @@ export default {
 
 .headmenu {
   position: fixed;
+  display: flex;
   width: calc(100% - #{$nav_width});
   left: $nav_width;
   background-color: $medium;
   color: #ccc;
   height: 44px;
+  .title {
+    flex: 1 1 auto;
+  }
+  .status {
+    display: flex;
+    flex: 0 0 auto;
+    padding-right: 0.5em;
+  }
 }
 
 .logo {
@@ -226,7 +317,7 @@ export default {
     width: 100%;
     left: 0;
     .title {
-      margin-left: 2em;
+      margin-left: 3em;
     }
   }
   .menu-link {
@@ -234,5 +325,20 @@ export default {
   }
 }
 
+.wifi,
+.notification,
+.cloud {
+  text-align: center;
+  padding: 14px 2px;
+  overflow: hidden;
+  float: right;
+  border-left: 2px solid #333;
+}
+
+.battery {
+  text-align: center;
+  padding: 14px 5px;
+  float: right;
+}
 
 </style>

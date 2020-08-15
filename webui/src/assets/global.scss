@@ -1,6 +1,7 @@
 @import "./external/normalized.scss";
 @import "./external/pure.scss";
 @import "./external/pure-responsive.scss";
+@import "./icon-font.scss";
 @import "./colors.scss";
 
 $nav_width: 250px;
@@ -17,4 +18,12 @@ body {
     &:hover {
         background-color: $medium_dark;
     }
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.mr5 {
+    margin-right: 5px;
 }

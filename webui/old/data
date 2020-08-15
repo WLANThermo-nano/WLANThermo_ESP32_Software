@@ -1,9 +1,13 @@
+
+
 {
     "system": {
         "time": "1590008772",
         "unit": "C",
-        "rssi": -35,
-        "online": 0
+        "rssi": -32,
+        "soc": 7,
+        "charge": false,
+        "online": 2
     },
     "channel": [
         {
