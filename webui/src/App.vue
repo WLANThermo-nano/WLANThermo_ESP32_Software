@@ -10,6 +10,7 @@
       </div>
       <div class="status" v-if="system">
         <!-- to do update notice -->
+        <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="handleCloudIconClick" iconClass="notification icon-yellow" />
         
         <Icon v-if="cloudIconClass !== null" class="cursor-pointer" @click="handleCloudIconClick" :iconClass="cloudIconClass" />
         <!-- charging -->
@@ -61,7 +62,7 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <Home v-if="page === 'home'" />
+          <Home v-if="page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit"/>
           <Wlan v-else-if="page === 'wlan'" />
           <div v-else>
             {{ page }} comming soon
@@ -95,9 +96,14 @@ export default {
           host: 'N.C'
         }
       },
-      system: null,
-      channel: [],
-      pitmaster: null,
+      system: {
+        unit: ''
+      },
+      channels: [],
+      pitmaster: {
+        pm: [],
+        type: []
+      },
       page: 'home',
       navActive: false
     };
@@ -106,16 +112,20 @@ export default {
     Home, Wlan, Icon
   },
   methods: {
-    getData: function() {
+    initGetDataPeriodically: function() {
+      this.getData();
       setInterval(() => {
-        this.axios.get('/data').then((response) => {
-          const data = response.data
-          this.system = data.system
-          this.channel = data.channel
-          this.pitmaster = data.pitmaster
-          this.prepareStatusIcons()
-        })
+        this.getData();
       }, 2000)
+    },
+    getData: function() {
+      this.axios.get('/data').then((response) => {
+        const data = response.data
+        this.system = data.system
+        this.channels = data.channel
+        this.pitmaster = data.pitmaster
+        this.prepareStatusIcons()
+      })
     },
     getSettings: function() {
       this.axios.get('/settings').then((response) => {
@@ -182,7 +192,7 @@ export default {
   },
   mounted: function() {
     this.getSettings();
-    this.getData();
+    this.initGetDataPeriodically();
   }
 };
 </script>
@@ -239,15 +249,6 @@ export default {
   font-size: 1.2em;
 }
 
-.info-box {
-  margin: 5px;
-  padding: 10px;
-  height: 100px;
-  color: #fff;
-  background-color: $medium_dark;
-  border-left: 8px solid;
-}
-
 // hamburger
 .menu-link {
   position: absolute;
@@ -289,7 +290,7 @@ export default {
 }
 
 .nav-mask {
-  position: absolute;
+  position: fixed;
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.3);
@@ -303,7 +304,7 @@ export default {
     z-index: 500;
     width: 12.5em;
     left: -12.5em;
-    position: absolute;
+    position: fixed;
     transition: left .4s ease;
     &.active {
       display: block;

@@ -6,12 +6,8 @@ module.exports = {
     configureWebpack: {
         plugins: [
             new CompressionPlugin(),
-            // new BundleAnalyzerPlugin()
+            new BundleAnalyzerPlugin()
         ],
-        // output: {
-        //     filename: '[name].js',
-        //     chunkFilename: '[name].js'
-        // }
     },
     devServer: {
         proxy: 'http://localhost'
