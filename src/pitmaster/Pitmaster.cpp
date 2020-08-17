@@ -42,12 +42,13 @@
 #define OPL_FALL 97   // OPEN LID LIMIT FALLING
 #define OPL_RISE 100  // OPEN LID LIMIT RISING
 #define OPL_PAUSE 300 // OPEN LID PAUSE
-#define OPL_THRESHOLD 4
+#define OPL_THRESHOLD 2
 
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
-#define MEDIAN_SIZE 5u
+#define MEDIAN_SIZE 10u
+#define DCOUNT  10u
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -74,6 +75,8 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
     this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
+    this->ecount = DCOUNT;
+    this->edif = 0;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -551,21 +554,25 @@ boolean Pitmaster::checkOpenLid()
         }
         else if (openLid.fall_c == 2)
         {
-            Log.notice("OPL 1: %F" CR, (float)(openLid.ref));
-            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getPreValue()));
-            Log.notice("OPL 3: %F" CR, (float)(this->temperature->getValue()));
+            Log.notice("OPL 0: %F" CR, (float)(openLid.ref));
+            Log.notice("OPL 1: %F" CR, (float)(this->temperature->getPreValue()));
+            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getValue()));
+        }
+        else if (openLid.fall_c > 10) {
+            openLid.fall_c = 0;  // Zurücksetzen wenn über max. Count
         }
         // wenn in 4 Schritten nicht unter Threshold, dann ist es auch keine Deckelöffnung
-        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
+        else if (openLid.fall_c >= 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
         { // Opened lid detected!            
             openLid.detected = true;
             openLid.temp = openLid.ref;
             openLid.count = OPL_PAUSE; // TODO: check pause
             
-            Log.notice("OPL detected" CR);
+            Log.notice("OPL: %d" CR, (int)(openLid.fall_c));
+            Log.notice("OPL detected: %F" CR, (float)(this->temperature->getValue()));
             Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
-
         }
+        
     }
     else
     {
@@ -895,17 +902,36 @@ float Pitmaster::pidCalc()
     else if (diff <= 0)
         this->jump = false;
 
-    //float e = w - x;
-
     // Proportional-Anteil
     float p_out = kp * e;
 
     // Differential-Anteil
+/*
     float edif = (e - this->elast) / (this->pause / 1000.0);
     this->elast = e;
     float d_out = kd * edif;
     if ((x - w) > 0)
         d_out = 0; // Begrenzung auf Untertemperaturbereich
+*/
+/*
+    float edif = (e - this->elast) / (this->pause / 1000.0);
+    float d_out = kd * edif;
+
+    this->ecount++;
+    if (this->ecount == 5) {
+        this->elast = e;
+        this->ecount = 0;
+    }
+*/
+
+    this->ecount++;
+    if (this->ecount >= DCOUNT) {
+        this->edif = (e - this->elast) / (this->pause / 1000.0);
+        this->elast = e;
+        this->ecount = 0;
+    }
+
+    float d_out = kd * edif;
 
     // i-Anteil wechsl: https://github.com/WLANThermo/WLANThermo_v2/blob/b7bd6e1b56fe5659e8750c17c6dd1cd489872f6c/software/usr/sbin/wlt_2_pitmaster.py
     // Integral-Anteil
