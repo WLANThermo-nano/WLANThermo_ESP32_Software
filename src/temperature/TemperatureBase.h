@@ -104,6 +104,7 @@ protected:
   float currentValue;
   float preValue;
   int8_t currentGradient;
+  int8_t gradientSign;
   MedianFilter<float> *medianValue;
   float minValue;
   float maxValue;

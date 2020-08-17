@@ -64,6 +64,7 @@ void TemperatureBase::loadDefaultValues()
   this->currentValue = INACTIVEVALUE;
   this->preValue = INACTIVEVALUE;
   this->currentGradient = 0;
+  this->gradientSign = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
@@ -299,10 +300,30 @@ boolean TemperatureBase::isActive()
 
 void TemperatureBase::refresh()
 {
+  // Save last
   this->preValue = this->currentValue;
-  this->currentValue = this->medianValue->GetFiltered();
-  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0;
+  int8_t preGradientSign = this->gradientSign;
+
+  // get current
+  float currentVal = this->medianValue->GetFiltered();
+  float gradient = (isActive() == true) ? decimalPlace(currentVal) - decimalPlace(this->preValue) : 0;
+  this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
+
+  // gradient sign filter 
+  if (preGradientSign == gradientSign) {
+    if (this->type == SensorType::TypeK){
+      this->currentValue = ((currentVal*2.0) + preValue)/3.0;
+    }
+    else {
+      this->currentValue = currentVal;
+    }
+  }
+  else
+  {
+    this->currentValue = this->preValue;
+  }
+  
 }
 
 void TemperatureBase::update()
