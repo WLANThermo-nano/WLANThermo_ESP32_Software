@@ -225,6 +225,8 @@ export default {
   height: 44px;
   .title {
     flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .status {
     display: flex;
@@ -239,7 +241,7 @@ export default {
 }
 
 .page-content {
-  padding: 44px 2px;
+  padding: 44px 0px;
 }
 
 .headmenu {

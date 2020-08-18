@@ -1,5 +1,11 @@
 @import "./colors.scss";
 
+select {
+    option {
+        background-color: $medium_dark;
+    }
+}    
+
 .form-radio,
 .form-group {
     position: relative;
