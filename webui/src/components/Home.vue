@@ -65,6 +65,7 @@
       <div class="channel-config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
         <div class="name">
           {{ editingChanelName }}
+          <span @click="showHelpText" class="icon-question_sign icon-question"></span>
         </div>
         <div class="channel-config-form" v-bind:style="{borderColor: editingChanelClone.color}">
           <form>
@@ -116,6 +117,7 @@
 </template>
 
 <script>
+import EventBus from '../event-bus';
 
 export default {
   name: "Home",
@@ -217,6 +219,12 @@ export default {
         value += 2
       }
       return value
+    },
+    showHelpText: function() {
+      EventBus.$emit('show-help-dialog', {
+        title: 'help',
+        content: 'help ur self'
+      })
     },
     save: function() {
       const requestObj = {
@@ -344,6 +352,13 @@ export default {
 
 .checkbox {
   color: #fff;
+}
+
+.icon-question {
+  padding: 0.2em;
+  font-size: 0.7em;
+  float: right;
+  cursor: pointer;
 }
 
 </style>

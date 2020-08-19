@@ -70,6 +70,25 @@
         </div>
       </div>
     </div>
+    
+<!-- modal -->
+<a href="#modal-one" class="btn btn-big">Modal!</a>
+<div class="modal" id="modal-one" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Modal in CSS?</h2>
+      <a href="#" class="btn-close" aria-hidden="true">×</a>
+    </div>
+    <div class="modal-body">
+      <p>One modal example here! :D</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn">Nice!</a>
+    </div>
+  </div>
+</div>
+<!-- modal end -->
+
   </div>
 </template>
 
@@ -77,6 +96,7 @@
 import Home from './components/Home.vue'
 import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
+import EventBus from './event-bus';
 
 export default {
   name: "App",
@@ -193,6 +213,11 @@ export default {
   mounted: function() {
     this.getSettings();
     this.initGetDataPeriodically();
+    EventBus.$on('show-help-dialog', (dialogData) => {
+      // dialogData.title
+      // dialogData.content
+      console.log(dialogData)
+    })
   }
 };
 </script>
