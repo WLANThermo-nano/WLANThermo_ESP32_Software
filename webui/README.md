@@ -1,5 +1,3 @@
-# testproject
-
 ## Project setup
 ```
 yarn install
