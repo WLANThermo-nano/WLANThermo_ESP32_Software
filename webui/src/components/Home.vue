@@ -62,12 +62,12 @@
           </div>
         </div>
       </div>
-      <div class="channel-config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+      <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
         <div class="name">
           {{ editingChanelName }}
           <span @click="showHelpText" class="icon-question_sign icon-question"></span>
         </div>
-        <div class="channel-config-form" v-bind:style="{borderColor: editingChanelClone.color}">
+        <div class="config-form" v-bind:style="{borderColor: editingChanelClone.color}">
           <form>
             <div class="form-group">
               <input type="text" v-model="editingChanelClone.name" maxlength="10" required>
@@ -174,6 +174,14 @@ export default {
   },
   watch: {
     channels: function() {
+      this.transformChannels()
+    }
+  },
+  mounted: function() {
+    this.transformChannels()
+  },
+  methods: {
+    transformChannels: function() {
       this.transformedChannels = this.channels.map((c, i) => {
         c.pm = this.pitmasterpm[i]
         return c
@@ -181,9 +189,7 @@ export default {
       if (this.channels.some(c => c.temp != '999')) {
         this.transformedChannels = this.transformedChannels.filter(c => c.temp != '999')
       }
-    }
-  },
-  methods: {
+    },
     editChannel: function(channel) {
       this.editingChanelClone = Object.assign({}, channel)
       this.editingChanelName = this.editingChanelClone.name
@@ -222,8 +228,8 @@ export default {
     },
     showHelpText: function() {
       EventBus.$emit('show-help-dialog', {
-        title: 'help',
-        content: 'help ur self'
+        title: 'Kanal Einstellungen',
+        content: '<p><span>Mit Hilfe der Kanal-Einstellungen passt du den Messkanal an den angeschlossenen F&uuml;hler an. Zus&auml;tzlich kannst du Grenzwerte für die Alarmfunktion vorgeben.</span></p><p><span>Siehe auch: </span><a href="https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Kanal-Einstellungen" target="_blank"><span style="color:#3366ff">Wiki - Kanal</span></a></p>'
       })
     },
     save: function() {
@@ -249,7 +255,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "../assets/colors.scss";
 
 .info-box {
@@ -304,33 +310,6 @@ export default {
   }
 }
 
-.channel-config-form-container {
-  .name {
-    padding: 0.1em;
-    color: $light;
-    font-size: 1.5em;
-    font-weight: 600;
-  }
-  .channel-config-form {
-    background-color: $medium_dark;
-    padding: 0.25rem 0.5rem;
-    margin: 0.25rem;
-    border-left: 10px solid;
-  }
-}
-
-.app-bar-actions {
-  background-color: $medium;
-  font-size: 1.2em;
-  display: flex;
-  justify-content: space-between;
-  .button-container {
-    padding: 0.2em;
-    color: $primary;
-    cursor: pointer;
-  }
-}
-
 .color-input {
   font-size: 1.5em;
 }
@@ -354,11 +333,7 @@ export default {
   color: #fff;
 }
 
-.icon-question {
-  padding: 0.2em;
-  font-size: 0.7em;
-  float: right;
-  cursor: pointer;
+.config-form {
+  border-left: 10px solid;
 }
-
 </style>

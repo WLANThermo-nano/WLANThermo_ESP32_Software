@@ -71,23 +71,18 @@
       </div>
     </div>
     
-<!-- modal -->
-<a href="#modal-one" class="btn btn-big">Modal!</a>
-<div class="modal" id="modal-one" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <h2>Modal in CSS?</h2>
-      <a href="#" class="btn-close" aria-hidden="true">×</a>
+    <!-- modal -->
+    <div class="dialog-mask" v-if="dialogActive" @click="dialogActive = false"></div>
+    <div class="dialog" v-if="dialogActive">
+      <div class="title">
+        {{ dialogTitle }}
+        <span @click="dialogActive = false" class="close-btn">×</span>
+      </div>
+      <div class="body" v-html="dialogBodyText">
+        
+      </div>
     </div>
-    <div class="modal-body">
-      <p>One modal example here! :D</p>
-    </div>
-    <div class="modal-footer">
-      <a href="#" class="btn">Nice!</a>
-    </div>
-  </div>
-</div>
-<!-- modal end -->
+    <!-- modal end -->
 
   </div>
 </template>
@@ -110,6 +105,11 @@ export default {
       batteryIconClass: null,
       // cloud
       cloudIconClass: null,
+
+      // dialog
+      dialogActive: false,
+      dialogTitle: '',
+      dialogBodyText: '',
 
       settings: {
         system: {
@@ -214,9 +214,12 @@ export default {
     this.getSettings();
     this.initGetDataPeriodically();
     EventBus.$on('show-help-dialog', (dialogData) => {
-      // dialogData.title
-      // dialogData.content
-      console.log(dialogData)
+      this.dialogTitle = dialogData.title
+      this.dialogBodyText = dialogData.content
+      this.dialogActive = true
+    })
+    EventBus.$on('back-to-home', () => {
+      this.page = 'home'
     })
   }
 };
@@ -316,13 +319,43 @@ export default {
   }
 }
 
-.nav-mask {
+.nav-mask, .dialog-mask {
   position: fixed;
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.3);
   display: none;
   z-index: 499;
+  &.dialog-mask {
+    display: block;
+  }
+}
+
+.dialog {
+  position: fixed;
+  left: 50%;
+  top: 15vh;
+  transform: translateX(-50%);
+  background-color: #fff;
+  z-index: 500;
+  .title {
+    padding: 0.3em;
+    font-size: 1.5em;
+    background-color: $primary;
+    color: #fff;
+    .close-btn {
+      font-size: 1.5em;
+      line-height: 0.9em;
+      cursor: pointer;
+      float: right;
+      &:hover {
+        color: $medium;
+      }
+    }
+  }
+  .body {
+    padding: 0.7em;
+  }
 }
 
 @media screen and (max-width: 48em) {

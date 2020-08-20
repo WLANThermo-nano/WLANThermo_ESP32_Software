@@ -28,3 +28,37 @@ body {
 .mr5 {
     margin-right: 5px;
 }
+
+
+.config-form-container {
+    .name {
+        padding: 0.1em;
+        color: $light;
+        font-size: 1.5em;
+        font-weight: 600;
+        .icon-question {
+            padding: 0.2em;
+            font-size: 0.7em;
+            float: right;
+            cursor: pointer;
+        }
+    }
+    .config-form {
+        background-color: $medium_dark;
+        padding: 0.25rem 0.5rem;
+        margin: 0.25rem;
+    }
+}
+
+.app-bar-actions {
+    background-color: $medium;
+    font-size: 1.2em;
+    display: flex;
+    justify-content: space-between;
+    .button-container {
+      padding: 0.2em;
+      color: $primary;
+      cursor: pointer;
+    }
+  }
+  
