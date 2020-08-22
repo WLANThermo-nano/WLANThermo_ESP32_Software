@@ -17,7 +17,6 @@
         ></span>
       </div>
       <div class="config-form">
-
       </div>
     </div>
   </div>
@@ -41,7 +40,7 @@ export default {
     },
     backToHome: function () {
       EventBus.$emit("back-to-home");
-    }
+    },
   },
   components: {},
   mounted: function () {},

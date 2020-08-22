@@ -99,12 +99,12 @@
             <div class="colors-container" v-if="showColorPicker">
               <div class="color-option" @click="setColor(c)" v-for="c in colors" :key="c" :style="{'backgroundColor': c}"></div>
             </div>
-            <div>
+            <div class="form-checkbox">
               <label for="alarm" class="pure-checkbox checkbox">
                 <input v-model="pushAlarmChecked" type="checkbox" id="alarm" /> {{$t("push_alarm")}}
               </label>
             </div>
-            <div>
+            <div class="form-checkbox">
               <label for="bz-alarm" class="pure-checkbox checkbox">
                 <input v-model="buzzerAlarmChecked" type="checkbox" id="bz-alarm" /> {{$t("buzzer_alarm")}}
               </label>
@@ -327,10 +327,6 @@ export default {
       opacity: 1;
     }
   }
-}
-
-.checkbox {
-  color: #fff;
 }
 
 .config-form {

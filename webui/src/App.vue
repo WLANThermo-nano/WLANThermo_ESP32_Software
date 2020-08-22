@@ -64,6 +64,8 @@
         <div class="content-body">
           <Home v-if="page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit"/>
           <Wlan v-else-if="page === 'wlan'" />
+          <System v-else-if="page === 'system'" />
+          <PushNotification v-else-if="page === 'notification'" />
           <div v-else>
             {{ page }} comming soon
           </div>
@@ -91,6 +93,8 @@
 import Home from './components/Home.vue'
 import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
+import System from './components/System.vue'
+import PushNotification from './components/PushNotification'
 import EventBus from './event-bus';
 
 export default {
@@ -129,7 +133,7 @@ export default {
     };
   },
   components: {
-    Home, Wlan, Icon
+    Home, Wlan, Icon, System, PushNotification
   },
   methods: {
     initGetDataPeriodically: function() {

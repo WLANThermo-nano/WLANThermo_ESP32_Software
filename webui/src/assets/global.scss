@@ -48,6 +48,13 @@ body {
         padding: 0.25rem 0.5rem;
         margin: 0.25rem;
     }
+    .form-checkbox {
+        margin-top: 1.25rem;
+        margin-bottom: 1rem;
+        .checkbox {
+            color: #fff;
+        }  
+    }
 }
 
 .app-bar-actions {
