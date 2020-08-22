@@ -55,7 +55,7 @@
             </div>
           </div>
         </form>
-        <button class="pure-button pure-button-primary" @click="sendTestMessage">
+        <button class="pure-button pure-button-primary test-msg-button" @click="sendTestMessage">
           {{ $t('notificationSendMessage') }}
         </button>
       </div>
@@ -150,4 +150,7 @@ export default {
   }
 }
 
+.test-msg-button {
+  margin-bottom: 1em;
+}
 </style>
