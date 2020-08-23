@@ -41,6 +41,7 @@
 
 const char *WServer::username = "admin";
 String WServer::password = DEFAULT_PASSWORD;
+boolean WServer::requireAuth = true;
 
 WServer::WServer()
 {
@@ -161,6 +162,7 @@ void WServer::saveConfig()
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
   json["password"] = password;
+  json["auth"] = requireAuth;
   Settings::write(kServer, json);
 }
 
@@ -174,6 +176,8 @@ void WServer::loadConfig()
 
     if (json.containsKey("password"))
       this->password = json["password"].asString();
+    if (json.containsKey("auth"))
+      this->requireAuth = json["auth"].as<boolean>();
   }
 }
 

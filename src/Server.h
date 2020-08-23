@@ -35,14 +35,16 @@ public:
     static void saveConfig();
     static String getUsername();
     static String getPassword();
-    static const char* getRealm(){ return "WLANThermo Device"; }
+    static const char *getRealm() { return "WLANThermo Device"; }
     static void setPassword(String newPassword);
+    static boolean getRequireAuth() { return requireAuth; }
 
 private:
     void loadConfig();
     AsyncWebServer *webServer;
     static const char *username;
     static String password;
+    static boolean requireAuth;
 };
 
 extern WServer gWebServer;
