@@ -927,6 +927,7 @@ float Pitmaster::pidCalc()
     this->ecount++;
     if (this->ecount >= DCOUNT) {
         this->edif = (e - this->elast) / (this->pause / 1000.0);
+        this->edif = this->edif / (float) DCOUNT;
         this->elast = e;
         this->ecount = 0;
     }
