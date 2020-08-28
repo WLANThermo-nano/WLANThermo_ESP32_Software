@@ -1,4 +1,16 @@
 export default {
+	// help text
+	help_channel: 'With the help of the channel settings you adapt the measuring channel to the connected sensor. You can also specify limit values for the alarm function.',
+	help_channel_link: 'Channel',
+	help_channel_title: "Channel settings",
+	help_system_title: "System settings",
+	help_system_link: 'System',
+	help_system: "Configure your WLANThermo Nano with the help of the system settings and make it YOUR WLANThermo.",
+	help_notification_title: "Push notification settings",
+	help_notification_link: 'Notification',
+	help_notification: "In the event of a channel alarm, be notified with a push message via the Telegram message service or Pushover. Requires internet access.",
+	// shared
+	see_also: "See also",
 	// Reiter System-Einstellungen
 	system_settings: "System settings",
 	unit: "Unit",

@@ -114,11 +114,12 @@ export default {
       EventBus.$emit("back-to-home");
     },
     showHelpText: function () {
-      EventBus.$emit("show-help-dialog", {
-        title: "Push Einstellungen",
-        content:
-          '<p><span>Lass dich bei einem Kanalalarm mit einer Push-Nachricht über den Nachrichtendienst Telegram oder Pushover benachrichtigen. Ben&ouml;tigt Internetzugang.</span></p><p><span>Siehe auch: </span><a href="https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Push-Notification" target="_blank"><span style="color:#3366ff">Wiki - Notification</span></a></p>',
-      });
+      EventBus.$emit('show-help-dialog', {
+        title: this.$t('help_notification_title'),
+        content: this.$t('help_notification'),
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Push-Notification',
+        linkText: this.$t('help_notification_link')
+      })
     },
     save: function() {
       const requestObj = Object.assign({}, this.notes.ext)

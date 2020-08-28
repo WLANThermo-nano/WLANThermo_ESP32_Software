@@ -228,8 +228,10 @@ export default {
     },
     showHelpText: function() {
       EventBus.$emit('show-help-dialog', {
-        title: 'Kanal Einstellungen',
-        content: '<p><span>Mit Hilfe der Kanal-Einstellungen passt du den Messkanal an den angeschlossenen F&uuml;hler an. Zus&auml;tzlich kannst du Grenzwerte für die Alarmfunktion vorgeben.</span></p><p><span>Siehe auch: </span><a href="https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Kanal-Einstellungen" target="_blank"><span style="color:#3366ff">Wiki - Kanal</span></a></p>'
+        title: this.$t('help_channel_title'),
+        content: this.$t('help_channel'),
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Kanal-Einstellungen',
+        linkText: this.$t('help_channel_link')
       })
     },
     save: function() {

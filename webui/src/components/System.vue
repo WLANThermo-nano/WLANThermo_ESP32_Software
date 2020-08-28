@@ -120,11 +120,12 @@ export default {
       EventBus.$emit("back-to-home");
     },
     showHelpText: function () {
-      EventBus.$emit("show-help-dialog", {
-        title: "System Einstellungen",
-        content:
-          '<p><span>Konfiguriere dein WLANThermo Nano mit Hilfe der Systemeinstellungen und mach es zu DEINEM WLANThermo.</span></p><p><span>Siehe auch: </span><a href="https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/System-Einstellungen" target="_blank"><span style="color:#3366ff">Wiki - System</span></a></p>',
-      });
+      EventBus.$emit('show-help-dialog', {
+        title: this.$t('help_system_title'),
+        content: this.$t('help_system'),
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/System-Einstellungen',
+        linkText: this.$t('help_system_link')
+      })
     },
     save: function() {
       const requestObj = Object.assign({}, this.copyOfSystem)

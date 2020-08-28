@@ -80,8 +80,14 @@
         {{ dialogTitle }}
         <span @click="dialogActive = false" class="close-btn">×</span>
       </div>
-      <div class="body" v-html="dialogBodyText">
-        
+      <div class="body">
+        <p><span>{{dialogBodyText}}</span></p>
+        <div class="link">
+          <p>
+            {{ $t('see_also') }}
+            <a :href="wikiLink" target="_blank"><span style="color:#3366ff">Wiki - {{ linkText }}</span></a>
+          </p>
+        </div>
       </div>
     </div>
     <!-- modal end -->
@@ -114,6 +120,8 @@ export default {
       dialogActive: false,
       dialogTitle: '',
       dialogBodyText: '',
+      wikiLink: '',
+      linkText: '',
 
       settings: {
         system: {
@@ -220,6 +228,8 @@ export default {
     EventBus.$on('show-help-dialog', (dialogData) => {
       this.dialogTitle = dialogData.title
       this.dialogBodyText = dialogData.content
+      this.wikiLink = dialogData.wikiLink
+      this.linkText = dialogData.linkText
       this.dialogActive = true
     })
     EventBus.$on('back-to-home', () => {

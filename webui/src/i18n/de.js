@@ -1,4 +1,16 @@
 export default {
+	// help text
+	help_channel: 'Mit Hilfe der Kanal-Einstellungen passt du den Messkanal an den angeschlossenen Fühler an. Zusätzlich kannst du Grenzwerte für die Alarmfunktion vorgeben.',
+	help_channel_link: 'Kanal',
+	help_channel_title: "Kanal Einstellungen",
+	help_system_title: "System Einstellungen",
+	help_system_link: 'System',
+	help_system: "Konfiguriere dein WLANThermo Nano mit Hilfe der Systemeinstellungen und mach es zu DEINEM WLANThermo.",
+	help_notification_title: "Push Einstellungen",
+	help_notification_link: 'Notification',
+	help_notification: "Lass dich bei einem Kanalalarm mit einer Push-Nachricht über den Nachrichtendienst Telegram oder Pushover benachrichtigen. Benötigt Internetzugang.",
+	// shared
+	see_also: "Siehe auch",
 	// Reiter System-Einstellungen
 	system_settings: "System-Einstellungen",
 	unit: "Einheit",
