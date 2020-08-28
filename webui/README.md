@@ -1,3 +1,6 @@
+## 
+The project is develop using nodejs version _v12.15.0_ and yarn version _1.22.0_
+
 ## Project setup
 ```
 yarn install
@@ -16,6 +19,12 @@ yarn build
 ### Lints and fixes files
 ```
 yarn lint
+```
+
+### Start local development backend
+```
+cd old
+python webserver.py
 ```
 
 ### Customize configuration
