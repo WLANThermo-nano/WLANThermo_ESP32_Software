@@ -34,6 +34,7 @@ export default {
 	// Buttons
 	back: "Back",
 	save: "Save",
+	cancel: "Cancel",
 	//Kanaleinstellungen
 	channel_name: "Channel name",
 	temp_max: "Upper temperature limit",
@@ -100,6 +101,8 @@ export default {
 	wlanSSID: "SSID",
 	wlanPwd: "Password",
 	stopWifiPrompt: "Are you sure want to stop the WiFi connection until the system is restarted?",
+	clearWifiPrompt: "Are you sure you want to delete all network connection data? Nano then restarts in AP mode.",
+	availableNetworks: "Available networks",
 	// Menu Bluetooth
 	bluetoothActivate: "Activate Bluetooth",
 	bluetoothChannels: "Select channels...",

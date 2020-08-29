@@ -1,5 +1,5 @@
 <template>
-  <div :style="styleObject" @click="$emit('click')">
+  <div :style="{width: width, height: height, fontSize: fontSize}" @click="$emit('click')">
     <span :class="'icon-' + iconClass"></span>
   </div>
 </template>
@@ -11,15 +11,19 @@ export default {
   props: {
     iconClass: {
       type: String
+    },
+    width: {
+      default: '45px'
+    },
+    height: {
+      default: '45px'
+    },
+    fontSize: {
+      default: '1em'
     }
   },
   data: () => {
-    return {
-      styleObject: {
-        width: '45px',
-        height: '45px'
-      }
-    };
+    return {};
   },
   components: {
   },

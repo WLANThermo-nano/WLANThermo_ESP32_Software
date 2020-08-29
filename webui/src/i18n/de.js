@@ -34,6 +34,7 @@ export default {
 	// Buttons
 	back: "Zurück",
 	save: "Speichern",
+	cancel: "Abbrechen",
 	//Kanaleinstellungen
 	channel_name: "Kanalname",
 	temp_max: "Temperatur-Obergrenze",
@@ -99,6 +100,7 @@ export default {
 	wlanConnect: "Netzwerk verbinden",
 	wlanSSID: "SSID",
 	wlanPwd: "Passwort",
+	clearWifiPrompt: "Sollen wirklich alle Netzwerkverbindungsdaten gelöscht werden? Nano startet danach im AP-Modus neu.",
 	stopWifiPrompt: "Soll die Wifi-Verbindung bis zum nächsten Restart des Systems wirklich abgeschaltet werden?",
 	// Menu Bluetooth
 	bluetoothActivate: "Bluetooth aktivieren",

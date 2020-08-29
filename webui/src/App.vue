@@ -101,7 +101,8 @@ import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
 import System from './components/System.vue'
 import PushNotification from './components/PushNotification'
-import EventBus from './event-bus';
+import EventBus from './event-bus'
+import IconsHelper from './helpers/icons-helper'
 
 export default {
   name: "App",
@@ -176,13 +177,7 @@ export default {
     prepareStatusIcons: function() {
       // wifi icon
       const dbm = this.system.rssi
-      if (dbm >= '-80') {
-        this.wifiIconClass = 'Wlan100'
-      } else if (dbm >= '-95') {
-        this.wifiIconClass = 'Wlan66'
-      } else if (dbm >= '-105') {
-        this.wifiIconClass = 'Wlan33'
-      }
+      this.wifiIconClass = IconsHelper.getWifiIcon(dbm)
 
       // Battery
       const percent = this.system.soc

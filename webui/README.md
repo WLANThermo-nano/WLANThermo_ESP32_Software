@@ -29,3 +29,9 @@ python webserver.py
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+### Working with icon font
+The icons are located at _webui\src\icons\icomoon.io.json_
+The icons can be imported and viewing with [icon moon](https://icomoon.io/app/#/select)
+You can add/remove icons and put the exported results to _webui\src\assets\icon-font.scss_
