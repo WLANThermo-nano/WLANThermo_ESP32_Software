@@ -5,8 +5,8 @@
         "time": "1590008772",
         "unit": "C",
         "rssi": -32,
-        "soc": 7,
-        "charge": false,
+        "soc": 70,
+        "charge": true,
         "online": 2
     },
     "channel": [
@@ -14,13 +14,13 @@
             "number": 1,
             "name": "Kanal 1",
             "typ": 0,
-            "temp": 999.0,
+            "temp": 999,
             "min": 10.0,
             "max": 35.0,
             "alarm": 0,
             "color": "#0C4C88",
-            "fixed": false,
-            "connected": false
+            "fixed": true,
+            "connected": true
         },
         {
             "number": 2,
@@ -38,7 +38,7 @@
             "number": 3,
             "name": "Kanal 3",
             "typ": 0,
-            "temp": 999.0,
+            "temp": 15.0,
             "min": 10.0,
             "max": 35.0,
             "alarm": 0,
@@ -116,7 +116,19 @@
             "alarm": 0,
             "color": "#5C7148",
             "fixed": true,
-            "connected": false
+            "connected": true
+        },
+        {
+            "number": 10,
+            "name": "Kanal 10",
+            "typ": 17,
+            "temp": 999.0,
+            "min": 10.0,
+            "max": 35.0,
+            "alarm": 0,
+            "color": "#5C7148",
+            "fixed": true,
+            "connected": true
         }
     ],
     "pitmaster": {
@@ -143,6 +155,16 @@
                 "value": 0,
                 "set": 50.0,
                 "typ": "off",
+                "set_color": "#FE2EF7",
+                "value_color": "#848484"
+            },
+            {
+                "id": 2,
+                "channel": 3,
+                "pid": 2,
+                "value": 98,
+                "set": 50.0,
+                "typ": "auto",
                 "set_color": "#FE2EF7",
                 "value_color": "#848484"
             }

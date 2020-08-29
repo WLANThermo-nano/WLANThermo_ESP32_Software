@@ -14,7 +14,7 @@
         "unit": "C",
         "ap": "WLANTHERMO-AP",
         "host": "MINI-c82b96995b70",
-        "language": "de",
+        "language": "en",
         "version": "v0.9.9",
         "getupdate": "false",
         "autoupd": true,
@@ -210,9 +210,9 @@
     "notes": {
         "fcm": [],
         "ext": {
-            "on": 0,
-            "token": "",
-            "id": "",
+            "on": 1,
+            "token": "token",
+            "id": "id",
             "repeat": 1,
             "service": 0,
             "services": [

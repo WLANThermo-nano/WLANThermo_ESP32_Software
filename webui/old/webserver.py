@@ -20,14 +20,19 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(f.read())
 
     def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        body = self.rfile.read(content_length)
+        # content_length = int(self.headers['Content-Length'])
+        # body = self.rfile.read(content_length)
 
         if self.path == '/setbluetooth':
             f = open('bluetooth', 'wb')
             f.write(body)
             self.send_response(200)
             self.end_headers()
+        if self.path == '/stopwifi':
+            self.send_response(200)
+            self.send_header( "Content-length", str(len("true")) )
+            self.end_headers()
+            self.wfile.write(b"true")
         else:
             self.send_response(200)
             self.end_headers()

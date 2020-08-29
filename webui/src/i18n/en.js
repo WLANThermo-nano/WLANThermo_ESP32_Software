@@ -9,6 +9,9 @@ export default {
 	help_notification_title: "Push notification settings",
 	help_notification_link: 'Notification',
 	help_notification: "In the event of a channel alarm, be notified with a push message via the Telegram message service or Pushover. Requires internet access.",
+	help_wlan_title: "WLAN settings",
+	help_wlan_link: 'WLAN',
+	help_wlan: "Connect your WLANThermo to your home network and thus expand the functionality of your WLANThermo.",
 	// shared
 	see_also: "See also",
 	// Reiter System-Einstellungen
@@ -96,6 +99,7 @@ export default {
 	wlanConnect: "Connect network",
 	wlanSSID: "SSID",
 	wlanPwd: "Password",
+	stopWifiPrompt: "Are you sure want to stop the WiFi connection until the system is restarted?",
 	// Menu Bluetooth
 	bluetoothActivate: "Activate Bluetooth",
 	bluetoothChannels: "Select channels...",
