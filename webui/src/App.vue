@@ -37,7 +37,7 @@
           <li @click="page = 'wlan'" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
           </li>
-          <li @click="page = 'wlan'" class="pure-menu-item">
+          <li @click="page = 'bluetooth'" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuBluetooth") }}</a>
           </li>
           <li @click="page = 'system'" class="pure-menu-item">
@@ -66,6 +66,7 @@
           <Wlan v-else-if="page === 'wlan'" />
           <System v-else-if="page === 'system'" />
           <PushNotification v-else-if="page === 'notification'" />
+          <Bluetooth v-else-if="page === 'bluetooth'" />
           <div v-else>
             {{ page }} comming soon
           </div>
@@ -82,7 +83,7 @@
       </div>
       <div class="body">
         <p><span>{{dialogBodyText}}</span></p>
-        <div class="link">
+        <div class="link" v-if="wikiLink">
           <p>
             {{ $t('see_also') }}
             <a :href="wikiLink" target="_blank"><span style="color:#3366ff">Wiki - {{ linkText }}</span></a>
@@ -92,6 +93,10 @@
     </div>
     <!-- modal end -->
 
+    <!-- spinner -->
+    <div class="dialog-mask" v-if="showSpinner"></div>
+    <div class="spinner" v-if="showSpinner"></div>
+
   </div>
 </template>
 
@@ -100,6 +105,7 @@ import Home from './components/Home.vue'
 import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
 import System from './components/System.vue'
+import Bluetooth from './components/Bluetooth.vue'
 import PushNotification from './components/PushNotification'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
@@ -138,11 +144,12 @@ export default {
         type: []
       },
       page: 'home',
-      navActive: false
+      navActive: false,
+      showSpinner: false
     };
   },
   components: {
-    Home, Wlan, Icon, System, PushNotification
+    Home, Wlan, Icon, System, PushNotification, Bluetooth
   },
   methods: {
     initGetDataPeriodically: function() {
@@ -229,6 +236,9 @@ export default {
     })
     EventBus.$on('back-to-home', () => {
       this.page = 'home'
+    })
+    EventBus.$on('loading', (value) => {
+      this.showSpinner = value
     })
   }
 };

@@ -235,6 +235,7 @@ export default {
       })
     },
     save: function() {
+      EventBus.$emit("loading", true)
       const requestObj = {
         alarm: this.getAlarmValue(),
         color: this.editingChanelClone.color,
@@ -249,6 +250,7 @@ export default {
       }
       this.axios.post('/setchannels', requestObj).then(() => {
         this.editing = false;
+        EventBus.$emit("loading", false)
       });
     }
   },

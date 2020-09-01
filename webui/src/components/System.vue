@@ -109,15 +109,17 @@ export default {
   },
   watch: {},
   mounted: function () {
+    EventBus.$emit("loading", true)
     this.axios.get("/settings").then((response) => {
       this.hardwareVersions = response.data.hardware
       this.copyOfSystem = Object.assign({}, response.data) 
       this.systemSettings = response.data.system
+      EventBus.$emit("loading", false)
     });
   },
   methods: {
     backToHome: function () {
-      EventBus.$emit("back-to-home");
+      EventBus.$emit("back-to-home")
     },
     showHelpText: function () {
       EventBus.$emit('show-help-dialog', {
@@ -130,9 +132,13 @@ export default {
     save: function() {
       const requestObj = Object.assign({}, this.copyOfSystem)
       requestObj.system = Object.assign({}, this.systemSettings)
+      EventBus.$emit("loading", true)
       this.axios.post('/settings', requestObj).then(() => {
+        EventBus.$emit("loading", false)
         this.backToHome()
-      });
+      }).catch(() => {
+        EventBus.$emit("loading", false)
+      })
     }
   },
   components: {},

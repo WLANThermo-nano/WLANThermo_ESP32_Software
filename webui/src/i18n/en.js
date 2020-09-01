@@ -12,6 +12,8 @@ export default {
 	help_wlan_title: "WLAN settings",
 	help_wlan_link: 'WLAN',
 	help_wlan: "Connect your WLANThermo to your home network and thus expand the functionality of your WLANThermo.",
+	help_bluetooth_title: "Bluetooth settings",
+	help_bluetooth: "Connect your WLANThermo with one or more Bluetooth devices and thus expand the functionality of your WLANThermo.",
 	// shared
 	see_also: "See also",
 	// Reiter System-Einstellungen
@@ -107,6 +109,7 @@ export default {
 	bluetoothActivate: "Activate Bluetooth",
 	bluetoothChannels: "Select channels...",
 	bluetoothTitle: "Bluetooth settings",
+	channel: "Channel",
 	// Menü Pitmaster
 	pitTitle: "Pitmaster settings",
 	pitPitmaster: "Pitmaster",

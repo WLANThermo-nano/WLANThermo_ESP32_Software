@@ -101,12 +101,14 @@ export default {
   },
   watch: {},
   mounted: function () {
+    EventBus.$emit("loading", true)
     this.axios.get("/settings").then((response) => {
       this.copyOfSystem = Object.assign({}, response.data) 
       this.notes = response.data.notes
       this.servicesOptions = response.data.notes.ext.services.map((serviceName, index) => {
         return { label: serviceName, value: index.toString() }
       })
+      EventBus.$emit("loading", false)
     });
   },
   methods: {
@@ -122,8 +124,10 @@ export default {
       })
     },
     save: function() {
+      EventBus.$emit("loading", true)
       const requestObj = Object.assign({}, this.notes.ext)
       this.axios.post('/setPush', requestObj).then(() => {
+        EventBus.$emit("loading", false)
         this.backToHome()
       });
     },

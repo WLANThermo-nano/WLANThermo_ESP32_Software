@@ -27,8 +27,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(f.read())
 
     def do_POST(self):
-        # content_length = int(self.headers['Content-Length'])
-        # body = self.rfile.read(content_length)
+        content_length = int(self.headers['Content-Length'])
+        body = self.rfile.read(content_length)
 
         if self.path == '/setbluetooth':
             f = open('bluetooth', 'wb')
