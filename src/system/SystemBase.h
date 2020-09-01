@@ -25,6 +25,7 @@
 #include "peripherie/Battery.h"
 #include "peripherie/Buzzer.h"
 #include "peripherie/SdCard.h"
+#include "peripherie/PbGuard.h"
 #include "bluetooth/Bluetooth.h"
 #include "Notification.h"
 #include "Wlan.h"
@@ -93,6 +94,7 @@ public:
 
 protected:
   Buzzer *buzzer;
+  PbGuard *pbGuard;
   PitmasterProfile *profile[MAX_PITMASTERPROFILES];
   uint8_t pitmasterProfileCount;
   String deviceName;

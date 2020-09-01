@@ -45,6 +45,9 @@
 #define BLE_UART_RX 14
 #define BLE_RESET_PIN 4u
 
+// PBGUARD
+#define PBGUARD_IO 27u
+
 enum ledcChannels
 {
   // Channel 0, Timer0
@@ -109,6 +112,8 @@ void SystemLinkV1::init()
   pitmasters.loadConfig();
 */
   sdCard = new SdCard(CS_SD_CARD);
+
+  pbGuard = new PbGuard(PBGUARD_IO);
 
   initDone = true;
 }

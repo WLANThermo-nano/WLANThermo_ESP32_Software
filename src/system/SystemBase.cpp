@@ -40,6 +40,7 @@ char SystemBase::serialNumber[13] = "";
 SystemBase::SystemBase()
 {
   buzzer = NULL;
+  pbGuard = NULL;
   battery = NULL;
   bluetooth = NULL;
   sdCard = NULL;
@@ -169,6 +170,11 @@ void SystemBase::update()
 
       buzzer->update();
     }
+  }
+
+  if(pbGuard != NULL)
+  {
+    pbGuard->update();
   }
 }
 
