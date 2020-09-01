@@ -32,12 +32,14 @@
 #include <SPIFFS.h>
 
 // include html files
-#include "webui/index.html.gz.h"
 #include "webui/fwupdate.html.gz.h"
 #include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
 #define DEFAULT_PASSWORD "admin"
+
+extern const uint8_t index_html_start[] asm("_binary_webui_dist_index_html_gz_start");
+extern const size_t index_html_size asm("_binary_webui_dist_index_html_gz_size");
 
 const char *WServer::username = "admin";
 String WServer::password = DEFAULT_PASSWORD;
@@ -141,7 +143,7 @@ void WServer::init()
 
   // to avoid multiple requests to ESP
   webServer->on("/", [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, sizeof(index_html_gz));
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
