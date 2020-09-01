@@ -31,6 +31,7 @@ PbGuard::PbGuard(uint8_t ioPin)
   this->lowInterval = PBGUARD_DEFAULT_LOW_INTERVAL;
   this->highInterval = PBGUARD_DEFAULT_HIGH_INTERVAL;
   this->previousMillis = 0u;
+  pinMode(this->ioPin, OUTPUT);
   digitalWrite(this->ioPin, LOW);
   loadConfig();
 }
