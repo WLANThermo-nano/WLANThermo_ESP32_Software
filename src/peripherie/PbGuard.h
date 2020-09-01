@@ -24,14 +24,14 @@
 class PbGuard
 {
   public:
-    PbGuard(uint8_t ioPinl);
+    PbGuard();
     void enable();
     void disable();
     void update();
   private:
+    static void task(void *parameter);
     void loadConfig();
     boolean enabled;
-    uint8_t ioPin;
     uint32_t lowInterval;
     uint32_t highInterval;
     uint32_t previousMillis;

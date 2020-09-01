@@ -19,20 +19,27 @@
 ****************************************************/
 #include "PbGuard.h"
 #include "Settings.h"
+#include "TaskConfig.h"
+#include <WiFi.h>
 
 #define PBGUARD_DEFAULT_LOW_INTERVAL 5000u
 #define PBGUARD_DEFAULT_HIGH_INTERVAL 1000u
 
-PbGuard::PbGuard(uint8_t ioPin)
+void PbGuard::task(void *parameter)
 {
-  this->ioPin = ioPin;
+  for(;;)
+  {
+    __asm__ __volatile__ ("nop");
+  }
+}
+
+PbGuard::PbGuard()
+{
   this->enabled = false;
   this->state = (uint8_t)LOW;
   this->lowInterval = PBGUARD_DEFAULT_LOW_INTERVAL;
   this->highInterval = PBGUARD_DEFAULT_HIGH_INTERVAL;
   this->previousMillis = 0u;
-  pinMode(this->ioPin, OUTPUT);
-  digitalWrite(this->ioPin, LOW);
   loadConfig();
 }
 
@@ -51,7 +58,6 @@ void PbGuard::disable()
   {
     this->enabled = false;
     this->state = LOW;
-    digitalWrite(this->ioPin, LOW);
   }
 }
 
@@ -74,6 +80,8 @@ void PbGuard::loadConfig()
 
 void PbGuard::update()
 {
+  static TaskHandle_t taskHandle = NULL;
+  
   if (this->enabled)
   {
     uint32_t currentMillis = millis();
@@ -84,9 +92,16 @@ void PbGuard::update()
       {
         this->previousMillis = currentMillis;
         this->state = (uint8_t)HIGH;
-        digitalWrite(this->ioPin, HIGH);
-        //Serial.println("HIGH");
-      }
+        Serial.println("PBGUARD HIGH DRAIN");
+        xTaskCreatePinnedToCore(
+          this->task,                 /* Task function. */
+          "PbGuard::task",            /* String with name of task. */
+          1000,                       /* Stack size in bytes. */
+          this,                       /* Parameter passed as input of the task */
+          TASK_PRIORITY_PBGUARD_TASK, /* Priority of the task. */
+          &taskHandle,                /* Task handle. */
+          1);                         /* CPU Core */
+        }
     }
     else
     {
@@ -94,8 +109,8 @@ void PbGuard::update()
       {
         this->previousMillis = currentMillis;
         this->state = (uint8_t)LOW;
-        digitalWrite(this->ioPin, LOW);
-        //Serial.println("LOW");
+        Serial.println("PBGUARD LOW DRAIN");
+        vTaskDelete(taskHandle);
       }
     }
   }
