@@ -117,7 +117,7 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
     {
       if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
       {
-        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::getRequireAuth()))
+        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::requireAuth()))
         {
           if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
           {
@@ -148,7 +148,7 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
     {
       if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
       {
-        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::getRequireAuth()))
+        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::requireAuth()))
         {
           if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
           {
