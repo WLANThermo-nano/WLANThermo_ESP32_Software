@@ -48,7 +48,7 @@
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
 #define MEDIAN_SIZE 10u
-#define DCOUNT  10u
+#define DCOUNT  15u
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -77,6 +77,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
     this->ecount = DCOUNT;
     this->edif = 0;
+    this->jump = 0;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -465,53 +466,6 @@ boolean Pitmaster::checkAutoTune()
 
     return false;
 }
-/*
-boolean Pitmaster::checkOpenLid()
-{
-    if ((pm_auto == this->type) && (true == this->profile->opl))
-    {
-        openLid.ref[0] = openLid.ref[1];
-        openLid.ref[1] = openLid.ref[2];
-        openLid.ref[2] = openLid.ref[3];
-        openLid.ref[3] = openLid.ref[4];
-        openLid.ref[4] = this->temperature->getValue();
-
-        float temp_ref = (openLid.ref[0] + openLid.ref[1] + openLid.ref[2]) / 3.0;
-
-        // erkennen ob Temperatur wieder eingependelt oder Timeout
-        if (openLid.detected)
-        { // Open Lid Detected
-
-            openLid.count--;
-
-            // extremes Überschwingen vermeiden
-            if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
-                openLid.temp = this->targetTemperature;
-
-            if (openLid.count <= 0) // Timeout
-                openLid.detected = false;
-
-            else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
-                openLid.detected = false;
-        }
-        else if (this->temperature->getValue() < (temp_ref * (OPL_FALL / 100.0)))
-        { // Opened lid detected!
-            // Wenn Temp innerhalb der letzten beiden Messzyklen den falling Wert unterschreitet
-
-            openLid.detected = true;
-            openLid.temp = openLid.ref[0];
-            openLid.count = OPL_PAUSE; // TODO: check pause
-
-            Serial.println("OPL");
-        }
-    }
-    else
-    {
-        openLid.detected = false;
-    }
-
-    return openLid.detected;
-}*/
 
 boolean Pitmaster::checkOpenLid()
 {
@@ -631,6 +585,11 @@ void Pitmaster::update()
 void Pitmaster::controlActuators()
 {
     float linkedvalue;
+    
+    // JUMP DROSSEL
+    if (this->jump && (this->value > this->profile->jumppw))
+          this->value = this->profile->jumppw;
+
     initActuators();
 
     switch (this->profile->actuator)
@@ -653,16 +612,11 @@ void Pitmaster::controlActuators()
         if (0 == this->profile->link)
         {
             // degressiv link
-            if (this->value > 0)
-                linkedvalue = 100;
-            else
-                linkedvalue = 0;
+            linkedvalue = (this->value > 0) ? 100 : 0;
         }
-        else
+        else // linear link
         {
-            // linear link
             linkedvalue = (ceil(this->value * 0.1)) * 10.0;
-            //Serial.println(linkedvalue);
         }
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
 
@@ -879,7 +833,6 @@ float Pitmaster::pidCalc()
     float e;
 
     // Abweichung bestimmen
-    // Abweichung bestimmen
     switch (this->profile->actuator)
     {
     case SSR: // SSR
@@ -896,34 +849,15 @@ float Pitmaster::pidCalc()
     this->profile->jumpth = (w * 0.05);
     if (this->profile->jumpth > (100.0 / kp))
         this->profile->jumpth = 100.0 / kp;
-    //Serial.println(this->profile->jumpth);
     if (diff > this->profile->jumpth)
-        this->jump = true; // Memory bis Soll erreicht
-    else if (diff <= 0)
+        this->jump = true; 
+    else if (diff <= 0) // Memory bis Soll erreicht
         this->jump = false;
 
     // Proportional-Anteil
     float p_out = kp * e;
 
-    // Differential-Anteil
-/*
-    float edif = (e - this->elast) / (this->pause / 1000.0);
-    this->elast = e;
-    float d_out = kd * edif;
-    if ((x - w) > 0)
-        d_out = 0; // Begrenzung auf Untertemperaturbereich
-*/
-/*
-    float edif = (e - this->elast) / (this->pause / 1000.0);
-    float d_out = kd * edif;
-
-    this->ecount++;
-    if (this->ecount == 5) {
-        this->elast = e;
-        this->ecount = 0;
-    }
-*/
-
+    // Differential-Anteil (Intervall-Berechnung)
     this->ecount++;
     if (this->ecount >= DCOUNT) {
         this->edif = (e - this->elast) / (this->pause / 1000.0);
@@ -984,4 +918,5 @@ void Pitmaster::pidReset()
     this->esum = 0;
     this->elast = 0;
     this->Ki_alt = 0;
+    this->jump = 0;
 }
