@@ -24,6 +24,8 @@
 #include "bluetooth/Bluetooth.h"
 #include "ArduinoLog.h"
 
+std::vector<TemperatureBase *> TemperatureGrp::temperatures;
+
 TemperatureGrp::TemperatureGrp()
 {
   this->currentUnit = Celsius;
@@ -51,6 +53,7 @@ void TemperatureGrp::add(uint8_t type, String address, uint8_t localIndex)
     {
     case SensorType::Ble:
       temperature = new TemperatureBle(address, localIndex);
+      temperature->setUnit(this->currentUnit);
       add(temperature);
       break;
     default:
@@ -86,15 +89,6 @@ void TemperatureGrp::remove(uint8_t type, String address, uint8_t localIndex)
   }
 }
 
-void TemperatureGrp::remove(uint8_t index)
-{
-  if (index < temperatures.size())
-  {
-    delete temperatures[index];
-    temperatures.erase(temperatures.begin() + index);
-  }
-}
-
 boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
 {
   const auto isTemperature = [type, address, localIndex](TemperatureBase *t) {
@@ -104,6 +98,26 @@ boolean TemperatureGrp::exists(uint8_t type, String address, uint8_t localIndex)
   auto it = std::find_if(temperatures.begin(), temperatures.end(), isTemperature);
 
   return (it != temperatures.end());
+}
+
+uint8_t TemperatureGrp::getIndex(TemperatureBase *temperature)
+{
+  uint8_t globalIndex = 0u;
+
+  const auto isTemperature = [temperature](TemperatureBase *t) {
+    return (t == temperature);
+  };
+
+  auto it = std::find_if(temperatures.begin(), temperatures.end(), isTemperature);
+
+  int index = std::distance(temperatures.begin(), it);
+
+  if (index >= 0)
+  {
+    globalIndex = (uint8_t)index;
+  }
+
+  return globalIndex;
 }
 
 void TemperatureGrp::update()

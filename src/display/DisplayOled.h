@@ -38,6 +38,7 @@ typedef enum
 
 enum class ButtonId
 {
+  None,
   Left,
   Right
 };
@@ -90,6 +91,7 @@ private:
   static OLEDDisplayUi ui;
   static OneButton lButton;
   static OneButton rButton;
+  static ButtonId lastButtonId;
   static MenuItem menuItem;
   static MenuMode menuMode;
   static boolean flashIndicator;

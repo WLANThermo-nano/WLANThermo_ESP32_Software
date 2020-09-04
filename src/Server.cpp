@@ -26,9 +26,6 @@
 #include "WebHandler.h"
 #include "Cloud.h"
 #include "system/SystemBase.h"
-#if defined HW_MINI_V2 || defined HW_MINI_V3
-#include "display/DisplayNextion.h"
-#endif
 #include "DbgPrint.h"
 #include "Settings.h"
 #include "RecoveryMode.h"
@@ -40,10 +37,8 @@
 #include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-#define DEFAULT_PASSWORD "admin"
-
 const char *WServer::username = "admin";
-String WServer::password = DEFAULT_PASSWORD;
+String WServer::password = "";
 
 WServer::WServer()
 {

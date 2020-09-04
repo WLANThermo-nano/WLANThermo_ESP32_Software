@@ -178,10 +178,11 @@ void SystemBase::resetConfig()
   {
     if (temperatures[i] != NULL)
     {
-      temperatures[i]->loadDefaultValues();
+      temperatures[i]->loadDefaultValues(i);
     }
   }
 
+  temperatures.setUnit(TemperatureUnit::Celsius);
   wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
   wlan.setAccessPointName(DEFAULT_APNAME);
 }

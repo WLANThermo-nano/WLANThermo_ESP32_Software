@@ -59,7 +59,7 @@ class TemperatureBase
 public:
   TemperatureBase();
   ~TemperatureBase();
-  void loadDefaultValues();
+  void loadDefaultValues(uint8_t index);
   void loadConfig();
   float getValue();
   float getPreValue();
@@ -75,8 +75,8 @@ public:
   static uint8_t getTypeCount();
   String getTypeName();
   static String getTypeName(uint8_t index);
+  static boolean isTypeFixed(uint8_t index);
   boolean isFixedSensor() { return this->fixedSensor; }
-  uint8_t getGlobalIndex();
   boolean isConnected() { return this->connected; }
   virtual void setType(uint8_t type);
   void setMinValue(float value);
@@ -100,10 +100,10 @@ public:
 
 protected:
   uint8_t localIndex;
-  uint8_t globalIndex;
   float currentValue;
   float preValue;
   int8_t currentGradient;
+  int8_t gradientSign;
   MedianFilter<float> *medianValue;
   float minValue;
   float maxValue;
@@ -124,7 +124,6 @@ private:
   AlarmStatus cbAlarmStatus;
   boolean acknowledgedAlarm;
   float cbCurrentValue;
-  static uint8_t globalIndexTracker;
   float getUnitValue(float value);
   float setUnitValue(float value);
   float decimalPlace(float value);

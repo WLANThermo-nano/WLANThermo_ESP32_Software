@@ -66,6 +66,7 @@ FrameCallback DisplayOled::frames[] = {DisplayOled::drawTemp, DisplayOled::drawT
 OverlayCallback DisplayOled::overlays[] = {drawOverlayBar};
 OneButton DisplayOled::lButton = OneButton(LBUTTON_IO, true, true);
 OneButton DisplayOled::rButton = OneButton(RBUTTON_IO, true, true);
+ButtonId DisplayOled::lastButtonId = ButtonId::None;
 MenuItem DisplayOled::menuItem = MenuItem::Boot;
 MenuMode DisplayOled::menuMode = MenuMode::Show;
 uint8_t DisplayOled::currentChannel = 0u;
@@ -214,6 +215,8 @@ void DisplayOled::update()
 
 void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
 {
+  lastButtonId = buttonId;
+
   if (ButtonEvent::Click == buttonEvent)
   {
     switch (menuItem)
@@ -467,9 +470,9 @@ void DisplayOled::handleTemperatureNavigation(ButtonId buttonId)
     TemperatureBase *firstActiveTemperature = system->temperatures.getNextActive(0u);
 
     if (nextActiveTemperature != NULL)
-      currentChannel = nextActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(nextActiveTemperature);
     else if (firstActiveTemperature != NULL)
-      currentChannel = firstActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(firstActiveTemperature);
     else if (currentChannel >= system->temperatures.count())
       currentChannel = 0u;
   }
@@ -834,7 +837,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
     // Show Pitmaster Activity on Icon
     if (pm_auto == pitmaster->getType())
     {
-      if (currentChannel == temperature->getGlobalIndex())
+      if (currentChannel == TemperatureGrp::getIndex(temperature))
       {
         display->setFont(ArialMT_Plain_10);
         if (pitmaster->isAutoTuneRunning())
@@ -920,6 +923,16 @@ void DisplayOled::drawTempSettings(OLEDDisplay *display, OLEDDisplayUiState *sta
         currentData = temperature->getTypeCount() - 1;
       else if (currentData >= temperature->getTypeCount())
         currentData = 0;
+
+      while (temperature->isTypeFixed((uint8_t)currentData))
+      {
+        currentData += (ButtonId::Left == lastButtonId) ? -1 : 1;
+
+        if (currentData < 0)
+          currentData = temperature->getTypeCount() - 1;
+        else if (currentData >= temperature->getTypeCount())
+          currentData = 0;
+      }
     }
     else if (MenuMode::Set == menuMode)
     {
@@ -997,7 +1010,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
     display->drawString(116, 20, "CHANNEL:");
     if (MenuMode::Show == menuMode)
     {
-      currentData = pm->getAssignedTemperature()->getGlobalIndex();
+      currentData = TemperatureGrp::getIndex(pm->getAssignedTemperature());
     }
     else if (MenuMode::Edit == menuMode)
     {
@@ -1012,7 +1025,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
       menuMode = MenuMode::Show;
       system->pitmasters.saveConfig();
     }
-    display->drawString(116 + x, 36 + y, String(system->temperatures[(uint8_t)currentData]->getGlobalIndex() + 1));
+    display->drawString(116 + x, 36 + y, String(TemperatureGrp::getIndex(system->temperatures[(uint8_t)currentData]) + 1));
     break;
 
   case MenuItem::PitmasterSettingsTemperature: // SET TEMPERATUR

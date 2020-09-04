@@ -171,6 +171,8 @@ private:
   float esum;   // PITMASTER I-PART DIFFERENZ SUM
   float elast;  // PITMASTER D-PART DIFFERENZ LAST
   float Ki_alt; // PITMASTER I-PART CACHE
+  uint8_t ecount;
+  float edif;
   bool jump;
 
   uint16_t pause;

@@ -259,6 +259,13 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
       break;
     }
   }
+  else {
+    display->drawString(4, 0, "IP:");
+    if (system->wlan.isAP())
+    display->drawString(18, 0, WiFi.softAPIP().toString());
+    else if (system->wlan.isConnected())
+    display->drawString(18, 0, WiFi.localIP().toString());
+  }
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
 
@@ -353,7 +360,7 @@ void DisplayOledLink::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, 
     // Show Pitmaster Activity on Icon
     if (pm_auto == pitmaster->getType())
     {
-      if (currentChannel == temperature->getGlobalIndex())
+      if (currentChannel == TemperatureGrp::getIndex(temperature))
       {
         display->setFont(ArialMT_Plain_10);
         if (pitmaster->isAutoTuneRunning())
