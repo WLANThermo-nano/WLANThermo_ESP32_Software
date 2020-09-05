@@ -40,7 +40,7 @@
               <div class="body">
                 <div class="name-address">
                   <div class="name">
-                    {{ device.name }} ({{device.selectedChannels}}/{{device.total}})
+                    {{ device.name }} <span class="space"></span> ({{device.selectedChannels}}/{{device.total}})
                   </div>
                   <div class="address">
                     {{ device.address }}
@@ -222,6 +222,9 @@ export default {
         color: #fff;
         .name {
           font-size: 1.0em;
+          .space {
+            margin-right: 0.5em;
+          }
         }
         .address {
           font-size: 0.8em;
