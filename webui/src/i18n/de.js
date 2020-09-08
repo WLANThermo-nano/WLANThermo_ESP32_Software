@@ -17,6 +17,12 @@ export default {
 	help_pitmaster_title: "Pitmaster settings",
 	help_pitmaster_link: 'Pitmaster',
 	help_pitmaster: "Willst du deine Grilltemperaturen nicht nur beobachten, sondern auch regeln? Dann besorge dir die passende Pitmaster-Hardware und leg los. Benötigt Pitmaster-Hardware.",
+	help_iot_title: "WLANThermo Cloud",
+	help_iot_link: 'Nano Cloud',
+	help_iot: "Der Nano Cloud Service ermöglicht dir den geschützten Zugriff auf deine Temperaturdaten auch außerhalb deines Heim-Netzwerks. Benötigt Internetzugang.",
+	help_mqtt_title: "Private MQTT Client",
+	help_mqtt_link: 'Private-MQTT',
+	help_mqtt: "Kopple dein WLANThermo Nano mit deiner Homeautomatic und nutze dafür die MQTT-Schnittstelle deines WLANThermo. Benötigt einen MQTT-Broker.",
 	// shared
 	see_also: "Siehe auch",
 	// Reiter System-Einstellungen
@@ -82,7 +88,7 @@ export default {
 	//Cloud
 	cloudTitle: "Nano-Cloud",
 	cloudActivate: "Nano-Cloud aktivieren",
-	tenSeconds: "10 Sekunden",				// siehe Hinweis EN
+	tenSeconds: "10 Sekunden",
 	fifteenSeconds: "15 Sekunden",
 	thirtySeconds: "30 Sekunden",
 	oneMinutes: "1 Minute",

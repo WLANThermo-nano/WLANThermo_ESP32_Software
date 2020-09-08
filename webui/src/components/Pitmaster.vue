@@ -254,7 +254,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_pitmaster_title'),
         content: this.$t('help_pitmaster'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/System-Einstellungen',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Pitmaster',
         linkText: this.$t('help_pitmaster_link')
       })
     },
