@@ -32,8 +32,8 @@
           <div class="select-channel-text">
             {{ $t('bluetoothChannels') }}
           </div>
-          <div class="bluetooth-item" :class="{'expand': (deviceIndex === expandingDevice)}" v-for="(device, deviceIndex) in devices" :key="deviceIndex" @click="selectDevice(deviceIndex)">
-            <div class="info">
+          <div class="bluetooth-item" :class="{'expand': (deviceIndex === expandingDevice)}" v-for="(device, deviceIndex) in devices" :key="deviceIndex">
+            <div class="info" @click="selectDevice(deviceIndex)">
               <div class="icon">
                 <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" iconClass="bluetooth_1" />
               </div>
@@ -119,7 +119,11 @@ export default {
       return (device.selected & (1 << channelIndex)) > 0 // I don't really understand this condition, it's from the old code
     },
     selectDevice: function(index) {
-      this.expandingDevice = index
+      if (this.expandingDevice === index) {
+        this.expandingDevice = -1
+      } else {
+        this.expandingDevice = index
+      }
     },
     handleChannelCheckChange: function(value, deviceIndex, channelIndex) {
       if (value === true) {
@@ -130,19 +134,6 @@ export default {
 
       this.devices[deviceIndex].selectedChannels = this.devices[deviceIndex].channels.filter(c => c.checked).length
     },
-    // handleDeviceCheckChange: function(value, deviceIndex) {
-    //   if (value === true) {
-    //     this.bluetoothSettings.devices[deviceIndex].selected = (1 << this.bluetoothSettings.devices[deviceIndex].count) - 1;
-    //     this.devices[deviceIndex].channels.forEach(channel => {
-    //       channel.checked = true
-    //     })
-    //   } else {
-    //     this.bluetoothSettings.devices[deviceIndex].selected = 0
-    //     this.devices[deviceIndex].channels.forEach(channel => {
-    //       channel.checked = false
-    //     })
-    //   }
-    // },
     backToHome: function () {
       EventBus.$emit("back-to-home")
     },

@@ -29,6 +29,9 @@
     </div>
     <div id="nav" :class="{ active: navActive }">
       <img class="logo" src="./assets/logo_nano.svg" style="width: 85%" />
+      <div class="version">
+        {{ settings.device.sw_version }}
+      </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
           <li class="pure-menu-item">
@@ -141,6 +144,9 @@ export default {
           bluetooth: true,
           pitmaster: true
         },
+        device: {
+          sw_version: '',
+        }
       },
       system: {
         unit: ''
@@ -289,8 +295,14 @@ export default {
   }
 }
 
+.version {
+  color: #fff;
+  text-align: right;
+  padding-right: 0.3em;
+}
+
 .logo {
-  margin: 15px auto 25px auto;
+  margin: 15px auto 10px auto;
   display: block;
 }
 
@@ -301,7 +313,7 @@ export default {
 .headmenu {
   padding: 0 0 0 15px;
   letter-spacing: normal;
-  line-height: 40px;
+  line-height: 45px;
   font-size: 1.2em;
 }
 

@@ -287,6 +287,7 @@ export default {
 .form-section-name {
   color: #fff;
   padding: 0.3em;
+  margin-top: 0.3em;
   font-size: 1.1em;
 }
 </style>

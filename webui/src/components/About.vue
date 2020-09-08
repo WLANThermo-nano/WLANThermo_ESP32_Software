@@ -43,7 +43,8 @@ export default {
         {name: 'Lukas Jedinger'},
         {name: 'Maik Kaste'},
         {name: 'Martin Körner'},
-        {name: 'Steffen Ochs'}
+        {name: 'Steffen Ochs'},
+        {name: 'Yu-Hsuan Tsai'}
       ]
     };
   },
