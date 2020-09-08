@@ -37,13 +37,13 @@
           <li @click="page = 'wlan'" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
           </li>
-          <li @click="page = 'bluetooth'" class="pure-menu-item">
+          <li @click="page = 'bluetooth'" class="pure-menu-item" v-if="settings.features.bluetooth">
             <a href="#" class="pure-menu-link">{{ $t("menuBluetooth") }}</a>
           </li>
           <li @click="page = 'system'" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuSystem") }}</a>
           </li>
-          <li @click="page = 'pitmaster'" class="pure-menu-item">
+          <li @click="page = 'pitmaster'" class="pure-menu-item" v-if="settings.features.pitmaster">
             <a href="#" class="pure-menu-link">{{ $t("menuPitmaster") }}</a>
           </li>
           <li @click="page = 'iot'" class="pure-menu-item">
@@ -136,7 +136,11 @@ export default {
       settings: {
         system: {
           host: 'N.C'
-        }
+        },
+        features: {
+          bluetooth: true,
+          pitmaster: true
+        },
       },
       system: {
         unit: ''
