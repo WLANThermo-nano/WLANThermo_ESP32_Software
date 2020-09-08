@@ -69,9 +69,7 @@
           <Bluetooth v-else-if="page === 'bluetooth'" />
           <Pitmaster v-else-if="page === 'pitmaster'" />
           <IoT v-else-if="page === 'iot'" />
-          <div v-else>
-            {{ page }} comming soon
-          </div>
+          <About v-else-if="page === 'about'" />
         </div>
       </div>
     </div>
@@ -109,6 +107,7 @@ import Icon from './components/Icon.vue'
 import System from './components/System.vue'
 import Bluetooth from './components/Bluetooth.vue'
 import Pitmaster from './components/Pitmaster'
+import About from './components/About'
 import IoT from './components/IoT'
 import PushNotification from './components/PushNotification'
 import EventBus from './event-bus'
@@ -153,7 +152,7 @@ export default {
     };
   },
   components: {
-    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT
+    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About
   },
   methods: {
     initGetDataPeriodically: function() {
