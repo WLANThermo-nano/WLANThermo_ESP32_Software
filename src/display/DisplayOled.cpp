@@ -612,7 +612,7 @@ void DisplayOled::drawPopUp()
 
   oled.setTextAlignment(TEXT_ALIGN_RIGHT);
   oled.setFont(ArialMT_Plain_10);
-  oled.drawString(109, 50, "OK");
+  oled.drawString(107, 53, "OK");
   oled.display();
 
   /*switch (counter)
@@ -726,8 +726,6 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
 
-  display->fillRect(20, 2, 1, 60);        //Draw Cut Line
-
   if (DisplayBase::debugString.length() != 0u)
   {
     display->drawString(0, 0, DisplayBase::debugString);
@@ -746,7 +744,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
 
     if ((millis() - ipAddressTimeoutMillis) <= OLED_WIFI_IP_ADDRESS_TIMEOUT)
     {
-      display->drawString(31, 0, WiFi.localIP().toString());
+      display->drawString(33, 0, WiFi.localIP().toString());
       showPit = false;
     }
   }
@@ -778,61 +776,59 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   if (system->wlan.isConnected())
   {
-    display->fillRect(5, 11, 2, 1); //Draw ground line
-    display->fillRect(9, 11, 2, 1); //Draw ground line
-    display->fillRect(13, 11, 2, 1); //Draw ground line
+    display->fillRect(116, 9, 2, 1); //Draw ground line
+    display->fillRect(120, 9, 2, 1); //Draw ground line
+    display->fillRect(124, 9, 2, 1); //Draw ground line
 
     if (system->wlan.getRssi() > -105)
-      display->fillRect(5, 8, 2, 3); //Draw 1 line
+      display->fillRect(116, 6, 2, 3); //Draw 1 line
     if (system->wlan.getRssi() > -95)
-      display->fillRect(9, 6, 2, 5); //Draw 2 line
+      display->fillRect(120, 4, 2, 5); //Draw 2 line
     if (system->wlan.getRssi() > -80)
-      display->fillRect(13, 4, 2, 7); //Draw 3 line
+      display->fillRect(124, 2, 2, 7); //Draw 3 line
   }
   else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
   {
-    display->drawString(17, 1, "AP");
+    display->drawString(128, 1, "AP");
   }
   else
   {
-    display->drawString(18, 0, "");
+    display->drawString(128, 0, "");
   }
 
   // BATTERY STATUS
   if (gSystem->battery)
   {
     int battPixel = 0.5 + ((gSystem->battery->percentage * MAXBATTERYBAR) / 100.0);
-    display->setTextAlignment(TEXT_ALIGN_RIGHT);
+    display->setTextAlignment(TEXT_ALIGN_LEFT);
 
     if (showbattery)
-      display->drawString(17, 30, String(system->battery->percentage));
+      display->drawString(24, 1, String(system->battery->percentage));
 
     if (flashIndicator && gSystem->battery->percentage < 10)
     {
     } // nothing for flash effect
     else if (gSystem->battery->isCharging())
     {
-      display->fillRect(8, 42, 4, 2); //Draw battery end button
-      display->drawRect(5, 44, 10, 16); //Draw Outline Battery
+      display->fillRect(18, 5, 2, 4); //Draw battery end button
+      display->drawRect(0, 3, 17, 8); //Draw Outline Battery
 
       display->setColor(BLACK);
-      //display->fillRect(4, 2, 8, 10); //Lücke für Pfeil
+      display->fillRect(4, 2, 8, 10); //Lücke für Pfeil
       display->setColor(WHITE);
 
-      //display->drawXbm(4, 2, 8, 10, xbmcharge); // Ladepfeilspitze
-      //display->fillRect(2, 5, 6, 4);            // Ladepfeilstiel
+      display->drawXbm(4, 2, 8, 10, xbmcharge); // Ladepfeilspitze
+      display->fillRect(2, 5, 6, 4);            // Ladepfeilstiel
     }
     else if (gSystem->battery->isUsbPowered())
     {
-      //display->drawString(1, 1, "USB");
-            display->fillRect(8, 42, 4, 2); //Draw battery end button
-      display->drawRect(5, 44, 10, 16); //Draw Outline Battery
+      display->drawString(1, 1, "USB");
     }
     else
     {
-      //display->fillRect(18, 5, 2, 4);        //Draw battery end button
-      //display->drawRect(0, 3, 17, 8);        //Draw Outline
-      //display->fillRect(2, 5, battPixel, 4); // Draw Battery Status
+      display->fillRect(18, 5, 2, 4);        //Draw battery end button
+      display->drawRect(0, 3, 17, 8);        //Draw Outline
+      display->fillRect(2, 5, battPixel, 4); // Draw Battery Status
     }
   }
 }
@@ -844,7 +840,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
   menuItem = MenuItem::TempShow;
   int match = 0;
   TemperatureBase *temperature = system->temperatures[currentChannel];
-  //display->drawXbm(x + 19, 19 + y, 20, 36, xbmtemp); // Symbol
+  display->drawXbm(x + 19, 19 + y, 20, 36, xbmtemp); // Symbol
 
   // Show limits in OLED
   if ((temperature->getMaxValue() > temperature->getMinValue()) && temperature->isActive())
@@ -853,19 +849,12 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
     match = constrain(match, 0, 20);
   }
 
-  //display->fillRect(x + 27, y + 43 - match, 4, match); // Current level
+  display->fillRect(x + 27, y + 43 - match, 4, match); // Current level
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(40, 2, "#" + String(currentChannel + 1)); // Channel
-  display->drawString(118, 2, temperature->getName());    // Channel Name //utf8ascii()
-
-  display->drawString(118, 48, String(temperature->getMaxValue(),1));    // Channel MAX
-  display->drawString(60, 48, String(temperature->getMinValue(),1));    // Channel MAX
-
-
-
-  display->setFont(ArialMT_Plain_24);
-
+  display->drawString(19 + x, 20 + y, String(currentChannel + 1)); // Channel
+  display->drawString(114 + x, 20 + y, temperature->getName());    // Channel Name //utf8ascii()
+  display->setFont(ArialMT_Plain_16);
   if ((temperature->getAlarmStatus() != NoAlarm) && (true == flashIndicator))
   {
     if (temperature->getValue() != INACTIVEVALUE)
@@ -874,10 +863,10 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
         display->drawCircle(100, 41, 2); // Grad-Zeichen
       else
         display->drawCircle(99, 41, 2);                                                                                        // Grad-Zeichen
-      display->drawString(118, 18, String(temperature->getValue(), 1) + "  " + (char)gSystem->temperatures.getUnit()); // Channel Temp
+      display->drawString(114 + x, 36 + y, String(temperature->getValue(), 1) + "  " + (char)gSystem->temperatures.getUnit()); // Channel Temp
     }
     else
-      display->drawString(118, 18, "OFF");
+      display->drawString(114 + x, 36 + y, "OFF");
   }
   else if (temperature->getAlarmStatus() == NoAlarm)
   {
@@ -887,10 +876,10 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
         display->drawCircle(100, 41, 2); // Grad-Zeichen
       else
         display->drawCircle(99, 41, 2);                                                                                        // Grad-Zeichen
-      display->drawString(110 + x, 18 + y, String(temperature->getValue())); // Channel Temp
+      display->drawString(114 + x, 36 + y, String(temperature->getValue(), 1) + "  " + (char)gSystem->temperatures.getUnit()); // Channel Temp
     }
     else
-      display->drawString(118, 18, "OFF");
+      display->drawString(114 + x, 36 + y, "OFF");
   }
 
   Pitmaster *pitmaster;
