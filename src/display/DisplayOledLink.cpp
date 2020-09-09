@@ -307,7 +307,7 @@ void DisplayOledLink::drawPopUp()
 
   oled.setTextAlignment(TEXT_ALIGN_RIGHT);
   oled.setFont(ArialMT_Plain_10);
-  oled.drawString(107, 53, "OK");
+  oled.drawString(107, 51, "OK");
   oled.display();
 
 }
@@ -337,6 +337,11 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
       {
         display->drawString(4, 0, "IP:");
         display->drawString(18, 0, WiFi.localIP().toString());
+      } 
+      else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.softAPIP().toString());
       }
       break;
     case pm_manual:

@@ -624,7 +624,7 @@ void DisplayOled::drawPopUp()
 
   oled.setTextAlignment(TEXT_ALIGN_RIGHT);
   oled.setFont(ArialMT_Plain_10);
-  oled.drawString(107, 53, "OK");
+  oled.drawString(107, 51, "OK");
   oled.display();
 
   /*switch (counter)
