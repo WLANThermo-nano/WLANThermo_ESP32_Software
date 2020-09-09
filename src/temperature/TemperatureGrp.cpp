@@ -53,6 +53,7 @@ void TemperatureGrp::add(uint8_t type, String address, uint8_t localIndex)
     {
     case SensorType::Ble:
       temperature = new TemperatureBle(address, localIndex);
+      temperature->setUnit(this->currentUnit);
       add(temperature);
       break;
     default:

@@ -91,7 +91,7 @@ void SystemLinkV1::init()
 
   // initialize buzzer
   buzzer = new Buzzer(BUZZER_IO, ledcBuzzer);
-
+/*
   // initialize pitmasters
   Pitmaster::setSupplyPin(PITMASTERSUPPLY);
   pitmasters.add(new Pitmaster(PITMASTER0IO1, ledcPitMaster0IO1, PITMASTER0IO2, ledcPitMaster0IO2));
@@ -107,7 +107,7 @@ void SystemLinkV1::init()
   pitmasters[0u]->assignTemperature(temperatures[0]);
 
   pitmasters.loadConfig();
-
+*/
   sdCard = new SdCard(CS_SD_CARD);
 
   initDone = true;

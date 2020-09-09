@@ -268,7 +268,7 @@ void DisplayOledLink::drawConnect()
   oled.setColor(WHITE);
 
   // Draw Logo
-  oled.drawXbm(7, 4, nano_width, nano_height, xbmnano);
+  oled.drawXbm(7, 4, nano_width, nano_height, xbmlink);
   oled.display();
 }
 
@@ -351,6 +351,13 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
       display->drawString(33, 0, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
       break;
     }
+  }
+  else {
+    display->drawString(4, 0, "IP:");
+    if (system->wlan.isAP())
+    display->drawString(18, 0, WiFi.softAPIP().toString());
+    else if (system->wlan.isConnected())
+    display->drawString(18, 0, WiFi.localIP().toString());
   }
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
