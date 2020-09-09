@@ -218,7 +218,7 @@ void DisplayOledLink::drawConnect()
   oled.setColor(WHITE);
 
   // Draw Logo
-  oled.drawXbm(7, 4, nano_width, nano_height, xbmnano);
+  oled.drawXbm(7, 4, nano_width, nano_height, xbmlink);
   oled.display();
 }
 
