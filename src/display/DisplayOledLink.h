@@ -69,7 +69,7 @@ private:
 
   /* Non UI draws */
   void drawConnect();
-  void drawPopUp(int counter);
+  void drawPopUp();
   void drawUpdate(String txt);
   static void drawMenu();
 
@@ -81,6 +81,8 @@ private:
   static void drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y);
   static void drawSystemSettings(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y);
   static void drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state);
+
+  boolean handlePopUp();
 
   static uint8_t currentChannel;
   static float currentData;
