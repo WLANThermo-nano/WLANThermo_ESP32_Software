@@ -75,3 +75,10 @@ enum class DisplayPopUpType
   Alarm,
   None
 };
+
+enum class DisplayStaticType
+{
+  MainMenu,
+  Logo,
+  None
+};

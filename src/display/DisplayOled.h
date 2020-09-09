@@ -90,5 +90,6 @@ private:
   static float currentData;
   static uint8_t buttonMupi;
   static DisplayPopUpType displayPopUp;
+  static DisplayStaticType displayStatic;
   static TaskHandle_t taskHandle;
 };

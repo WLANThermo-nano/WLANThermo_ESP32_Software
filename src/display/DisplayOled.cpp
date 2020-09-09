@@ -76,6 +76,7 @@ const DisplayPopUpInfo displayPopupInfo[OLED_NUM_OF_POPUPS] =
 float DisplayOled::currentData = 0; // Zwischenspeichervariable
 uint8_t DisplayOled::buttonMupi = 1u;
 DisplayPopUpType DisplayOled::displayPopUp = DisplayPopUpType::None;
+DisplayStaticType DisplayOled::displayStatic = DisplayStaticType::None;
 TaskHandle_t DisplayOled::taskHandle = NULL;
 String alarmname[4] = {"off", "push", "summer", "all"};
 
@@ -225,14 +226,18 @@ void DisplayOled::update()
     rButton.tick();
 
     //check oled block
-    if (DisplayPopUpType::None == displayPopUp)
+    if (DisplayPopUpType::None != displayPopUp)
     {      
-      ui.update();
-      handlePopUp();
+      drawPopUp();
+    }
+    else if (DisplayStaticType::None != displayStatic)
+    {
+      // nix
     }
     else
     {
-      drawPopUp();
+      ui.update();
+      handlePopUp();
     }
     
 
@@ -337,6 +342,7 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuMode = MenuMode::Show;
         ui.switchToFrame(1u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else if (ButtonId::Right == buttonId)
       {
@@ -355,6 +361,7 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else if ((MenuMode::Edit == menuMode) && (menuItem <= MenuItem::TempSettingsLower))
         handleTemperatureEdit(buttonId, buttonEvent);
@@ -392,6 +399,7 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
       menuMode = MenuMode::Show;
       ui.switchToFrame(0u);
       displayPopUp = DisplayPopUpType::None;
+      displayStatic = DisplayStaticType::None;
       break;
     case MenuItem::MenuPitmaster:
       if (ButtonId::Left == buttonId)
@@ -400,6 +408,7 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else
       {
@@ -407,6 +416,7 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuMode = MenuMode::Show;
         ui.switchToFrame(2u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       break;
 
@@ -417,12 +427,14 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else
       {
         menuItem = MenuItem::SystemSettingsSSID;
         ui.switchToFrame(3u);
         displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       break;
     }
@@ -677,6 +689,8 @@ void DisplayOled::drawUpdate(String txt)
 // Frame while Menu
 void DisplayOled::drawMenu()
 {
+  displayStatic = DisplayStaticType::MainMenu;
+
   oled.clear();
   oled.setColor(WHITE);
   oled.setTextAlignment(TEXT_ALIGN_LEFT);
