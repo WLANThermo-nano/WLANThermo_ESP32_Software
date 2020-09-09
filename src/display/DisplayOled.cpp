@@ -576,21 +576,21 @@ void DisplayOled::drawCharging()
 
     oled.drawXbm(4, 0, 8, 10, xbmcharge); // Ladepfeilspitze
     oled.fillRect(2, 3, 6, 4);            // Ladepfeilstiel
-    oled.drawString(64, 30, "WIRD GELADEN...");
+    oled.drawString(64, 30, "CHARGING...");
   }
   else
   {
     oled.fillRect(18, 3, 2, 4);                //Draw battery end button
     oled.drawRect(0, 1, 17, 8);                //Draw Outline
     oled.fillRect(2, 3, MAXBATTERYBAR - 1, 4); // Draw Battery Status
-    oled.drawString(64, 30, "LADEN BEENDET");
+    oled.drawString(64, 30, "READY!");
   }
 
   oled.display();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Frame while Question
+// Frame while PopUp
 void DisplayOled::drawPopUp()
 {
   char text[30] = {0};
@@ -758,7 +758,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
 
     if ((millis() - ipAddressTimeoutMillis) <= OLED_WIFI_IP_ADDRESS_TIMEOUT)
     {
-      display->drawString(33, 0, WiFi.localIP().toString());
+      display->drawString(33, 1, WiFi.localIP().toString());
       showPit = false;
     }
   }
@@ -790,16 +790,16 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   if (system->wlan.isConnected())
   {
-    display->fillRect(116, 9, 2, 1); //Draw ground line
-    display->fillRect(120, 9, 2, 1); //Draw ground line
-    display->fillRect(124, 9, 2, 1); //Draw ground line
+    display->fillRect(116, 10, 2, 1); //Draw ground line
+    display->fillRect(120, 10, 2, 1); //Draw ground line
+    display->fillRect(124, 10, 2, 1); //Draw ground line
 
     if (system->wlan.getRssi() > -105)
-      display->fillRect(116, 6, 2, 3); //Draw 1 line
+      display->fillRect(116, 7, 2, 3); //Draw 1 line
     if (system->wlan.getRssi() > -95)
-      display->fillRect(120, 4, 2, 5); //Draw 2 line
+      display->fillRect(120, 5, 2, 5); //Draw 2 line
     if (system->wlan.getRssi() > -80)
-      display->fillRect(124, 2, 2, 7); //Draw 3 line
+      display->fillRect(124, 3, 2, 7); //Draw 3 line
   }
   else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
   {
@@ -807,7 +807,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   }
   else
   {
-    display->drawString(128, 0, "");
+    display->drawString(128, 1, "");
   }
 
   // BATTERY STATUS
@@ -1151,7 +1151,7 @@ void DisplayOled::drawSystemSettings(OLEDDisplay *display, OLEDDisplayUiState *s
 {
 
   if ((true == flashIndicator) || MenuMode::Edit != menuMode)
-    display->drawXbm(x + 5, 22 + y, sys_width, sys_height, xbmsys);
+    //display->drawXbm(x + 5, 22 + y, sys_width, sys_height, xbmsys);
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
 
