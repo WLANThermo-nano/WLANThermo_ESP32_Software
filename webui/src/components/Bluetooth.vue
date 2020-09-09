@@ -201,6 +201,7 @@ export default {
     display: flex;
     .icon {
       flex: 0 0 3em;
+      margin-top: 0.3em;
     }
     .body {
       flex: 1 1 auto;
@@ -219,10 +220,8 @@ export default {
         }
         .address {
           font-size: 0.8em;
+          margin-left: 0.3em;
         }
-      }
-      .lock {
-        flex: 0 0 1.5em;
       }
     }
   }

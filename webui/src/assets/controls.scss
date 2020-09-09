@@ -44,7 +44,7 @@ select {
 }
 
 .form-group input {
-    height: 1.9rem;
+    height: 1.5rem;
 }
 
 .form-group textarea {
@@ -108,7 +108,6 @@ select {
     font-size: 1rem;
     border-width: 0;
     border-color: transparent;
-    line-height: 1.9;
     width: 100%;
     color: transparent;
     -webkit-transition: all 0.28s ease;
@@ -193,4 +192,8 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+.form-group select {
+    height: 1.95rem;
 }

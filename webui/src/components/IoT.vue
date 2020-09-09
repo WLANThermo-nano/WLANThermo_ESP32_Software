@@ -95,7 +95,7 @@
           </div>
           <div class="pure-u-1-2">
             <div class="form-group mr5">
-              <select v-model="iot.PMQint" class="select-in-row">
+              <select v-model="iot.PMQint">
                 <option
                   v-for="option in mtqqIntervalOptions"
                   :key="option.value"
@@ -223,10 +223,6 @@ export default {
       color: $input_highlight_color;
     }
   }
-}
-
-.select-in-row {
-  margin-top: 0.75em;
 }
 
 </style>

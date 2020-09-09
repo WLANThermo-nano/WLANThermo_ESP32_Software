@@ -27,7 +27,14 @@
                 <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" :iconClass="currentNetwork.wifiIcon" />
               </div>
               <div class="body">
-                <div class="ssid">{{ currentNetwork.SSID }}</div>
+                <div class="name-address">
+                  <div class="name">
+                    {{ currentNetwork.SSID }}
+                  </div>
+                  <div class="address">
+                    {{currentNetwork.BSSID}}
+                  </div>
+                </div>
                 <Icon v-if="currentNetwork.enc" class="lock ic_white" width="1em" height="1em" iconClass="lock" />
               </div>
             </div>
@@ -44,7 +51,14 @@
                 <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" :iconClass="wifi.wifiIcon" />
               </div>
               <div class="body">
-                <div class="ssid">{{ wifi.SSID }}</div>
+                <div class="name-address">
+                  <div class="name">
+                    {{ wifi.SSID }}
+                  </div>
+                  <div class="address">
+                    {{wifi.BSSID}}
+                  </div>
+                </div>
                 <Icon v-if="wifi.enc" class="lock ic_white" width="1em" height="1em" iconClass="lock" />
               </div>
             </div>
@@ -145,7 +159,6 @@ export default {
       })
     },
     cancel: function() {
-      console.log('cancel')
       this.expandingWifi = -1
     },
     deleteStoredWifi: function() {
@@ -182,7 +195,7 @@ export default {
           }
         }).sort((a, b) => {
           return b.RSSI - a.RSSI
-        })
+        }).filter(wifi => wifi.SSID !== this.currentNetwork.SSID)
       });
     },
     backToHome: function () {
@@ -223,16 +236,27 @@ export default {
     display: flex;
     .icon {
       flex: 0 0 3em;
+      margin-top: 0.3em;
     }
     .body {
       flex: 1 1 auto;
       display: flex;
       justify-content: space-between;
-      line-height: 1.9em;
-      .ssid {
+      line-height: 2.1em;
+      .name-address {
+        display: flex;
+        flex-direction: column;
         flex: 1 1 auto;
         color: #fff;
-        font-size: 1.2em;
+        .name {
+          line-height: 1.2em;
+          font-size: 1.0em;
+        }
+        .address {
+          margin-left: 0.3em;
+          line-height: 0.8em;
+          font-size: 0.8em;
+        }
       }
       .lock {
         flex: 0 0 1.5em;
