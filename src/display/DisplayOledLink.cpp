@@ -353,11 +353,16 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     }
   }
   else {
-    display->drawString(4, 0, "IP:");
-    if (system->wlan.isAP())
-    display->drawString(18, 0, WiFi.softAPIP().toString());
-    else if (system->wlan.isConnected())
-    display->drawString(18, 0, WiFi.localIP().toString());
+    if (system->wlan.isConnected())
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.localIP().toString());
+      } 
+      else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.softAPIP().toString());
+      }
   }
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);

@@ -758,7 +758,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
 
     if ((millis() - ipAddressTimeoutMillis) <= OLED_WIFI_IP_ADDRESS_TIMEOUT)
     {
-      display->drawString(33, 1, WiFi.localIP().toString());
+      display->drawString(29, 1, WiFi.localIP().toString());
       showPit = false;
     }
   }
