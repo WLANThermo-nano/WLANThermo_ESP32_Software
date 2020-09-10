@@ -99,7 +99,7 @@ void Battery::updatePowerPercentage()
   //percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
   // polynom
   float rVol = this->voltage/1000.0;
-  percraw = (1266.0 - 145.0*rVol)*rVol - 2654.5;
+  percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
 
   percraw = constrain(percraw, 0, 100);
 
