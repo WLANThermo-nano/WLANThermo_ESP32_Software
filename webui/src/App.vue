@@ -281,6 +281,7 @@ export default {
 
 .headmenu {
   position: fixed;
+  z-index: 5;
   display: flex;
   width: calc(100% - #{$nav_width});
   left: $nav_width;

@@ -50,7 +50,7 @@
       </div>
     </template>
     <template v-else>
-      <div class="pure-u-1-1">
+      <div class="pure-u-1-1 app-bar-wrapper">
         <div class="app-bar-actions">
           <div class="button-container" @click="editing = false">
             <span class="icon-arrow_left"></span>

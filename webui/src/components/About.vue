@@ -1,7 +1,7 @@
 <template>
   <div class="pure-g">
     <div class="pure-u-1-1">
-      <div class="app-bar-actions">
+      <div class="app-bar-actions app-bar-wrapper">
         <div class="button-container" @click="backToHome">
           <span class="icon-arrow_left"></span>
           <span>{{$t('back')}}</span>

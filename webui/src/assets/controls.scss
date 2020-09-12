@@ -10,7 +10,7 @@ select {
 .form-group {
     position: relative;
     margin-top: 1.25rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.55rem;
 }
 
 .form-inline > .form-group,
@@ -150,7 +150,7 @@ select {
 .form-group textarea.has-value ~ .control-label {
     font-size: 0.8rem;
     color: gray;
-    top: -1rem;
+    top: -.5rem;
     left: 0;
 }
 
@@ -197,3 +197,7 @@ input[type=number] {
 .form-group select {
     height: 1.95rem;
 }
+
+// .form-group {
+//     marg
+// }

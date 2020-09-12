@@ -63,17 +63,28 @@ body {
     }
 }
 
+.app-bar-wrapper {
+    margin-bottom: 1.9em;
+}
+
 .app-bar-actions {
+    z-index: 5;
+    display: block;
     background-color: $medium;
     font-size: 1.2em;
     display: flex;
     justify-content: space-between;
+    position: fixed;
+    width: 100%;
     .button-container {
       padding: 0.2em;
       color: $primary;
       cursor: pointer;
     }
-  }
+    &:after {
+        margin-bottom: 5em;
+    }
+}
 
 .ic_white {
     color: #fff;
