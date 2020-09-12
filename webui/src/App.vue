@@ -35,27 +35,27 @@
       <div class="pure-menu">
         <ul class="pure-menu-list">
           <li class="pure-menu-item">
-            <a @click="page = 'home'" href="#" class="pure-menu-link">{{ $t("menuHome") }}</a>
+            <a @click="toPage('home')" href="#" class="pure-menu-link">{{ $t("menuHome") }}</a>
           </li>
-          <li @click="page = 'wlan'" class="pure-menu-item">
+          <li @click="toPage('wlan')" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
           </li>
-          <li @click="page = 'bluetooth'" class="pure-menu-item" v-if="settings.features.bluetooth">
+          <li @click="toPage('bluetooth')" class="pure-menu-item" v-if="settings.features.bluetooth">
             <a href="#" class="pure-menu-link">{{ $t("menuBluetooth") }}</a>
           </li>
-          <li @click="page = 'system'" class="pure-menu-item">
+          <li @click="toPage('system')" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuSystem") }}</a>
           </li>
-          <li @click="page = 'pitmaster'" class="pure-menu-item" v-if="settings.features.pitmaster">
+          <li @click="toPage('pitmaster')" class="pure-menu-item" v-if="settings.features.pitmaster">
             <a href="#" class="pure-menu-link">{{ $t("menuPitmaster") }}</a>
           </li>
-          <li @click="page = 'iot'" class="pure-menu-item">
+          <li @click="toPage('iot')" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuIOT") }}</a>
           </li>
-          <li @click="page = 'notification'" class="pure-menu-item">
+          <li @click="toPage('notification')" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuNotification") }}</a>
           </li>
-          <li @click="page = 'about'" class="pure-menu-item">
+          <li @click="toPage('about')" class="pure-menu-item">
             <a href="#" class="pure-menu-link">{{ $t("menuAbout") }}</a>
           </li>
         </ul>
@@ -168,8 +168,12 @@ export default {
     initGetDataPeriodically: function() {
       this.getData();
       setInterval(() => {
-        this.getData();
+        this.getData()
       }, 2000)
+    },
+    toPage: function(pageName) {
+      this.page = pageName
+      this.navActive = false
     },
     getData: function() {
       this.axios.get('/data').then((response) => {
@@ -311,7 +315,7 @@ export default {
 }
 
 .headmenu {
-  padding: 0 0 0 15px;
+  padding: 0 0 0 5px;
   letter-spacing: normal;
   line-height: 45px;
   font-size: 1.2em;
@@ -328,7 +332,7 @@ export default {
   z-index: 10;
   width: 2em;
   height: auto;
-  padding: 2.1em 1.6em;
+  padding: 2.1em 1.6em 2.1em 0.5em;
   float: left;
   &:hover, &:focus {
     // background: $medium_dark;
