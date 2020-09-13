@@ -288,6 +288,7 @@ export default {
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
+      font-size: 0.9em;
       .max {
         flex: 1 1 auto;
       }
@@ -295,12 +296,13 @@ export default {
         flex: 1 1 auto;
       }
       .icon {
-        font-size: 0.9em;
+        font-size: 1.1em;
       }
     }
     .temperature {
       flex: 0 0 auto;
       font-size: 2.2em;
+      margin-top: 0.05em;
       .too-hot, .too-cold {
         font-weight: bold;
       }
