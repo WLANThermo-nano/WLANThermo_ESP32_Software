@@ -13,10 +13,10 @@ export default {
       type: String
     },
     width: {
-      default: '45px'
+      default: '33px'
     },
     height: {
-      default: '45px'
+      default: '33px'
     },
     fontSize: {
       default: '1em'

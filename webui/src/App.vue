@@ -292,6 +292,7 @@ export default {
     flex: 1 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .status {
     display: flex;
@@ -421,7 +422,7 @@ export default {
     width: 100%;
     left: 0;
     .title {
-      margin-left: 3em;
+      margin-left: 2.2em;
     }
   }
   .menu-link {
