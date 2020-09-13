@@ -315,7 +315,7 @@ export default {
 }
 
 .color-input {
-  font-size: 1.5em;
+  // font-size: 1.5em;
 }
 
 .colors-container {

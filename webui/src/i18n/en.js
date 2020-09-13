@@ -86,8 +86,8 @@ export default {
 	notificationRepead: "Repeats",
 	notificationSendMessage: "Send a test message",
 	//Cloud
-	cloudTitle: "Nano Cloud",
-	cloudActivate: "Activate Nano Cloud",
+	cloudTitle: "Cloud Service",
+	cloudActivate: "Activate Cloud Service",
 	tenSeconds: "10 seconds",
 	fifteenSeconds: "15 seconds",
 	thirtySeconds: "30 seconds",

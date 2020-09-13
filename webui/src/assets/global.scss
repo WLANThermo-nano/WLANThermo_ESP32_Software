@@ -30,7 +30,7 @@ body {
 }
 
 .mt10 {
-    margin-top: 10px;
+    margin-top: 10px !important;
 }
 
 
@@ -74,15 +74,16 @@ body {
     font-size: 1.2em;
     display: flex;
     justify-content: space-between;
+    height: 1.7em;
     position: fixed;
-    width: 100%;
+    width: calc(100% - 250px);
+    @media screen and (max-width: 48em) {
+        width: 100%;
+    }
     .button-container {
       padding: 0.2em;
       color: $primary;
       cursor: pointer;
-    }
-    &:after {
-        margin-bottom: 5em;
     }
 }
 

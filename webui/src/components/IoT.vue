@@ -50,7 +50,7 @@
           </button>
         </form>
       </div>
-      <div class="name">
+      <div class="name mt10">
         {{ $t('mqttTitle') }}
         <span
           @click="showMQTTHelpText"
@@ -66,35 +66,35 @@
             </label>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <input type="text" v-model="iot.PMQhost" required />
               <label class="control-label" for="input">{{$t("mqttHost")}}</label>
               <i class="bar"></i>
             </div>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <input type="text" v-model="iot.PMQport" required />
               <label class="control-label" for="input">{{$t("mqttPort")}}</label>
               <i class="bar"></i>
             </div>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <input type="text" v-model="iot.PMQuser" required />
               <label class="control-label" for="input">{{$t("mqttUser")}}</label>
               <i class="bar"></i>
             </div>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <input type="text" v-model="iot.PMQpass" required />
               <label class="control-label" for="input">{{$t("mqttPwd")}}</label>
               <i class="bar"></i>
             </div>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <select v-model="iot.PMQint">
                 <option
                   v-for="option in mtqqIntervalOptions"
@@ -107,7 +107,7 @@
             </div>
           </div>
           <div class="pure-u-1-2">
-            <div class="form-group mr5">
+            <div class="form-group">
               <input type="text" v-model="iot.PMQqos" required />
               <label class="control-label" for="input">{{$t("mqttQos")}}</label>
               <i class="bar"></i>
