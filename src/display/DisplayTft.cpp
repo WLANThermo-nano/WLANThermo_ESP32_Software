@@ -327,7 +327,7 @@ void DisplayTft::createTemperatureScreen()
     lv_obj_set_style_local_text_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->objTile, 156, 63);
     lv_obj_set_click(tile->objTile, true);
-    lv_obj_set_event_cb(tile->objTile, DisplayTft::temperatureTileEvent);
+    //lv_obj_set_event_cb(tile->objTile, DisplayTft::temperatureTileEvent);
 
     tile->objColor = lv_obj_create(tile->objTile, NULL);
     lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(system->temperatures[i]->getColor()));
