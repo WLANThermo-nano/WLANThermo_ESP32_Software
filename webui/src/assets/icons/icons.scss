@@ -1,8 +1,4 @@
 
-.icon-yellow {
-    color: #ffff00;
-}
-
 .icon-rotate-100 {
     animation: rotate 2s infinite linear;
 }
@@ -46,4 +42,24 @@
     100% {
         transform: rotate(360deg);
     }
+}
+
+.icon-disabled:before {
+    color: #808080;
+}
+
+.icon-red:before {
+    color: #FF0000;
+}
+
+.icon-green:before {
+    color: #00FF00;
+}
+
+.icon-yellow:before {
+    color: #FFFF00;
+}
+
+.icon-yellow {
+    color: #ffff00;
 }
