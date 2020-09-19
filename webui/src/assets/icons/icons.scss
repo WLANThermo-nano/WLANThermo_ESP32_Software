@@ -1,0 +1,49 @@
+
+.icon-yellow {
+    color: #ffff00;
+}
+
+.icon-rotate-100 {
+    animation: rotate 2s infinite linear;
+}
+
+.icon-rotate-75 {
+    animation: rotate 3s infinite linear;
+}
+
+.icon-rotate-50 {
+    animation: rotate 4s infinite linear;
+}
+
+.icon-rotate-25 {
+    animation: rotate 5s infinite linear;
+}
+
+.icon-rotate-25,
+.icon-rotate-50,
+.icon-rotate-75,
+.icon-rotate-100 {
+    -webkit-transition-delay: 1s;
+    /* Safari */
+    transition-delay: 1s;
+    display: inline-block;
+}
+
+.icon-blinker {
+    animation: blinker 2s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

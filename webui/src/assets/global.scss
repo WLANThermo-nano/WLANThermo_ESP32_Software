@@ -2,6 +2,7 @@
 @import "./external/pure.scss";
 @import "./external/pure-responsive.scss";
 @import "./icons/style.scss";
+@import "./icons/icons.scss";
 @import "./colors.scss";
 @import "./controls.scss";
 
@@ -110,8 +111,4 @@ body {
 @keyframes spinner_rotation {
     from {transform: rotate(0deg);}
     to {transform: rotate(359deg);}
-}
-
-.icon-yellow {
-    color: #ffff00;
 }
