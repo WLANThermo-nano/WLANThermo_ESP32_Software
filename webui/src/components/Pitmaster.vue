@@ -51,7 +51,7 @@
                 </select>
                 <label class="control-label" for="select">{{$t("pitProfile")}}</label>
                 <i class="bar"></i>
-                <span @click="editProfile(index)" class="icon-pencil icon-form"></span>
+                <span @click="editProfile(pm.pid)" class="icon-pencil icon-form"></span>
               </div>
               <!-- channels -->
               <div class="form-group" v-if="pm.typ === 'auto'">
@@ -135,33 +135,32 @@
         </div>
         <div class="config-form" >
           <form>
-            <div class="form-group">
-              <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.Kp" required />
-                  <label class="control-label" for="input">{{$t("pidKp")}}</label>
-                  <i class="bar"></i>
-                </div>
-              </div>
-              <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" step="0.1" v-model="editingProfile.Ki" required />
-                  <label class="control-label" for="input">{{$t("pidKi")}}</label>
-                  <i class="bar"></i>
-                </div>
-              </div>
-              <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.Kd" required />
-                  <label class="control-label" for="input">{{$t("pidKd")}}</label>
-                  <i class="bar"></i>
-                </div>
-              </div>
+            <div class="form-spacing"></div>
+            <div class="pure-u-1-3 control">
               <div class="form-group">
-                <input type="number" v-model="editingProfile.jp" min="10" max="100" required />
-                <label class="control-label" for="input">{{$t("pidJump")}}</label>
+                <input type="number" v-model="editingProfile.Kp" required />
+                <label class="control-label" for="input">{{$t("pidKp")}}</label>
                 <i class="bar"></i>
               </div>
+            </div>
+            <div class="pure-u-1-3 control">
+              <div class="form-group">
+                <input type="number" step="0.1" v-model="editingProfile.Ki" required />
+                <label class="control-label" for="input">{{$t("pidKi")}}</label>
+                <i class="bar"></i>
+              </div>
+            </div>
+            <div class="pure-u-1-3 control">
+              <div class="form-group">
+                <input type="number" v-model="editingProfile.Kd" required />
+                <label class="control-label" for="input">{{$t("pidKd")}}</label>
+                <i class="bar"></i>
+              </div>
+            </div>
+            <div class="form-group control-at-top">
+              <input type="number" v-model="editingProfile.jp" min="10" max="100" required />
+              <label class="control-label" for="input">{{$t("pidJump")}}</label>
+              <i class="bar"></i>
             </div>
           </form>
         </div>
@@ -238,10 +237,10 @@ export default {
       })
   },
   methods: {
-    editProfile: function(index) {
+    editProfile: function(profileId) {
       this.isEditingProfile = true
-      this.editingProfile = this.profiles[index]
-      this.editingProfileIndex = index
+      this.editingProfile = this.profiles.find(p => p.id == profileId)
+      this.editingProfileIndex = this.profiles.findIndex(p => p.id == profileId)
     },
     backToHome: function () {
       if (this.isEditingProfile) {
@@ -289,5 +288,8 @@ export default {
   padding: 0.3em;
   margin-top: 0.3em;
   font-size: 1.1em;
+}
+.form-spacing {
+  margin-bottom: 1.2em;
 }
 </style>

@@ -1,0 +1,137 @@
+@font-face {
+  font-family: 'icomoon';
+  src: url('~@/assets/icons/fonts/icomoon.ttf?anupur') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-Wlan33:before {
+  content: "\e906";
+}
+.icon-Wlan66:before {
+  content: "\e907";
+}
+.icon-Wlan100:before {
+  content: "\e908";
+}
+.icon-arrow_left:before {
+  content: "\e901";
+}
+.icon-arrow_right:before {
+  content: "\e902";
+}
+.icon-temp_down:before {
+  content: "\e904";
+}
+.icon-temp_up:before {
+  content: "\e905";
+}
+.icon-fan:before {
+  content: "\e913";
+}
+.icon-trash:before {
+  content: "\f014";
+}
+.icon-download:before {
+  content: "\f019";
+}
+.icon-refresh:before {
+  content: "\f021";
+}
+.icon-lock:before {
+  content: "\f023";
+}
+.icon-pencil:before {
+  content: "\f040";
+}
+.icon-question_sign:before {
+  content: "\f059";
+}
+.icon-info_sign:before {
+  content: "\f05a";
+}
+.icon-notification:before {
+  content: "\f06a";
+}
+.icon-unlock:before {
+  content: "\f09c";
+}
+.icon-reorder:before {
+  content: "\f0c9";
+}
+.icon-charger:before {
+  content: "\f1e6";
+}
+.icon-battery-100:before {
+  content: "\f240";
+}
+.icon-battery-75:before {
+  content: "\f241";
+}
+.icon-battery-50:before {
+  content: "\f242";
+}
+.icon-battery-25:before {
+  content: "\f243";
+}
+.icon-battery-0:before {
+  content: "\f244";
+}
+.icon-cloud:before {
+  content: "\f289";
+}
+.icon-bluetooth_1:before {
+  content: "\f293";
+}
+.icon-bluetooth_2:before {
+  content: "\f294";
+}
+.icon-uniF2C7:before {
+  content: "\f2c7";
+}
+.icon-uniF2C8:before {
+  content: "\f2c8";
+}
+.icon-uniF2C9:before {
+  content: "\f2c9";
+}
+.icon-uniF2CA:before {
+  content: "\f2ca";
+}
+.icon-uniF2CB:before {
+  content: "\f2cb";
+}
+.icon-stats-dots:before {
+  content: "\e99b";
+}
+.icon-power-cord:before {
+  content: "\e9b7";
+}
+.icon-home:before {
+  content: "\e900";
+}
+.icon-bell:before {
+  content: "\e951";
+}
+.icon-cog:before {
+  content: "\e994";
+}
+.icon-fire:before {
+  content: "\e9a9";
+}

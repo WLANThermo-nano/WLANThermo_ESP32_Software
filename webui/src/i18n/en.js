@@ -25,6 +25,9 @@ export default {
 	help_mqtt: "Couple your WLANThermo Nano with your home automatic and use the MQTT interface of your WLANThermo. Requires an MQTT broker.",
 	// shared
 	see_also: "See also",
+	update_prompt: "Do you want to install the latest update?",
+	current_verision: "Current version",
+	new_version: "New version",
 	// Reiter System-Einstellungen
 	system_settings: "System settings",
 	unit: "Unit",

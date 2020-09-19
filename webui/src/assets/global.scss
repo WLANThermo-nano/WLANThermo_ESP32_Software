@@ -1,7 +1,7 @@
 @import "./external/normalized.scss";
 @import "./external/pure.scss";
 @import "./external/pure-responsive.scss";
-@import "./icon-font.scss";
+@import "./icons/style.scss";
 @import "./colors.scss";
 @import "./controls.scss";
 
@@ -93,21 +93,25 @@ body {
 
 
 .spinner {
-position: absolute;
-left: 50%;
-top: 50%;
-height:60px;
-width:60px;
-margin:0px auto;
-animation: spinner_rotation .6s infinite linear;
-border-left:6px solid rgba(0,174,239,.15);
-border-right:6px solid rgba(0,174,239,.15);
-border-bottom:6px solid rgba(0,174,239,.15);
-border-top:6px solid $primary;
-border-radius:100%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height:60px;
+    width:60px;
+    margin:0px auto;
+    animation: spinner_rotation .6s infinite linear;
+    border-left:6px solid rgba(0,174,239,.15);
+    border-right:6px solid rgba(0,174,239,.15);
+    border-bottom:6px solid rgba(0,174,239,.15);
+    border-top:6px solid $primary;
+    border-radius:100%;
 }
 
 @keyframes spinner_rotation {
-from {transform: rotate(0deg);}
-to {transform: rotate(359deg);}
+    from {transform: rotate(0deg);}
+    to {transform: rotate(359deg);}
+}
+
+.icon-yellow {
+    color: #ffff00;
 }

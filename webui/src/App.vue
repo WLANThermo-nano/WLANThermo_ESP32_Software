@@ -10,7 +10,7 @@
       </div>
       <div class="status" v-if="system">
         <!-- to do update notice -->
-        <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="handleCloudIconClick" iconClass="notification icon-yellow" />
+        <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="update" iconClass="info_sign icon-yellow" />
         
         <Icon v-if="cloudIconClass !== null" class="cursor-pointer" @click="handleCloudIconClick" :iconClass="cloudIconClass" />
         <!-- charging -->
@@ -28,35 +28,17 @@
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
-      <img class="logo" src="./assets/logo_nano.svg" style="width: 85%" />
+      <img @click="toPage('home')" class="logo" src="./assets/logo_nano.svg" style="width: 85%" />
       <div class="version">
         {{ settings.device.sw_version }}
       </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
-          <li class="pure-menu-item">
-            <a @click="toPage('home')" href="#" class="pure-menu-link">{{ $t("menuHome") }}</a>
-          </li>
-          <li @click="toPage('wlan')" class="pure-menu-item">
-            <a href="#" class="pure-menu-link">{{ $t("menuWlan") }}</a>
-          </li>
-          <li @click="toPage('bluetooth')" class="pure-menu-item" v-if="settings.features.bluetooth">
-            <a href="#" class="pure-menu-link">{{ $t("menuBluetooth") }}</a>
-          </li>
-          <li @click="toPage('system')" class="pure-menu-item">
-            <a href="#" class="pure-menu-link">{{ $t("menuSystem") }}</a>
-          </li>
-          <li @click="toPage('pitmaster')" class="pure-menu-item" v-if="settings.features.pitmaster">
-            <a href="#" class="pure-menu-link">{{ $t("menuPitmaster") }}</a>
-          </li>
-          <li @click="toPage('iot')" class="pure-menu-item">
-            <a href="#" class="pure-menu-link">{{ $t("menuIOT") }}</a>
-          </li>
-          <li @click="toPage('notification')" class="pure-menu-item">
-            <a href="#" class="pure-menu-link">{{ $t("menuNotification") }}</a>
-          </li>
-          <li @click="toPage('about')" class="pure-menu-item">
-            <a href="#" class="pure-menu-link">{{ $t("menuAbout") }}</a>
+          <li class="pure-menu-item" v-for="item in menuItems" :key="item.id">
+            <a @click="toPage(item.id)" href="#" class="pure-menu-link">
+              <span class="menu-icon" :class="'icon-' + item.icon"></span>
+              {{ $t(item.translationKey) }}
+            </a>
           </li>
         </ul>
       </div>
@@ -136,6 +118,18 @@ export default {
       wikiLink: '',
       linkText: '',
 
+      // menu
+      menuItems: [
+        { icon: 'home', translationKey: 'menuHome', id: 'home' },
+        { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
+        { icon: 'bluetooth_2', translationKey: 'menuBluetooth', id: 'bluetooth' },
+        { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
+        { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
+        { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
+        { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
+        { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
+      ],
+
       settings: {
         system: {
           host: 'N.C'
@@ -158,7 +152,8 @@ export default {
       },
       page: 'home',
       navActive: false,
-      showSpinner: false
+      showSpinner: false,
+      isUpdating: false,
     };
   },
   components: {
@@ -176,6 +171,9 @@ export default {
       this.navActive = false
     },
     getData: function() {
+      if (this.isUpdating) {
+        return;
+      }
       this.axios.get('/data').then((response) => {
         const data = response.data
         this.system = data.system
@@ -189,6 +187,34 @@ export default {
         const data = response.data
         this.settings = data
         this.$i18n.locale = this.settings.system.language
+
+        if (!this.settings.features.bluetooth) {
+          this.menuItems = this.menuItems.filter(i => i.id !== 'bluetooth')
+        }
+        if (!this.settings.features.pitmaster) {
+          this.menuItems = this.menuItems.filter(i => i.id !== 'pitmaster')
+        }
+      })
+    },
+    update: function() {
+      const promptText = `${this.$t('update_prompt')}\n\n${this.$t('current_verision')}: ${this.settings.system.version}\n${this.$t('new_version')}: ${this.settings.system.getupdate}`
+      if (confirm(promptText) == true) {
+        this.showSpinner = true
+        this.axios.post('/update').then(() => {
+          this.checkUpdateStatus()
+          this.isUpdating = true
+        })
+      }
+    },
+    checkUpdateStatus: function() {
+      this.axios.post('/updatestatus').then((response) => {
+        if (response.data == true) {
+          setTimeout(() => {
+            this.checkUpdateStatus()
+          }, 2000)
+        } else {
+          location.reload()
+        }
       })
     },
     handleCloudIconClick: function() {
@@ -242,8 +268,8 @@ export default {
     }
   },
   mounted: function() {
-    this.getSettings();
-    this.initGetDataPeriodically();
+    this.getSettings()
+    this.initGetDataPeriodically()
     EventBus.$on('show-help-dialog', (dialogData) => {
       this.dialogTitle = dialogData.title
       this.dialogBodyText = dialogData.content
@@ -304,12 +330,14 @@ export default {
 .version {
   color: #fff;
   text-align: right;
-  padding-right: 0.3em;
+  font-size: 0.9em;
+  padding-right: 10%;
 }
 
 .logo {
   margin: 15px auto 10px auto;
   display: block;
+  cursor: pointer;
 }
 
 .page-content {
@@ -444,6 +472,13 @@ export default {
   text-align: center;
   padding: 14px 5px;
   float: right;
+}
+
+.menu-icon {
+  display: inline-block;
+  width: 21px;
+  margin-right: 0.2em;
+  text-align: center;
 }
 
 </style>

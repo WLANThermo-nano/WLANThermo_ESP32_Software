@@ -23,6 +23,10 @@ export default {
 	help_mqtt_title: "Private MQTT Client",
 	help_mqtt_link: 'Private-MQTT',
 	help_mqtt: "Kopple dein WLANThermo Nano mit deiner Homeautomatic und nutze dafür die MQTT-Schnittstelle deines WLANThermo. Benötigt einen MQTT-Broker.",
+	// update
+	update_prompt: "Wollen Sie das aktuelle Update installieren?",
+	current_verision: "Aktuelle Version",
+	new_version: "Neue Version",
 	// shared
 	see_also: "Siehe auch",
 	// Reiter System-Einstellungen
@@ -106,6 +110,7 @@ export default {
 	mqttQos: "QoS",
 	// Menü WLAN
 	wlanTitle: "WLAN-Einstellungen",
+	availableNetworks: "Verfügbare Netzwerke",
 	wlanActivate: "WLAN aktivieren",
 	wlanNetwork: "Netzwerk wählen...",
 	wlanClear: "Netzwerkverbindungsdaten löschen",

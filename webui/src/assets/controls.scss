@@ -197,10 +197,15 @@ input[type=number] {
 .pure-u-1-2, .pure-u-1-3 {
     &.control {
         margin-top: -.7em;
+        margin-bottom: .6em;
     }
     .form-group {
         margin-right: 5px;
         margin-top: 0.75rem;
         margin-bottom: 0.85rem;
     }
+}
+
+.form-group.control-at-top {
+    margin-top: 0.1em;
 }
