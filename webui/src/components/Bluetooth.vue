@@ -148,7 +148,10 @@ export default {
       EventBus.$emit("loading", true)
       this.axios.post('/setbluetooth', requestObj).then(() => {
         EventBus.$emit("loading", false)
-      });
+        this.backToHome()
+      }).catch(() => {
+        EventBus.$emit("loading", false)
+      })
     }
   },
   components: {
