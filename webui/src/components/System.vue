@@ -130,10 +130,8 @@ export default {
       })
     },
     save: function() {
-      const requestObj = Object.assign({}, this.copyOfSystem)
-      requestObj.system = Object.assign({}, this.systemSettings)
       EventBus.$emit("loading", true)
-      this.axios.post('/settings', requestObj).then(() => {
+      this.axios.post('/setsystem', this.systemSettings).then(() => {
         EventBus.$emit("loading", false)
         this.backToHome()
       }).catch(() => {
