@@ -40,7 +40,8 @@
             <i class="bar"></i>
           </div>
           <div class="form-group cloud-link">
-            <label for="input">
+            <label class="control-label">{{$t("cloudUrl")}}</label>
+            <label class="link" for="input">
               <a :href="cloudUrl">{{cloudUrl}}</a>
             </label>
             <i class="bar"></i>
@@ -65,35 +66,35 @@
               {{$t("mqttActivate")}}
             </label>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <input type="text" v-model="iot.PMQhost" required />
               <label class="control-label" for="input">{{$t("mqttHost")}}</label>
               <i class="bar"></i>
             </div>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <input type="text" v-model="iot.PMQport" required />
               <label class="control-label" for="input">{{$t("mqttPort")}}</label>
               <i class="bar"></i>
             </div>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <input type="text" v-model="iot.PMQuser" required />
               <label class="control-label" for="input">{{$t("mqttUser")}}</label>
               <i class="bar"></i>
             </div>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <input type="text" v-model="iot.PMQpass" required />
               <label class="control-label" for="input">{{$t("mqttPwd")}}</label>
               <i class="bar"></i>
             </div>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <select v-model="iot.PMQint">
                 <option
@@ -106,7 +107,7 @@
               <i class="bar"></i>
             </div>
           </div>
-          <div class="pure-u-1-2">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <input type="text" v-model="iot.PMQqos" required />
               <label class="control-label" for="input">{{$t("mqttQos")}}</label>
@@ -217,10 +218,20 @@ export default {
 @import "../assets/colors.scss";
 
 .cloud-link {
-  a {
-    color: #fff;
-    &:hover {
-      color: $input_highlight_color;
+  .control-label {
+    font-size: 0.8rem;
+    color: gray;
+    top: -.5rem;
+    left: 0;
+  }
+  .link {
+    line-height: 1.9em;
+    a {
+      margin-left: 0.2em;
+      color: #fff;
+      &:hover {
+        color: $input_highlight_color;
+      }
     }
   }
 }

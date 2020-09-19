@@ -114,14 +114,14 @@
               <label class="control-label" for="select">{{$t("pitAktor")}}</label>
               <i class="bar"></i>
             </div>
-            <div class="pure-u-1-2">
+            <div class="pure-u-1-2 control">
               <div class="form-group">
                 <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" required />
                 <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
                 <i class="bar"></i>
               </div>
             </div>
-            <div class="pure-u-1-2">
+            <div class="pure-u-1-2 control">
               <div class="form-group">
                 <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" required />
                 <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
@@ -136,21 +136,21 @@
         <div class="config-form" >
           <form>
             <div class="form-group">
-              <div class="pure-u-1-3">
+              <div class="pure-u-1-3 control">
                 <div class="form-group">
                   <input type="number" v-model="editingProfile.Kp" required />
                   <label class="control-label" for="input">{{$t("pidKp")}}</label>
                   <i class="bar"></i>
                 </div>
               </div>
-              <div class="pure-u-1-3">
+              <div class="pure-u-1-3 control">
                 <div class="form-group">
                   <input type="number" step="0.1" v-model="editingProfile.Ki" required />
                   <label class="control-label" for="input">{{$t("pidKi")}}</label>
                   <i class="bar"></i>
                 </div>
               </div>
-              <div class="pure-u-1-3">
+              <div class="pure-u-1-3 control">
                 <div class="form-group">
                   <input type="number" v-model="editingProfile.Kd" required />
                   <label class="control-label" for="input">{{$t("pidKd")}}</label>

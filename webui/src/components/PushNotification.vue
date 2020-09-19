@@ -38,7 +38,7 @@
             <label class="control-label" for="input">{{$t("notificationKey")}}</label>
             <i class="bar"></i>
           </div>
-          <div class="service-group">
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <select v-model="notes.ext.service">
                 <option v-for="s in servicesOptions" :key="s.value" :value="s.value">{{s.label}}</option>
@@ -46,6 +46,8 @@
               <label class="control-label" for="select">{{$t("notificationService")}}</label>
               <i class="bar"></i>
             </div>
+          </div>
+          <div class="pure-u-1-2 control">
             <div class="form-group">
               <select v-model="notes.ext.repeat">
                 <option v-for="r in repeatOptions" :key="r.value" :value="r.value">{{$t(r.translationKey)}}</option>
@@ -143,17 +145,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
-.service-group {
-  width: 100%;
-  display: flex;
-  .form-group {
-    flex: 1 1 auto;
-    &:last-child {
-      margin-left: 0.5em;
-    }
-  }
-}
 
 .test-msg-button {
   margin-bottom: 1em;

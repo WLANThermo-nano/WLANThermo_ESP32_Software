@@ -88,6 +88,7 @@ export default {
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Cloud Service aktivieren",
+	cloudUrl: "Cloud Link",
 	tenSeconds: "10 Sekunden",
 	fifteenSeconds: "15 Sekunden",
 	thirtySeconds: "30 Sekunden",
