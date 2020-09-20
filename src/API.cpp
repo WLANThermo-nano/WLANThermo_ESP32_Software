@@ -207,7 +207,7 @@ void API::iotObj(JsonObject &jObj)
   jObj["CLon"] = cloudConfig.enabled;
   jObj["CLtoken"] = cloudConfig.token;
   jObj["CLint"] = cloudConfig.interval;
-  jObj["CLurl"] = "dev-cloud.wlanthermo.de/index.html";
+  jObj["CLurl"] = "cloud.wlanthermo.de/index.html";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

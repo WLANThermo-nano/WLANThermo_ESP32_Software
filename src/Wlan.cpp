@@ -22,6 +22,8 @@
 #include "Wlan.h"
 #include "Settings.h"
 #include "Constants.h"
+#include "Version.h"
+#include "system/SystemBase.h"
 
 #define APPASSWORD "12345678"
 
@@ -335,6 +337,10 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
   else
   {
     MDNS.addService("http", "tcp", 80);
+    MDNS.addService("wlanthermo", "tcp", 80);
+    MDNS.addServiceTxt("wlanthermo", "tcp", "device", gSystem->getDeviceName());
+    MDNS.addServiceTxt("wlanthermo", "tcp", "hw_version", String("v") + String(gSystem->getHardwareVersion()));
+    MDNS.addServiceTxt("wlanthermo", "tcp", "sw_version", FIRMWAREVERSION);
   }
 }
 
