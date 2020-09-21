@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build-nano": "vue-cli-service build --mode nano",
+    "build-link": "vue-cli-service build --mode link",
+    "build-cloud": "vue-cli-service build --mode cloud",
+    "build-mini": "vue-cli-service build --mode mini",
+    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

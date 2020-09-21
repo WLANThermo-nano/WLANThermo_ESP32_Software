@@ -28,7 +28,7 @@
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
-      <img @click="toPage('home')" class="logo" src="./assets/logo_nano.svg" style="width: 85%" />
+      <img @click="toPage('home')" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version">
         {{ settings.device.sw_version }}
       </div>
@@ -102,6 +102,8 @@ export default {
   name: "App",
   data: () => {
     return {
+      logoImg: require(`@/assets/logo_${process.env.VUE_APP_PRODUCT_NAME}.svg`),
+
       // wifi icon
       wifiIconClass: null,
       showWifiStrength: false,
@@ -268,6 +270,7 @@ export default {
     }
   },
   mounted: function() {
+    console.log(process.env.VUE_APP_PRODUCT_NAME)
     this.getSettings()
     this.initGetDataPeriodically()
     EventBus.$on('show-help-dialog', (dialogData) => {
@@ -331,7 +334,7 @@ export default {
   color: #fff;
   text-align: right;
   font-size: 0.9em;
-  padding-right: 10%;
+  padding-right: 7.9%;
 }
 
 .logo {

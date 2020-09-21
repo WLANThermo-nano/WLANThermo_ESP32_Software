@@ -2,9 +2,9 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 const CompressionPlugin = require('compression-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const InlineChunkHtmlPlugin = require('./webpack/inline-chunk-html-plugin');
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
 module.exports = {
+    outputDir: `dist/${process.env.VUE_APP_PRODUCT_NAME}`,
     chainWebpack: config => {
         const svgRule = config.module.rule('svg')
         svgRule.uses.clear()

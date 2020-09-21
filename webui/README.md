@@ -12,8 +12,16 @@ yarn serve
 ```
 
 ### Compiles and minifies for production
+The build result is at _dist_ folder, 
 ```
+// build for all products
 yarn build
+
+// build individual project
+yarn build-nano
+yarn build-mini
+yarn build-link
+yarn build-cloud
 ```
 
 ### Lints and fixes files
