@@ -36,13 +36,11 @@
 #include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-#define DEFAULT_PASSWORD "admin"
-
 extern const uint8_t index_html_start[] asm("_binary_webui_dist_index_html_gz_start");
 extern const size_t index_html_size asm("_binary_webui_dist_index_html_gz_size");
 
 const char *WServer::username = "admin";
-String WServer::password = DEFAULT_PASSWORD;
+String WServer::password = "";
 
 WServer::WServer()
 {

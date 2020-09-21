@@ -25,13 +25,14 @@
 #include "display/DisplayBase.h"
 #include "Settings.h"
 #include <esp_adc_cal.h>
+#include "ArduinoLog.h"
 
 #define BATTERY_ADC_IO 39u
 #define BATTERTY_CHARGE_IO 35u
 #define BATTERY_USB_IO 34u
 #define MEDIAN_SIZE 30u
 #define PERCENTAGE_UPDATE_CYCLE 30u // 30 seconds
-#define BATTMIN 3550        // MINIMUM BATTERY VOLTAGE in mV
+#define BATTMIN 3500        // MINIMUM BATTERY VOLTAGE in mV
 #define BATTMAX 4180        // MAXIMUM BATTERY VOLTAGE in mV
 #define BATTDIV 5.7F        // VOLTAGE DIVIDER
 #define CORRECTIONTIME 60000
@@ -93,7 +94,13 @@ void Battery::updatePowerPercentage()
   //Serial.println("Battery::updatePowerPercentage");
 
   // Calculate battery percentage
-  uint32_t percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
+  uint32_t percraw;
+  // linear
+  //percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
+  // polynom
+  float rVol = this->voltage/1000.0;
+  percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
+
   percraw = constrain(percraw, 0, 100);
 
   // Korrektur
@@ -197,7 +204,8 @@ void Battery::updatePowerMode()
   }
   else if ((this->voltage < this->min) && (this->usbPowerEnabled == false))
   {
-    this->powerMode = PowerMode::Protection;    // Protection 
+    this->powerMode = PowerMode::Protection;    // Protection
+    Log.notice("Battery: Protection" CR);
   }
   else if ((this->usbPowerEnabled == true) && (this->chargeEnabled == true))
   {

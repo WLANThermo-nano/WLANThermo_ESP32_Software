@@ -48,7 +48,7 @@ public:
   TemperatureBase *getNextActive(uint8_t index);
   uint32_t getActiveBits();
   uint8_t getActiveCount();
-  boolean hasAlarm();
+  boolean hasAlarm(boolean filterAcknowledged = true);
   void acknowledgeAlarm();
   void saveConfig();
   void loadConfig();
