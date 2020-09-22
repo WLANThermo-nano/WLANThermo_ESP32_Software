@@ -1,4 +1,6 @@
 export default {
+	// validation
+	v_must_between: 'Must be between {min} and {max}',
 	// help text
 	help_channel: 'With the help of the channel settings you adapt the measuring channel to the connected sensor. You can also specify limit values for the alarm function.',
 	help_channel_link: 'Channel',

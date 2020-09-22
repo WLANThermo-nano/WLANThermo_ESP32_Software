@@ -1,4 +1,6 @@
 export default {
+	// validation
+	v_must_between: 'Must be between {min} and {max}',
 	// help text
 	help_channel: 'Mit Hilfe der Kanal-Einstellungen passt du den Messkanal an den angeschlossenen Fühler an. Zusätzlich kannst du Grenzwerte für die Alarmfunktion vorgeben.',
 	help_channel_link: 'Kanal',

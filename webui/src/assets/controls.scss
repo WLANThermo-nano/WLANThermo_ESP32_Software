@@ -209,3 +209,23 @@ input[type=number] {
 .form-group.control-at-top {
     margin-top: 0.1em;
 }
+
+// errors
+.form-group {
+    .error-prompt {
+        color: $error_color;
+        font-size: 0.8em;
+        margin-top: 0.2em;
+    }
+    &.error {
+        .control-label {
+            color: $error_color !important;
+        }
+        .bar {
+            border-bottom-color: $error_color !important;
+            &::before {
+                background: $error_color;
+            }
+        }
+    }
+}

@@ -29,12 +29,12 @@
             </label>
           </div>
           <div class="form-group">
-            <input type="text" v-model="notes.ext.token" required />
+            <input type="text" maxlength="50" v-model="notes.ext.token" required />
             <label class="control-label" for="input">{{$t("notificationToken")}}</label>
             <i class="bar"></i>
           </div>
           <div class="form-group">
-            <input type="text" v-model="notes.ext.id" required />
+            <input type="text" maxlength="30" v-model="notes.ext.id" required />
             <label class="control-label" for="input">{{$t("notificationKey")}}</label>
             <i class="bar"></i>
           </div>

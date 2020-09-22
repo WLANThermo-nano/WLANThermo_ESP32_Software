@@ -3,9 +3,15 @@ import App from './App.vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import VueI18n from 'vue-i18n'
+import Vuelidate from 'vuelidate'
 import en from './i18n/en'
 import de from './i18n/de'
 
+if (process.env.VUE_APP_DEMO_MODE) {
+  require('./demo/mock-apis')
+}
+
+Vue.use(Vuelidate)
 Vue.use(VueAxios, axios)
 Vue.use(VueI18n)
 

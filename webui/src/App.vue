@@ -179,7 +179,7 @@ export default {
       this.axios.get('/data').then((response) => {
         const data = response.data
         this.system = data.system
-        this.channels = data.channel
+        this.channels = [...data.channel]
         this.pitmaster = data.pitmaster
         this.prepareStatusIcons()
       })
@@ -270,7 +270,6 @@ export default {
     }
   },
   mounted: function() {
-    console.log(process.env.VUE_APP_PRODUCT_NAME)
     this.getSettings()
     this.initGetDataPeriodically()
     EventBus.$on('show-help-dialog', (dialogData) => {
@@ -285,6 +284,12 @@ export default {
     })
     EventBus.$on('loading', (value) => {
       this.showSpinner = value
+    })
+    EventBus.$on('getData', () => {
+      this.getData()
+    })
+    EventBus.$on('getSettings', () => {
+      this.getSettings()
     })
   }
 };

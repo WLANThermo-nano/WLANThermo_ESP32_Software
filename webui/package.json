@@ -8,7 +8,8 @@
     "build-link": "vue-cli-service build --mode link",
     "build-cloud": "vue-cli-service build --mode cloud",
     "build-mini": "vue-cli-service build --mode mini",
-    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini",
+    "build-demo": "vue-cli-service build --mode demo",
+    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini && npm run build-demo",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -17,7 +18,8 @@
     "html-webpack-plugin": "^4.0.0-beta.14",
     "vue": "^2.6.11",
     "vue-axios": "^2.1.5",
-    "vue-i18n": "^8.20.0"
+    "vue-i18n": "^8.20.0",
+    "vuelidate": "^0.7.5"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",

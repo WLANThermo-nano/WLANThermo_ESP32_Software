@@ -64,7 +64,7 @@
             </div>
             <div class="password-panel" v-if="index === expandingWifi">
               <div class="form-group">
-                <input type="password" required v-model="password" />
+                <input type="password" maxlength="63" required v-model="password" />
                 <label class="control-label" for="input">{{$t("wlanPwd")}}</label>
                 <i class="bar"></i>
               </div>

@@ -23,12 +23,12 @@
       <div class="config-form">
         <form>
           <div class="form-group">
-            <input type="text" v-model="systemSettings.host" required />
+            <input type="text" maxlength="13" v-model="systemSettings.host" required />
             <label class="control-label" for="input">{{$t("hostname")}}</label>
             <i class="bar"></i>
           </div>
           <div class="form-group">
-            <input type="text" v-model="systemSettings.ap" required />
+            <input type="text" maxlength="13" v-model="systemSettings.ap" required />
             <label class="control-label" for="input">{{$t("ap_name")}}</label>
             <i class="bar"></i>
           </div>
@@ -133,6 +133,7 @@ export default {
       EventBus.$emit("loading", true)
       this.axios.post('/setsystem', this.systemSettings).then(() => {
         EventBus.$emit("loading", false)
+        EventBus.$emit("getSettings")
         this.backToHome()
       }).catch(() => {
         EventBus.$emit("loading", false)

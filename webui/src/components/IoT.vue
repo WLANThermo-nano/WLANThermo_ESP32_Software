@@ -109,7 +109,11 @@
           </div>
           <div class="pure-u-1-2 control">
             <div class="form-group">
-              <input type="text" v-model="iot.PMQqos" required />
+              <select v-model="iot.PMQqos">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
               <label class="control-label" for="input">{{$t("mqttQos")}}</label>
               <i class="bar"></i>
             </div>

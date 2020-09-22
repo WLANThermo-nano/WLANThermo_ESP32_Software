@@ -74,15 +74,21 @@
               <label class="control-label" for="input">{{$t("channel_name")}}</label>
               <i class="bar"></i>
             </div>
-            <div class="form-group">
-              <input v-model="editingChanelClone.max" required>
+            <div class="form-group" :class="{ 'error': $v.editingChanelClone.max.$invalid}">
+              <input type="number" max="999" min="-999" v-model.lazy="editingChanelClone.max" required>
               <label class="control-label" for="input">{{$t("temp_max")}}</label>
               <i class="bar"></i>
+              <div class="error-prompt" v-if="$v.editingChanelClone.max.$invalid">
+                {{$t('v_must_between', {min: $v.editingChanelClone.max.$params.between.min, max: $v.editingChanelClone.max.$params.between.max})}}
+              </div>
             </div>
-            <div class="form-group">
-              <input v-model="editingChanelClone.min" required>
+            <div class="form-group" :class="{ 'error': $v.editingChanelClone.min.$invalid}">
+              <input type="number" max="999" min="-999" v-model.lazy="editingChanelClone.min" required>
               <label class="control-label" for="input">{{$t("temp_min")}}</label>
               <i class="bar"></i>
+              <div class="error-prompt" v-if="$v.editingChanelClone.min.$invalid">
+                {{$t('v_must_between', {min: $v.editingChanelClone.min.$params.between.min, max: $v.editingChanelClone.min.$params.between.max})}}
+              </div>
             </div>
             <div class="form-group">
               <select v-model="editingChanelClone.typ" :disabled="editingChanelClone.fixed">
@@ -117,7 +123,8 @@
 </template>
 
 <script>
-import EventBus from '../event-bus';
+import EventBus from '../event-bus'
+import { between } from 'vuelidate/lib/validators'
 
 export default {
   name: "Home",
@@ -142,7 +149,9 @@ export default {
       editingChanelName: '',
       editingChanelClone: {
         color: '',
-        fixed: false
+        fixed: false,
+        max: null,
+        min: null,
       },
       pushAlarmChecked: false,
       buzzerAlarmChecked: false,
@@ -171,6 +180,18 @@ export default {
         "#948A54"
       ],
     };
+  },
+  validations() {
+    return {
+      editingChanelClone: {
+        max: {
+          between: between(Math.max(this.editingChanelClone.min, -999), 999)
+        },
+        min: {
+          between: between(-999, Math.min(this.editingChanelClone.max, 999))
+        }
+      }
+    }
   },
   watch: {
     channels: function() {
@@ -235,6 +256,9 @@ export default {
       })
     },
     save: function() {
+      if (this.$v.$invalid) {
+        return;
+      }
       EventBus.$emit("loading", true)
       const requestObj = {
         alarm: this.getAlarmValue(),
@@ -250,6 +274,7 @@ export default {
       }
       this.axios.post('/setchannels', requestObj).then(() => {
         this.editing = false;
+        EventBus.$emit("getData")
         EventBus.$emit("loading", false)
       });
     }
