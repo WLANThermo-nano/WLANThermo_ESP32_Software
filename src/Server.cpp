@@ -36,8 +36,20 @@
 #include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-extern const uint8_t index_html_start[] asm("_binary_webui_dist_index_html_gz_start");
-extern const size_t index_html_size asm("_binary_webui_dist_index_html_gz_size");
+#ifdef HW_MINI_V1 || HW_MINI_V2 || HW_MINI_V3
+#define WEB_SUBFOLDER "mini"
+#elif HW_NANO_V3
+#define WEB_SUBFOLDER "nano"
+#elif HW_LINK_V1
+#define WEB_SUBFOLDER "link"
+#endif
+
+extern const uint8_t index_html_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_start");
+extern const size_t index_html_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_size");
+extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_start");
+extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
+extern const uint8_t icomoon_ttf_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_fonts_icomoon_ttf_gz_start");
+extern const size_t icomoon_ttf_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_fonts_icomoon_ttf_gz_size");
 
 const char *WServer::username = "admin";
 String WServer::password = "";
@@ -143,6 +155,22 @@ void WServer::init()
   webServer->on("/", [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
+  // favicon.ico
+  webServer->on("/favicon.ico", [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "image/x-icon", favicon_ico_start, (size_t)&favicon_ico_size);
+    response->addHeader("Content-Disposition", "inline; filename=\"favicon.ico\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
+  // icomoon.ttf
+  webServer->on("/fonts/icomoon.ttf", [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "font/ttf", icomoon_ttf_start, (size_t)&icomoon_ttf_size);
+    response->addHeader("Content-Disposition", "inline; filename=\"icomoon.ttf\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
