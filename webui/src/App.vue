@@ -339,7 +339,7 @@ export default {
   color: #fff;
   text-align: right;
   font-size: 0.9em;
-  padding-right: 7.9%;
+  padding-right: 8.3%;
 }
 
 .logo {

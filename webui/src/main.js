@@ -7,9 +7,7 @@ import Vuelidate from 'vuelidate'
 import en from './i18n/en'
 import de from './i18n/de'
 
-if (process.env.VUE_APP_DEMO_MODE) {
-  require('./demo/mock-apis')
-}
+require(process.env.VUE_APP_DEMO_FILE_PATH)
 
 Vue.use(Vuelidate)
 Vue.use(VueAxios, axios)

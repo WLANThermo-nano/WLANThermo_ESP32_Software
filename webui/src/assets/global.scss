@@ -6,7 +6,7 @@
 @import "./colors.scss";
 @import "./controls.scss";
 
-$nav_width: 250px;
+$nav_width: 200px;
 
 /*
  * -- BASE STYLES --
@@ -77,7 +77,7 @@ body {
     justify-content: space-between;
     height: 1.7em;
     position: fixed;
-    width: calc(100% - 250px);
+    width: calc(100% - #{$nav_width});
     @media screen and (max-width: 48em) {
         width: 100%;
     }

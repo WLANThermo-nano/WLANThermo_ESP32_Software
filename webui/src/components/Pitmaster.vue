@@ -51,7 +51,7 @@
                 </select>
                 <label class="control-label" for="select">{{$t("pitProfile")}}</label>
                 <i class="bar"></i>
-                <span @click="editProfile(pm.pid)" class="icon-pencil icon-form"></span>
+                <span @click="editProfile(pm.pid, pm.typ)" class="icon-pencil icon-form"></span>
               </div>
               <!-- channels -->
               <div class="form-group" v-if="pm.typ === 'auto'">
@@ -114,69 +114,101 @@
               <label class="control-label" for="select">{{$t("pitAktor")}}</label>
               <i class="bar"></i>
             </div>
-            <div class="pure-u-1-2 control">
-              <div class="form-group">
-                <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" required />
-                <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
+            <!-- 0 => SSR, 1 => FAN  -->
+            <template v-if="editingProfile.aktor == 0 || editingProfile.aktor === 1 || editingProfile.aktor == 3">
+              <div class="pure-u-1-2 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" required />
+                  <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+              <div class="pure-u-1-2 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" required />
+                  <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+            </template>
+            <!-- 2 => SERVO, 3 => DAMPER  -->
+            <template v-if="editingProfile.aktor == 2 || editingProfile.aktor == 3">
+              <div class="pure-u-1-2 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.SPmin" max="100" min="0" required />
+                  <label class="control-label" for="input">{{$t("pitSPmin")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+              <div class="pure-u-1-2 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.SPmax" max="100" min="0" required />
+                  <label class="control-label" for="input">{{$t("pitSPmax")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+            </template>
+            <template v-if="editingProfile.aktor == 3">
+              <div class="form-group select-form-group">
+                <select v-model="editingProfile.link">
+                  <option value="0">{{$t("pitlinkdegressiv")}}</option>
+                  <option value="1">{{$t("pitlinklinear")}}</option>
+                </select>
+                <label class="control-label" for="select">{{$t("pitlink")}}</label>
                 <i class="bar"></i>
               </div>
-            </div>
-            <div class="pure-u-1-2 control">
-              <div class="form-group">
-                <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" required />
-                <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
-                <i class="bar"></i>
-              </div>
-            </div>
+            </template>
           </form>
         </div>
-        <div class="form-section-name">
-          {{$t("pidTitle")}}
-        </div>
-        <div class="config-form" >
-          <form>
-            <div class="form-spacing"></div>
-            <div class="pure-u-1-3 control">
-              <div class="form-group">
-                <input type="number" v-model="editingProfile.Kp" required />
-                <label class="control-label" for="input">{{$t("pidKp")}}</label>
+        <template v-if="editingPMType !== 'manual'">
+          <div class="form-section-name" >
+            {{$t("pidTitle")}}
+          </div>
+          <div class="config-form" >
+            <form>
+              <div class="form-spacing"></div>
+              <div class="pure-u-1-3 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.Kp" required />
+                  <label class="control-label" for="input">{{$t("pidKp")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+              <div class="pure-u-1-3 control">
+                <div class="form-group">
+                  <input type="number" step="0.1" v-model="editingProfile.Ki" required />
+                  <label class="control-label" for="input">{{$t("pidKi")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+              <div class="pure-u-1-3 control">
+                <div class="form-group">
+                  <input type="number" v-model="editingProfile.Kd" required />
+                  <label class="control-label" for="input">{{$t("pidKd")}}</label>
+                  <i class="bar"></i>
+                </div>
+              </div>
+              <div class="form-group control-at-top">
+                <input type="number" v-model="editingProfile.jp" min="10" max="100" required />
+                <label class="control-label" for="input">{{$t("pidJump")}}</label>
                 <i class="bar"></i>
               </div>
-            </div>
-            <div class="pure-u-1-3 control">
-              <div class="form-group">
-                <input type="number" step="0.1" v-model="editingProfile.Ki" required />
-                <label class="control-label" for="input">{{$t("pidKi")}}</label>
-                <i class="bar"></i>
+            </form>
+          </div>
+          <div class="form-section-name">
+            {{$t("pitAdvancesTitle")}}
+          </div>
+          <div class="config-form" >
+            <form>
+              <div class="form-checkbox">
+                <label for="lid" class="pure-checkbox checkbox">
+                  <input v-model="editingProfile.opl" :true-value="1" :false-value="0" type="checkbox" id="lid" />
+                  {{$t("pitLid")}}
+                </label>
               </div>
-            </div>
-            <div class="pure-u-1-3 control">
-              <div class="form-group">
-                <input type="number" v-model="editingProfile.Kd" required />
-                <label class="control-label" for="input">{{$t("pidKd")}}</label>
-                <i class="bar"></i>
-              </div>
-            </div>
-            <div class="form-group control-at-top">
-              <input type="number" v-model="editingProfile.jp" min="10" max="100" required />
-              <label class="control-label" for="input">{{$t("pidJump")}}</label>
-              <i class="bar"></i>
-            </div>
-          </form>
-        </div>
-        <div class="form-section-name">
-          {{$t("pitAdvancesTitle")}}
-        </div>
-        <div class="config-form" >
-          <form>
-            <div class="form-checkbox">
-              <label for="lid" class="pure-checkbox checkbox">
-                <input v-model="editingProfile.opl" :true-value="1" :false-value="0" type="checkbox" id="lid" />
-                {{$t("pitLid")}}
-              </label>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -198,6 +230,7 @@ export default {
       profiles: [],
       actuators: [],
       isEditingProfile: false,
+      editingPMType: null,
       editingProfileIndex: -1,
       editingProfile: {
         DCmmax: null,
@@ -237,8 +270,9 @@ export default {
       })
   },
   methods: {
-    editProfile: function(profileId) {
+    editProfile: function(profileId, pmType) {
       this.isEditingProfile = true
+      this.editingPMType = pmType
       this.editingProfile = this.profiles.find(p => p.id == profileId)
       this.editingProfileIndex = this.profiles.findIndex(p => p.id == profileId)
     },
