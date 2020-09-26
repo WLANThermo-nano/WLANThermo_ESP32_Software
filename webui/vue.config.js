@@ -20,10 +20,6 @@ module.exports = {
         },
         plugins: [
             // new BundleAnalyzerPlugin(),
-            new HtmlWebpackPlugin({
-                title: 'WLANThermo',
-                template: 'public/index.html',  //template file to embed the source
-            }),
             new InlineChunkHtmlPlugin(HtmlWebpackPlugin, ['js/app.js']),
             new CompressionPlugin()
         ]

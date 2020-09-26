@@ -425,6 +425,7 @@ export const Data = {
         "Enc": true
     },
     bluetooth: {
+        "enabled": true,
         "devices": [
             {
                 "name": "WT BLE",

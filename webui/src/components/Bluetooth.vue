@@ -30,7 +30,8 @@
           </div>
           <hr>
           <div class="select-channel-text">
-            {{ $t('bluetoothChannels') }}
+            <span class="text">{{ $t('bluetoothChannels') }}</span>
+            <span class="ic_white icon-refresh" :class="{'icon-rotate-100': refreshing}" @click="refreshBluetooth"></span>
           </div>
           <div class="bluetooth-item" :class="{'expand': (deviceIndex === expandingDevice)}" v-for="(device, deviceIndex) in devices" :key="deviceIndex">
             <div class="info" @click="selectDevice(deviceIndex)">
@@ -75,6 +76,7 @@ export default {
   data: () => {
     return {
       expandingDevice: -1,
+      refreshing: false,
       bluetoothSettings: {
         enabled: false,
         devices: []
@@ -84,37 +86,44 @@ export default {
   },
   watch: {},
   mounted: function () {
-    EventBus.$emit("loading", true)
-    this.axios.get("/bluetooth").then((response) => {
-      const data = response.data
-      this.bluetoothSettings = {
-        enabled: data.enabled,
-        devices: data.devices
-      }
-      this.devices = data.devices.map((device, index) => {
-        let mappedDevice = {};
-        mappedDevice.name = device.name
-        mappedDevice.address = device.address
-        mappedDevice.id = `d_${index}` // for label
-        mappedDevice.checked = device.selected > 0
-        mappedDevice.channels = []
-        mappedDevice.total = device.count
-        for (let channelIndex = 0; channelIndex < device.count ; channelIndex++) {
-          mappedDevice.channels.push({
-            name: `${this.$t('channel')} ${channelIndex + 1}`,
-            checked: this.channelIsChecked(device, channelIndex),
-            id: `c_${index}_${channelIndex}` // for label
-          })
-        }
-
-        mappedDevice.selectedChannels = mappedDevice.channels.filter(c => c.checked).length
-        
-        return mappedDevice
-      })
-      EventBus.$emit("loading", false)
-    });
+    this.refreshBluetooth()
   },
   methods: {
+    refreshBluetooth: function() {
+      this.refreshing = true;
+      this.axios.get("/bluetooth").then((response) => {
+        console.log(response)
+        const data = response.data
+        this.bluetoothSettings = {
+          enabled: data.enabled,
+          devices: data.devices
+        }
+        this.devices = data.devices.map((device, index) => {
+          let mappedDevice = {};
+          mappedDevice.name = device.name
+          mappedDevice.address = device.address
+          mappedDevice.id = `d_${index}` // for label
+          mappedDevice.checked = device.selected > 0
+          mappedDevice.channels = []
+          mappedDevice.total = device.count
+          for (let channelIndex = 0; channelIndex < device.count ; channelIndex++) {
+            mappedDevice.channels.push({
+              name: `${this.$t('channel')} ${channelIndex + 1}`,
+              checked: this.channelIsChecked(device, channelIndex),
+              id: `c_${index}_${channelIndex}` // for label
+            })
+          }
+
+          mappedDevice.selectedChannels = mappedDevice.channels.filter(c => c.checked).length
+          
+          return mappedDevice
+        })
+        // API returns too fast, adding some delay makes UX a bit better, otherwise the button looks doesn't work at all
+        setTimeout(() => {
+          this.refreshing = false
+        }, 200)
+      });
+    },
     channelIsChecked: function(device, channelIndex) {
       return (device.selected & (1 << channelIndex)) > 0 // I don't really understand this condition, it's from the old code
     },
@@ -164,9 +173,20 @@ export default {
 @import "../assets/colors.scss";
 
 .select-channel-text {
-  color: #fff;
-  font-size: 1.2em;
-  margin: 0.7em 0 0.7em;
+  display: flex;
+  .text {
+    flex: 1 1 auto;
+    color: #fff;
+    font-size: 1.2em;
+    margin: 0.7em 0 0.7em;
+  }
+  .icon-refresh {
+    margin-top: 15px;
+    margin-right: 18px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .channels {

@@ -21,14 +21,14 @@
         ></span>
       </div>
       <div  v-if="!isEditingProfile">
-        <div v-for="(pm, index) in pitmaster.pm" :key="index">
+        <div v-for="(pm, index) in $v.pitmaster.pm.$each.$iter" :key="index">
           <div class="form-section-name">
-            {{ 'Pitmaster ' + (index + 1) }}
+            {{ 'Pitmaster ' + (parseInt(index) + 1) }}
           </div>
           <div class="config-form" >
             <form>
               <div class="form-group">
-                <select v-model="pm.typ">
+                <select v-model="pm.typ.$model">
                   <option
                     v-for="type in pitmaster.type"
                     :key="type"
@@ -40,8 +40,8 @@
                 <i class="bar"></i>
               </div>
               <!-- profiles -->
-              <div class="form-group" v-if="pm.typ !== 'off'">
-                <select v-model="pm.pid">
+              <div class="form-group" v-if="pm.typ.$model !== 'off'">
+                <select v-model="pm.pid.$model">
                   <option
                     v-for="(profile, index) in profiles"
                     :key="index"
@@ -51,11 +51,11 @@
                 </select>
                 <label class="control-label" for="select">{{$t("pitProfile")}}</label>
                 <i class="bar"></i>
-                <span @click="editProfile(pm.pid, pm.typ)" class="icon-pencil icon-form"></span>
+                <span @click="editProfile(pm.pid.$model, pm.typ.$model)" class="icon-pencil icon-form"></span>
               </div>
               <!-- channels -->
-              <div class="form-group" v-if="pm.typ === 'auto'">
-                <select v-model="pm.channel">
+              <div class="form-group" v-if="pm.typ.$model === 'auto'">
+                <select v-model="pm.channel.$model">
                   <option
                     v-for="(channel, index) in channels"
                     :key="index"
@@ -67,16 +67,22 @@
                 <i class="bar"></i>
               </div>
               <!-- pitmaster value -->
-              <div class="form-group" v-if="pm.typ === 'manual'">
-                <input type="number" v-model="pm.value" max="100" min="0" required />
+              <div class="form-group" v-if="pm.typ.$model === 'manual'" :class="{ 'error': pm.value.$invalid}">
+                <input type="number" v-model="pm.value.$model" max="100" min="0" required />
                 <label class="control-label" for="input">{{$t("pitValue")}}</label>
                 <i class="bar"></i>
+                <div class="error-prompt" v-if="pm.value.$invalid">
+                  {{$t('v_must_between', {min: pm.value.$params.between.min, max: pm.value.$params.between.max})}}
+                </div>
               </div>
               <!-- set value -->
-              <div class="form-group" v-if="pm.typ === 'auto'">
-                <input type="number" v-model="pm.set" max="100" min="0" required />
+              <div class="form-group" v-if="pm.typ.$model === 'auto'" :class="{ 'error': pm.set.$invalid}">
+                <input type="number" v-model="pm.set.$model" max="999.9" min="-999.9" required />
                 <label class="control-label" for="input">{{$t("pitTemp")}}</label>
                 <i class="bar"></i>
+                <div class="error-prompt" v-if="pm.set.$invalid">
+                  {{$t('v_must_between', {min: pm.set.$params.between.min, max: pm.set.$params.between.max})}}
+                </div>
               </div>
             </form>
           </div>
@@ -117,34 +123,46 @@
             <!-- 0 => SSR, 1 => FAN  -->
             <template v-if="editingProfile.aktor == 0 || editingProfile.aktor === 1 || editingProfile.aktor == 3">
               <div class="pure-u-1-2 control">
-                <div class="form-group">
+                <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmin.$invalid}">
                   <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" required />
                   <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.DCmmin.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.DCmmin.$params.between.min, max: $v.editingProfile.DCmmin.$params.between.max})}}
+                  </div>
                 </div>
               </div>
               <div class="pure-u-1-2 control">
-                <div class="form-group">
+                <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmax.$invalid}">
                   <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" required />
                   <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.DCmmax.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.DCmmax.$params.between.min, max: $v.editingProfile.DCmmax.$params.between.max})}}
+                  </div>
                 </div>
               </div>
             </template>
             <!-- 2 => SERVO, 3 => DAMPER  -->
             <template v-if="editingProfile.aktor == 2 || editingProfile.aktor == 3">
               <div class="pure-u-1-2 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.SPmin" max="100" min="0" required />
+                <div class="form-group" :class="{ 'error': $v.editingProfile.SPmin.$invalid}">
+                  <input type="number" v-model="editingProfile.SPmin" max="3000" min="0" required />
                   <label class="control-label" for="input">{{$t("pitSPmin")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.SPmin.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.SPmin.$params.between.min, max: $v.editingProfile.SPmin.$params.between.max})}}
+                  </div>
                 </div>
               </div>
               <div class="pure-u-1-2 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.SPmax" max="100" min="0" required />
+                <div class="form-group" :class="{ 'error': $v.editingProfile.SPmax.$invalid}">
+                  <input type="number" v-model="editingProfile.SPmax" max="3000" min="0" required />
                   <label class="control-label" for="input">{{$t("pitSPmax")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.SPmax.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.SPmax.$params.between.min, max: $v.editingProfile.SPmax.$params.between.max})}}
+                  </div>
                 </div>
               </div>
             </template>
@@ -168,30 +186,42 @@
             <form>
               <div class="form-spacing"></div>
               <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.Kp" required />
+                <div class="form-group" :class="{ 'error': $v.editingProfile.Kp.$invalid}">
+                  <input type="number" min="0" max="150" v-model="editingProfile.Kp" required />
                   <label class="control-label" for="input">{{$t("pidKp")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.Kp.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.Kp.$params.between.min, max: $v.editingProfile.Kp.$params.between.max})}}
+                  </div>
                 </div>
               </div>
               <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" step="0.1" v-model="editingProfile.Ki" required />
+                <div class="form-group" :class="{ 'error': $v.editingProfile.Ki.$invalid}">
+                  <input type="number" step="0.1" min="0" max="5" v-model="editingProfile.Ki" required />
                   <label class="control-label" for="input">{{$t("pidKi")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.Ki.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.Ki.$params.between.min, max: $v.editingProfile.Ki.$params.between.max})}}
+                  </div>
                 </div>
               </div>
               <div class="pure-u-1-3 control">
-                <div class="form-group">
-                  <input type="number" v-model="editingProfile.Kd" required />
+                <div class="form-group" :class="{ 'error': $v.editingProfile.Kd.$invalid}">
+                  <input type="number" min="0" max="800" v-model="editingProfile.Kd" required />
                   <label class="control-label" for="input">{{$t("pidKd")}}</label>
                   <i class="bar"></i>
+                  <div class="error-prompt" v-if="$v.editingProfile.Kd.$invalid">
+                    {{$t('v_must_between', {min: $v.editingProfile.Kd.$params.between.min, max: $v.editingProfile.Kd.$params.between.max})}}
+                  </div>
                 </div>
               </div>
-              <div class="form-group control-at-top">
-                <input type="number" v-model="editingProfile.jp" min="10" max="100" required />
+              <div class="form-group control-at-top" :class="{ 'error': $v.editingProfile.jp.$invalid}">
+                <input type="number" min="0" max="100" v-model="editingProfile.jp" required/>
                 <label class="control-label" for="input">{{$t("pidJump")}}</label>
                 <i class="bar"></i>
+                <div class="error-prompt" v-if="$v.editingProfile.jp.$invalid">
+                  {{$t('v_must_between', {min: $v.editingProfile.jp.$params.between.min, max: $v.editingProfile.jp.$params.between.max})}}
+                </div>
               </div>
             </form>
           </div>
@@ -216,6 +246,7 @@
 
 <script>
 import EventBus from "../event-bus";
+import { between } from 'vuelidate/lib/validators'
 
 export default {
   name: "Pitmaster",
@@ -250,7 +281,52 @@ export default {
       },
     };
   },
-  watch: {},
+  validations: {
+    pitmaster: {
+      pm: {
+        $each: {
+          value: {
+            between: between(0, 100)
+          },
+          id: {},
+          channel: {},
+          pid: {},
+          set: {
+            between: between(-999.9, 999.9)
+          },
+          typ: {},
+          set_color: {},
+          value_color: {},
+        },
+      },
+    },
+    editingProfile: {
+      jp: {
+        between: between(10, 100)
+      },
+      Kd: {
+        between: between(0, 800)
+      },
+      Ki: {
+        between: between(0, 5)
+      },
+      Kp: {
+        between: between(0, 150)
+      },
+      SPmax: {
+        between: between(0, 3000)
+      },
+      SPmin: {
+        between: between(0, 3000)
+      },
+      DCmmax: {
+        between: between(0, 100)
+      },
+      DCmmin: {
+        between: between(0, 100)
+      }
+    }
+  },
   mounted: function () {
     EventBus.$emit("loading", true)
     Promise.all([
@@ -293,6 +369,9 @@ export default {
     },
     save: function() {
       if (this.isEditingProfile) {
+        if (this.$v.editingProfile.$invalid) {
+          return;
+        }
         this.profiles[this.editingProfileIndex] = this.editingProfile;
         EventBus.$emit("loading", true)
         this.axios.post('/setpid', this.profiles).then(() => {
@@ -302,6 +381,9 @@ export default {
           EventBus.$emit("loading", false)
         })
       } else {
+        if (this.$v.pitmaster.$invalid) {
+          return;
+        }
         EventBus.$emit("loading", true)
         this.axios.post('/setpitmaster', this.pitmaster.pm).then(() => {
           EventBus.$emit("loading", false)

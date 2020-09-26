@@ -11,6 +11,10 @@ yarn install
 yarn serve
 ```
 
+the mock APIs are located at `webui\src\demo\mocks\data.js`.
+The APIs logs are write to console.
+
+
 ### Compiles and minifies for production
 The build result is at _dist_ folder, 
 ```
@@ -27,12 +31,6 @@ yarn build-cloud
 ### Lints and fixes files
 ```
 yarn lint
-```
-
-### Start local development backend
-```
-cd old
-python webserver.py
 ```
 
 ### Customize configuration

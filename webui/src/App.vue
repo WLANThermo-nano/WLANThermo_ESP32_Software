@@ -124,7 +124,7 @@ export default {
       menuItems: [
         { icon: 'home', translationKey: 'menuHome', id: 'home' },
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
-        { icon: 'bluetooth_2', translationKey: 'menuBluetooth', id: 'bluetooth' },
+        { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
         { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
         { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
         { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
