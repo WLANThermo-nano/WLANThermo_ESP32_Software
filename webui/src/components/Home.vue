@@ -75,7 +75,7 @@
               <i class="bar"></i>
             </div>
             <div class="form-group" :class="{ 'error': $v.editingChanelClone.max.$invalid}">
-              <input type="number" max="999.9" min="-999.9" v-model.lazy="editingChanelClone.max" required>
+              <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.max" required>
               <label class="control-label" for="input">{{$t("temp_max")}}</label>
               <i class="bar"></i>
               <div class="error-prompt" v-if="$v.editingChanelClone.max.$invalid">
@@ -83,7 +83,7 @@
               </div>
             </div>
             <div class="form-group" :class="{ 'error': $v.editingChanelClone.min.$invalid}">
-              <input type="number" max="999" min="-999" v-model.lazy="editingChanelClone.min" required>
+              <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.min" required>
               <label class="control-label" for="input">{{$t("temp_min")}}</label>
               <i class="bar"></i>
               <div class="error-prompt" v-if="$v.editingChanelClone.min.$invalid">

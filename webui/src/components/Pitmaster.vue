@@ -77,7 +77,7 @@
               </div>
               <!-- set value -->
               <div class="form-group" v-if="pm.typ.$model === 'auto'" :class="{ 'error': pm.set.$invalid}">
-                <input type="number" v-model="pm.set.$model" max="999.9" min="-999.9" required />
+                <input type="number" v-model="pm.set.$model" max="999.9" min="-999.9" step="any" required />
                 <label class="control-label" for="input">{{$t("pitTemp")}}</label>
                 <i class="bar"></i>
                 <div class="error-prompt" v-if="pm.set.$invalid">

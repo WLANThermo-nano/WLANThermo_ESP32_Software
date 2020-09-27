@@ -34,7 +34,7 @@
       </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
-          <li class="pure-menu-item" v-for="item in menuItems" :key="item.id">
+          <li class="pure-menu-item" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
             <a @click="toPage(item.id)" href="#" class="pure-menu-link">
               <span class="menu-icon" :class="'icon-' + item.icon"></span>
               {{ $t(item.translationKey) }}
@@ -435,6 +435,15 @@ export default {
   }
   .body {
     padding: 0.7em;
+  }
+}
+
+.pure-menu-item {
+  &:hover {
+    background-color: $medium_dark;
+  }
+  &.active {
+    background-color: #fff;
   }
 }
 
