@@ -36,6 +36,11 @@ yarn lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
+The following command is useful when you want to check the current configs.
+```
+vue inspect > inspect-config.js
+```
+
 
 ### Working with icon font
 The icons are located at _webui\src\icons\selection.json_
