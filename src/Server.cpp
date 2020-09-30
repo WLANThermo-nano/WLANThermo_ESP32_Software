@@ -36,7 +36,7 @@
 #include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-#ifdef HW_MINI_V1 || HW_MINI_V2 || HW_MINI_V3
+#if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3)
 #define WEB_SUBFOLDER "mini"
 #elif HW_NANO_V3
 #define WEB_SUBFOLDER "nano"
@@ -50,6 +50,8 @@ extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"
 extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
 extern const uint8_t icomoon_ttf_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_fonts_icomoon_ttf_gz_start");
 extern const size_t icomoon_ttf_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_fonts_icomoon_ttf_gz_size");
+extern const uint8_t app_js_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_js_app_js_gz_start");
+extern const size_t app_js_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_js_app_js_gz_size");
 
 const char *WServer::username = "admin";
 String WServer::password = "";
@@ -171,6 +173,14 @@ void WServer::init()
   webServer->on("/fonts/icomoon.ttf", [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "font/ttf", icomoon_ttf_start, (size_t)&icomoon_ttf_size);
     response->addHeader("Content-Disposition", "inline; filename=\"icomoon.ttf\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
+  // app.js
+  webServer->on("/js/app.js", [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/javascript", app_js_start, (size_t)&app_js_size);
+    response->addHeader("Content-Disposition", "inline; filename=\"app.js\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
