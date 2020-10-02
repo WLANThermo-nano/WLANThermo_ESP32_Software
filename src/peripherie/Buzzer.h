@@ -28,11 +28,13 @@ class Buzzer
 {
   public:
     Buzzer(uint8_t ioPin, uint8_t channel);
-    virtual void enable();
-    virtual void disable();
-    virtual void update();
+    void enable();
+    void disable();
+    void test();
+    void update();
   private:
     boolean enabled;
+    boolean testEnabled;
     uint8_t ioPin;
     uint8_t channel;
     double frequency;

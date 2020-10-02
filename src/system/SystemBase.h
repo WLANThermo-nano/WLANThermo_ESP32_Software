@@ -57,7 +57,7 @@ public:
   virtual void init();
   virtual void hwInit();
   PitmasterProfile *getPitmasterProfile(uint8_t index);
-  Buzzer getBuzzer();
+  Buzzer *getBuzzer() { return this->buzzer; };
   uint8_t getPitmasterProfileCount();
   void update();
   void resetConfig();
