@@ -124,7 +124,7 @@
             <template v-if="editingProfile.aktor == 0 || editingProfile.aktor === 1 || editingProfile.aktor == 3">
               <div class="pure-u-1-2 control">
                 <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmin.$invalid}">
-                  <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" required />
+                  <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" step="any" required />
                   <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
                   <i class="bar"></i>
                   <div class="error-prompt" v-if="$v.editingProfile.DCmmin.$invalid">
@@ -134,7 +134,7 @@
               </div>
               <div class="pure-u-1-2 control">
                 <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmax.$invalid}">
-                  <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" required />
+                  <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" step="any" required />
                   <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
                   <i class="bar"></i>
                   <div class="error-prompt" v-if="$v.editingProfile.DCmmax.$invalid">
@@ -187,7 +187,7 @@
               <div class="form-spacing"></div>
               <div class="pure-u-1-3 control">
                 <div class="form-group" :class="{ 'error': $v.editingProfile.Kp.$invalid}">
-                  <input type="number" min="0" max="150" v-model="editingProfile.Kp" required />
+                  <input type="number" min="0" max="150" step="any" v-model="editingProfile.Kp" required />
                   <label class="control-label" for="input">{{$t("pidKp")}}</label>
                   <i class="bar"></i>
                   <div class="error-prompt" v-if="$v.editingProfile.Kp.$invalid">
@@ -197,7 +197,7 @@
               </div>
               <div class="pure-u-1-3 control">
                 <div class="form-group" :class="{ 'error': $v.editingProfile.Ki.$invalid}">
-                  <input type="number" step="0.1" min="0" max="5" v-model="editingProfile.Ki" required />
+                  <input type="number" min="0.0" max="5.0" step="0.01" v-model="editingProfile.Ki" required />
                   <label class="control-label" for="input">{{$t("pidKi")}}</label>
                   <i class="bar"></i>
                   <div class="error-prompt" v-if="$v.editingProfile.Ki.$invalid">
