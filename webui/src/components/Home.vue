@@ -92,7 +92,7 @@
             </div>
             <div class="form-group">
               <select v-model="editingChanelClone.typ" :disabled="editingChanelClone.fixed">
-                <option v-for="s in sensors" :key="s.type" :value="s.type">{{s.name}}</option>
+                <option v-for="s in filteredSensors" :key="s.type" :value="s.type">{{s.name}}</option>
               </select>
               <label class="control-label" for="select">{{$t("temp_sensor")}}</label>
               <i class="bar"></i>
@@ -180,6 +180,11 @@ export default {
         "#948A54"
       ],
     };
+  },
+  computed: {
+    filteredSensors: function () {
+      return this.sensors.filter(i => i.fixed === false)
+    }
   },
   validations() {
     return {
