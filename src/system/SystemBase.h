@@ -79,7 +79,7 @@ public:
   String getLanguage();
   void setLanguage(String language);
   uint8_t getHardwareVersion();
-  void setPowerSaveMode(boolean enabled);
+  void setPowerSaveMode(boolean enable);
   String getResetReason(uint8_t cpuId);
   boolean getSupportDamper();
   TemperatureGrp temperatures;

@@ -26,14 +26,12 @@
 #include "Constants.h"
 #include "RecoveryMode.h"
 #include "TaskConfig.h"
+#include "ArduinoLog.h"
 
 #define STRINGIFY(s) #s
 
 #define CHECK_CYCLE(a, b) (!(a % b))
-#define BATTERY_UPDATE_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
-#define TEMPERATURE_REFRESH_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
-#define TEMPERATURE_ALARM_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
-#define PITMASTER_UPDATE_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
+#define ONCE_PER_SECOND_CYCLE (1000 / TASK_CYCLE_TIME_SYSTEM_TASK)
 
 char SystemBase::serialNumber[13] = "";
 
@@ -109,11 +107,12 @@ void SystemBase::update()
 {
   static uint8_t cycleCounter = 0u;
   boolean buzzerAlarm = false;
+  boolean enablePsm = true;
 
   // Increment cycle counter
   cycleCounter++;
 
-  if ((battery != NULL) && (CHECK_CYCLE(cycleCounter, BATTERY_UPDATE_CYCLE)))
+  if ((battery != NULL) && (CHECK_CYCLE(cycleCounter, ONCE_PER_SECOND_CYCLE)))
   {
     battery->update();
 
@@ -123,10 +122,16 @@ void SystemBase::update()
       esp_deep_sleep_start();
     }
 
+    // only enable pitmaster when USB supply is connected
     if (powerSaveModeSupport)
     {
-      setPowerSaveMode(!battery->isUsbPowered());
       pitmasters.enable(battery->isUsbPowered());
+    }
+
+    // disable PSM when USB supply is connected
+    if(battery->isUsbPowered())
+    {
+      enablePsm = false;
     }
   }
 
@@ -134,18 +139,11 @@ void SystemBase::update()
   temperatures.update();
   this->wireRelease();
 
-  if (CHECK_CYCLE(cycleCounter, TEMPERATURE_REFRESH_CYCLE))
+  if (CHECK_CYCLE(cycleCounter, ONCE_PER_SECOND_CYCLE))
   {
     temperatures.refresh();
-  }
-
-  if (CHECK_CYCLE(cycleCounter, PITMASTER_UPDATE_CYCLE))
-  {
     pitmasters.update();
-  }
 
-  if (CHECK_CYCLE(cycleCounter, TEMPERATURE_ALARM_CYCLE))
-  {
     for (uint8_t i = 0; i < temperatures.count(); i++)
     {
       if (temperatures[i] != NULL)
@@ -156,19 +154,29 @@ void SystemBase::update()
         boolean acknowledged = temperatures[i]->isAlarmAcknowledged();
 
         if ((alarmStatus != NoAlarm) && (false == acknowledged) && ((AlarmViaSummer == alarmSetting) || (AlarmAll == alarmSetting)))
+        {
           buzzerAlarm = true;
+        }
       }
     }
 
     if (buzzer != NULL)
     {
       if (buzzerAlarm)
+      {
         buzzer->enable();
+        // disable PSM when buzzer is enabled (PWM issue)
+        enablePsm = false;
+      }
       else
+      {
         buzzer->disable();
+      }
 
       buzzer->update();
     }
+
+    setPowerSaveMode(enablePsm);
   }
 }
 
@@ -293,16 +301,18 @@ uint8_t SystemBase::getHardwareVersion()
   return this->hardwareVersion;
 }
 
-void SystemBase::setPowerSaveMode(boolean enabled)
+void SystemBase::setPowerSaveMode(boolean enable)
 {
-  if ((enabled == powerSaveModeEnabled) || (false == powerSaveModeSupport))
-    return;
-
   esp_pm_config_esp32_t pm_config;
   esp_err_t ret;
+
+  if ((enable == powerSaveModeEnabled) || (false == powerSaveModeSupport))
+    return;
+
+  // only enable PSM when every caller enables it
+  pm_config.light_sleep_enable = enable;
   pm_config.max_freq_mhz = 240;
   pm_config.min_freq_mhz = 240;
-  pm_config.light_sleep_enable = enabled;
 
   if ((ret = esp_pm_configure(&pm_config)) != ESP_OK)
   {
@@ -310,7 +320,8 @@ void SystemBase::setPowerSaveMode(boolean enabled)
   }
   else
   {
-    powerSaveModeEnabled = enabled;
+      Log.notice("PSM: %s" CR, (enable == true) ? "enabled" : "disabled");
+      powerSaveModeEnabled = enable;
   }
 }
 
