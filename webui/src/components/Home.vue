@@ -27,11 +27,11 @@
             <div class="temperature-range">
               <div class="max">
                 <span class="icon icon-temp_up"></span>
-                <span class="temp-val">{{c.max}}°</span>
+                <span>{{c.max}}°</span>
               </div>
               <div class="min">
                 <span class="icon icon-temp_down"></span>
-                <span class="temp-val">{{c.min}}°</span>
+                <span>{{c.min}}°</span>
               </div>
             </div>
             <div class="temperature">
@@ -328,8 +328,6 @@ export default {
       .icon {
         font-size: 1.1em;
         margin-right: 0.2em;
-      }
-      .temp-val {
       }
     }
     .temperature {
