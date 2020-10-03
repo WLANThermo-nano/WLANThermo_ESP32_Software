@@ -69,7 +69,7 @@
           </div>
           <div class="form-checkbox">
             <label for="prerelease" class="pure-checkbox checkbox">
-              <input v-model="systemSettings.getupdate" :true-value="'true'" :false-value="'false'" type="checkbox" id="prerelease" />
+              <input v-model="systemSettings.prerelease" :true-value="'true'" :false-value="'false'" type="checkbox" id="prerelease" />
               {{$t("prerelease")}}
             </label>
           </div>
@@ -94,7 +94,7 @@ export default {
         language: "de",
         unit: "C",
         autoupd: null,
-        getupdate: null
+        prerelease: null
       },
       languages: [
         { value: "en", translationKey: "english" },
