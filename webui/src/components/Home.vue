@@ -26,10 +26,12 @@
           <div class="body-row">
             <div class="temperature-range">
               <div class="max">
-                <span class="icon icon-temp_up"></span>{{c.max}}°
+                <span class="icon icon-temp_up"></span>
+                <span class="temp-val">{{c.max}}°</span>
               </div>
               <div class="min">
-                <span class="icon icon-temp_down"></span>{{c.min}}°
+                <span class="icon icon-temp_down"></span>
+                <span class="temp-val">{{c.min}}°</span>
               </div>
             </div>
             <div class="temperature">
@@ -314,14 +316,15 @@ export default {
       display: flex;
       flex-direction: column;
       font-size: 0.9em;
-      .max {
+      .max, .min {
         flex: 1 1 auto;
-      }
-      .min {
-        flex: 1 1 auto;
+        display: flex;
       }
       .icon {
         font-size: 1.1em;
+        margin-right: 0.2em;
+      }
+      .temp-val {
       }
     }
     .temperature {

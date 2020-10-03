@@ -444,6 +444,9 @@ export default {
   }
   &.active {
     background-color: #fff;
+    .pure-menu-link {
+      background-color: #fff;
+    }
   }
 }
 

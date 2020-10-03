@@ -46,7 +46,7 @@
             </label>
             <i class="bar"></i>
           </div>
-          <button class="pure-button pure-button-primary" @click.stop="generateToken">
+          <button class="pure-button pure-button-primary" type="button" @click.stop="generateToken">
             {{ $t('cloudBtnToken') }}
           </button>
         </form>
