@@ -48,7 +48,7 @@ module.exports = {
             splitChunks: false
         },
         plugins: [
-            new BundleAnalyzerPlugin(),
+            // new BundleAnalyzerPlugin(),
             new CompressionPlugin()
         ]
     },
