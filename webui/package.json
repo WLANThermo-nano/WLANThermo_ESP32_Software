@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "base64-inline-loader": "^1.1.1",
     "core-js": "^3.6.5",
     "vue": "^2.6.11",
     "vue-axios": "^2.1.5",
