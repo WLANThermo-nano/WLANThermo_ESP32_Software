@@ -185,6 +185,9 @@ export default {
   },
   computed: {
     filteredSensors: function () {
+      if (this.editingChanelClone.fixed) {
+        return this.sensors;
+      }
       return this.sensors.filter(i => i.fixed === false)
     }
   },
