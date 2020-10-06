@@ -102,6 +102,7 @@ void TemperatureBase::loadConfig()
         {
           this->name = json["tname"][i].asString();
           this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
+          setType((uint8_t)this->type);
           this->minValue = json["tmin"][i];
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
