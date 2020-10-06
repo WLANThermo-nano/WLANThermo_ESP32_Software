@@ -64,8 +64,15 @@ void read_serial(char *buffer)
     // set item string
     else if (command == "item")
     {
+      Buzzer *buzzer = gSystem->getBuzzer();
       String payload((char *)buffer);
       gSystem->item.write(ItemNvsKeys::kItem, payload);
+
+      if(buzzer)
+      {
+        // buzzer test
+        buzzer->test();
+      }
       return;
     }
 

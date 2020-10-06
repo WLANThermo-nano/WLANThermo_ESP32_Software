@@ -57,7 +57,7 @@ public:
   virtual void init();
   virtual void hwInit();
   PitmasterProfile *getPitmasterProfile(uint8_t index);
-  Buzzer getBuzzer();
+  Buzzer *getBuzzer() { return this->buzzer; };
   uint8_t getPitmasterProfileCount();
   void update();
   void resetConfig();
@@ -79,7 +79,7 @@ public:
   String getLanguage();
   void setLanguage(String language);
   uint8_t getHardwareVersion();
-  void setPowerSaveMode(boolean enabled);
+  void setPowerSaveMode(boolean enable);
   String getResetReason(uint8_t cpuId);
   boolean getSupportDamper();
   TemperatureGrp temperatures;

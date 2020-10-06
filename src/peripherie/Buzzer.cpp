@@ -21,11 +21,14 @@
 #include <driver/ledc.h>
 #include "Buzzer.h"
 
+#define BUZZER_TEST_INTERVAL 1000u
+
 Buzzer::Buzzer(uint8_t ioPin, uint8_t channel) : enabled(false)
 {
   this->ioPin = ioPin;
   this->channel = channel;
   this->frequency = 0;
+  this->testEnabled = false;
   ledcSetup(this->channel , this->frequency, 8u);
   ledcAttachPin(this->ioPin, this->channel);
 }
@@ -50,12 +53,27 @@ void Buzzer::disable()
   }
 }
 
+void Buzzer::test()
+{
+  this->testEnabled = true;
+  this->previousMillis = millis();
+  ledcWriteTone(this->channel, BUZZER_FREQUENCY);
+}
+
 void Buzzer::update()
 {
-  if (this->enabled)
+  if(this->testEnabled)
+  {
+    if ((millis() - this->previousMillis) >= BUZZER_TEST_INTERVAL)
+    {
+      this->testEnabled = false;
+      ledcWriteTone(this->channel, 0);
+    }
+  }
+  else if (this->enabled)
   {
     uint currentMillis = millis();
-    if (millis() - this->previousMillis >= this->intervall)
+    if ((millis() - this->previousMillis) >= this->intervall)
     {
       if (this->frequency == 0)
       {
