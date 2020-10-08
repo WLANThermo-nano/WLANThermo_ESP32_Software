@@ -30,9 +30,9 @@ SystemBase *gSystem = new SystemMiniV2();
 DisplayBase *gDisplay = new DisplayNextion();
 #elif HW_MINI_V3
 #include "system/SystemMiniV3.h"
-#include "display/DisplayNextion.h"
+#include "display/DisplayTft.h"
 SystemBase *gSystem = new SystemMiniV3();
-DisplayBase *gDisplay = new DisplayNextion();
+DisplayBase *gDisplay = new DisplayTft();
 #elif HW_NANO_V3
 #include "system/SystemNanoVx.h"
 #include "display/DisplayOled.h"
