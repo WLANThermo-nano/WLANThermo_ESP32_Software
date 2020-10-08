@@ -26,54 +26,7 @@
 #include <OneButton.h>
 #include "system/SystemBase.h"
 #include "DisplayBase.h"
-
-typedef enum
-{
-  Click,
-  LongClickStart,
-  LongClickEnd,
-  LongClickOnGoing,
-  DoubleClick
-} ButtonEvent;
-
-enum class ButtonId
-{
-  Left,
-  Right
-};
-
-enum class MenuItem
-{
-  Boot,
-
-  MenuTemperature,
-  MenuPitmaster,
-  MenuSystem,
-
-  TempShow,
-  TempSettingsUpper,
-  TempSettingsLower,
-  TempSettingsType,
-  TempSettingsAlarm,
-
-  PitmasterSettingsProfile,
-  PitmasterSettingsChannel,
-  PitmasterSettingsTemperature,
-  PitmasterSettingsType,
-
-  SystemSettingsSSID,
-  SystemSettingsIP,
-  SystemSettingsHost,
-  SystemSettingsUnit,
-  SystemSettingsFirmwareVersion
-};
-
-enum class MenuMode
-{
-  Show,
-  Edit,
-  Set
-};
+#include "DisplayOledTypes.h"
 
 class DisplayOled : public DisplayBase
 {
@@ -90,6 +43,7 @@ private:
   static OLEDDisplayUi ui;
   static OneButton lButton;
   static OneButton rButton;
+  static ButtonId lastButtonId;
   static MenuItem menuItem;
   static MenuMode menuMode;
   static boolean flashIndicator;
@@ -113,10 +67,11 @@ private:
 
   void loadConfig();
   boolean initDisplay();
-  
+  static void buttonInterruptHandler();
+
   /* Non UI draws */
   void drawConnect();
-  void drawQuestion(int counter);
+  void drawPopUp();
   void drawUpdate(String txt);
   static void drawMenu();
 
@@ -129,8 +84,12 @@ private:
   static void drawSystemSettings(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y);
   static void drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state);
 
+  boolean handlePopUp();
+
   static uint8_t currentChannel;
   static float currentData;
   static uint8_t buttonMupi;
-  static boolean oledBlocked;
+  static DisplayPopUpType displayPopUp;
+  static DisplayStaticType displayStatic;
+  static TaskHandle_t taskHandle;
 };

@@ -152,7 +152,6 @@ void SystemMiniV3::init()
   sdCard = new SdCard(CS_SD_CARD);
 
   powerSaveModeSupport = true;
-  setPowerSaveMode(true);
 
   initDone = true;
 }

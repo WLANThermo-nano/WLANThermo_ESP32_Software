@@ -35,8 +35,9 @@ public:
     static void saveConfig();
     static String getUsername();
     static String getPassword();
-    static const char* getRealm(){ return "WLANThermo Device"; }
+    static const char *getRealm() { return "WLANThermo Device"; }
     static void setPassword(String newPassword);
+    static boolean requireAuth() { return password.length() > 0u; }
 
 private:
     void loadConfig();

@@ -36,14 +36,26 @@
 #define DISPLAY_I2C_ADDRESS 0x3cu
 #define LBUTTON_IO 14u
 #define RBUTTON_IO 12u
-#define OLED_TASK_CYCLE_TIME 10u   // 10ms
-#define OLED_BOOT_SCREEN_TIME 100u // 100 * 10ms = 1s
-#define OLED_FLASH_INTERVAL 50u    // 50 * 10ms = 500ms
+#define OLED_BOOT_SCREEN_TIME 200u // 200 * 10ms = 2s
+#define OLED_FLASH_INTERVAL 500u   // in ms
 #define OLED_WIFI_AP_DELAY 10000u
 #define OLED_BATTERY_PERCENTAGE_DELAY 10000u
 #define BUTTON_DEBOUNCE_TICKS 10u
 #define BUTTON_CLICK_TICKS 200u
 #define BUTTON_PRESS_TICKS 600u
+#define OLED_WIFI_IP_ADDRESS_TIMEOUT 5000u
+#define OLED_NUM_OF_POPUPS ((uint8_t)(DisplayPopUpType::None))
+
+typedef void (*PopUpCallback_t)(ButtonId);
+
+typedef struct DisplayPopUpInfo
+{
+  DisplayPopUpType type;
+  const char* headerLine;
+  const char* firstLine;
+  const char* secondLine;
+  PopUpCallback_t cb;
+} DisplayPopUpInfoType;
 
 enum class Frames
 {
@@ -54,9 +66,18 @@ enum class Frames
   NumOfFrames,
 };
 
+const DisplayPopUpInfo displayPopupInfo[OLED_NUM_OF_POPUPS] =
+{
+    { DisplayPopUpType::IpAddress, "WLAN", "WLAN-Anmeldung", "IP: %d", NULL },
+    { DisplayPopUpType::Update, "Update in progress!", "", "", NULL },
+    { DisplayPopUpType::Alarm, "ALARM!", "Temperatur außerhalb", "der Grenzwerte", NULL }
+};
+
 float DisplayOled::currentData = 0; // Zwischenspeichervariable
 uint8_t DisplayOled::buttonMupi = 1u;
-boolean DisplayOled::oledBlocked = false;
+DisplayPopUpType DisplayOled::displayPopUp = DisplayPopUpType::None;
+DisplayStaticType DisplayOled::displayStatic = DisplayStaticType::None;
+TaskHandle_t DisplayOled::taskHandle = NULL;
 String alarmname[4] = {"off", "push", "summer", "all"};
 
 SystemBase *DisplayOled::system = gSystem;
@@ -66,6 +87,7 @@ FrameCallback DisplayOled::frames[] = {DisplayOled::drawTemp, DisplayOled::drawT
 OverlayCallback DisplayOled::overlays[] = {drawOverlayBar};
 OneButton DisplayOled::lButton = OneButton(LBUTTON_IO, true, true);
 OneButton DisplayOled::rButton = OneButton(RBUTTON_IO, true, true);
+ButtonId DisplayOled::lastButtonId = ButtonId::None;
 MenuItem DisplayOled::menuItem = MenuItem::Boot;
 MenuMode DisplayOled::menuMode = MenuMode::Show;
 uint8_t DisplayOled::currentChannel = 0u;
@@ -83,7 +105,7 @@ void DisplayOled::init()
       10000,                      /* Stack size in bytes. */
       this,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
-      NULL,                       /* Task handle. */
+      &taskHandle,                /* Task handle. */
       1);                         /* CPU Core */
 }
 
@@ -105,9 +127,6 @@ boolean DisplayOled::initDisplay()
   oled.display();
   drawConnect();
 
-  //question.typ = NO;
-  //question.con = 0;
-
   lButton.attachClick(this->lButtonClick);
   lButton.attachLongPressStart(this->lButtonLongClickStart);
   lButton.attachLongPressStop(this->lButtonLongClickEnd);
@@ -126,12 +145,20 @@ boolean DisplayOled::initDisplay()
   rButton.setClickTicks(BUTTON_CLICK_TICKS);
   rButton.setPressTicks(BUTTON_PRESS_TICKS);
 
+  attachInterrupt(LBUTTON_IO, buttonInterruptHandler, CHANGE);
+  attachInterrupt(RBUTTON_IO, buttonInterruptHandler, CHANGE);
+
   return true;
+}
+
+void DisplayOled::buttonInterruptHandler()
+{
+  vTaskNotifyGiveFromISR(taskHandle, NULL);
 }
 
 void DisplayOled::task(void *parameter)
 {
-  uint8_t flashTimeout = OLED_FLASH_INTERVAL;
+  uint32_t flashTimeout = millis();
   TickType_t xLastWakeTime = xTaskGetTickCount();
   uint8_t bootScreenTimeout = OLED_BOOT_SCREEN_TIME;
   DisplayOled *display = (DisplayOled *)parameter;
@@ -143,25 +170,33 @@ void DisplayOled::task(void *parameter)
   // show boot screen
   while (bootScreenTimeout || display->system->isInitDone() != true)
   {
-    vTaskDelayUntil(&xLastWakeTime, OLED_TASK_CYCLE_TIME);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
     if (bootScreenTimeout)
       bootScreenTimeout--;
   }
 
+  TickType_t timeout = TASK_CYCLE_TIME_DISPLAY_FAST_TASK;
+
   for (;;)
   {
+
+    // This function will block until notify or timeout
+    if (ulTaskNotifyTake(pdTRUE, timeout) != 0)
+    {
+      /* Do nothing */
+    }
+
     display->system->wireLock();
     display->update();
     display->system->wireRelease();
 
-    if (!flashTimeout--)
+    if ((millis() - flashTimeout) >= OLED_FLASH_INTERVAL)
     {
-      flashTimeout = OLED_FLASH_INTERVAL;
+      flashTimeout = millis();
       display->flashIndicator = !display->flashIndicator;
     }
 
-    // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
+    timeout = (MenuItem::TempShow == menuItem) ? TASK_CYCLE_TIME_DISPLAY_SLOW_TASK : TASK_CYCLE_TIME_DISPLAY_FAST_TASK;
   }
 }
 
@@ -191,13 +226,52 @@ void DisplayOled::update()
     rButton.tick();
 
     //check oled block
-    if (!oledBlocked)
+    if (DisplayPopUpType::None != displayPopUp)
+    {      
+      drawPopUp();
+    }
+    else if (DisplayStaticType::None != displayStatic)
+    {
+      // nix
+    }
+    else
+    {
       ui.update();
+      handlePopUp();
+    }
+    
+
+  }
+}
+
+boolean DisplayOled::handlePopUp()
+{
+  if (gSystem->temperatures.hasAlarm(true))
+  {
+    displayPopUp = DisplayPopUpType::Alarm;
   }
 }
 
 void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
 {
+  if(DisplayPopUpType::None != displayPopUp)
+  {
+    switch (displayPopUp)
+    {
+    case DisplayPopUpType::Alarm:
+      gSystem->temperatures.acknowledgeAlarm();
+      displayPopUp = DisplayPopUpType::None;
+      break;
+    
+    default:
+      break;
+    }
+
+    return;
+  }
+
+  lastButtonId = buttonId;
+
   if (ButtonEvent::Click == buttonEvent)
   {
     switch (menuItem)
@@ -267,7 +341,8 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuItem = MenuItem::TempSettingsUpper;
         menuMode = MenuMode::Show;
         ui.switchToFrame(1u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else if (ButtonId::Right == buttonId)
       {
@@ -285,7 +360,8 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuItem = MenuItem::TempShow;
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else if ((MenuMode::Edit == menuMode) && (menuItem <= MenuItem::TempSettingsLower))
         handleTemperatureEdit(buttonId, buttonEvent);
@@ -322,7 +398,8 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
       menuItem = MenuItem::TempShow;
       menuMode = MenuMode::Show;
       ui.switchToFrame(0u);
-      oledBlocked = false;
+      displayPopUp = DisplayPopUpType::None;
+      displayStatic = DisplayStaticType::None;
       break;
     case MenuItem::MenuPitmaster:
       if (ButtonId::Left == buttonId)
@@ -330,14 +407,16 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuItem = MenuItem::TempShow;
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else
       {
         menuItem = MenuItem::PitmasterSettingsProfile;
         menuMode = MenuMode::Show;
         ui.switchToFrame(2u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       break;
 
@@ -347,13 +426,15 @@ void DisplayOled::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
         menuItem = MenuItem::TempShow;
         menuMode = MenuMode::Show;
         ui.switchToFrame(0u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       else
       {
         menuItem = MenuItem::SystemSettingsSSID;
         ui.switchToFrame(3u);
-        oledBlocked = false;
+        displayPopUp = DisplayPopUpType::None;
+        displayStatic = DisplayStaticType::None;
       }
       break;
     }
@@ -451,9 +532,9 @@ void DisplayOled::handleTemperatureNavigation(ButtonId buttonId)
     TemperatureBase *firstActiveTemperature = system->temperatures.getNextActive(0u);
 
     if (nextActiveTemperature != NULL)
-      currentChannel = nextActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(nextActiveTemperature);
     else if (firstActiveTemperature != NULL)
-      currentChannel = firstActiveTemperature->getGlobalIndex();
+      currentChannel = TemperatureGrp::getIndex(firstActiveTemperature);
     else if (currentChannel >= system->temperatures.count())
       currentChannel = 0u;
   }
@@ -495,57 +576,69 @@ void DisplayOled::drawCharging()
 
     oled.drawXbm(4, 0, 8, 10, xbmcharge); // Ladepfeilspitze
     oled.fillRect(2, 3, 6, 4);            // Ladepfeilstiel
-    oled.drawString(64, 30, "WIRD GELADEN...");
+    oled.drawString(64, 30, "CHARGING...");
   }
   else
   {
     oled.fillRect(18, 3, 2, 4);                //Draw battery end button
     oled.drawRect(0, 1, 17, 8);                //Draw Outline
     oled.fillRect(2, 3, MAXBATTERYBAR - 1, 4); // Draw Battery Status
-    oled.drawString(64, 30, "LADEN BEENDET");
+    oled.drawString(64, 30, "READY!");
   }
 
   oled.display();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Frame while Question
-void DisplayOled::drawQuestion(int counter)
+// Frame while PopUp
+void DisplayOled::drawPopUp()
 {
+  char text[30] = {0};
+  uint8_t popUpIndex = (uint8_t)displayPopUp;
+
   oled.clear();
   oled.setColor(WHITE);
 
   oled.setTextAlignment(TEXT_ALIGN_LEFT);
   oled.setFont(ArialMT_Plain_10);
 
-  byte b0 = 1;
-  bool b1 = true;
+  switch(displayPopUp)
+  {
+    case DisplayPopUpType::IpAddress:
+      //sprintf(text, displayPopupInfo[popUpIndex].text, WiFi.localIP().toString());
+      oled.drawString(17, 20, text);
+      break;
+    case DisplayPopUpType::Update:
+      //oled.drawString(17, 20, displayPopupInfo[popUpIndex].text);
+      break;
+    case DisplayPopUpType::Alarm:
+      oled.setFont(ArialMT_Plain_16);
+      oled.drawString(5, 5, displayPopupInfo[popUpIndex].headerLine);
+      oled.setFont(ArialMT_Plain_10);
+      oled.drawString(5, 25, displayPopupInfo[popUpIndex].firstLine);
+      oled.drawString(5, 40, displayPopupInfo[popUpIndex].secondLine);
+      break;
+    default:
+      break;
+  }
 
-  /*switch (question.typ)
-  { // Which Question?
+  oled.setTextAlignment(TEXT_ALIGN_RIGHT);
+  oled.setFont(ArialMT_Plain_10);
+  oled.drawString(107, 51, "OK");
+  oled.display();
 
-  case CONFIGRESET:
-    oled.drawString(3, 3, "Reset Config?");
-    break;
-
-  case RESETWIFI:
-    oled.drawString(3, 3, "Reset Wifi?");
-    break;
-
-  case RESETFW:
-    oled.drawString(3, 3, "Reset Firmware?");
-    break;
-
-  case IPADRESSE:
+  /*switch (counter)
+  {
+  case 0:
     oled.drawString(25, 3, "WLAN-Anmeldung");
-    oled.drawString(17, 20, "IP:");
+    
     oled.drawString(33, 20, WiFi.localIP().toString());
     b1 = false;
     b0 = 2;
     break;
 
-  case OTAUPDATE:
-    if (gSystem->otaUpdate.get == FIRMWAREVERSION)
+  case 1:
+    /*if (gSystem->otaUpdate.get == FIRMWAREVERSION)
       oled.drawString(3, 3, "Update: Erfolgreich!");
     else
       oled.drawString(3, 3, "Update: Fehlgeschlagen!");
@@ -553,33 +646,14 @@ void DisplayOled::drawQuestion(int counter)
     b0 = 2;
     break;
 
-  case TUNE:
-    if (counter == 0)
-    {
-      oled.drawString(3, 3, "Autotune: gestartet!");
-      oled.setTextAlignment(TEXT_ALIGN_CENTER);
-      oled.drawString(64, 20, "PID danach fortsetzen?");
-      //oled.drawString(64,18,"fortsetzen?");
-      b1 = true;
-      b0 = true;
-      break;
-    }
-    else if (counter == 1)
-      oled.drawString(3, 3, "Autotune: beendet!");
-    else
-      oled.drawString(3, 3, "Autotune: abgebrochen!");
-    b1 = false;
-    b0 = 2;
-    break;
-
-  case HARDWAREALARM:
+  case 2:
     String text = "ALARM! Kanal ";
     text += String(counter + 1);
     oled.drawString(25, 3, text);
     oled.drawString(40, 18, "Stoppen?");
     b1 = false;
     break;
-  }*/
+  }
 
   oled.setFont(ArialMT_Plain_16);
   oled.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -590,7 +664,7 @@ void DisplayOled::drawQuestion(int counter)
     oled.drawString(118, 40, "YES");
   else if (b0 == 2)
     oled.drawString(118, 40, "OK");
-  oled.display();
+  oled.display();*/
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -615,7 +689,8 @@ void DisplayOled::drawUpdate(String txt)
 // Frame while Menu
 void DisplayOled::drawMenu()
 {
-  oledBlocked = true;
+  displayStatic = DisplayStaticType::MainMenu;
+
   oled.clear();
   oled.setColor(WHITE);
   oled.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -658,6 +733,10 @@ void DisplayOled::drawMenu()
 // STATUS ROW
 void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state)
 {
+  static WifiState wifiState = WifiState::SoftAPNoClient;
+  static uint32_t ipAddressTimeoutMillis = 0u;
+  WifiState newWifiState = system->wlan.getWifiState();
+
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
 
@@ -667,10 +746,27 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
     return;
   }
 
+  // WIFI IP ADDRESS
+  boolean showPit = true;
+  if (newWifiState == WifiState::ConnectedToSTA)
+  {
+    if (wifiState != newWifiState)
+    {
+      ipAddressTimeoutMillis = millis();
+      wifiState = newWifiState;
+    }
+
+    if ((millis() - ipAddressTimeoutMillis) <= OLED_WIFI_IP_ADDRESS_TIMEOUT)
+    {
+      display->drawString(29, 1, WiFi.localIP().toString());
+      showPit = false;
+    }
+  }
+
   // PITMASTER STATUS
   boolean showbattery = false;
   Pitmaster *pit = system->pitmasters[0];
-  if (pit)
+  if ((pit != NULL) && (true == showPit))
   {
     switch (pit->getType())
     {
@@ -679,13 +775,13 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
         showbattery = true;
       break;
     case pm_manual:
-      display->drawString(33, 0, "M  " + String(pit->getValue(), 0) + "%");
+      display->drawString(33, 1, "M  " + String(pit->getValue(), 0) + "%");
       break;
     case pm_auto:
-      /*if (pit->getAssignedProfile()->opl)
-        display->drawString(33, 0, "OPL: " + String(opl.temp, 1));
-      else*/
-      display->drawString(33, 0, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
+      if (pit->getOPLStatus())
+        display->drawString(33, 1, "OPL: " + String(pit->getOPLTemperature(), 1));
+      else
+        display->drawString(33, 1, "P  " + String(pit->getTargetTemperature(), 1) + " / " + String(pit->getValue(), 0) + "%");
       break;
     }
   }
@@ -694,16 +790,16 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   if (system->wlan.isConnected())
   {
-    display->fillRect(116, 9, 2, 1); //Draw ground line
-    display->fillRect(120, 9, 2, 1); //Draw ground line
-    display->fillRect(124, 9, 2, 1); //Draw ground line
+    display->fillRect(116, 10, 2, 1); //Draw ground line
+    display->fillRect(120, 10, 2, 1); //Draw ground line
+    display->fillRect(124, 10, 2, 1); //Draw ground line
 
     if (system->wlan.getRssi() > -105)
-      display->fillRect(116, 6, 2, 3); //Draw 1 line
+      display->fillRect(116, 7, 2, 3); //Draw 1 line
     if (system->wlan.getRssi() > -95)
-      display->fillRect(120, 4, 2, 5); //Draw 2 line
+      display->fillRect(120, 5, 2, 5); //Draw 2 line
     if (system->wlan.getRssi() > -80)
-      display->fillRect(124, 2, 2, 7); //Draw 3 line
+      display->fillRect(124, 3, 2, 7); //Draw 3 line
   }
   else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
   {
@@ -711,7 +807,7 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
   }
   else
   {
-    display->drawString(128, 0, "");
+    display->drawString(128, 1, "");
   }
 
   // BATTERY STATUS
@@ -722,31 +818,31 @@ void DisplayOled::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *state
 
     if (showbattery)
       display->drawString(24, 1, String(system->battery->percentage));
-  
+
     if (flashIndicator && gSystem->battery->percentage < 10)
     {
     } // nothing for flash effect
     else if (gSystem->battery->isCharging())
     {
-      display->fillRect(18,5,2,4);              //Draw battery end button
-      display->drawRect(0,3,17,8);              //Draw Outline Battery
-    
+      display->fillRect(18, 5, 2, 4); //Draw battery end button
+      display->drawRect(0, 3, 17, 8); //Draw Outline Battery
+
       display->setColor(BLACK);
-      display->fillRect(4,2,8,10);              //Lücke für Pfeil
+      display->fillRect(4, 2, 8, 10); //Lücke für Pfeil
       display->setColor(WHITE);
-    
+
       display->drawXbm(4, 2, 8, 10, xbmcharge); // Ladepfeilspitze
-      display->fillRect(2,5,6,4);               // Ladepfeilstiel
+      display->fillRect(2, 5, 6, 4);            // Ladepfeilstiel
     }
     else if (gSystem->battery->isUsbPowered())
     {
-      display->drawString(1,1,"USB");
+      display->drawString(1, 1, "USB");
     }
     else
     {
-      display->fillRect(18,5,2,4);         //Draw battery end button
-      display->drawRect(0,3,17,8);         //Draw Outline
-      display->fillRect(2,5,battPixel,4);  // Draw Battery Status
+      display->fillRect(18, 5, 2, 4);        //Draw battery end button
+      display->drawRect(0, 3, 17, 8);        //Draw Outline
+      display->fillRect(2, 5, battPixel, 4); // Draw Battery Status
     }
   }
 }
@@ -758,7 +854,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
   menuItem = MenuItem::TempShow;
   int match = 0;
   TemperatureBase *temperature = system->temperatures[currentChannel];
-  display->drawXbm(x + 19, 18 + y, 20, 36, xbmtemp); // Symbol
+  display->drawXbm(x + 19, 19 + y, 20, 36, xbmtemp); // Symbol
 
   // Show limits in OLED
   if ((temperature->getMaxValue() > temperature->getMinValue()) && temperature->isActive())
@@ -818,7 +914,7 @@ void DisplayOled::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, int1
     // Show Pitmaster Activity on Icon
     if (pm_auto == pitmaster->getType())
     {
-      if (currentChannel == temperature->getGlobalIndex())
+      if (currentChannel == TemperatureGrp::getIndex(temperature))
       {
         display->setFont(ArialMT_Plain_10);
         if (pitmaster->isAutoTuneRunning())
@@ -904,6 +1000,16 @@ void DisplayOled::drawTempSettings(OLEDDisplay *display, OLEDDisplayUiState *sta
         currentData = temperature->getTypeCount() - 1;
       else if (currentData >= temperature->getTypeCount())
         currentData = 0;
+
+      while (temperature->isTypeFixed((uint8_t)currentData))
+      {
+        currentData += (ButtonId::Left == lastButtonId) ? -1 : 1;
+
+        if (currentData < 0)
+          currentData = temperature->getTypeCount() - 1;
+        else if (currentData >= temperature->getTypeCount())
+          currentData = 0;
+      }
     }
     else if (MenuMode::Set == menuMode)
     {
@@ -981,7 +1087,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
     display->drawString(116, 20, "CHANNEL:");
     if (MenuMode::Show == menuMode)
     {
-      currentData = pm->getAssignedTemperature()->getGlobalIndex();
+      currentData = TemperatureGrp::getIndex(pm->getAssignedTemperature());
     }
     else if (MenuMode::Edit == menuMode)
     {
@@ -996,7 +1102,7 @@ void DisplayOled::drawPitmasterSettings(OLEDDisplay *display, OLEDDisplayUiState
       menuMode = MenuMode::Show;
       system->pitmasters.saveConfig();
     }
-    display->drawString(116 + x, 36 + y, String(system->temperatures[(uint8_t)currentData]->getGlobalIndex() + 1));
+    display->drawString(116 + x, 36 + y, String(TemperatureGrp::getIndex(system->temperatures[(uint8_t)currentData]) + 1));
     break;
 
   case MenuItem::PitmasterSettingsTemperature: // SET TEMPERATUR
@@ -1045,7 +1151,7 @@ void DisplayOled::drawSystemSettings(OLEDDisplay *display, OLEDDisplayUiState *s
 {
 
   if ((true == flashIndicator) || MenuMode::Edit != menuMode)
-    display->drawXbm(x + 5, 22 + y, sys_width, sys_height, xbmsys);
+    //display->drawXbm(x + 5, 22 + y, sys_width, sys_height, xbmsys);
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
   display->setFont(ArialMT_Plain_10);
 

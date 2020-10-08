@@ -1,0 +1,57 @@
+{
+  "name": "WLANThermo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve --mode development",
+    "build-nano": "vue-cli-service build --mode nano",
+    "build-link": "vue-cli-service build --mode link",
+    "build-cloud": "vue-cli-service build --mode cloud",
+    "build-mini": "vue-cli-service build --mode mini",
+    "build-demo": "vue-cli-service build --mode demo",
+    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini && npm run build-demo",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "base64-inline-loader": "^1.1.1",
+    "core-js": "^3.6.5",
+    "vue": "^2.6.11",
+    "vue-axios": "^2.1.5",
+    "vue-i18n": "^8.20.0",
+    "vuelidate": "^0.7.5"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.4.0",
+    "@vue/cli-plugin-eslint": "~4.4.0",
+    "@vue/cli-service": "~4.4.0",
+    "babel-eslint": "^10.1.0",
+    "compression-webpack-plugin": "^4.0.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "html-webpack-inline-source-plugin": "0.0.10",
+    "sass": "^1.26.10",
+    "sass-loader": "^9.0.3",
+    "vue-template-compiler": "^2.6.11",
+    "webpack-bundle-analyzer": "^3.8.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

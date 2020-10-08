@@ -19,17 +19,18 @@
 ****************************************************/
 
 #include "TemperatureBase.h"
+#include "TemperatureGrp.h"
 #include "Settings.h"
 
 #define LOWEST_VALUE -31
 #define HIGHEST_VALUE 999
 #define DEFAULT_MIN_VALUE 10.0
 #define DEFAULT_MAX_VALUE 35.0
-#define MAX_COLORS 12u
+#define MAX_COLORS 8u
 #define MEDIAN_SIZE 9u
 #define DEFAULT_CHANNEL_NAME "Kanal "
 
-const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148", "#5C7148", "#5C7148", "#5C7148", "#5C7148"};
+const static String colors[MAX_COLORS] = {"#0C4C88", "#22B14C", "#EF562D", "#FFC100", "#A349A4", "#804000", "#5587A2", "#5C7148"};
 TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
@@ -37,43 +38,46 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
     TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC, TemperatureBase::calcTemperatureNTC,
     TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperaturePTx, TemperatureBase::calcTemperatureNTC,
     NULL, NULL};
-uint8_t TemperatureBase::globalIndexTracker = 0u;
 
 TemperatureBase::TemperatureBase()
 {
-  this->globalIndex = this->globalIndexTracker++;
   this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
-  this->loadDefaultValues();
+  this->fixedSensor = false;
+  this->loadDefaultValues(TemperatureGrp::count());
   this->settingsChanged = false;
   this->cbCurrentValue = INACTIVEVALUE;
   this->cbAlarmStatus = NoAlarm;
   this->calcTemperature = typeFunctions[0];
-  this->fixedSensor = false;
   this->acknowledgedAlarm = false;
   this->connected = false;
 }
 
 TemperatureBase::~TemperatureBase()
 {
-  this->globalIndexTracker--;
 }
 
-void TemperatureBase::loadDefaultValues()
+void TemperatureBase::loadDefaultValues(uint8_t index)
 {
   this->currentUnit = Celsius;
   this->currentValue = INACTIVEVALUE;
   this->preValue = INACTIVEVALUE;
   this->currentGradient = 0;
+  this->gradientSign = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
-  this->name = DEFAULT_CHANNEL_NAME + String(this->globalIndex + 1u);
-  this->type = SensorType::Maverick;
+  this->name = DEFAULT_CHANNEL_NAME + String(index + 1u);
+
+  if (false == this->isFixedSensor())
+  {
+    this->type = SensorType::Maverick;
+  }
+
   this->alarmSetting = AlarmOff;
   this->notificationCounter = 1u;
 
-  if (this->globalIndex < MAX_COLORS)
+  if (index < MAX_COLORS)
   {
-    this->color = colors[this->globalIndex];
+    this->color = colors[index];
   }
   else
   {
@@ -98,6 +102,7 @@ void TemperatureBase::loadConfig()
         {
           this->name = json["tname"][i].asString();
           this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
+          setType((uint8_t)this->type);
           this->minValue = json["tmin"][i];
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
@@ -197,9 +202,9 @@ String TemperatureBase::getTypeName(uint8_t index)
   return (index < NUM_OF_TYPES) ? sensorTypeInfo[index].name : "";
 }
 
-uint8_t TemperatureBase::getGlobalIndex()
+boolean TemperatureBase::isTypeFixed(uint8_t index)
 {
-  return this->globalIndex;
+  return (index < NUM_OF_TYPES) ? sensorTypeInfo[index].fixed : false;
 }
 
 void TemperatureBase::setType(uint8_t type)
@@ -299,10 +304,30 @@ boolean TemperatureBase::isActive()
 
 void TemperatureBase::refresh()
 {
+  // Save last
   this->preValue = this->currentValue;
-  this->currentValue = this->medianValue->GetFiltered();
-  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0; 
-  this->currentGradient = (0 == gradient) ? 0 : gradient/abs(gradient);
+  int8_t preGradientSign = this->gradientSign;
+
+  // get current
+  float currentVal = this->medianValue->GetFiltered();
+  float gradient = (isActive() == true) ? decimalPlace(currentVal) - decimalPlace(this->preValue) : 0;
+  this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
+  this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
+
+  // gradient sign filter 
+  if (preGradientSign == gradientSign) {
+    if (this->type == SensorType::TypeK){
+      this->currentValue = ((currentVal*2.0) + preValue)/3.0;
+    }
+    else {
+      this->currentValue = currentVal;
+    }
+  }
+  else
+  {
+    this->currentValue = this->preValue;
+  }
+  
 }
 
 void TemperatureBase::update()
@@ -311,7 +336,7 @@ void TemperatureBase::update()
 
 float TemperatureBase::decimalPlace(float value)
 {
-  return (((int) value*10.0)/10.0);
+  return (((int)value * 10.0) / 10.0);
 }
 
 float TemperatureBase::getUnitValue(float value)
@@ -320,7 +345,7 @@ float TemperatureBase::getUnitValue(float value)
 
   if (this->currentUnit == Fahrenheit)
   {
-    convertedValue = ((value * (9 / 5)) + 32);
+    convertedValue = ((value * (1.8)) + 32);
   }
 
   return convertedValue;
@@ -332,7 +357,7 @@ float TemperatureBase::setUnitValue(float value)
 
   if (this->currentUnit == Fahrenheit)
   {
-    convertedValue = (value - 32) * (5 / 9);
+    convertedValue = (value - 32) * (5.0 / 9);
   }
 
   return convertedValue;

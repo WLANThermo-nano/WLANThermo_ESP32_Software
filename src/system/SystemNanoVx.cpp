@@ -148,7 +148,6 @@ void SystemNanoVx::init()
   pitmasters.loadConfig();
 
   powerSaveModeSupport = true;
-  setPowerSaveMode(true);
 
   initDone = true;
 }

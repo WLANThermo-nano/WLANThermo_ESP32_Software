@@ -128,7 +128,7 @@ void PitmasterGrp::saveConfig()
     if (pm != NULL)
     {
       JsonObject &_ma = _master.createNestedObject();
-      _ma["ch"] = pm->getAssignedTemperature()->getGlobalIndex();
+      _ma["ch"] = TemperatureGrp::getIndex(pm->getAssignedTemperature());
       _ma["pid"] = pm->getAssignedProfile()->id;
       _ma["set"] = double_with_n_digits(pm->getTargetTemperature(), 1);
       _ma["act"] = (uint8_t)pm->getType();

@@ -21,6 +21,7 @@
 #include "Pitmaster.h"
 #include "DbgPrint.h"
 #include "math.h"
+#include "ArduinoLog.h"
 
 #define PIDKIMAX 95 // ANTI WINDUP LIMIT MAX
 #define PIDKIMIN 0  // ANTI WINDUP LIMIT MIN
@@ -41,12 +42,13 @@
 #define OPL_FALL 97   // OPEN LID LIMIT FALLING
 #define OPL_RISE 100  // OPEN LID LIMIT RISING
 #define OPL_PAUSE 300 // OPEN LID PAUSE
-#define OPL_THRESHOLD 4
+#define OPL_THRESHOLD 2
 
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
-#define MEDIAN_SIZE 5u
+#define MEDIAN_SIZE 10u
+#define DCOUNT  15u
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -73,6 +75,9 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
     this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
+    this->ecount = DCOUNT;
+    this->edif = 0;
+    this->jump = 0;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -461,53 +466,6 @@ boolean Pitmaster::checkAutoTune()
 
     return false;
 }
-/*
-boolean Pitmaster::checkOpenLid()
-{
-    if ((pm_auto == this->type) && (true == this->profile->opl))
-    {
-        openLid.ref[0] = openLid.ref[1];
-        openLid.ref[1] = openLid.ref[2];
-        openLid.ref[2] = openLid.ref[3];
-        openLid.ref[3] = openLid.ref[4];
-        openLid.ref[4] = this->temperature->getValue();
-
-        float temp_ref = (openLid.ref[0] + openLid.ref[1] + openLid.ref[2]) / 3.0;
-
-        // erkennen ob Temperatur wieder eingependelt oder Timeout
-        if (openLid.detected)
-        { // Open Lid Detected
-
-            openLid.count--;
-
-            // extremes Überschwingen vermeiden
-            if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
-                openLid.temp = this->targetTemperature;
-
-            if (openLid.count <= 0) // Timeout
-                openLid.detected = false;
-
-            else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
-                openLid.detected = false;
-        }
-        else if (this->temperature->getValue() < (temp_ref * (OPL_FALL / 100.0)))
-        { // Opened lid detected!
-            // Wenn Temp innerhalb der letzten beiden Messzyklen den falling Wert unterschreitet
-
-            openLid.detected = true;
-            openLid.temp = openLid.ref[0];
-            openLid.count = OPL_PAUSE; // TODO: check pause
-
-            Serial.println("OPL");
-        }
-    }
-    else
-    {
-        openLid.detected = false;
-    }
-
-    return openLid.detected;
-}*/
 
 boolean Pitmaster::checkOpenLid()
 {
@@ -527,27 +485,48 @@ boolean Pitmaster::checkOpenLid()
 
             // extremes Überschwingen vermeiden
             if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
+            {    
                 openLid.temp = this->targetTemperature;
+                Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
+            }
 
             if (openLid.count <= 0) // Timeout
+            {
                 openLid.detected = false;
+                Log.notice("OPL finished: Timeout" CR);
+            }    
 
             else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
+            {    
                 openLid.detected = false;
+                Log.notice("OPL finished: Lid closed" CR);
+            }
         }
         else if (openLid.fall_c == 1)
         {
             openLid.ref = (this->temperature->getPreValue() == INACTIVEVALUE) ? this->temperature->getValue() : this->temperature->getPreValue();
         }
-        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
-        { // Opened lid detected!
+        else if (openLid.fall_c == 2)
+        {
+            Log.notice("OPL 0: %F" CR, (float)(openLid.ref));
+            Log.notice("OPL 1: %F" CR, (float)(this->temperature->getPreValue()));
+            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getValue()));
+        }
+        else if (openLid.fall_c > 10) {
+            openLid.fall_c = 0;  // Zurücksetzen wenn über max. Count
+        }
+        // wenn in 4 Schritten nicht unter Threshold, dann ist es auch keine Deckelöffnung
+        else if (openLid.fall_c >= 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
+        { // Opened lid detected!            
             openLid.detected = true;
             openLid.temp = openLid.ref;
             openLid.count = OPL_PAUSE; // TODO: check pause
-
-            Serial.print("OPL: ");
-            Serial.println(openLid.temp);
+            
+            Log.notice("OPL: %d" CR, (int)(openLid.fall_c));
+            Log.notice("OPL detected: %F" CR, (float)(this->temperature->getValue()));
+            Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
         }
+        
     }
     else
     {
@@ -556,6 +535,16 @@ boolean Pitmaster::checkOpenLid()
     }
 
     return openLid.detected;
+}
+
+boolean Pitmaster::getOPLStatus()
+{
+    return openLid.detected;
+}
+
+float Pitmaster::getOPLTemperature()
+{
+    return openLid.temp;
 }
 
 void Pitmaster::update()
@@ -596,6 +585,11 @@ void Pitmaster::update()
 void Pitmaster::controlActuators()
 {
     float linkedvalue;
+    
+    // JUMP DROSSEL
+    if (this->jump && (this->value > this->profile->jumppw))
+          this->value = this->profile->jumppw;
+
     initActuators();
 
     switch (this->profile->actuator)
@@ -618,16 +612,11 @@ void Pitmaster::controlActuators()
         if (0 == this->profile->link)
         {
             // degressiv link
-            if (this->value > 0)
-                linkedvalue = 100;
-            else
-                linkedvalue = 0;
+            linkedvalue = (this->value > 0) ? 100 : 0;
         }
-        else
+        else // linear link
         {
-            // linear link
             linkedvalue = (ceil(this->value * 0.1)) * 10.0;
-            //Serial.println(linkedvalue);
         }
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
 
@@ -844,7 +833,6 @@ float Pitmaster::pidCalc()
     float e;
 
     // Abweichung bestimmen
-    // Abweichung bestimmen
     switch (this->profile->actuator)
     {
     case SSR: // SSR
@@ -861,23 +849,24 @@ float Pitmaster::pidCalc()
     this->profile->jumpth = (w * 0.05);
     if (this->profile->jumpth > (100.0 / kp))
         this->profile->jumpth = 100.0 / kp;
-    //Serial.println(this->profile->jumpth);
     if (diff > this->profile->jumpth)
-        this->jump = true; // Memory bis Soll erreicht
-    else if (diff <= 0)
+        this->jump = true; 
+    else if (diff <= 0) // Memory bis Soll erreicht
         this->jump = false;
-
-    //float e = w - x;
 
     // Proportional-Anteil
     float p_out = kp * e;
 
-    // Differential-Anteil
-    float edif = (e - this->elast) / (this->pause / 1000.0);
-    this->elast = e;
+    // Differential-Anteil (Intervall-Berechnung)
+    this->ecount++;
+    if (this->ecount >= DCOUNT) {
+        this->edif = (e - this->elast) / (this->pause / 1000.0);
+        this->edif = this->edif / (float) DCOUNT;
+        this->elast = e;
+        this->ecount = 0;
+    }
+
     float d_out = kd * edif;
-    if ((x - w) > 0)
-        d_out = 0; // Begrenzung auf Untertemperaturbereich
 
     // i-Anteil wechsl: https://github.com/WLANThermo/WLANThermo_v2/blob/b7bd6e1b56fe5659e8750c17c6dd1cd489872f6c/software/usr/sbin/wlt_2_pitmaster.py
     // Integral-Anteil
@@ -929,4 +918,5 @@ void Pitmaster::pidReset()
     this->esum = 0;
     this->elast = 0;
     this->Ki_alt = 0;
+    this->jump = 0;
 }

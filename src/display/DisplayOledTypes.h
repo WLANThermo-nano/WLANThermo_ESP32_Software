@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,27 +17,68 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#pragma once
 
-#include <DbgPrint.h>
-#include "system/SystemBase.h"
-
-#if DEBUG == REMOTE_DEBUG
-RemoteDebug Debug;
-#endif
-
-void dbgPrintInit()
+typedef enum
 {
-#if DEBUG == REMOTE_DEBUG
-    Debug.begin(gSystem->wlan.getHostName());    // Initialize the WiFi server
-    Debug.setResetCmdEnabled(true); // Enable the reset command
-    //Debug.showProfiler(true);       // Profiler (Good to measure times, to optimize codes)
-    Debug.showColors(true);         // Colors
-#endif
-}
+  Click,
+  LongClickStart,
+  LongClickEnd,
+  LongClickOnGoing,
+  DoubleClick
+} ButtonEvent;
 
-void dbgPrintMain()
+enum class ButtonId
 {
-#if DEBUG == REMOTE_DEBUG
-    Debug.handle();
-#endif
-}
+  None,
+  Left,
+  Right
+};
+
+enum class MenuItem
+{
+  Boot,
+
+  MenuTemperature,
+  MenuPitmaster,
+  MenuSystem,
+
+  TempShow,
+  TempSettingsUpper,
+  TempSettingsLower,
+  TempSettingsType,
+  TempSettingsAlarm,
+
+  PitmasterSettingsProfile,
+  PitmasterSettingsChannel,
+  PitmasterSettingsTemperature,
+  PitmasterSettingsType,
+
+  SystemSettingsSSID,
+  SystemSettingsIP,
+  SystemSettingsHost,
+  SystemSettingsUnit,
+  SystemSettingsFirmwareVersion
+};
+
+enum class MenuMode
+{
+  Show,
+  Edit,
+  Set
+};
+
+enum class DisplayPopUpType
+{
+  IpAddress,
+  Update,
+  Alarm,
+  None
+};
+
+enum class DisplayStaticType
+{
+  MainMenu,
+  Logo,
+  None
+};

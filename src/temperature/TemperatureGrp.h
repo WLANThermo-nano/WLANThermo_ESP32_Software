@@ -42,20 +42,22 @@ public:
   void remove(uint8_t index);
   boolean exists(uint8_t type, String address, uint8_t localIndex);
   TemperatureBase *operator[](int index);
-  uint8_t count();
+  static uint8_t count();
   boolean setUnit(TemperatureUnit unit);
   TemperatureUnit getUnit();
   TemperatureBase *getNextActive(uint8_t index);
   uint32_t getActiveBits();
   uint8_t getActiveCount();
-  boolean hasAlarm();
+  boolean hasAlarm(boolean filterAcknowledged = true);
   void acknowledgeAlarm();
   void saveConfig();
   void loadConfig();
   void registerCallback(TemperatureCallback_t callback, void *userData = NULL);
 
+  static uint8_t getIndex(TemperatureBase *temperature);
+
 private:
-  std::vector<TemperatureBase *> temperatures;
+  static std::vector<TemperatureBase *> temperatures;
   std::vector<TemperatureCallbackDataType> registeredCb;
   TemperatureUnit currentUnit;
 };

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		.centered {
+			font-size: 100px;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+		html {
+			font-family: sans-serif;
+			ms-text-size-adjust: 100%;
+		}
+
+		body {
+			background-color: #333333;
+			color: #FFFFFF;
+		}
+
+		.cover_active {
+			position: fixed;
+			top: 0;
+			left: 0;
+			background: rgba(0, 0, 0, 0.6);
+			z-index: 5;
+			width: 100%;
+			height: 100%;
+			display: none;
+			display: block;
+			opacity: 2;
+		}
+
+		.spinner {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			height: 28px;
+			width: 28px;
+			margin-left: -14px;
+			margin-top: -14px;
+			animation: rotate 0.8s infinite linear;
+			border: 8px solid #fff;
+			border-right-color: transparent;
+			border-radius: 50%;
+			-webkit-transition-delay: 1s;
+			/* Safari */
+			transition-delay: 1s;
+		}
+
+		@keyframes rotate {
+			0% {
+				transform: rotate(0deg);
+			}
+
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<!--div class="centered" id="counter">10</div-->
+	<div id="cover">
+		<div id="spinner"></div>
+	</div>
+
+	<script>
+		document.getElementById('cover').classList.add("cover_active");
+		document.getElementById('spinner').classList.add("spinner");
+
+		const xhr = new XMLHttpRequest();
+		xhr.open("GET", "/ping");
+		xhr.timeout = 1000; // 1s timeout
+
+		xhr.onload = function () {
+			if (xhr.readyState === xhr.DONE) {
+				if (xhr.status === 200) {
+					window.location.href = "/";
+				}
+			}
+		};
+
+		xhr.ontimeout = function (e) {
+			xhr.open("GET", "/ping");
+			xhr.send(null);
+		};
+
+		xhr.send(null);
+	</script>
+</body>

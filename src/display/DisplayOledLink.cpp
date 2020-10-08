@@ -43,6 +43,18 @@
 #define BUTTON_DEBOUNCE_TICKS 10u
 #define BUTTON_CLICK_TICKS 200u
 #define BUTTON_PRESS_TICKS 600u
+#define OLED_NUM_OF_POPUPS ((uint8_t)(DisplayPopUpType::None))
+
+typedef void (*PopUpCallback_t)(ButtonId);
+
+typedef struct DisplayPopUpInfo
+{
+  DisplayPopUpType type;
+  const char* headerLine;
+  const char* firstLine;
+  const char* secondLine;
+  PopUpCallback_t cb;
+} DisplayPopUpInfoType;
 
 enum class Frames
 {
@@ -53,9 +65,16 @@ enum class Frames
   NumOfFrames,
 };
 
+const DisplayPopUpInfo displayPopupInfo[OLED_NUM_OF_POPUPS] =
+{
+    { DisplayPopUpType::IpAddress, "WLAN", "WLAN-Anmeldung", "IP: %d", NULL },
+    { DisplayPopUpType::Update, "Update in progress!", "", "", NULL },
+    { DisplayPopUpType::Alarm, "ALARM!", "Temperatur außerhalb", "der Grenzwerte", NULL }
+};
+
 float DisplayOledLink::currentData = 0; // Zwischenspeichervariable
 //uint8_t DisplayOledLink::buttonMupi = 1u;
-boolean DisplayOledLink::oledBlocked = false;
+DisplayPopUpType DisplayOledLink::displayPopUp = DisplayPopUpType::None;
 //String alarmname[4] = {"off", "push", "summer", "all"};
 
 SystemBase *DisplayOledLink::system = gSystem;
@@ -147,7 +166,7 @@ void DisplayOledLink::task(void *parameter)
     }
 
     // Wait for the next cycle.
-    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_TASK);
+    vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   }
 }
 
@@ -176,13 +195,44 @@ void DisplayOledLink::update()
     lButton.tick();
 
     //check oled block
-    if (!oledBlocked)
+    if (DisplayPopUpType::None == displayPopUp)
+    {
       ui.update();
+      handlePopUp();
+    }
+    else
+    {
+      drawPopUp();
+    }
+  }
+}
+
+boolean DisplayOledLink::handlePopUp()
+{
+  if (gSystem->temperatures.hasAlarm(true))
+  {
+    displayPopUp = DisplayPopUpType::Alarm;
   }
 }
 
 void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)
 {
+  if(DisplayPopUpType::None != displayPopUp)
+  {
+    switch (displayPopUp)
+    {
+    case DisplayPopUpType::Alarm:
+      gSystem->temperatures.acknowledgeAlarm();
+      displayPopUp = DisplayPopUpType::None;
+      break;
+    
+    default:
+      break;
+    }
+
+    return;
+  }
+
   if (ButtonEvent::Click == buttonEvent)
   {
     handleTemperatureNavigation(buttonId);
@@ -218,8 +268,48 @@ void DisplayOledLink::drawConnect()
   oled.setColor(WHITE);
 
   // Draw Logo
-  oled.drawXbm(7, 4, nano_width, nano_height, xbmnano);
+  oled.drawXbm(7, 4, nano_width, nano_height, xbmlink);
   oled.display();
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Frame while PopUp
+void DisplayOledLink::drawPopUp()
+{
+  char text[30] = {0};
+  uint8_t popUpIndex = (uint8_t)displayPopUp;
+
+  oled.clear();
+  oled.setColor(WHITE);
+
+  oled.setTextAlignment(TEXT_ALIGN_LEFT);
+  oled.setFont(ArialMT_Plain_10);
+
+  switch(displayPopUp)
+  {
+    case DisplayPopUpType::IpAddress:
+      //sprintf(text, displayPopupInfo[popUpIndex].text, WiFi.localIP().toString());
+      oled.drawString(17, 20, text);
+      break;
+    case DisplayPopUpType::Update:
+      //oled.drawString(17, 20, displayPopupInfo[popUpIndex].text);
+      break;
+    case DisplayPopUpType::Alarm:
+      oled.setFont(ArialMT_Plain_16);
+      oled.drawString(5, 5, displayPopupInfo[popUpIndex].headerLine);
+      oled.setFont(ArialMT_Plain_10);
+      oled.drawString(5, 25, displayPopupInfo[popUpIndex].firstLine);
+      oled.drawString(5, 40, displayPopupInfo[popUpIndex].secondLine);
+      break;
+    default:
+      break;
+  }
+
+  oled.setTextAlignment(TEXT_ALIGN_RIGHT);
+  oled.setFont(ArialMT_Plain_10);
+  oled.drawString(107, 51, "OK");
+  oled.display();
+
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -243,13 +333,16 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
     switch (pit->getType())
     {
     case pm_off:
-      display->drawString(4, 0, "IP:");
-      if (system->wlan.isAP())
-        display->drawString(18, 0, WiFi.softAPIP().toString());
-      else if (system->wlan.isConnected())
+      if (system->wlan.isConnected())
+      {
+        display->drawString(4, 0, "IP:");
         display->drawString(18, 0, WiFi.localIP().toString());
-      else
-        display->drawString(18, 0, "");
+      } 
+      else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.softAPIP().toString());
+      }
       break;
     case pm_manual:
       display->drawString(33, 0, "M  " + String(pit->getValue(), 0) + "%");
@@ -259,22 +352,34 @@ void DisplayOledLink::drawOverlayBar(OLEDDisplay *display, OLEDDisplayUiState *s
       break;
     }
   }
+  else {
+    if (system->wlan.isConnected())
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.localIP().toString());
+      } 
+      else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
+      {
+        display->drawString(4, 0, "IP:");
+        display->drawString(18, 0, WiFi.softAPIP().toString());
+      }
+  }
 
   display->setTextAlignment(TEXT_ALIGN_RIGHT);
 
   if (system->wlan.isConnected())
   {
     //display->drawString(128,0,String(wifi.rssi)+" dBm");
-    display->fillRect(116, 8, 2, 1); //Draw ground line
-    display->fillRect(120, 8, 2, 1); //Draw ground line
-    display->fillRect(124, 8, 2, 1); //Draw ground line
+    display->fillRect(116, 9, 2, 1); //Draw ground line
+    display->fillRect(120, 9, 2, 1); //Draw ground line
+    display->fillRect(124, 9, 2, 1); //Draw ground line
 
     if (system->wlan.getRssi() > -105)
-      display->fillRect(116, 5, 2, 3); //Draw 1 line
+      display->fillRect(116, 6, 2, 3); //Draw 1 line
     if (system->wlan.getRssi() > -95)
-      display->fillRect(120, 3, 2, 5); //Draw 2 line
+      display->fillRect(120, 4, 2, 5); //Draw 2 line
     if (system->wlan.getRssi() > -80)
-      display->fillRect(124, 1, 2, 7); //Draw 3 line
+      display->fillRect(124, 2, 2, 7); //Draw 3 line
   }
   else if (system->wlan.isAP() && (millis() > OLED_WIFI_AP_DELAY))
   {
@@ -353,7 +458,7 @@ void DisplayOledLink::drawTemp(OLEDDisplay *display, OLEDDisplayUiState *state, 
     // Show Pitmaster Activity on Icon
     if (pm_auto == pitmaster->getType())
     {
-      if (currentChannel == temperature->getGlobalIndex())
+      if (currentChannel == TemperatureGrp::getIndex(temperature))
       {
         display->setFont(ArialMT_Plain_10);
         if (pitmaster->isAutoTuneRunning())

@@ -14,7 +14,7 @@
         "unit": "C",
         "ap": "WLANTHERMO-AP",
         "host": "MINI-c82b96995b70",
-        "language": "de",
+        "language": "en",
         "version": "v0.9.9",
         "getupdate": "false",
         "autoupd": true,
@@ -205,14 +205,14 @@
         "CLon": false,
         "CLtoken": "c82b96995b705ec91d87bb",
         "CLint": 30,
-        "CLurl": "dev-cloud.wlanthermo.de/index.html"
+        "CLurl": "cloud.wlanthermo.de/index.html"
     },
     "notes": {
         "fcm": [],
         "ext": {
-            "on": 0,
-            "token": "",
-            "id": "",
+            "on": 1,
+            "token": "token",
+            "id": "id",
             "repeat": 1,
             "service": 0,
             "services": [

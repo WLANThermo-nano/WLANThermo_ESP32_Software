@@ -113,6 +113,8 @@ public:
   void setValue(float value);
   void setTargetTemperature(float temperature);
   float getTargetTemperature();
+  boolean getOPLStatus();
+  float getOPLTemperature();
   uint8_t getGlobalIndex() { return this->globalIndex; };
   bool startDutyCycleTest(uint8_t actuator, uint8_t value);
   bool startAutoTune();
@@ -169,6 +171,8 @@ private:
   float esum;   // PITMASTER I-PART DIFFERENZ SUM
   float elast;  // PITMASTER D-PART DIFFERENZ LAST
   float Ki_alt; // PITMASTER I-PART CACHE
+  uint8_t ecount;
+  float edif;
   bool jump;
 
   uint16_t pause;

@@ -20,6 +20,7 @@
 ****************************************************/
 
 #include "TemperatureMax11615.h"
+#include "ArduinoLog.h"
 
 #define MAX1161X_SGL_DIF_BIT 0x01u
 #define MAX1161X_SCAN0_BIT 0x20u
@@ -56,7 +57,11 @@ TemperatureMax11615::TemperatureMax11615(uint8_t index, TwoWire *twoWire) : Temp
 
   this->twoWire->beginTransmission(this->chipAddress);
   this->twoWire->write(reg);
-  this->twoWire->endTransmission();
+  byte error = this->twoWire->endTransmission();
+
+  if (error == 0) {
+    Log.trace("Add NTC: %X" CR, index);
+  }
 }
 
 void TemperatureMax11615::update()
