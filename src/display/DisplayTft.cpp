@@ -79,7 +79,7 @@ boolean DisplayTft::initDisplay()
   lv_init();
 
   tft.init();
-  tft.setRotation(3);
+  tft.setRotation(1);
 
   calibrate();
 
@@ -159,7 +159,7 @@ void DisplayTft::task(void *parameter)
   {
     display->update();
     // Wait for the next cycle.
-    vTaskDelay(TASK_CYCLE_TIME_DISPLAY_TASK);
+    vTaskDelay(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   }
 }
 
@@ -183,7 +183,7 @@ void DisplayTft::update()
   updateTemperatureScreenTiles(false);
   updateTemperatureScreenSymbols(false);
 
-  lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_TASK);
+  lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   lv_task_handler();
 }
 
