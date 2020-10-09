@@ -22,7 +22,8 @@
 #include "TemperatureMcp3208.h"
 #include <SPI.h>
 
-union SplitTwoBytes {
+union SplitTwoBytes
+{
   uint16_t value;
   struct
   {
@@ -59,9 +60,9 @@ uint16_t TemperatureMcp3208::readChip()
   // set channel
   command.value |= ((this->localIndex + 8u) << 6u);
 
+  SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
   // write CS
   digitalWrite(csPin, LOW);
-
   // send first byte
   SPI.transfer(command.highByte);
   // send second byte and receive first 4 bits
@@ -71,6 +72,8 @@ uint16_t TemperatureMcp3208::readChip()
 
   // write CS
   digitalWrite(csPin, HIGH);
+
+  SPI.endTransaction();
 
   return receive.value;
 }
