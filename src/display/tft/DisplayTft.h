@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 #include "system/SystemBase.h"
-#include "DisplayBase.h"
+#include "display/DisplayBase.h"
 #include <lvgl.h>
 #include <Ticker.h>
 #include <TFT_eSPI.h>

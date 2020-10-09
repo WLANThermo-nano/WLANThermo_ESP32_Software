@@ -226,7 +226,7 @@ void RecoveryMode::run()
           if (final)
             Update.end(true);
           break;
-#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2 
         case UploadFileType::Nextion:
           if (!index)
           {

@@ -17,7 +17,7 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2
 
 #include "DisplayNextion.h"
 #include "Settings.h"
@@ -1158,4 +1158,4 @@ void DisplayNextion::updateFromSPIFFS()
   SPIFFS.end();
 }
 
-#endif //#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
+#endif //#if defined HW_MINI_V1 || defined HW_MINI_V2
