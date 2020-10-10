@@ -55,7 +55,4 @@ module.exports = {
     css: {
         extract: false
     },
-    devServer: {
-        proxy: 'http://localhost'
-    }
 };

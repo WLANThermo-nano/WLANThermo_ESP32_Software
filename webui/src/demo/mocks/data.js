@@ -206,7 +206,7 @@ export const Data = {
             "CLon": false,
             "CLtoken": "c82b96995b705ec91d87bb",
             "CLint": 30,
-            "CLurl": "cloud.wlanthermo.de/index.html"
+            "CLurl": "https://dev-api.wlanthermo.de/index.php"
         },
         "notes": {
             "fcm": [],
@@ -440,5 +440,161 @@ export const Data = {
                 "selected": 7
             }
         ]
+    },
+    chartData: {
+        "device": {
+            "device": "nano",
+            "serial": "2462abc2fed8",
+            "cpu": "esp32",
+            "flash_size": "33554432",
+            "item": "blabl",
+            "hw_version": "v2",
+            "sw_version": "v0.9.9"
+        },
+        "cloud": {
+            "task": true,
+            "api_token": "2462abc2fed85f6a5815a5",
+            "data": [
+                {
+                    "system": {
+                        "time": "1602262464",
+                        "soc": 84
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 110.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                },
+                {
+                    "system": {
+                        "time": "1602308464",
+                        "soc": 74
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 30.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                },
+                {
+                    "system": {
+                        "time": "1602312464",
+                        "soc": 64
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 110.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                },
+                {
+                    "system": {
+                        "time": "1602327491",
+                        "soc": 84
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 55.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                },
+                {
+                    "system": {
+                        "time": "1602327491",
+                        "soc": 74
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 75.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                },
+                {
+                    "system": {
+                        "time": "1602327491",
+                        "soc": 64
+                    },
+                    "channel": [
+                        {
+                            "number": 1,
+                            "temp": 110.9
+                        },
+                        {
+                            "number": 2,
+                            "temp": 56.7
+                        }
+                    ],
+                    "pitmaster": [
+                        {
+                            "value": 0,
+                            "set": 50,
+                            "typ": "off"
+                        }
+                    ]
+                }
+            ]
+        },
+        "runtime": 0.044924020767211914
     }
 }

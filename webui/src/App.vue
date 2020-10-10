@@ -48,6 +48,7 @@
       <div class="page-content">
         <div class="content-body">
           <Home v-if="page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit"/>
+          <LineChart v-if="settingsReady && page === 'home'" :settings="settings" :channels="channels"/>
           <Wlan v-else-if="page === 'wlan'" />
           <System v-else-if="page === 'system'" />
           <PushNotification v-else-if="page === 'notification'" />
@@ -92,6 +93,7 @@ import Icon from './components/Icon.vue'
 import System from './components/System.vue'
 import Bluetooth from './components/Bluetooth.vue'
 import Pitmaster from './components/Pitmaster'
+import LineChart from './components/LineChart'
 import About from './components/About'
 import IoT from './components/IoT'
 import PushNotification from './components/PushNotification'
@@ -119,6 +121,8 @@ export default {
       dialogBodyText: '',
       wikiLink: '',
       linkText: '',
+
+      settingsReady: false,
 
       // menu
       menuItems: [
@@ -159,7 +163,7 @@ export default {
     };
   },
   components: {
-    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About
+    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About, LineChart
   },
   methods: {
     initGetDataPeriodically: function() {
@@ -196,6 +200,8 @@ export default {
         if (!this.settings.features.pitmaster) {
           this.menuItems = this.menuItems.filter(i => i.id !== 'pitmaster')
         }
+
+        this.settingsReady = true
       })
     },
     update: function() {

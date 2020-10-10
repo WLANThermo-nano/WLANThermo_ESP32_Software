@@ -1,6 +1,10 @@
 import axios from 'axios'
 import { MockData } from './mock-data'
 
+const EXCEPTION_LIST = [
+  // 'index.php'
+]
+
 const getMockError = config => {
   const mockError = new Error()
   mockError.config = config
@@ -9,6 +13,9 @@ const getMockError = config => {
 
 // Add a request interceptor
 axios.interceptors.request.use(config => {
+  if (EXCEPTION_LIST.some(url => config.url.includes(url))) {
+    return config
+  }
   return getMockError(config)
 }, error => Promise.reject(error))
 

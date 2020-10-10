@@ -7,6 +7,7 @@
 @import "./controls.scss";
 
 $nav_width: 200px;
+$mobile_break_point: 48em;
 
 /*
  * -- BASE STYLES --
@@ -78,7 +79,7 @@ body {
     height: 1.7em;
     position: fixed;
     width: calc(100% - #{$nav_width});
-    @media screen and (max-width: 48em) {
+    @media screen and (max-width: $mobile_break_point) {
         width: 100%;
     }
     .button-container {
