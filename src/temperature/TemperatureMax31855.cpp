@@ -89,6 +89,7 @@ uint32_t TemperatureMax31855::readChip()
 {
   SplitFourBytes receive;
 
+  SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
   // write CS
   digitalWrite(csPin, LOW);
   delay(1u);
@@ -100,6 +101,8 @@ uint32_t TemperatureMax31855::readChip()
 
   // write CS
   digitalWrite(csPin, HIGH);
+
+  SPI.endTransaction();
 
   return receive.value;
 }

@@ -24,7 +24,6 @@
 #include "SystemMiniV3.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
-#include "display/DisplayNextion.h"
 #include "Constants.h"
 
 // TEMPERATURES
@@ -130,7 +129,7 @@ void SystemMiniV3::init()
   // initialize pitmasters
   Pitmaster::setSupplyPin(PITMASTERSUPPLY);
   pitmasters.add(new Pitmaster(PITMASTER0IO1, ledcPitMaster0IO1, PITMASTER0IO2, ledcPitMaster0IO2));
-  pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
+  //pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
@@ -144,15 +143,14 @@ void SystemMiniV3::init()
   // default profiles and temperatures, will be overwritten when config exists
   pitmasters[0u]->assignProfile(profile[0]);
   pitmasters[0u]->assignTemperature(temperatures[0]);
-  pitmasters[1u]->assignProfile(profile[1]);
-  pitmasters[1u]->assignTemperature(temperatures[1]);
+  //pitmasters[1u]->assignProfile(profile[1]);
+  //pitmasters[1u]->assignTemperature(temperatures[1]);
 
   pitmasters.loadConfig();
 
   sdCard = new SdCard(CS_SD_CARD);
 
   powerSaveModeSupport = true;
-  setPowerSaveMode(true);
 
   initDone = true;
 }

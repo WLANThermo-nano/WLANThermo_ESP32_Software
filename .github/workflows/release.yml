@@ -198,21 +198,3 @@ jobs:
           asset_path: ./nextion/NX3224K028-180.tft
           asset_name: mini_v2_esp32_NX3224K028-180_${{ steps.get_version.outputs.version }}.tft
           asset_content_type: application/octet-stream
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nextion/NX3224K024-0.tft
-          asset_name: mini_v3_esp32_NX3224K024-0_${{ steps.get_version.outputs.version }}.tft
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nextion/NX3224K024-180.tft
-          asset_name: mini_v3_esp32_NX3224K024-180_${{ steps.get_version.outputs.version }}.tft
-          asset_content_type: application/octet-stream
