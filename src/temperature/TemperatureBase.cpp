@@ -304,7 +304,7 @@ boolean TemperatureBase::isActive()
 
 void TemperatureBase::refresh()
 {
-  // Save last
+  // save last
   this->preValue = this->currentValue;
   int8_t preGradientSign = this->gradientSign;
 
@@ -314,9 +314,16 @@ void TemperatureBase::refresh()
   this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
 
-  // gradient sign filter 
-  if (preGradientSign == gradientSign) {
-    if (this->type == SensorType::TypeK){
+   
+  if (INACTIVEVALUE == currentVal) 
+  {
+    this->currentValue = INACTIVEVALUE;
+  }
+  // gradient sign filter
+  else if (preGradientSign == gradientSign) 
+  {
+    if (this->type == SensorType::TypeK && INACTIVEVALUE != preValue)
+    {
       this->currentValue = ((currentVal*2.0) + preValue)/3.0;
     }
     else {
