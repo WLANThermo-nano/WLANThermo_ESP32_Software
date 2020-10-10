@@ -150,5 +150,7 @@ export default {
 	pitLid: "Lid monitoring",
 	pitlink: "Linking Actuators",
 	pitlinkdegressiv: "degressive",
-	pitlinklinear: "linear"
+	pitlinklinear: "linear",
+	// chart
+	battery: "Battery"
 };

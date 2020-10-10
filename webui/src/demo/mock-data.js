@@ -4,7 +4,8 @@ const mock = {
     '/settings': Data.settings,
     '/data': Data.data,
     '/networklist': Data.networklist,
-    '/bluetooth': Data.bluetooth
+    '/bluetooth': Data.bluetooth,
+    'https://dev-api.wlanthermo.de/index.php': Data.chartData
 }
 
 export class MockData {

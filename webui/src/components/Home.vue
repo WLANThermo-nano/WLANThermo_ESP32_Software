@@ -50,6 +50,7 @@
           </div>
         </div>
       </div>
+      <LineChart :settings="settings" :channels="channels"/>
     </template>
     <template v-else>
       <div class="pure-u-1-1 app-bar-wrapper">
@@ -126,6 +127,7 @@
 
 <script>
 import EventBus from '../event-bus'
+import LineChart from './LineChart'
 import { between } from 'vuelidate/lib/validators'
 
 export default {
@@ -290,6 +292,7 @@ export default {
     }
   },
   components: {
+    LineChart
   },
 };
 </script>
