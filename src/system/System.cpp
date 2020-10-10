@@ -34,7 +34,7 @@ DisplayBase *gDisplay = new DisplayNextion();
 SystemBase *gSystem = new SystemMiniV3();
 DisplayBase *gDisplay = new DisplayTft();
 #elif HW_NANO_V3
-#include "system/SystemNanoVx.h"
+#include "system/SystemNanoV3.h"
 #include "display/DisplayOled.h"
 SystemBase *gSystem = new SystemNanoVx();
 DisplayBase *gDisplay = new DisplayOled();

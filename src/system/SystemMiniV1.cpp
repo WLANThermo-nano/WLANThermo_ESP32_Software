@@ -24,7 +24,6 @@
 #include "SystemMiniV1.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMavRadio.h"
-#include "display/DisplayNextion.h"
 #include "Constants.h"
 
 // TEMPERATURES

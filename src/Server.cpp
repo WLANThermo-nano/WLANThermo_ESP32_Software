@@ -32,8 +32,6 @@
 #include <SPIFFS.h>
 
 // include html files
-#include "webui/fwupdate.html.gz.h"
-#include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
 #if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3)
