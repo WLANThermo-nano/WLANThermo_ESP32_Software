@@ -113,3 +113,8 @@ body {
     from {transform: rotate(0deg);}
     to {transform: rotate(359deg);}
 }
+
+.pure-button-error {
+    color: #fff;
+    background-color: rgb(202, 60, 60);
+}

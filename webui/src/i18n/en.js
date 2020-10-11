@@ -65,8 +65,8 @@ export default {
 	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
-	menuIOT: "IoT",
 	menuHistory: "History",
+	menuIOT: "IoT",
 	menuNotification: "Push Notification",
 	menuAbout: "About",
 	//History

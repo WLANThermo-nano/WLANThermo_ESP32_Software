@@ -237,7 +237,7 @@ export const Data = {
                 "number": 1,
                 "name": "Kanal 1",
                 "typ": 0,
-                "temp": 999,
+                "temp": 45,
                 "min": 10.0,
                 "max": 35.0,
                 "alarm": 0,
@@ -249,7 +249,7 @@ export const Data = {
                 "number": 2,
                 "name": "Kanal 2",
                 "typ": 0,
-                "temp": 999.0,
+                "temp": 27.0,
                 "min": 10.0,
                 "max": 35.0,
                 "alarm": 0,
@@ -472,7 +472,7 @@ export const Data = {
                     ],
                     "pitmaster": [
                         {
-                            "value": 0,
+                            "value": 60,
                             "set": 50,
                             "typ": "off"
                         }
@@ -518,7 +518,7 @@ export const Data = {
                     ],
                     "pitmaster": [
                         {
-                            "value": 0,
+                            "value": 60,
                             "set": 50,
                             "typ": "off"
                         }
@@ -541,7 +541,7 @@ export const Data = {
                     ],
                     "pitmaster": [
                         {
-                            "value": 0,
+                            "value": 40,
                             "set": 50,
                             "typ": "off"
                         }

@@ -50,6 +50,7 @@
           <Home v-if="settingsReady && page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" :settings="settings"/>
           <Wlan v-else-if="page === 'wlan'" />
           <System v-else-if="page === 'system'" />
+          <History v-else-if="page === 'history'" :settings="settings" :channels="channels"/>
           <PushNotification v-else-if="page === 'notification'" />
           <Bluetooth v-else-if="page === 'bluetooth'" />
           <Pitmaster v-else-if="page === 'pitmaster'" />
@@ -90,6 +91,7 @@ import Home from './components/Home.vue'
 import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
 import System from './components/System.vue'
+import History from './components/History.vue'
 import Bluetooth from './components/Bluetooth.vue'
 import Pitmaster from './components/Pitmaster'
 import About from './components/About'
@@ -128,6 +130,7 @@ export default {
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
         { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
         { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
+        { icon: 'stats-dots1', translationKey: 'menuHistory', id: 'history' },
         { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
         { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
         { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
@@ -161,7 +164,7 @@ export default {
     };
   },
   components: {
-    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About
+    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About, History
   },
   methods: {
     initGetDataPeriodically: function() {

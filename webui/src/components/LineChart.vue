@@ -1,7 +1,6 @@
 <template>
   <div class="pure-g">
     <div class="pure-u-1">
-      <button @click="requestDataAndUpdateChart"> Update (dev only) </button>
       <div class="chart-container">
         <canvas :id="id"></canvas>
       </div>
