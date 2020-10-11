@@ -171,6 +171,7 @@
                 <select v-model="editingProfile.link">
                   <option value="0">{{$t("pitlinkdegressiv")}}</option>
                   <option value="1">{{$t("pitlinklinear")}}</option>
+                  <option value="2">{{$t("pitlinklowpass")}}</option>
                 </select>
                 <label class="control-label" for="select">{{$t("pitlink")}}</label>
                 <i class="bar"></i>
