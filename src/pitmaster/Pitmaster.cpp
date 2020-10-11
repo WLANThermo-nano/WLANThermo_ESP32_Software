@@ -48,7 +48,21 @@
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
 #define MEDIAN_SIZE 10u
-#define DCOUNT  15u
+#define PM_DEFAULT_DCOUNT 15u
+#define PM_DEFAULT_DCOUNT_MIN 1u
+#define PM_DEFAULT_DCOUNT_MAX 60u
+
+// duty cycle calculation
+// frequency: 50Hz --> 20ms
+// timer resolution: 16 bit --> 65535
+// resolution: 20.000us / 65535 --> 0,305us
+// e.g. servo min duty cyle:  550us / 0,305...us --> 1802
+// e.g. servo min duty cyle: 2250us / 0,305...us --> 7373
+#define PM_SERVO_DUTY_CYCLE_DIVISOR 0.30518f
+#define PM_DEFAULT_SERVO_MIN_DUTY_CYCLE 550u    //in uS
+#define PM_DEFAULT_SERVO_MAX_DUTY_CYCLE 2250u   //in uS
+#define PM_CONFIG_SERVO_MIN_DUTY_CYCLE 400u     //in uS
+#define PM_CONFIG_SERVO_MAX_DUTY_CYCLE 2600     //in uS
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -75,9 +89,13 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
     this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
-    this->ecount = DCOUNT;
+    this->ecount = PM_DEFAULT_DCOUNT;
+    this->dCount = PM_DEFAULT_DCOUNT;
     this->edif = 0;
     this->jump = 0;
+
+    this->servoDcMin = PM_DEFAULT_SERVO_MIN_DUTY_CYCLE;
+    this->servoDcMax = PM_DEFAULT_SERVO_MAX_DUTY_CYCLE;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -150,6 +168,46 @@ void Pitmaster::setTargetTemperature(float temperature)
 float Pitmaster::getTargetTemperature()
 {
     return this->targetTemperature;
+}
+
+void Pitmaster::setServoMinDutyCyle(uint16_t dutyCycle)
+{
+    // duty cycle is inside limit?
+    if((dutyCycle >= PM_CONFIG_SERVO_MIN_DUTY_CYCLE) && (dutyCycle <= PM_CONFIG_SERVO_MAX_DUTY_CYCLE))
+    {
+        this->servoDcMin = dutyCycle;
+    }
+    else
+    {
+        Log.error("Pitmaster::setServoMinDutyCyle: dutyCycle = %d out of range!" CR, dutyCycle);
+    }
+}
+
+void Pitmaster::setServoMaxDutyCyle(uint16_t dutyCycle)
+{
+    // duty cycle is inside limit?
+    if((dutyCycle >= PM_CONFIG_SERVO_MIN_DUTY_CYCLE) && (dutyCycle <= PM_CONFIG_SERVO_MAX_DUTY_CYCLE))
+    {
+        this->servoDcMax = dutyCycle;
+    }
+    else
+    {
+        Log.error("Pitmaster::setServoMaxDutyCyle: dutyCycle = %d out of range!" CR, dutyCycle);
+    }
+}
+
+void Pitmaster::setDCount(uint8_t dCount)
+{
+    // dCount is inside limit?
+    if((dCount >= PM_DEFAULT_DCOUNT_MIN) && (dCount <= PM_DEFAULT_DCOUNT_MAX))
+    {
+        this->dCount = dCount;
+        this->ecount = dCount;
+    }
+    else
+    {
+        Log.error("Pitmaster::setDCount: dCount = %d out of range!" CR, dCount);
+    }
 }
 
 void Pitmaster::registerCallback(PitmasterCallback_t callback, void *userData)
@@ -609,15 +667,24 @@ void Pitmaster::controlActuators()
     case DAMPER:
         this->enableStepUp(true);
         this->controlFan(this->value, this->profile->dcmin, this->profile->dcmax);
-        if (0 == this->profile->link)
+        switch(this->profile->link)
         {
-            // degressiv link
-            linkedvalue = (this->value > 0) ? 100 : 0;
+            case 0: // degressiv link
+                linkedvalue = (this->value > 0) ? 100 : 0;
+                break;
+            case 1: // linear link
+                linkedvalue = (ceil(this->value * 0.1)) * 10.0;
+                break;
+            case 2: // lowpass link
+                linkedvalue = constrain(((ceil(this->value * 5 * 0.03))*34.0), 0 ,100);
+                break;
+            default:
+                break;
         }
-        else // linear link
-        {
-            linkedvalue = (ceil(this->value * 0.1)) * 10.0;
-        }
+
+        //Log.notice("OUTOUT_VALUE: %F" CR, (float)(this->value));
+        //Log.notice("DAMPER_VALUE: %F" CR, (float)(linkedvalue));
+
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
 
         break;
@@ -716,14 +783,11 @@ void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
     uint16_t spmin = newSPMin * 10u; // 1. Nachkommastelle
     uint16_t spmax = newSPMax * 10u; // 1. Nachkommastelle
 
-    // duty cycle calculation
-    // frequency: 50Hz --> 20ms
-    // timer resolution: 16 bit --> 65535
-    // resolution: 20.000us / 65535 --> 0,305us
-    // servo min duty cyle:  550us / 0,305...us --> 1802
-    // servo min duty cyle: 2250us / 0,305...us --> 7373
-    const uint16_t servoPulseMin = 1802u;
-    const uint16_t servoPulseMax = 7373u;
+    uint16_t servoPulseMin = (uint16_t)(this->servoDcMin / PM_SERVO_DUTY_CYCLE_DIVISOR);
+    uint16_t servoPulseMax = (uint16_t)(this->servoDcMax / PM_SERVO_DUTY_CYCLE_DIVISOR);
+
+    //Serial.printf("Pitmaster::controlServo: servoPulseMin = %d\n", servoPulseMin);
+    //Serial.printf("Pitmaster::controlServo: servoPulseMax = %d\n", servoPulseMax);
 
     spmin = map(spmin, 0, 1000, servoPulseMin, servoPulseMax);
     spmax = map(spmax, 0, 1000, servoPulseMin, servoPulseMax);
@@ -849,9 +913,9 @@ float Pitmaster::pidCalc()
     this->profile->jumpth = (w * 0.05);
     if (this->profile->jumpth > (100.0 / kp))
         this->profile->jumpth = 100.0 / kp;
-    if (diff > this->profile->jumpth)
+    if (e > this->profile->jumpth)
         this->jump = true; 
-    else if (diff <= 0) // Memory bis Soll erreicht
+    else if (e <= 0) // Memory bis Soll erreicht
         this->jump = false;
 
     // Proportional-Anteil
@@ -859,11 +923,11 @@ float Pitmaster::pidCalc()
 
     // Differential-Anteil (Intervall-Berechnung)
     this->ecount++;
-    if (this->ecount >= DCOUNT) {
+    if (this->ecount >= this->dCount) {
         this->edif = (e - this->elast) / (this->pause / 1000.0);
-        this->edif = this->edif / (float) DCOUNT;
+        this->edif = this->edif / (float) this->dCount;
         this->elast = e;
-        this->ecount = 0;
+        this->ecount = 0u;
     }
 
     float d_out = kd * edif;

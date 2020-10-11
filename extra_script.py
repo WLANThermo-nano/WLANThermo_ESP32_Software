@@ -13,13 +13,9 @@ import pip
 
 
 # path configuration
-web_ui_source_path = "./webui/"
+web_ui_source_path = "./webui/old/"
 web_ui_target_path = "./src/webui/"
-web_ui_source_files = ["index.html", "fwupdate.html", "displayupdate.html", "recoverymode.html", "restart.html"]
-
-nextion_source_path = "./nextion/"
-nextion_target_path = "./src/"
-nextion_file = "miniV2.tft"
+web_ui_source_files = ["recoverymode.html", "restart.html"]
 
 def install_package(package):
     subprocess.call(["pip", "install", "--upgrade", package])
@@ -28,41 +24,13 @@ install_package("beautifulsoup4")
 install_package("html5lib")
 
 from prepare_webui import WebUiPacker
-import zlib
-
-
-def compress_nextion_file():
-    print("---- Convert nextion to include file ----")
-    if not os.path.exists('./data/'):
-        os.makedirs('./data/')
-    nextion_file_header_array = nextion_file + ".zlib"
-    nextion_file_uncompressed_size = os.path.getsize(nextion_source_path + nextion_file)
-    with open(nextion_source_path + nextion_file, "rb") as f:
-            nextion_file_zlib = zlib.compress(f.read())
-    with open("./data/" + "nextion.tft.zlib", 'wb') as f:
-            f.write(nextion_file_zlib)
-
 
 def convert_web_ui_to_include_files():
     print("---- Convert Web UI to include files ----")
 
-    # add logo
-    if str(env["PIOENV"]).startswith("nano"):
-        shutil.copyfile(web_ui_source_path + "WLANThermoNano.png", web_ui_source_path + "WLANThermoLogo.png")
-    else:
-        shutil.copyfile(web_ui_source_path + "WLANThermoMini.png", web_ui_source_path + "WLANThermoLogo.png")
-
     # compress html files and create a uint8_t array
     for web_ui_file in web_ui_source_files:
-        #web_ui_file_inlined = web_ui_file + "_inlined.html"
         web_ui_file_header_array = web_ui_file + ".gz"
-        #html_file = HTML()
-        #html_file.read_file(web_ui_source_path + web_ui_file)
-        #html_file.inline_css()
-        #html_file.inline_js()
-        #html_file.remove_comments("", "<!--", "-->")
-        #html_file.images_to_base64()
-        #html_file.write_file(web_ui_file_inlined)
 
         # Set all entries in minify to "None" to avoid web access
         webPackerOptions = {
@@ -84,8 +52,4 @@ def convert_web_ui_to_include_files():
         with open(web_ui_target_path + web_ui_file + ".gz.h", 'w') as f:
             f.write(char_array_string)
 
-    #remove logo
-    os.remove(web_ui_source_path + "WLANThermoLogo.png")
-
 convert_web_ui_to_include_files()
-#compress_nextion_file()
