@@ -667,15 +667,24 @@ void Pitmaster::controlActuators()
     case DAMPER:
         this->enableStepUp(true);
         this->controlFan(this->value, this->profile->dcmin, this->profile->dcmax);
-        if (0 == this->profile->link)
+        switch(this->profile->link)
         {
-            // degressiv link
-            linkedvalue = (this->value > 0) ? 100 : 0;
+            case 0: // degressiv link
+                linkedvalue = (this->value > 0) ? 100 : 0;
+                break;
+            case 1: // linear link
+                linkedvalue = (ceil(this->value * 0.1)) * 10.0;
+                break;
+            case 2: // lowpass link
+                linkedvalue = constrain(((ceil(this->value * 5 * 0.03))*34.0), 0 ,100);
+                break;
+            default:
+                break;
         }
-        else // linear link
-        {
-            linkedvalue = (ceil(this->value * 0.1)) * 10.0;
-        }
+
+        //Log.notice("OUTOUT_VALUE: %F" CR, (float)(this->value));
+        //Log.notice("DAMPER_VALUE: %F" CR, (float)(linkedvalue));
+
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
 
         break;
