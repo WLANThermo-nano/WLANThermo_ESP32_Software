@@ -904,9 +904,9 @@ float Pitmaster::pidCalc()
     this->profile->jumpth = (w * 0.05);
     if (this->profile->jumpth > (100.0 / kp))
         this->profile->jumpth = 100.0 / kp;
-    if (diff > this->profile->jumpth)
+    if (e > this->profile->jumpth)
         this->jump = true; 
-    else if (diff <= 0) // Memory bis Soll erreicht
+    else if (e <= 0) // Memory bis Soll erreicht
         this->jump = false;
 
     // Proportional-Anteil
