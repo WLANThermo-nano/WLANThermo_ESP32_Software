@@ -1,4 +1,4 @@
-<template>
+<<template>
  <div class="pure-g">
     <template v-if="!editing">
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
@@ -261,7 +261,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_channel_title'),
         content: this.$t('help_channel'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Kanal-Einstellungen',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Temperaturmessung',
         linkText: this.$t('help_channel_link')
       })
     },
