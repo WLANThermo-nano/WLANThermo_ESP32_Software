@@ -151,5 +151,6 @@ export default {
 	pitLid: "Deckelüberwachung",
 	pitlink: "Aktorverknüfung",
 	pitlinkdegressiv: "degressiv",
-	pitlinklinear: "linear"
+	pitlinklinear: "linear",
+	pitlinklowpass: "lowpass"
 };
