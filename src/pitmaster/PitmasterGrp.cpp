@@ -86,10 +86,9 @@ void PitmasterGrp::loadConfig()
           pm->setDCount(_master[pitsize]["dCount"].as<uint8_t>());
 
         if(_master[pitsize].asObject().containsKey("servoDcMin"))
-          pm->setServoMinDutyCyle(_master[pitsize]["servoDcMin"].as<uint8_t>());
-
+          pm->setServoMinDutyCyle(_master[pitsize]["servoDcMin"].as<uint16_t>());        
         if(_master[pitsize].asObject().containsKey("servoDcMax"))
-          pm->setServoMaxDutyCyle(_master[pitsize]["servoDcMax"].as<uint8_t>());
+          pm->setServoMaxDutyCyle(_master[pitsize]["servoDcMax"].as<uint16_t>());
       }
 
       pitsize++;
