@@ -121,7 +121,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_notification_title'),
         content: this.$t('help_notification'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Push-Notification',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Push-Notification',
         linkText: this.$t('help_notification_link')
       })
     },

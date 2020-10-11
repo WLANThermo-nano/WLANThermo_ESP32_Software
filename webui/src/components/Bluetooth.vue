@@ -149,7 +149,9 @@ export default {
     showHelpText: function () {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_bluetooth_title'),
-        content: this.$t('help_bluetooth')
+        content: this.$t('help_bluetooth'),
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Bluetooth-Schnittstelle',
+        linkText: this.$t('help_bluetooth_link')
       })
     },
     save: function() {

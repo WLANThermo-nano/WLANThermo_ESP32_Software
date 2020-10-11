@@ -183,7 +183,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_iot_title'),
         content: this.$t('help_iot'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Nano-Cloud-Service',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/CloudService',
         linkText: this.$t('help_iot_link')
       })
     },
@@ -191,7 +191,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_mqtt_title'),
         content: this.$t('help_mqtt'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Private-MQTT',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Private-MQTT',
         linkText: this.$t('help_mqtt_link')
       })
     },

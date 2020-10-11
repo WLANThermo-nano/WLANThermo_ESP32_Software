@@ -364,7 +364,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_pitmaster_title'),
         content: this.$t('help_pitmaster'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/Pitmaster',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Pitmaster',
         linkText: this.$t('help_pitmaster_link')
       })
     },

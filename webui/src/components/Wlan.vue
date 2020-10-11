@@ -119,7 +119,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_wlan_title'),
         content: this.$t('help_wlan'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/WLAN',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/WLAN',
         linkText: this.$t('help_wlan_link')
       })
     },

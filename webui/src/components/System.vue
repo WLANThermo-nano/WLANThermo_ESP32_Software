@@ -125,7 +125,7 @@ export default {
       EventBus.$emit('show-help-dialog', {
         title: this.$t('help_system_title'),
         content: this.$t('help_system'),
-        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_nano_Software/wiki/System-Einstellungen',
+        wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/System-Einstellungen',
         linkText: this.$t('help_system_link')
       })
     },

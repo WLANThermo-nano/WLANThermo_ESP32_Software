@@ -16,6 +16,7 @@ export default {
 	help_wlan: "Connect your WLANThermo to your home network and thus expand the functionality of your WLANThermo.",
 	help_bluetooth_title: "Bluetooth settings",
 	help_bluetooth: "Connect your WLANThermo with one or more Bluetooth devices and thus expand the functionality of your WLANThermo.",
+	help_bluetooth_link: "Bluetooth",
 	help_pitmaster_title: "Pitmaster settings",
 	help_pitmaster_link: 'Pitmaster',
 	help_pitmaster: "Do you not only want to monitor your grill temperatures, but also regulate them? Then get the right Pitmaster hardware and get started. Requires Pitmaster hardware.",
