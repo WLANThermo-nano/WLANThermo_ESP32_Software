@@ -49,7 +49,7 @@
         <div class="content-body">
           <Home v-if="page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit"/>
           <Wlan v-else-if="page === 'wlan'" />
-          <System v-else-if="page === 'system'" />
+          <System v-else-if="page === 'system'" :settings="settings"/>
           <PushNotification v-else-if="page === 'notification'" />
           <Bluetooth v-else-if="page === 'bluetooth'" />
           <Pitmaster v-else-if="page === 'pitmaster'" />
@@ -475,6 +475,9 @@ export default {
   }
   .menu-link {
     display: block;
+  }
+  .dialog {
+    width: 95vw;
   }
 }
 

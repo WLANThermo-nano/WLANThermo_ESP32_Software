@@ -1,4 +1,4 @@
-<<template>
+<template>
  <div class="pure-g">
     <template v-if="!editing">
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
