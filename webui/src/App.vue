@@ -476,6 +476,9 @@ export default {
   .menu-link {
     display: block;
   }
+  .dialog {
+    width: 95vw;
+  }
 }
 
 .wifi,
