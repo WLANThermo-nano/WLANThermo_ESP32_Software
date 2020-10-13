@@ -2,7 +2,8 @@ import axios from 'axios'
 import { MockData } from './mock-data'
 
 const EXCEPTION_LIST = [
-  // 'index.php'
+  // 'index.php',
+  // 'data.php'
 ]
 
 const getMockError = config => {
@@ -27,11 +28,11 @@ axios.interceptors.response.use(response => response, error => {
 const getMockResponse = mockError => {
   const {config} = mockError
 
-  if (process.env.VUE_APP_DEBUG_MOCK_API) {
-    if (config.url !== '/data') {
-      console.log(config)
-    }
-  }
+  // if (process.env.VUE_APP_DEBUG_MOCK_API) {
+  //   if (config.url !== '/data') {
+  //     console.log(config)
+  //   }
+  // }
 
   // Handle mocked success
   return Promise.resolve(Object.assign({

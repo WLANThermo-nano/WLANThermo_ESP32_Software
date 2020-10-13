@@ -49,26 +49,23 @@ export default {
     clearInterval(this.intervalHandle)
   },
   methods: {
-    updateChart: function(datasets) {
-      this.chart.data.labels.pop();
-      this.chart.data.datasets = []
-      datasets.forEach(dataset => {
-        this.chart.data.datasets.push(dataset)
+    updateChart: function(newDatasets) {
+      this.chart.data.datasets.forEach((dataset) => {
+        const newData = newDatasets.find(d => d.customData.name === dataset.customData.name)
+        dataset.data = newData.data
       })
-      this.chart.update({
-        duration: 0,
-      })
+      this.chart.update()
     },
     prepareChartDatasets: function(data) {
         const datasetsMap = {};
         data.cloud.data.forEach((d) => {
-          const time = DateHelper.stringTimestampInSecondToDate(d.system.time)
+          const time = DateHelper.toTimestamp(d.system.time)
 
           d.channel.forEach((channelData) => {
             if (!datasetsMap[channelData.number]) {
               const channel = this.channels.find((c) => c.number === channelData.number)
               datasetsMap[channelData.number] = {
-                yAxisID: 'A',
+                yAxisID: 'y_temperature',
                 label: `#${channelData.number}`,
                 borderColor: channel.color,
                 backgroundColor: channel.color,
@@ -92,7 +89,7 @@ export default {
               if (!datasetsMap[`pm_set_${index}`]) {
                 // init pm set
                 datasetsMap[`pm_set_${index}`] = {
-                  yAxisID: 'A',
+                  yAxisID: 'y_temperature',
                   radius: 0,
                   lineTension: 0,
                   borderColor: '#FF0000',
@@ -107,7 +104,7 @@ export default {
                 }
                 // init pm value
                 datasetsMap[`pm_val_${index}`] = {
-                  yAxisID: 'B',
+                  yAxisID: 'y_percent',
                   radius: 0,
                   lineTension: 0,
                   borderColor: '#000000',
@@ -136,7 +133,7 @@ export default {
 
         if (data.cloud.data.some(d => d.system.soc)) {
           datasetsMap[`battery`] = {
-            yAxisID: 'B',
+            yAxisID: 'y_percent',
             label: this.$t('battery'), 
             radius: 0,
             lineTension: 0,
@@ -151,7 +148,7 @@ export default {
             },
             data: data.cloud.data.filter(d => d.system.soc).map(d => {
               return {
-                x: DateHelper.stringTimestampInSecondToDate(d.system.time),
+                x: DateHelper.toTimestamp(d.system.time),
                 y: d.system.soc
               }
             })
@@ -194,20 +191,8 @@ export default {
     initChart: function (datasets) {
         let ctx = document.getElementById(this.id).getContext("2d");
         /*eslint-disable */
-        // Chart.defaults.global.defaultFontColor = "#fff";
-        // eslint-disable-next-line
-        // Chart.defaults.global.defaultFontSize = 15;
-        Chart.defaults.global.animationSteps = 50;
-        Chart.defaults.global.tooltipYPadding = 16;
-        Chart.defaults.global.tooltipCornerRadius = 0;
-        Chart.defaults.global.defaultFontColor= 'white';
-        Chart.defaults.global.tooltipTitleFontStyle = "normal";
-        Chart.defaults.global.tooltips.mode = "index";
-        Chart.defaults.global.tooltips.intersect = false;
-        Chart.defaults.global.legend.labels.boxWidth = 15;
-        Chart.defaults.global.animationEasing = "easeOutBounce";
-        Chart.defaults.global.responsive = true;
-        Chart.defaults.global.scaleFontSize = 16;
+        Chart.defaults.elements.point.hitRadius = 100
+        Chart.defaults.font.color= '#fff';
         /*eslint-enable */
         // eslint-disable-next-line
         this.chart = new Chart(ctx, {
@@ -216,6 +201,12 @@ export default {
             datasets: datasets,
           },
           options: {
+            animation: true,
+            elements: {
+              line: {
+                tension: 0 // disables bezier curves
+              }
+            },
             aspectRatio: 2.5,
             legend: {
               labels: {
@@ -223,8 +214,7 @@ export default {
               },
             },
             scales: {
-              xAxes: [
-                {
+              x: {
                   type: "time",
                   ticks: {
                     autoSkip: true,
@@ -232,43 +222,37 @@ export default {
                     maxRotation: 0,
                     minRotation: 0,
                   },
-                },
-              ],
-
-              yAxes: [
-                {
-                  id: "A",
-                  position: "right",
-                  ticks: {
-                    // eslint-disable-next-line
-                    userCallback: (label, index, labels) => {
-                      return `${label.toFixed(1)}° ${this.settings.system.unit}`
-                    },
+              },
+              y_temperature: {
+                position: "right",
+                ticks: {
+                  // eslint-disable-next-line
+                  callback: (label, index, labels) => {
+                    return `${label.toFixed(1)}° ${this.settings.system.unit}`
                   },
                 },
-                {
-                  id: "B",
-                  position: "left",
-                  ticks: {
-                    min: 0,
-                    max: 100,
-                    // eslint-disable-next-line
-                    userCallback: (label, index, labels) => {
-                      return label + "%"
-                    },
+              },
+              y_percent: {
+                position: "left",
+                min: 0,
+                max: 100,
+                ticks: {
+                  // eslint-disable-next-line
+                  callback: (label, index, labels) => {
+                    return label + "%"
                   },
                 },
-              ],
+              },
             },
             tooltips: {
-              mode: 'index',
               enabled: true,
+              mode: 'index',
               filter: (tooltipItem) => {
                 return this.types[tooltipItem.datasetIndex] !== 'pitmaster'
               },
               callbacks: {
-                label: (tooltipItems, data) => {
-                  return `${tooltipItems.yLabel} ${this.units[tooltipItems.datasetIndex]} - ${data.datasets[tooltipItems.datasetIndex].label} ${this.labelNames[tooltipItems.datasetIndex]}`;
+                label: (tooltipItems) => {
+                  return `${tooltipItems.dataPoint.y} ${this.units[tooltipItems.datasetIndex]} - ${tooltipItems.dataset.label} ${this.labelNames[tooltipItems.datasetIndex]}`;
                 },
               },
             },

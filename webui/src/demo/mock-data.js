@@ -1,11 +1,12 @@
 import { Data } from './mocks/data'
+import {ChartData} from './mocks/chartData'
 
 const mock = {
     '/settings': Data.settings,
     '/data': Data.data,
     '/networklist': Data.networklist,
     '/bluetooth': Data.bluetooth,
-    'https://dev-api.wlanthermo.de/index.php': Data.chartData
+    'https://dev-api.wlanthermo.de/index.php': ChartData
 }
 
 export class MockData {
