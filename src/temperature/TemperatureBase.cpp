@@ -87,7 +87,7 @@ void TemperatureBase::loadDefaultValues(uint8_t index)
   settingsChanged = true;
 }
 
-void TemperatureBase::loadConfig()
+void TemperatureBase::loadConfig(TemperatureUnit unit)
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = Settings::read(kChannels, &jsonBuffer);
@@ -107,6 +107,7 @@ void TemperatureBase::loadConfig()
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
           this->color = json["tcolor"][i].asString();
+          this->currentUnit = unit;
         }
       }
     }
@@ -122,7 +123,7 @@ boolean TemperatureBase::checkNewValue()
   if ((cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
   {
     cbAlarmStatus = newAlarmStatus;
-    cbCurrentValue = getValue();
+    cbCurrentValue = currentValue;
     newValue = true;
   }
 
@@ -154,12 +155,12 @@ int8_t TemperatureBase::getGradient()
 
 float TemperatureBase::getMinValue()
 {
-  return getUnitValue(this->minValue);
+  return this->minValue;
 }
 
 float TemperatureBase::getMaxValue()
 {
-  return getUnitValue(this->maxValue);
+  return this->maxValue;
 }
 
 String TemperatureBase::getName()
@@ -220,7 +221,7 @@ void TemperatureBase::setMinValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
   {
-    this->minValue = setUnitValue(value);
+    this->minValue = value;
     settingsChanged = true;
   }
 }
@@ -229,7 +230,7 @@ void TemperatureBase::setMaxValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
   {
-    this->maxValue = setUnitValue(value);
+    this->maxValue = value;
     settingsChanged = true;
   }
 }
@@ -260,8 +261,25 @@ void TemperatureBase::setAlarmSetting(AlarmSetting alarmSetting)
 
 void TemperatureBase::setUnit(TemperatureUnit unit)
 {
-  this->currentUnit = unit;
-  settingsChanged = true;
+  if (unit != this->currentUnit)
+  {
+    /* Convert min and max values */
+    switch (unit)
+    {
+    case Celsius:
+      this->minValue = (this->minValue - 32) * (5.0 / 9);
+      this->maxValue = (this->maxValue - 32) * (5.0 / 9);
+      break;
+    case Fahrenheit:
+      this->minValue = ((this->minValue * (1.8)) + 32);
+      this->maxValue = ((this->maxValue * (1.8)) + 32);
+      break;
+    default:
+      break;
+    }
+    this->currentUnit = unit;
+    settingsChanged = true;
+  }
 }
 
 uint8_t TemperatureBase::getNotificationCounter()
@@ -286,9 +304,9 @@ AlarmStatus TemperatureBase::getAlarmStatus()
 
   if (INACTIVEVALUE == this->currentValue)
     status = NoAlarm;
-  else if (this->currentValue <= this->minValue)
+  else if (this->getUnitValue(this->currentValue) <= this->minValue)
     status = MinAlarm;
-  else if (this->currentValue >= this->maxValue)
+  else if (this->getUnitValue(this->currentValue) >= this->maxValue)
     status = MaxAlarm;
 
   if (NoAlarm == status)
@@ -314,19 +332,19 @@ void TemperatureBase::refresh()
   this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
 
-   
-  if (INACTIVEVALUE == currentVal) 
+  if (INACTIVEVALUE == currentVal)
   {
     this->currentValue = INACTIVEVALUE;
   }
   // gradient sign filter
-  else if (preGradientSign == gradientSign) 
+  else if (preGradientSign == gradientSign)
   {
     if (this->type == SensorType::TypeK && INACTIVEVALUE != preValue)
     {
-      this->currentValue = ((currentVal*2.0) + preValue)/3.0;
+      this->currentValue = ((currentVal * 2.0) + preValue) / 3.0;
     }
-    else {
+    else
+    {
       this->currentValue = currentVal;
     }
   }
@@ -334,7 +352,6 @@ void TemperatureBase::refresh()
   {
     this->currentValue = this->preValue;
   }
-  
 }
 
 void TemperatureBase::update()
@@ -353,18 +370,6 @@ float TemperatureBase::getUnitValue(float value)
   if (this->currentUnit == Fahrenheit)
   {
     convertedValue = ((value * (1.8)) + 32);
-  }
-
-  return convertedValue;
-}
-
-float TemperatureBase::setUnitValue(float value)
-{
-  float convertedValue = value;
-
-  if (this->currentUnit == Fahrenheit)
-  {
-    convertedValue = (value - 32) * (5.0 / 9);
   }
 
   return convertedValue;
