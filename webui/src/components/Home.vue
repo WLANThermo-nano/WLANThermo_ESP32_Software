@@ -50,7 +50,7 @@
           </div>
         </div>
       </div>
-      <LineChart :settings="settings" :channels="channels"/>
+      <LineChart :settings="settings" :channels="channels" v-if="canUseChart"/>
     </template>
     <template v-else>
       <div class="pure-u-1-1 app-bar-wrapper">
@@ -141,6 +141,9 @@ export default {
     },
     pitmasterpm: {
       type: Array
+    },
+    canUseChart: {
+      type: Boolean
     },
     settings: {
       type: Object

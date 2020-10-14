@@ -47,7 +47,12 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <Home v-if="settingsReady && page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" :settings="settings"/>
+          <Home v-if="settingsReady && page === 'home'" 
+            :channels="channels"
+            :pitmasterpm="pitmaster.pm"
+            :unit="system.unit"
+            :canUseChart="canUseChart"
+            :settings="settings"/>
           <Wlan v-else-if="page === 'wlan'" />
           <System v-else-if="page === 'system'" />
           <History v-else-if="page === 'history'" :settings="settings" :channels="channels"/>
@@ -123,6 +128,7 @@ export default {
       linkText: '',
 
       settingsReady: false,
+      canUseChart: false,
 
       // menu
       menuItems: [
@@ -277,6 +283,9 @@ export default {
     }
   },
   mounted: function() {
+    // eslint-disable-next-line
+    this.canUseChart = typeof Chart === "function"
+
     this.getSettings()
     this.initGetDataPeriodically()
     EventBus.$on('show-help-dialog', (dialogData) => {

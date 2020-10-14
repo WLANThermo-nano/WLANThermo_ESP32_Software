@@ -3,6 +3,7 @@ const CompressionPlugin = require('compression-webpack-plugin');
 
 
 module.exports = {
+    lintOnSave: false,
     outputDir: `dist/${process.env.VUE_APP_PRODUCT_NAME}`,
     chainWebpack: config => {
         const svgRule = config.module.rule('svg')

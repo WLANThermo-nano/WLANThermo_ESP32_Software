@@ -33,17 +33,15 @@ export default {
     };
   },
   created: function () {
-    // eslint-disable-next-line
-    this.canUseChart = typeof Chart === "function"
     this.id = `chart_${Math.random()}`
   },
   mounted: function () {
-    if (this.canUseChart) {
+    setTimeout(() => {
       this.requestDataAndUpdateChart()
       this.intervalHandle = setInterval(() => {
         this.requestDataAndUpdateChart()
       }, this.settings.iot.CLint * 1000)
-    }
+    }, 50)
   },
   destroyed: function() {
     clearInterval(this.intervalHandle)
@@ -85,13 +83,12 @@ export default {
           });
 
           d.pitmaster.forEach((pitmasterData, index) => {
-            if ( pitmasterData.type !== 'off' ) {
+            if ( pitmasterData.typ !== 'off' ) {
               if (!datasetsMap[`pm_set_${index}`]) {
                 // init pm set
                 datasetsMap[`pm_set_${index}`] = {
                   yAxisID: 'y_temperature',
                   radius: 0,
-                  lineTension: 0,
                   borderColor: '#FF0000',
                   borderDash: [10,5],
                   label: `pm set #${index + 1}`,
@@ -106,7 +103,6 @@ export default {
                 datasetsMap[`pm_val_${index}`] = {
                   yAxisID: 'y_percent',
                   radius: 0,
-                  lineTension: 0,
                   borderColor: '#000000',
                   borderWidth: 1,
                   label: `pm val #${index + 1}`,
@@ -136,7 +132,6 @@ export default {
             yAxisID: 'y_percent',
             label: this.$t('battery'), 
             radius: 0,
-            lineTension: 0,
             borderColor: '#fff',
             backgroundColor: '#fff',
             fill: false,
@@ -191,7 +186,7 @@ export default {
     initChart: function (datasets) {
         let ctx = document.getElementById(this.id).getContext("2d");
         /*eslint-disable */
-        Chart.defaults.elements.point.hitRadius = 100
+        Chart.defaults.elements.point.hitRadius = 10
         Chart.defaults.font.color= '#fff';
         /*eslint-enable */
         // eslint-disable-next-line
@@ -201,10 +196,37 @@ export default {
             datasets: datasets,
           },
           options: {
-            animation: true,
+            animation: false,
+            parsing: false,
+            hover: {
+              mode: 'index',
+              intersect: false
+            },
+            tooltips: {
+              mode: 'index',
+              intersect: false,
+              filter: (tooltipItem) => {
+                return this.types[tooltipItem.datasetIndex] !== 'pitmaster'
+              },
+              callbacks: {
+                label: (tooltipItems) => {
+                  return `${tooltipItems.dataPoint.y} ${this.units[tooltipItems.datasetIndex]} - ${tooltipItems.dataset.label} ${this.labelNames[tooltipItems.datasetIndex]}`;
+                },
+              },
+            },
+            point: {
+                radius: 0 // default to disabled in all datasets
+            },
+            animation: false,
+            normalized: true,
+            parsing: false,
+            spanGaps: true,
             elements: {
               line: {
-                tension: 0 // disables bezier curves
+                tension: 0, // disables bezier curves
+                fill: false,
+                stepped: false,
+                borderDash: []
               }
             },
             aspectRatio: 2.5,
@@ -243,19 +265,7 @@ export default {
                   },
                 },
               },
-            },
-            tooltips: {
-              enabled: true,
-              mode: 'index',
-              filter: (tooltipItem) => {
-                return this.types[tooltipItem.datasetIndex] !== 'pitmaster'
-              },
-              callbacks: {
-                label: (tooltipItems) => {
-                  return `${tooltipItems.dataPoint.y} ${this.units[tooltipItems.datasetIndex]} - ${tooltipItems.dataset.label} ${this.labelNames[tooltipItems.datasetIndex]}`;
-                },
-              },
-            },
+            }
           },
         });
     },
