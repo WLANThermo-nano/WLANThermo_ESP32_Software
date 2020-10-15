@@ -227,6 +227,9 @@ export default {
                 fill: false,
                 stepped: false,
                 borderDash: []
+              },
+              point: {
+                radius: 0 // default to disabled in all datasets
               }
             },
             aspectRatio: 2.5,
