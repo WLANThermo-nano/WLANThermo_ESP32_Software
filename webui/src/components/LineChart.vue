@@ -29,7 +29,9 @@ export default {
       labelNames: [],
       units: [],
       types: [],
-      intervalHandle: null
+      intervalHandle: null,
+      immutableChartDatasetMap: {},
+      latestTimestamp: null
     };
   },
   created: function () {
@@ -55,7 +57,10 @@ export default {
       this.chart.update()
     },
     prepareChartDatasets: function(data) {
-        const datasetsMap = {};
+        const datasetsMap = this.immutableChartDatasetMap;
+        if (data.cloud.data.length > 0) {
+          this.latestTimestamp = data.cloud.data[data.cloud.data.length - 1].system.time
+        }
         data.cloud.data.forEach((d) => {
           const time = DateHelper.toTimestamp(d.system.time)
 
@@ -150,7 +155,8 @@ export default {
           }
         }
 
-        const datasets = Object.keys(datasetsMap).map((k) => datasetsMap[k]);
+        this.immutableChartDatasetMap = Object.freeze(datasetsMap)
+        const datasets = Object.keys(datasetsMap).map((k) => datasetsMap[k])
         this.labelNames = datasets.map(d => d.customData.name)
         this.units = datasets.map(d => d.customData.unit)
         this.types = datasets.map(d => d.customData.type)
@@ -165,6 +171,9 @@ export default {
           api_token: this.settings.iot.CLtoken,
         },
       };
+      if (this.latestTimestamp) {
+        requestObj.cloud.from = this.latestTimestamp
+      }
       var config = {
         method: "post",
         url: this.settings.iot.CLurl, // https://dev-api.wlanthermo.de/index.php
