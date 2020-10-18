@@ -213,8 +213,8 @@ export default {
   },
   methods: {
     transformChannels: function() {
-      this.transformedChannels = this.channels.map((c, i) => {
-        c.pm = this.pitmasterpm[i]
+      this.transformedChannels = this.channels.map((c) => {
+        c.pm = this.pitmasterpm.find(pm => pm.channel === c.number)
         return c
       });
       if (this.channels.some(c => c.temp != '999')) {
