@@ -168,6 +168,9 @@ void WServer::init()
     request->send(404);
   });
 
+  /* Add default headers */
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    
   webServer->begin();
   IPRINTPLN("HTTP server started");
 }
