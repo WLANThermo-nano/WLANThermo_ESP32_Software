@@ -25,6 +25,8 @@
 #include <lvgl.h>
 #include <Ticker.h>
 #include <TFT_eSPI.h>
+#include "Wire.h"
+#include <PCA9533.h>
 
 #define DISPLAY_TFT_TEMPERATURES_PER_PAGE 6u
 
@@ -91,4 +93,6 @@ private:
   static boolean wifiScanInProgress;
   static int8_t wifiIndex;
   static uint8_t tempPageIndex;
+
+  PCA9533 pca9533;
 };

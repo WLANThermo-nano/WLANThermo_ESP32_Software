@@ -68,6 +68,17 @@ boolean DisplayTft::initDisplay()
     return true;
   }
 
+  // configure dimming IC
+  pca9533.init();
+  Serial.println("Setup LED Controller:");
+  Serial.println(pca9533.ping());
+  pca9533.setPSC(REG_PSC0, 0);
+  pca9533.setPSC(REG_PSC1, 29);
+  pca9533.setMODE(IO0, LED_MODE_ON);
+  pca9533.setMODE(IO1, LED_MODE_ON);
+  pca9533.setMODE(IO2, LED_MODE_ON);
+  pca9533.setMODE(IO3, LED_MODE_ON);
+
   // configure PIN mode
   pinMode(TFT_CS, OUTPUT);
   pinMode(TOUCH_CS, OUTPUT);
