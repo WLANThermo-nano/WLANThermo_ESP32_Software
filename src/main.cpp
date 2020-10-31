@@ -50,6 +50,7 @@ void setup()
   Log.notice("Start logging" CR);
 
   gSystem->hwInit();
+  gDisplay->hwInit();
   gDisplay->loadConfig();
   gDisplay->init();
   gSystem->loadConfig();

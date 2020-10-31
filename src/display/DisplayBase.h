@@ -34,14 +34,15 @@ public:
   DisplayBase();
   DisplayBase(SystemBase *system);
   virtual void init();
+  virtual void hwInit(){};
   virtual void update();
   void saveConfig();
   void loadConfig();
   void disable(boolean disabled);
   void toggleOrientation();
-  uint16_t getOrientation(){ return (int16_t)this->orientation; };
+  uint16_t getOrientation() { return (int16_t)this->orientation; };
   void block(boolean block);
-  virtual String getUpdateName(){return this->modelName;};
+  virtual String getUpdateName() { return this->modelName; };
   virtual void calibrate();
   static String debugString;
 

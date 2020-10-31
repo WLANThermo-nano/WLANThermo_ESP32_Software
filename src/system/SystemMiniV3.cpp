@@ -69,6 +69,12 @@ void SystemMiniV3::hwInit()
 
   pinMode(PITMASTERSUPPLY, OUTPUT);
   digitalWrite(PITMASTERSUPPLY, 0u);
+
+    // initialize SPI interface
+  SPI.begin();
+
+  // initialize I2C interface
+  Wire.begin();
 }
 
 void SystemMiniV3::init()
@@ -84,12 +90,6 @@ void SystemMiniV3::init()
   // set initial PIN state
   digitalWrite(CS_MCP3208, HIGH);
   digitalWrite(CS_MAX31855_N1, HIGH);
-
-  // initialize SPI interface
-  SPI.begin();
-
-  // initialize I2C interface
-  Wire.begin();
 
   // initialize temperatures
   temperatures.add(new TemperatureMcp3208(0u, CS_MCP3208));

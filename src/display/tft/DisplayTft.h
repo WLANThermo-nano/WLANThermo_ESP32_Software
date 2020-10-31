@@ -60,6 +60,7 @@ class DisplayTft : public DisplayBase
 public:
   DisplayTft();
   void init();
+  void hwInit();
   void update();
   void calibrate();
 
