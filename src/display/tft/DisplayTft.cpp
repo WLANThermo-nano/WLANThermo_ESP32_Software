@@ -30,6 +30,8 @@ LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
 LV_FONT_DECLARE(Font_Nano_h24);
 
+extern const uint16_t DisplayTftStartScreenImg[25400];
+
 static const char *wifiSymbolText[4] = {"I", "H", "G", ""};
 
 uint32_t DisplayTft::updateTemperature = 0u;
@@ -52,7 +54,9 @@ void DisplayTft::hwInit()
 {
   tft.init();
   tft.setRotation(1);
-  tft.fillScreen(TFT_GREEN);
+  tft.setSwapBytes(true);
+  tft.fillScreen(0x31a6);
+  tft.pushImage(33, 70, 254, 100, DisplayTftStartScreenImg);
 
   // configure dimming IC
   pca9533.init();
