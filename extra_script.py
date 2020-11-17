@@ -23,8 +23,6 @@ def install_package(package):
 install_package("html_utils_becothal")	
 from html_utils import HTML
 
-from prepare_webui import WebUiPacker
-
 def convert_web_ui_to_include_files():
     print("---- Convert Web UI to include files ----")
 
