@@ -35,7 +35,7 @@
       <div class="pure-menu">
         <ul class="pure-menu-list">
           <li class="pure-menu-item" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
-            <a @click="toPage(item.id)" href="#" class="pure-menu-link">
+            <a @click="toPage(item.id)" class="pure-menu-link cursor-pointer">
               <span class="menu-icon" :class="'icon-' + item.icon"></span>
               {{ $t(item.translationKey) }}
             </a>
@@ -47,14 +47,7 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <Home v-if="page === 'home'" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit"/>
-          <Wlan v-else-if="page === 'wlan'" />
-          <System v-else-if="page === 'system'" :settings="settings"/>
-          <PushNotification v-else-if="page === 'notification'" />
-          <Bluetooth v-else-if="page === 'bluetooth'" />
-          <Pitmaster v-else-if="page === 'pitmaster'" />
-          <IoT v-else-if="page === 'iot'" />
-          <About v-else-if="page === 'about'" />
+          <router-view :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" />
         </div>
       </div>
     </div>
@@ -86,15 +79,7 @@
 </template>
 
 <script>
-import Home from './components/Home.vue'
-import Wlan from './components/Wlan.vue'
 import Icon from './components/Icon.vue'
-import System from './components/System.vue'
-import Bluetooth from './components/Bluetooth.vue'
-import Pitmaster from './components/Pitmaster'
-import About from './components/About'
-import IoT from './components/IoT'
-import PushNotification from './components/PushNotification'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
@@ -122,7 +107,7 @@ export default {
 
       // menu
       menuItems: [
-        { icon: 'home', translationKey: 'menuHome', id: 'home' },
+        { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
         { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
         { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
@@ -159,7 +144,7 @@ export default {
     };
   },
   components: {
-    Home, Wlan, Icon, System, PushNotification, Bluetooth, Pitmaster, IoT, About
+    Icon
   },
   methods: {
     initGetDataPeriodically: function() {
@@ -169,6 +154,7 @@ export default {
       }, 2000)
     },
     toPage: function(pageName) {
+      this.$router.push({ path: pageName })
       this.page = pageName
       this.navActive = false
     },
@@ -475,9 +461,6 @@ export default {
   }
   .menu-link {
     display: block;
-  }
-  .dialog {
-    width: 95vw;
   }
 }
 
