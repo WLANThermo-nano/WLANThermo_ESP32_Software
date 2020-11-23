@@ -71,6 +71,7 @@ public:
   String getColor();
   uint8_t getLocalIndex() { return localIndex; };
   AlarmSetting getAlarmSetting();
+  String getUnitString() { return this->currentUnitString; };
   uint8_t getType();
   static uint8_t getTypeCount();
   String getTypeName();
@@ -115,6 +116,7 @@ protected:
   TemperatureCalculation_t calcTemperature;
   boolean fixedSensor;
   boolean connected;
+  String currentUnitString;
 
 private:
   TemperatureUnit currentUnit;

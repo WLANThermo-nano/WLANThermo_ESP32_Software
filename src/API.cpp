@@ -113,6 +113,13 @@ void API::channelAry(JsonArray &jAry, int cc)
       data["color"] = temperature->getColor();
       data["fixed"] = temperature->isFixedSensor();
       data["connected"] = temperature->isConnected();
+
+      String unit = temperature->getUnitString();
+      // optional unit string for sensors other than temperatures
+      if(unit.length() > 0u)
+      {
+        data["unit"] = unit;
+      }
     }
   }
 }

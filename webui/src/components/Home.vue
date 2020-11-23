@@ -27,11 +27,21 @@
             <div class="temperature-range">
               <div class="max">
                 <span class="icon icon-temp_up"></span>
-                <span>{{c.max}}°</span>
+                  <template v-if="c.unit">
+                    <span>{{c.max}}</span>
+                  </template>
+                  <template v-else>
+                    <span>{{c.max}}°</span>
+                  </template>
               </div>
               <div class="min">
                 <span class="icon icon-temp_down"></span>
-                <span>{{c.min}}°</span>
+                  <template v-if="c.unit">
+                    <span>{{c.min}}</span>
+                  </template>
+                  <template v-else>
+                    <span>{{c.min}}°</span>
+                  </template>
               </div>
             </div>
             <div class="temperature">
@@ -43,7 +53,12 @@
                   'too-hot': c.temp > c.max,
                   'too-cold': c.temp < c.min,
                   }">
-                  {{c.temp.toFixed(1)}}°{{unit}}
+                  <template v-if="c.unit">
+                    {{c.temp.toFixed(1)}} {{c.unit}}
+                  </template>
+                  <template v-else>
+                    {{c.temp.toFixed(1)}}°{{unit}}
+                  </template>
                 </span>
               </template>
             </div>

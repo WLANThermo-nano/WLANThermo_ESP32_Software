@@ -28,7 +28,8 @@
 
 #define BLE_ADDRESS_STRING_MAX_SIZE 18u
 #define BLE_NAME_STRING_MAX_SIZE 18u
-#define BLE_TEMPERATURE_MAX_COUNT 8u
+#define BLE_SENSOR_UNIT_MAX_SIZE 4u
+#define BLE_SENSORS_MAX_COUNT 8u
 
 #define BLE_DEVICE_REMOTE_INDEX_INIT 0xFFu
 
@@ -38,7 +39,8 @@ typedef struct BleDevice
 {
     char name[BLE_ADDRESS_STRING_MAX_SIZE];
     char address[BLE_NAME_STRING_MAX_SIZE];
-    float temperatures[BLE_TEMPERATURE_MAX_COUNT];
+    float sensors[BLE_SENSORS_MAX_COUNT];
+    char units[BLE_SENSORS_MAX_COUNT][BLE_SENSOR_UNIT_MAX_SIZE];
     uint8_t count;
     uint8_t selected;
     uint8_t status;
@@ -60,7 +62,8 @@ public:
     boolean getDevice(uint8_t index, BleDevice *device);
     void setDeviceSelected(String peerAddress, uint8_t selected);
     static boolean isDeviceConnected(String peerAddress);
-    static float getTemperatureValue(String peerAddress, uint8_t index);
+    static float getSensorValue(String peerAddress, uint8_t index);
+    static String getSensorUnit(String peerAddress, uint8_t index);
 
 private:
     static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
