@@ -1,0 +1,19 @@
+name: Mobile build
+on:
+  push:
+    branches:    
+      - feature/adding-vue-router
+
+jobs:
+  main:
+    name: PlatformIO build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oxr463/setup-cordova@0.0.2
+      - name: build android app
+        uses: ./mobile
+        with:
+          exec: |
+            cordova platform add android && \
+            cordova build --no-telemetry && \
+            cp "$(find . -name '*.apk')" .

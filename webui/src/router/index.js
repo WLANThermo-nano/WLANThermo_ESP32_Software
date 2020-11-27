@@ -8,6 +8,7 @@ import Pitmaster from '../components/Pitmaster'
 import About from '../components/About'
 import IoT from '../components/IoT'
 import PushNotification from '../components/PushNotification'
+const Scan = require(process.env.VUE_APP_SCAN_COMPONENT).default;
 
 Vue.use(VueRouter)
 
@@ -51,6 +52,11 @@ const routes = [
     path: '/notification',
     name: 'notification',
     component: PushNotification
+  },
+  {
+    path: '/scan',
+    name: 'scan',
+    component: Scan
   },
 ]
 

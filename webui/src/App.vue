@@ -29,7 +29,7 @@
     </div>
     <div id="nav" :class="{ active: navActive }">
       <img @click="toPage('home')" class="logo" :src="logoImg" style="width: 85%" />
-      <div class="version">
+      <div class="version" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
       <div class="pure-menu">
@@ -83,6 +83,18 @@ import Icon from './components/Icon.vue'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
+const menuItem = [
+        { icon: 'home', translationKey: 'menuHome', id: '/' },
+        { icon: 'scan', translationKey: 'menuScan', id: 'scan' },
+        { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
+        { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
+        { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
+        { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
+        { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
+        { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
+        { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
+];
+
 export default {
   name: "App",
   data: () => {
@@ -106,20 +118,12 @@ export default {
       linkText: '',
 
       // menu
-      menuItems: [
-        { icon: 'home', translationKey: 'menuHome', id: '/' },
-        { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
-        { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
-        { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
-        { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
-        { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
-        { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
-        { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
-      ],
+      menuItems: menuItem,
 
       settings: {
         system: {
-          host: 'N.C'
+          host: 'N.C',
+          getupdate: 'false'
         },
         features: {
           bluetooth: true,
@@ -141,6 +145,8 @@ export default {
       navActive: false,
       showSpinner: false,
       isUpdating: false,
+      getDataInteval: null,
+      appReady: false, // for mobile app
     };
   },
   components: {
@@ -149,12 +155,17 @@ export default {
   methods: {
     initGetDataPeriodically: function() {
       this.getData();
-      setInterval(() => {
+      this.getDataInteval = setInterval(() => {
         this.getData()
       }, 2000)
     },
-    toPage: function(pageName) {
-      this.$router.push({ path: pageName })
+    clearGetDataInteval: function() {
+      if (this.getDataInteval) {
+        clearInterval(this.getDataInteval)
+      }
+    },
+    toPage: function(pageName, query) {
+      this.$router.push({ path: pageName, query: query})
       this.page = pageName
       this.navActive = false
     },
@@ -175,7 +186,6 @@ export default {
         const data = response.data
         this.settings = data
         this.$i18n.locale = this.settings.system.language
-
         if (!this.settings.features.bluetooth) {
           this.menuItems = this.menuItems.filter(i => i.id !== 'bluetooth')
         }
@@ -256,8 +266,15 @@ export default {
     }
   },
   mounted: function() {
-    this.getSettings()
-    this.initGetDataPeriodically()
+    if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+      this.$router.push('/scan')
+      this.settings.system.host = this.$t('mobileAppHeader')
+      this.menuItems = this.menuItems.filter(i => i.id === 'scan')
+    } else {
+      this.menuItems = this.menuItems.filter(i => i.id !== 'scan')
+      this.getSettings()
+      this.initGetDataPeriodically()
+    }
     EventBus.$on('show-help-dialog', (dialogData) => {
       this.dialogTitle = dialogData.title
       this.dialogBodyText = dialogData.content
@@ -266,7 +283,21 @@ export default {
       this.dialogActive = true
     })
     EventBus.$on('back-to-home', () => {
-      this.page = 'home'
+      this.toPage('/')
+    })
+    EventBus.$on('device-selected', () => {
+      this.clearGetDataInteval()
+      this.toPage('/')
+      this.menuItems = menuItem
+      this.getSettings()
+      this.initGetDataPeriodically()
+    })
+    EventBus.$on('api-error', () => {
+      this.showSpinner = false
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        this.clearGetDataInteval()
+        this.toPage('scan', { connectionLost: true })
+      }
     })
     EventBus.$on('loading', (value) => {
       this.showSpinner = value

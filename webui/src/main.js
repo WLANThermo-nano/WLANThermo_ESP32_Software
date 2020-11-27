@@ -7,8 +7,18 @@ import Vuelidate from 'vuelidate'
 import en from './i18n/en'
 import de from './i18n/de'
 import router from './router'
+import EventBus from "./event-bus";
 
 require(process.env.VUE_APP_DEMO_FILE_PATH)
+
+axios.interceptors.response.use(response => response, error => {
+  if (!error?.config?.headers?.scan) {
+    EventBus.$emit('api-error')
+  }
+  return error
+})
+
+axios.defaults.timeout = 5000
 
 Vue.use(Vuelidate)
 Vue.use(VueAxios, axios)
