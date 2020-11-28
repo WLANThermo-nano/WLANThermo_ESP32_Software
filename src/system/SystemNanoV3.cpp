@@ -61,18 +61,6 @@ SystemNanoVx::SystemNanoVx() : SystemBase()
 
 void SystemNanoVx::hwInit()
 {
-  // only init oled reset pin when coming from cold start
-  /*
-  if (didSleep != true)
-  {
-    pinMode(OLED_RESET_IO, OUTPUT);
-    digitalWrite(OLED_RESET_IO, LOW);
-    delay(100);
-    digitalWrite(OLED_RESET_IO, HIGH);
-    delay(100);
-  }
-  */
-
   // initialize battery in hwInit!
   battery = new Battery();
   battery->update();

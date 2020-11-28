@@ -24,6 +24,7 @@
 #include "SystemMiniV3.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
+#include "display\tft\DisplayTft.h"
 #include "Constants.h"
 
 // TEMPERATURES
@@ -48,6 +49,11 @@
 #define BLE_UART_RX 14
 #define BLE_RESET_PIN 4u
 
+// TFT
+#define TFT_RESET_PIN 27u
+
+#define STANDBY_SLEEP_CYCLE_TIME 500000u // 500ms
+
 enum ledcChannels
 {
   ledcPitMaster0IO1 = 0,
@@ -57,12 +63,27 @@ enum ledcChannels
   ledcBuzzer = 4
 };
 
+RTC_DATA_ATTR boolean SystemMiniV3::didSleep = false;  // standby ram
+RTC_DATA_ATTR boolean SystemMiniV3::didCharge = false; // standby ram
+
 SystemMiniV3::SystemMiniV3() : SystemBase()
 {
 }
 
 void SystemMiniV3::hwInit()
 {
+
+  // only toggle tft reset pin when coming from cold start
+  if (didSleep != true)
+  {
+    pinMode(TFT_RESET_PIN, OUTPUT);
+    digitalWrite(TFT_RESET_PIN, HIGH);
+    delay(5);
+    digitalWrite(TFT_RESET_PIN, LOW);
+    delay(20);
+    digitalWrite(TFT_RESET_PIN, HIGH);
+  }
+
   // initialize battery in hwInit!
   battery = new Battery();
   battery->update();
@@ -70,7 +91,25 @@ void SystemMiniV3::hwInit()
   pinMode(PITMASTERSUPPLY, OUTPUT);
   digitalWrite(PITMASTERSUPPLY, 0u);
 
-    // initialize SPI interface
+  // handle sleep during battery charge
+  if (battery->requestsStandby())
+  {
+    if (didSleep != true || battery->isCharging() != didCharge)
+    {
+      SPI.begin();
+      Wire.begin();
+      DisplayTft::drawCharging();
+      didCharge = battery->isCharging();
+    }
+
+    didSleep = true;
+    esp_sleep_enable_timer_wakeup(STANDBY_SLEEP_CYCLE_TIME);
+    esp_deep_sleep_start();
+  }
+
+  didSleep = false;
+
+  // initialize SPI interface
   SPI.begin();
 
   // initialize I2C interface

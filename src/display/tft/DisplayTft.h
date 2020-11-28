@@ -76,6 +76,7 @@ public:
   void hwInit();
   void update();
   void calibrate();
+  static void drawCharging();
 
 private:
   boolean initDisplay();

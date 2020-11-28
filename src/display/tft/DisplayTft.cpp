@@ -157,6 +157,37 @@ void DisplayTft::calibrate()
   }
 }
 
+void DisplayTft::drawCharging()
+{
+  tft.init();
+  tft.setRotation(1);
+  tft.setSwapBytes(true);
+  tft.fillScreen(0x31a6);
+  tft.setTextColor(TFT_WHITE, 0x31a6);
+  tft.setTextSize(3);
+  //tft.setTextDatum(MC_DATUM);
+  //LV_COLOR_MAKE(0x33, 0x33, 0x33)
+
+  // configure dimming IC
+  PCA9533 pca9533;
+  pca9533.init();
+  pca9533.setPSC(REG_PSC0, 0);
+  pca9533.setPSC(REG_PSC1, 29);
+  pca9533.setMODE(IO0, LED_MODE_ON);
+  pca9533.setMODE(IO1, LED_MODE_ON);
+  pca9533.setMODE(IO2, LED_MODE_ON);
+  pca9533.setMODE(IO3, LED_MODE_ON);
+
+  if (gSystem->battery->isCharging())
+  {
+    tft.drawCentreString("CHARGING...", 160, 120, 1);
+  }
+  else
+  {
+    tft.drawCentreString("READY!", 160, 120, 1);
+  }
+}
+
 void DisplayTft::task(void *parameter)
 {
   DisplayTft *display = (DisplayTft *)parameter;
