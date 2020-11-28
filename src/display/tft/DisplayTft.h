@@ -55,6 +55,19 @@ typedef struct lvSymbol
   lv_obj_t *btnWifi;
 } lvSymbolType;
 
+typedef struct lvWifi
+{
+  lv_obj_t *qrCode;
+  lv_obj_t *labelFirst;
+  lv_obj_t *labelSecond;
+} lvWifiType;
+
+typedef struct lvScreens
+{
+  lv_obj_t *temperatureScreen;
+  lv_obj_t *wifiScreen;
+} lvScreensType;
+
 class DisplayTft : public DisplayBase
 {
 public:
@@ -75,11 +88,16 @@ private:
   static void temperatureTileEvent(lv_obj_t *obj, lv_event_t event);
   static void temperatureNavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
   static void temperatureNavigationRightEvent(lv_obj_t *obj, lv_event_t event);
+  static void temperatureNavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
   void createTemperatureScreen();
   void updateTemperatureScreenTiles(boolean forceUpdate);
   void updateTemperatureScreenSymbols(boolean forceUpdate);
-  lv_color_t
-  htmlColorToLvColor(String htmlColor);
+
+  void createWifiScreen();
+  void updateWifiScreen(boolean forceUpdate);
+  static void wifiCloseEvent(lv_obj_t *obj, lv_event_t event);
+
+  lv_color_t htmlColorToLvColor(String htmlColor);
   static SystemBase *system;
 
   static TFT_eSPI tft;
@@ -88,6 +106,8 @@ private:
 
   lvTemperatureTileType lvTemperatureTiles[DISPLAY_TFT_TEMPERATURES_PER_PAGE];
   lvSymbolType lvSymbols;
+  lvScreensType lvScreens;
+  lvWifiType lvWifi;
   static uint32_t updateTemperature;
   static uint32_t updatePitmaster;
   static uint8_t serialTimeout;

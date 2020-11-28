@@ -21,6 +21,7 @@
 #include "Settings.h"
 #include "TaskConfig.h"
 #include "Preferences.h"
+#include "lv_qrcode.h"
 
 #define UPDATE_ALL 0xFFFFFFFFu
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
@@ -58,6 +59,9 @@ void DisplayTft::hwInit()
   tft.fillScreen(0x31a6);
   tft.pushImage(33, 70, 254, 100, DisplayTftStartScreenImg);
 
+  // configure PIN mode
+  //pinMode(TFT_RST, INPUT);
+
   // configure dimming IC
   pca9533.init();
   Serial.println("Setup LED Controller:");
@@ -91,14 +95,6 @@ boolean DisplayTft::initDisplay()
     return true;
   }
 
-  // configure PIN mode
-  /*pinMode(TFT_CS, OUTPUT);
-  pinMode(TOUCH_CS, OUTPUT);*/
-
-  // set initial PIN state
-  /*digitalWrite(TFT_CS, HIGH);
-  digitalWrite(TOUCH_CS, HIGH);*/
-
   lv_init();
 
   calibrate();
@@ -121,6 +117,8 @@ boolean DisplayTft::initDisplay()
 
   createTemperatureScreen();
   updateTemperatureScreenSymbols(true);
+  createWifiScreen();
+  updateWifiScreen(true);
 
   // register for all temperature callbacks
   system->temperatures.registerCallback(temperatureUpdateCb, this);
@@ -202,6 +200,7 @@ void DisplayTft::update()
 
   updateTemperatureScreenTiles(false);
   updateTemperatureScreenSymbols(false);
+  updateWifiScreen(false);
 
   lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
   lv_task_handler();
@@ -247,6 +246,52 @@ bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   return false;
 }
 
+void DisplayTft::createWifiScreen()
+{
+  /* create screen for wifi */
+  lvScreens.wifiScreen = lv_obj_create(NULL, NULL);
+
+  lv_obj_set_style_local_bg_color(lvScreens.wifiScreen, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+
+  lvWifi.qrCode = lv_qrcode_create(lvScreens.wifiScreen, 132, LV_COLOR_BLACK, LV_COLOR_WHITE);
+  lv_obj_set_pos(lvWifi.qrCode, 94, 41);
+
+  lvWifi.labelFirst = lv_label_create(lvScreens.wifiScreen, NULL);
+  lv_label_set_text(lvWifi.labelFirst, "");
+  lv_label_set_align(lvWifi.labelFirst, LV_LABEL_ALIGN_CENTER);
+  lv_label_set_long_mode(lvWifi.labelFirst, LV_LABEL_LONG_BREAK);
+  lv_obj_set_style_local_text_font(lvWifi.labelFirst, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+  lv_obj_set_style_local_text_color(lvWifi.labelFirst, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_set_size(lvWifi.labelFirst, 320, 30);
+  lv_obj_set_pos(lvWifi.labelFirst, 0, 180);
+
+  lvWifi.labelSecond = lv_label_create(lvScreens.wifiScreen, NULL);
+  lv_label_set_text(lvWifi.labelSecond, "");
+  lv_label_set_align(lvWifi.labelSecond, LV_LABEL_ALIGN_CENTER);
+  lv_label_set_long_mode(lvWifi.labelSecond, LV_LABEL_LONG_BREAK);
+  lv_obj_set_style_local_text_font(lvWifi.labelSecond, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+  lv_obj_set_style_local_text_color(lvWifi.labelSecond, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_set_size(lvWifi.labelSecond, 320, 30);
+  lv_obj_set_pos(lvWifi.labelSecond, 0, 210);
+
+  /* create close button */
+  lv_obj_t * closeButton = lv_btn_create(lvScreens.wifiScreen, NULL);
+  lv_obj_add_protect(closeButton, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_bg_color(closeButton, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_bg_grad_color(closeButton, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_border_width(closeButton, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_clip_corner(closeButton, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
+  lv_obj_set_style_local_radius(closeButton, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_size(closeButton, 40, 40);
+  lv_obj_set_pos(closeButton, 280, 0);
+  lv_obj_set_event_cb(closeButton, DisplayTft::wifiCloseEvent);
+
+  lv_obj_t * img = lv_img_create(closeButton, NULL);
+  lv_obj_set_click(img, false);
+  lv_img_set_src(img, LV_SYMBOL_CLOSE);
+  lv_obj_set_style_local_image_recolor(img, LV_IMG_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+}
+
 void DisplayTft::createTemperatureScreen()
 {
   /* create style for symbols */
@@ -261,8 +306,12 @@ void DisplayTft::createTemperatureScreen()
   lv_style_set_value_color(lvSymbols.style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
   lv_style_set_value_align(lvSymbols.style, LV_STATE_DEFAULT, LV_ALIGN_CENTER);
 
+  /* create screen for temperatures */
+  lvScreens.temperatureScreen = lv_obj_create(NULL, NULL);
+  lv_scr_load(lvScreens.temperatureScreen);
+
   /* create container for symbols */
-  static lv_obj_t *contHeader = lv_cont_create(lv_scr_act(), NULL);
+  static lv_obj_t *contHeader = lv_cont_create(lvScreens.temperatureScreen, NULL);
   lv_obj_add_style(contHeader, LV_CONT_PART_MAIN, lvSymbols.style);
   lv_obj_set_click(contHeader, false);
   lv_obj_set_size(contHeader, 320, 40);
@@ -319,8 +368,9 @@ void DisplayTft::createTemperatureScreen()
   lv_obj_set_size(lvSymbols.btnWifi, 40, 40);
   lv_obj_set_pos(lvSymbols.btnWifi, 280, 0);
   lv_obj_set_hidden(lvSymbols.btnWifi, true);
+  lv_obj_set_event_cb(lvSymbols.btnWifi, DisplayTft::temperatureNavigationWifiEvent);
 
-  static lv_obj_t *contTemperature = lv_cont_create(lv_scr_act(), NULL);
+  static lv_obj_t *contTemperature = lv_cont_create(lvScreens.temperatureScreen, NULL);
   lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
   lv_obj_set_style_local_border_width(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_clip_corner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
@@ -507,6 +557,49 @@ void DisplayTft::updateTemperatureScreenTiles(boolean forceUpdate)
   updatePitmaster = 0u;
 }
 
+void DisplayTft::updateWifiScreen(boolean forceUpdate)
+{
+  WifiState newWifiState = system->wlan.getWifiState();
+  static WifiState wifiState = newWifiState;
+
+  if ((wifiState != newWifiState) || forceUpdate)
+  {
+    String qrCode;
+
+    switch (newWifiState)
+    {
+    case WifiState::SoftAPNoClient:
+      qrCode = "WIFI:T:WPA;S:" + system->wlan.getAccessPointName() + ";P:12345678;;";
+      lv_qrcode_update(lvWifi.qrCode, qrCode.c_str(), qrCode.length());
+      lv_label_set_text_fmt(lvWifi.labelFirst, "WLAN: %s", system->wlan.getAccessPointName().c_str());
+      lv_label_set_text_fmt(lvWifi.labelSecond, "PW: %s", "12345678");
+      break;
+    case WifiState::SoftAPClientConnected:
+      qrCode = "http://192.168.66.1";
+      lv_qrcode_update(lvWifi.qrCode, qrCode.c_str(), qrCode.length());
+      lv_label_set_text(lvWifi.labelFirst, "");
+      lv_label_set_text(lvWifi.labelSecond, qrCode.c_str());
+      break;
+    case WifiState::ConnectedToSTA:
+      qrCode = "http://" + WiFi.localIP().toString();
+      lv_qrcode_update(lvWifi.qrCode, qrCode.c_str(), qrCode.length());
+      lv_label_set_text(lvWifi.labelFirst, WiFi.SSID().c_str());
+      lv_label_set_text(lvWifi.labelSecond, qrCode.c_str());
+      break;
+    case WifiState::ConnectingToSTA:
+    case WifiState::AddCredentials:
+      break;
+    default:
+      qrCode = "";
+      lv_qrcode_update(lvWifi.qrCode, qrCode.c_str(), qrCode.length());
+      lv_label_set_text(lvWifi.labelFirst, "");
+      lv_label_set_text(lvWifi.labelSecond, qrCode.c_str());
+      break;
+    }
+    wifiState = newWifiState;
+  }
+}
+
 void DisplayTft::updateTemperatureScreenSymbols(boolean forceUpdate)
 {
   boolean newHasAlarm = system->temperatures.hasAlarm();
@@ -689,5 +782,25 @@ void DisplayTft::temperatureNavigationRightEvent(lv_obj_t *obj, lv_event_t event
       tempPageIndex = newPageIndex;
       displayTft->updateTemperatureScreenTiles(true);
     }
+  }
+}
+
+void DisplayTft::temperatureNavigationWifiEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    DisplayTft *displayTft = (DisplayTft *)gDisplay;
+
+    lv_scr_load(displayTft->lvScreens.wifiScreen);
+  }
+}
+
+void DisplayTft::wifiCloseEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    DisplayTft *displayTft = (DisplayTft *)gDisplay;
+
+    lv_scr_load(displayTft->lvScreens.temperatureScreen);
   }
 }
