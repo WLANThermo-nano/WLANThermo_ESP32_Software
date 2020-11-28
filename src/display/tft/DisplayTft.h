@@ -90,6 +90,7 @@ private:
   static void temperatureNavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
   static void temperatureNavigationRightEvent(lv_obj_t *obj, lv_event_t event);
   static void temperatureNavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
+  static void temperatureAlarmEvent(lv_obj_t *obj, lv_event_t event); 
   void createTemperatureScreen();
   void updateTemperatureScreenTiles(boolean forceUpdate);
   void updateTemperatureScreenSymbols(boolean forceUpdate);

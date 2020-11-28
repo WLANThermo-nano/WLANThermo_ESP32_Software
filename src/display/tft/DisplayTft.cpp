@@ -26,6 +26,8 @@
 #define UPDATE_ALL 0xFFFFFFFFu
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 
+static lv_color_t tftAlarmColorMap[3u] = {LV_COLOR_WHITE, LV_COLOR_BLUE, LV_COLOR_RED};
+
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
@@ -381,6 +383,7 @@ void DisplayTft::createTemperatureScreen()
   lv_obj_set_style_local_value_color(lvSymbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
   lv_obj_set_size(lvSymbols.btnAlarm, 40, 40);
   lv_obj_set_pos(lvSymbols.btnAlarm, 200, 0);
+  lv_obj_set_event_cb(lvSymbols.btnAlarm, DisplayTft::temperatureAlarmEvent);
 
   /* create cloud symbol */
   lvSymbols.btnCloud = lv_btn_create(contHeader, NULL);
@@ -545,6 +548,7 @@ void DisplayTft::updateTemperatureScreenTiles(boolean forceUpdate)
             sprintf(labelCurrentText, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
 
           lv_label_set_text(tile->labelCurrent, labelCurrentText);
+          lv_obj_set_style_local_text_color(tile->labelCurrent, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, tftAlarmColorMap[system->temperatures[i]->getAlarmStatus()]);
 
           lv_label_set_text(tile->labelName, system->temperatures[i]->getName().c_str());
           lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(system->temperatures[i]->getColor()));
@@ -561,6 +565,7 @@ void DisplayTft::updateTemperatureScreenTiles(boolean forceUpdate)
             sprintf(labelCurrentText, "%.1lf°%c", system->temperatures[i]->getValue(), (char)system->temperatures.getUnit());
 
           lv_label_set_text(tile->labelCurrent, labelCurrentText);
+          lv_obj_set_style_local_text_color(tile->labelCurrent, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, tftAlarmColorMap[system->temperatures[i]->getAlarmStatus()]);
         }
 
         /*if (updatePitmaster & (1u << i))
@@ -823,6 +828,14 @@ void DisplayTft::temperatureNavigationWifiEvent(lv_obj_t *obj, lv_event_t event)
     DisplayTft *displayTft = (DisplayTft *)gDisplay;
 
     lv_scr_load(displayTft->lvScreens.wifiScreen);
+  }
+}
+
+void DisplayTft::temperatureAlarmEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    gSystem->temperatures.acknowledgeAlarm();
   }
 }
 
