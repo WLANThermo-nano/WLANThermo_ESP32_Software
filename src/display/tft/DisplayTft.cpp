@@ -386,7 +386,7 @@ void DisplayTft::createTemperatureScreen()
   lvSymbols.btnCloud = lv_btn_create(contHeader, NULL);
   lv_obj_add_protect(lvSymbols.btnCloud, LV_PROTECT_CLICK_FOCUS);
   lv_obj_add_style(lvSymbols.btnCloud, LV_CONT_PART_MAIN, lvSymbols.style);
-  lv_obj_set_style_local_value_str(lvSymbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "O");
+  lv_obj_set_style_local_value_str(lvSymbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "h");
   lv_obj_set_style_local_value_color(lvSymbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
   lv_obj_set_size(lvSymbols.btnCloud, 40, 40);
   lv_obj_set_pos(lvSymbols.btnCloud, 240, 0);
