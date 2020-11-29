@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "a": "cordova run android",
     "build-android": "cordova build android",
-    "build-ios": "cordova build ios"
+    "build-ios": "cordova build ios --buildConfig ios-build.json"
   },
   "keywords": [
     "ecosystem:cordova"
