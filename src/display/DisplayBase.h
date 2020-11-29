@@ -32,7 +32,6 @@ class DisplayBase
 {
 public:
   DisplayBase();
-  DisplayBase(SystemBase *system);
   virtual void init();
   virtual void hwInit(){};
   virtual void update();
