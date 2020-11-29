@@ -30,10 +30,24 @@ jobs:
         working-directory: ./mobile
         run: cordova platform add android@latest
 
+      - name: npm install UI project
+        working-directory: ./webui
+        run: npm install
+
       - name: Build App HTML file from UI project
         working-directory: ./webui
         run: npm run build-mobile
 
+      - name: npm install mobile project
+        working-directory: ./mobile
+        run: npm install
+
       - name: Build Android app
         working-directory: ./mobile
         run: npm run build-android
+
+      - name: Upload dev APK
+        uses: actions/upload-artifact@v1
+        with:
+          name: app-dev
+          path: ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
