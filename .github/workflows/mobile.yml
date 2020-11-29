@@ -59,3 +59,9 @@ jobs:
         with:
           name: app-dev
           path: ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload dev APP
+        uses: actions/upload-artifact@v1
+        with:
+          name: app-dev
+          path: ./mobile/platforms/ios/build/emulator/WLANThermo.app
