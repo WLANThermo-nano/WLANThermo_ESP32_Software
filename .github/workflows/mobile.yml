@@ -7,7 +7,7 @@ on:
 jobs:
   main:
     name: Mobile build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
