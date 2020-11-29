@@ -30,6 +30,10 @@ jobs:
         working-directory: ./mobile
         run: cordova platform add android@latest
 
+      - name: Build App HTML file from UI project
+        working-directory: ./webui
+        run: npm run build-mobile
+
       - name: Build Android app
         working-directory: ./mobile
-        run: npm run build
+        run: npm run build-android
