@@ -189,13 +189,13 @@ void lvHome_Create(void)
     lv_obj_set_pos(tile->labelSymbolMax, 15, 21);
 
     tile->labelMax = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelMax, LV_LABEL_ALIGN_RIGHT);
+    lv_label_set_align(tile->labelMax, LV_LABEL_ALIGN_LEFT);
     lv_label_set_long_mode(tile->labelMax, LV_LABEL_LONG_BREAK);
     lv_obj_set_style_local_text_font(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMax, "%i°", (int)gSystem->temperatures[i]->getMaxValue());
-    lv_obj_set_size(tile->labelMax, 30, 21);
-    lv_obj_set_pos(tile->labelMax, 35, 21);
+    lv_obj_set_size(tile->labelMax, 37, 21);
+    lv_obj_set_pos(tile->labelMax, 35, 18);
 
     tile->labelSymbolMin = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelSymbolMin, "E");
@@ -205,13 +205,13 @@ void lvHome_Create(void)
     lv_obj_set_pos(tile->labelSymbolMin, 15, 42);
 
     tile->labelMin = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelMin, LV_LABEL_ALIGN_RIGHT);
+    lv_label_set_align(tile->labelMin, LV_LABEL_ALIGN_LEFT);
     lv_label_set_long_mode(tile->labelMin, LV_LABEL_LONG_BREAK);
     lv_obj_set_style_local_text_font(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
     lv_obj_set_style_local_text_color(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
-    lv_obj_set_size(tile->labelMin, 30, 21);
-    lv_obj_set_pos(tile->labelMin, 35, 40);
+    lv_obj_set_size(tile->labelMin, 37, 21);
+    lv_obj_set_pos(tile->labelMin, 35, 37);
 
     tile->labelCurrent = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelCurrent, LV_LABEL_ALIGN_RIGHT);
