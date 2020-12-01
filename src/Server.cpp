@@ -165,11 +165,21 @@ void WServer::init()
 
   // 404 NOT found: called when the url is not defined here
   webServer->onNotFound([](AsyncWebServerRequest *request) {
-    request->send(404);
+    if (request->method() == HTTP_OPTIONS)
+    {
+      request->send(200);
+    }
+    else
+    {
+      request->send(404);
+    }
   });
 
   /* Add default headers */
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+  DefaultHeaders::Instance().addHeader("Access-Control-Max-Age", "1000");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, client-security-token, scan");
     
   webServer->begin();
   IPRINTPLN("HTTP server started");
