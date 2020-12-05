@@ -53,10 +53,11 @@ void DisplayTft::hwInit()
   Serial.println(pca9533.ping());
   pca9533.setPSC(REG_PSC0, 0);
   pca9533.setPSC(REG_PSC1, 29);
-  pca9533.setMODE(IO0, LED_MODE_ON);
-  pca9533.setMODE(IO1, LED_MODE_ON);
-  pca9533.setMODE(IO2, LED_MODE_ON);
-  pca9533.setMODE(IO3, LED_MODE_ON);
+  pca9533.setMODE(IO0, LED_MODE_PWM0);
+  pca9533.setMODE(IO1, LED_MODE_PWM0);
+  pca9533.setMODE(IO2, LED_MODE_PWM0);
+  pca9533.setMODE(IO3, LED_MODE_PWM0);
+  pca9533.setPWM(REG_PWM0, 255);
 }
 
 void DisplayTft::init()
@@ -134,6 +135,12 @@ void DisplayTft::calibrate()
     touchCalibrationSize = prefs.putBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
     prefs.end();
   }
+}
+
+void DisplayTft::setBrightness(uint8_t brightness)
+{
+  int value = (int)(brightness * 2.55);
+  pca9533.setPWM(REG_PWM0, value);
 }
 
 void DisplayTft::drawCharging()

@@ -20,64 +20,62 @@
 #include "lvScreen.h"
 #include "lvHome.h"
 #include "lvWifi.h"
+#include "lvMenu.h"
+#include "lvDisplay.h"
 
 static lvScreenType lvScreen_CurrentScreen = lvScreenType::None;
-static lvScreenType lvScreen_requestedScreen = lvScreenType::None;
+static lvScreenType lvScreen_RequestedScreen = lvScreenType::None;
+
+static lvScreenFuncType lvScreen_Functions[] = {
+    {lvScreenType::None, NULL, NULL, NULL},
+    {lvScreenType::Menu, lvMenu_Create, lvMenu_Update, lvMenu_Delete},
+    {lvScreenType::Home, lvHome_Create, lvHome_Update, lvHome_Delete},
+    {lvScreenType::Wifi, lvWifi_Create, lvWifi_Update, lvWifi_Delete},
+    {lvScreenType::Display, lvDisplay_Create, lvDisplay_Update, lvDisplay_Delete}};
 
 void lvScreen_Open(lvScreenType screen)
 {
   if (screen != lvScreen_CurrentScreen)
-    lvScreen_requestedScreen = screen;
+  {
+    lvScreen_RequestedScreen = screen;
+  }
 }
 
-void lvScreen_Update()
+void lvScreen_Update(void)
 {
-  if (lvScreen_requestedScreen != lvScreenType::None)
+  uint8_t screenIndex;
+
+  if ((lvScreen_RequestedScreen > lvScreenType::None) &&
+      (lvScreen_RequestedScreen < lvScreenType::Max))
   {
-    switch (lvScreen_requestedScreen)
+    screenIndex = (uint8_t)lvScreen_RequestedScreen;
+    if (lvScreen_Functions[screenIndex].createFunc)
     {
-    case lvScreenType::Home:
-      Serial.println("lvHome_Create");
-      lvHome_Create();
-      break;
-    case lvScreenType::Wifi:
-      Serial.println("lvWifi_Create");
-      lvWifi_Create();
-      break;
+      lvScreen_Functions[screenIndex].createFunc();
     }
 
-    switch (lvScreen_CurrentScreen)
+    screenIndex = (uint8_t)lvScreen_CurrentScreen;
+    if (lvScreen_Functions[screenIndex].deleteFunc)
     {
-    case lvScreenType::Home:
-      Serial.println("lvHome_Delete");
-      lvHome_Delete();
-      break;
-    case lvScreenType::Wifi:
-      Serial.println("lvWifi_Delete");
-      lvWifi_Delete();
-      break;
+      lvScreen_Functions[screenIndex].deleteFunc();
     }
 
-    lvScreen_CurrentScreen = lvScreen_requestedScreen;
-    lvScreen_requestedScreen = lvScreenType::None;
+    lvScreen_CurrentScreen = lvScreen_RequestedScreen;
+    lvScreen_RequestedScreen = lvScreenType::None;
 
-    lv_mem_monitor_t mon;
+    /*lv_mem_monitor_t mon;
     lv_mem_monitor(&mon);
     printf("used: %6d (%3d %%), frag: %3d %%, biggest free: %6d\n", (int)mon.total_size - mon.free_size,
            mon.used_pct,
            mon.frag_pct,
-           (int)mon.free_biggest_size);
+           (int)mon.free_biggest_size);*/
   }
   else
   {
-    switch (lvScreen_CurrentScreen)
+    screenIndex = (uint8_t)lvScreen_CurrentScreen;
+    if (lvScreen_Functions[screenIndex].updateFunc)
     {
-    case lvScreenType::Home:
-      lvHome_Update(false);
-      break;
-    case lvScreenType::Wifi:
-      lvWifi_Update(false);
-      break;
+      lvScreen_Functions[screenIndex].updateFunc(false);
     }
   }
 }

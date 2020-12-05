@@ -20,35 +20,19 @@
 #pragma once
 
 #include "Arduino.h"
-#include "system/SystemBase.h"
-#include "display/DisplayBase.h"
 #include <lvgl.h>
-#include <Ticker.h>
-#include <TFT_eSPI.h>
-#include "Wire.h"
-#include <PCA9533.h>
 
-class DisplayTft : public DisplayBase
+typedef struct lvMenu
 {
-public:
-  DisplayTft();
-  void init();
-  void hwInit();
-  void update();
-  void calibrate();
-  void setBrightness(uint8_t brightness);
-  static void drawCharging();
+  lv_obj_t *screen;
+  lv_style_t *btnStyle;
+  lv_obj_t *btnTemperatures;
+  lv_obj_t *btnWifi;
+  lv_obj_t *btnSystem;
+  lv_obj_t *btnPitmaster;
+  lv_obj_t *btnDisplay;
+} lvMenuType;
 
-private:
-  boolean initDisplay();
-  static void task(void *parameter);
-
-  static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
-
-  static TFT_eSPI tft;
-  lv_disp_buf_t lvDispBuffer;
-  lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
-
-  PCA9533 pca9533;
-};
+void lvMenu_Create(void);
+void lvMenu_Update(boolean forceUpdate);
+void lvMenu_Delete(void);

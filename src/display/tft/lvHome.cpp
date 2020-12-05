@@ -45,6 +45,7 @@ static void lvHome_UpdateSymbols(boolean forceUpdate);
 static lv_color_t htmlColorToLvColor(String htmlColor);
 static void lvlvHome_UpdateSensorCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData);
 static void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event);
+static void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
@@ -80,6 +81,7 @@ void lvHome_Create(void)
   lv_obj_set_style_local_value_str(lvHome.symbols.btnMenu, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "f");
   lv_obj_set_size(lvHome.symbols.btnMenu, 40, 40);
   lv_obj_set_pos(lvHome.symbols.btnMenu, 0, 0);
+  lv_obj_set_event_cb(lvHome.symbols.btnMenu, lvHome_NavigationMenuEvent);
 
   /* create left navigation symbol */
   lvHome.symbols.btnLeft = lv_btn_create(contHeader, NULL);
@@ -463,6 +465,14 @@ void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event)
 
   if (LV_EVENT_CLICKED == event)
   {
+  }
+}
+
+void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    lvScreen_Open(lvScreenType::Menu);
   }
 }
 
