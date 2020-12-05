@@ -17,6 +17,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "cordova-android": "^9.0.0",
+    "cordova-disable-http-cache": "^1.0.0",
     "cordova-plugin-add-swift-support": "^2.0.2",
     "cordova-plugin-badge": "^0.8.8",
     "cordova-plugin-device": "^2.0.3",
@@ -31,7 +32,8 @@
         "ANDROID_SUPPORT_V4_VERSION": "26.+"
       },
       "cordova-plugin-zeroconf": {},
-      "cordova-plugin-networkinterface": {}
+      "cordova-plugin-networkinterface": {},
+      "cordova-disable-http-cache": {}
     },
     "platforms": [
       "android"

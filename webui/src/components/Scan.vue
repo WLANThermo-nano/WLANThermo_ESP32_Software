@@ -8,11 +8,11 @@
         <form>
           <div class="select-channel-text">
             <span class="text">{{ $t("scanDevices") }}</span>
-            <span
+            <!-- <span
               class="ic_white icon-refresh"
               :class="{ 'icon-rotate-100': refreshing }"
               @click="initAndScan"
-            ></span>
+            ></span> -->
           </div>
           <div
             class="scan-device-item"
@@ -76,7 +76,7 @@ export default {
       }
     },
     deviceSelected: function(device) {
-      this.requestCancelTokenSource.cancel('')
+      // this.requestCancelTokenSource.cancel('')
       EventBus.$emit("loading", true)
       setTimeout(() => {
         this.axios.defaults.baseURL = `http://${device.ip}`
@@ -84,11 +84,7 @@ export default {
         EventBus.$emit('device-selected')
       })
     },
-    initAndScan: function () {
-      if (this.refreshing) {
-        return;
-      }
-      this.devices = []
+    scanBySubnet: function() {
       this.refreshing = true
       this.requestCompletedCount = 0
       this.blockSize = 0
@@ -135,26 +131,57 @@ export default {
           console.log(`subnet is too large to scan`);
         }
       });
-      // var zeroconf = cordova.plugins.zeroconf;
-      // zeroconf.registerAddressFamily = "ipv4";
-      // zeroconf.watchAddressFamily = "ipv4";
+    },
+    scanByZeroConf: function() {
+      // eslint-disable-next-line
+      var zeroconf = cordova.plugins.zeroconf;
+      zeroconf.registerAddressFamily = "ipv4";
+      zeroconf.watchAddressFamily = "ipv4";
 
-      // zeroconf.watch("_wlanthermo._tcp.", "local.", (result) => {
-      //   var action = result.action;
-      //   var service = result.service;
-      //   if (action == "added") {
-      //     console.log("service added", service);
-      //   } else if (action == "resolved") {
-      //     console.log("service resolved", service);
-      //     console.log("device name: " + service.txtRecord.device);
-      //     console.log("device ip: " + service.ipv4Addresses[0]);
-      //     // ipAddress = service.ipv4Addresses[0];
-      //     this.deviceName = service.txtRecord.device
-      //     // window.location.href = "device.html?ip=" + ipAddress;
-      //   } else {
-      //     console.log("service removed", service);
-      //   }
-      // });
+      zeroconf.watch("_wlanthermo._tcp.", "local.", (result) => {
+        var action = result.action;
+        var service = result.service;
+        console.log(`action ${action}`)
+        console.log(service)
+        if (action == "added") {
+          console.log(`service added`)
+          const ip = service.ipv4Addresses[0]
+          const name = service.txtRecord.device
+          // ipAddress = service.ipv4Addresses[0];
+          this.deviceName = service.txtRecord.device
+          if (ip && name && !this.devices.some(d => d.ip === ip && d.name === name)) {
+            this.devices.push({
+              ip: ip,
+              name: name
+            })
+          }
+        } else if (action == "resolved") {
+          const ip = service.ipv4Addresses[0]
+          const name = service.txtRecord.device
+          // ipAddress = service.ipv4Addresses[0];
+          this.deviceName = service.txtRecord.device
+          if (!this.devices.some(d => d.ip === ip && d.name === name)) {
+            this.devices.push({
+              ip: ip,
+              name: name
+            })
+          }
+          // window.location.href = "device.html?ip=" + ipAddress;
+        } else {
+          console.log(`service removed`)
+          const ip = service.ipv4Addresses[0]
+          const name = service.txtRecord.device
+          this.devices = this.devices.filter(d => d.ip === ip && d.name === name)
+        }
+      });
+    },
+    initAndScan: function () {
+      if (this.refreshing) {
+        return;
+      }
+      this.devices = []
+
+      this.scanByZeroConf()
     },
   },
   components: {
