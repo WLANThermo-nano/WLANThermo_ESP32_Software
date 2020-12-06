@@ -25,6 +25,7 @@
 #include "WebHandler.h"
 #include "DbgPrint.h"
 #include <SPIFFS.h>
+#include "ArduinoLog.h"
 
 // API
 #define APISERVER "api.wlanthermo.de"
@@ -243,16 +244,19 @@ void Cloud::setConfig(CloudConfig newConfig)
 // Read time stamp from HTTP Header
 void Cloud::readUTCfromHeader(String payload)
 {
-  // Jahr 1971
-  if (now() < 31536000)
-  {
     tmElements_t tmx;
-    string_to_tm(&tmx, (char *)payload.c_str());
-    setTime(makeTime(tmx));
+    time_t seconds;
+    time_t delta;
 
-    IPRINTP("UTC: ");
-    DPRINTLN(digitalClockDisplay(now()));
-  }
+    string_to_tm(&tmx, (char *)payload.c_str());
+    seconds = makeTime(tmx);
+    delta = abs(seconds - now());
+
+    if(delta > 1u)
+    {
+      setTime(seconds);
+      Log.notice("Updated time from http header. New UTC time: %s" CR, digitalClockDisplay(now()).c_str());
+    }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
