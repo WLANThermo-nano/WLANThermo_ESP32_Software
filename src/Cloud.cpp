@@ -24,6 +24,7 @@
 #include "API.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
+#include "ArduinoLog.h"
 #include <SPIFFS.h>
 #include "ArduinoLog.h"
 
@@ -303,14 +304,23 @@ tmElements_t *Cloud::string_to_tm(tmElements_t *tme, char *str)
 void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
 {
   boolean *requestDone = (boolean *)optParm;
+  int responseCode;
 
   if (READY_STATE_DONE == readyState)
   {
     if (request->respHeaderExists("Date"))
       readUTCfromHeader(request->respHeaderValue("Date"));
 
-    if(request->responseHTTPcode() == HTTP_STATUS_OK)
+    responseCode = request->responseHTTPcode();
+
+    if (HTTP_STATUS_OK == responseCode)
+    {
       nanoWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
+    }
+    else
+    {
+      Log.warning("API response HTTP code: %d" CR, responseCode);
+    }
     
     *requestDone = true;
   }
@@ -334,7 +344,7 @@ void Cloud::handleQueue()
 
   if (requestDone)
   {
-    if(xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
+    if (xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
       return;
 
     requestDone = false;
