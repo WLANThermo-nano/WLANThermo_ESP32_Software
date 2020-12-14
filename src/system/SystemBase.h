@@ -26,6 +26,7 @@
 #include "peripherie/Buzzer.h"
 #include "peripherie/SdCard.h"
 #include "bluetooth/Bluetooth.h"
+#include "connect/Connect.h"
 #include "Notification.h"
 #include "Wlan.h"
 #include "Cloud.h"
@@ -86,6 +87,7 @@ public:
   PitmasterGrp pitmasters;
   Battery *battery;
   Bluetooth *bluetooth;
+  Connect *connect;
   Cloud cloud;
   Mqtt mqtt;
   OtaUpdate otaUpdate;
