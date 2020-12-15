@@ -33,6 +33,8 @@
 #define CHECKAPI "/"
 #define URL_FILE "/url.json"
 #define DEFAULT_INTERVAL 30u
+#define TOKEN_BYTE_LENGTH 11u
+#define TOKEN_STRING_LENGTH ((2u * TOKEN_BYTE_LENGTH) + 1u)
 
 #define READY_STATE_UNSENT 0
 #define READY_STATE_OPENED 1
@@ -132,18 +134,19 @@ String Cloud::newToken()
 
 String Cloud::createToken()
 {
-  String stamp = String(now(), HEX);
-  int x = 10 - stamp.length(); //pow(16,(10 - timestamp.length()));
-  long y = 1;                  // long geht bis 16^7
-  if (x > 7)
+  uint8_t random[TOKEN_BYTE_LENGTH] = {0u};
+  char token[TOKEN_STRING_LENGTH] = {0};
+
+  // use hardware RNG
+  esp_fill_random(random, TOKEN_BYTE_LENGTH);
+
+  // copy byte array to hex string
+  for(uint8_t index = 0u; index < TOKEN_BYTE_LENGTH; index++)
   {
-    stamp += String(random(268435456), HEX);
-    x -= 7;
+    sprintf(&token[index*2u], "%02x", random[index]);
   }
-  for (int i = 0; i < x; i++)
-    y *= 16;
-  stamp += String(random(y), HEX);
-  return (String)(gSystem->getSerialNumber() + stamp);
+
+  return String(token);
 }
 
 void Cloud::saveConfig()
