@@ -64,7 +64,7 @@ export default {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
-	menuScan: "Scan",
+	menuScan: "My Devices",
 	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
@@ -157,6 +157,6 @@ export default {
 	pitlinklowpass: "lowpass",
 	// scan
 	mobileAppHeader: "WLANThermo App",
-	scanTitle: "Scan devices",
+	scanTitle: "My Devices",
 	scanDevices: "Devices",
 };

@@ -65,6 +65,7 @@ export default {
 	menuHome: "Home",
 	menuWlan: "WLAN",
 	menuBluetooth: "Bluetooth",
+	menuScan: "Meine Geräte",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
 	menuIOT: "IoT",
@@ -153,5 +154,7 @@ export default {
 	pitlink: "Aktorverknüfung",
 	pitlinkdegressiv: "degressiv",
 	pitlinklinear: "linear",
-	pitlinklowpass: "lowpass"
+	pitlinklowpass: "lowpass",
+	// scan
+	scanTitle: "Meine Geräte",
 };

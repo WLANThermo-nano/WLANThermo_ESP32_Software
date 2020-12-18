@@ -8,26 +8,36 @@
         <form>
           <div class="select-channel-text">
             <span class="text">{{ $t("scanDevices") }}</span>
-            <!-- <span
+            <span
               class="ic_white icon-refresh"
               :class="{ 'icon-rotate-100': refreshing }"
-              @click="initAndScan"
-            ></span> -->
+              @click="checkConnection"
+            ></span>
           </div>
           <div
             class="scan-device-item"
-            v-for="(device, deviceIndex) in devices"
+            v-for="(device, deviceIndex) in displayedDevices"
             :key="deviceIndex"
             @click="deviceSelected(device)"
           >
             <div class="info">
               <div class="body">
+                <div class="image" style="width: 30px;">
+                  <div class="connection-state" 
+                       v-if="device.type !== 'demo'"
+                       :class="{ connected: device.connected, lower: device.type === 'linkv1' }">
+                  </div>
+                  <img :src="images[device.type]" alt="">
+                </div>
                 <div class="name-address">
                   <div class="name">
                     {{ device.name }}
                   </div>
                   <div class="address">
                     {{ device.ip }}
+                  </div>
+                  <div class="info">
+                    {{ device.info }}
                   </div>
                 </div>
               </div>
@@ -44,14 +54,68 @@
 
 <script>
 import EventBus from "../event-bus";
+import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile';
+
 const Netmask = require("netmask").Netmask;
+
+const MY_DEVICES_KEY = '_WLANTHERMO_MY_DEVICES';
+const DEVICE_SCHEMA_VERSION = 'v1'
+const DEVICE_SCHEMA_VERSION_KEY = '_WLANTHERMO_MY_DEVICES_VERSION'
+const DEVICE_TYPES = ['nanov1','nanov2','nanov3','miniv1','miniv2','miniv3','linkv1']
+
+function toInfoText(respData) {
+  return `${respData.device?.device} || ${respData.device?.sw_version}`
+}
+
+
+function toDeviceType(respData) {
+  const type = `${respData.device?.device?.toLocaleLowerCase()}${respData.device?.hw_version.toLocaleLowerCase()}`
+  if (DEVICE_TYPES.some(t => t === type)) {
+    return type
+  }
+  return 'demo'
+}
+
+
+// structure of a device: v1
+// {
+//   name: 'NANO-98f4ab7570d8',
+//   ip: '192.168.178.134',
+//   info: 'NANO V3 || v.1.0.6',
+//   type: 'nanov2',
+//   sn: '1591215343',
+//   connected: true,
+// },
 
 export default {
   name: "Scan",
   props: {},
+  computed: {
+    displayedDevices: function() {
+      return [...this.devices, ...this.demoDevices]
+    }
+  },
   data: () => {
     return {
+      images: {
+        nanov1: require(`@/assets/images/nanov1.svg`),
+        nanov2: require(`@/assets/images/nanov1.svg`),
+        nanov3: require(`@/assets/images/nanov3.svg`),
+        miniv1: require(`@/assets/images/miniv2.svg`),
+        miniv2: require(`@/assets/images/miniv2.svg`),
+        miniv3: require(`@/assets/images/miniv3.svg`),
+        linkv1: require(`@/assets/images/linkv1.svg`),
+        demo: require(`@/assets/images/demo.svg`)
+      },
       refreshing: false,
+      demoDevices: [
+        {
+          name: 'DEMO',
+          ip: '192.168.0.1',
+          info: 'Konfiguration',
+          type: 'demo'
+        }
+      ],
       devices: [],
       requestCompletedCount: 0,
       blockSize: 0,
@@ -67,7 +131,8 @@ export default {
         this.showConnectionLost = false
       }, 3000)
     }
-    document.addEventListener('deviceready', this.initAndScan.bind(this), false);
+    this.getStoredData()
+    document.addEventListener('deviceready', this.initAndScan.bind(this), false)
   },
   methods: {
     checkScanCompleted: function() {
@@ -76,13 +141,20 @@ export default {
       }
     },
     deviceSelected: function(device) {
-      // this.requestCancelTokenSource.cancel('')
-      EventBus.$emit("loading", true)
-      setTimeout(() => {
-        this.axios.defaults.baseURL = `http://${device.ip}`
+      if (device.type === 'demo') {
+        EventBus.$emit("loading", true)
+        console.log(`should be SPECIAL_URL_FOR_DEMO_API ${SPECIAL_URL_FOR_DEMO_API}`)
+        this.axios.defaults.baseURL = `http://${SPECIAL_URL_FOR_DEMO_API}`
         EventBus.$emit("loading", false)
         EventBus.$emit('device-selected')
-      })
+      } else if (device.connected) {
+        EventBus.$emit("loading", true)
+        setTimeout(() => {
+          this.axios.defaults.baseURL = `http://${device.ip}`
+          EventBus.$emit("loading", false)
+          EventBus.$emit('device-selected')
+        })
+      }
     },
     scanBySubnet: function() {
       this.refreshing = true
@@ -147,24 +219,17 @@ export default {
           console.log(`service added`)
           const ip = service.ipv4Addresses[0]
           const name = service.txtRecord.device
-          // ipAddress = service.ipv4Addresses[0];
           this.deviceName = service.txtRecord.device
-          if (ip && name && !this.devices.some(d => d.ip === ip && d.name === name)) {
-            this.devices.push({
-              ip: ip,
-              name: name
-            })
+          if (ip && name) {
+            this.checkAndAddDevice(name, ip)
           }
         } else if (action == "resolved") {
           const ip = service.ipv4Addresses[0]
           const name = service.txtRecord.device
           // ipAddress = service.ipv4Addresses[0];
           this.deviceName = service.txtRecord.device
-          if (!this.devices.some(d => d.ip === ip && d.name === name)) {
-            this.devices.push({
-              ip: ip,
-              name: name
-            })
+          if (ip && name) {
+            this.checkAndAddDevice(name, ip)
           }
           // window.location.href = "device.html?ip=" + ipAddress;
         } else {
@@ -175,12 +240,75 @@ export default {
         }
       });
     },
+    checkAndAddDevice: function(name, ip) {
+      console.log(`checking device ${name} - ${ip}`)
+      this.axios.get(`http://${ip}/settings`).then(resp => {
+          const data = resp.data
+          console.log(`resp data`)
+          console.log(resp)
+          const sn = data.device?.sn
+
+          const deviceInListAndHasDifferentIp = this.devices.some(d => d.sn === sn && d.ip !== ip)
+          const deviceInList = this.devices.some(d => d.sn === sn)
+          console.log(`deviceInListAndHasDifferentIp: ${deviceInListAndHasDifferentIp}`)
+          console.log(`deviceInList: ${deviceInList}`)
+
+          if (!deviceInList || deviceInListAndHasDifferentIp) {
+            if (deviceInListAndHasDifferentIp) {
+              this.devices = this.devices.filter(d => d.sn !== sn)
+            }
+            const info = toInfoText(data)
+            const type = toDeviceType(data)
+            this.devices.push({
+              ip: ip,
+              name: name,
+              sn: sn,
+              info: info,
+              type: type,
+              connected: true
+            })
+            this.updateStoredData()
+          }
+        });
+    },
+    updateStoredData: function() {
+      const storage = window.localStorage
+      storage.setItem(DEVICE_SCHEMA_VERSION_KEY, DEVICE_SCHEMA_VERSION)
+      storage.setItem(MY_DEVICES_KEY, JSON.stringify(this.devices))
+    },
+    getStoredData: function() {
+      const storage = window.localStorage
+      const value = storage.getItem(MY_DEVICES_KEY)
+      const version = storage.getItem(DEVICE_SCHEMA_VERSION_KEY)
+      if (value !== null && version === DEVICE_SCHEMA_VERSION) {
+        this.devices = JSON.parse(value)
+        this.devices = this.devices.map(d => {
+          d.connected = false
+          return d
+        })
+        this.checkConnection()
+      }
+    },
+    checkConnection: function() {
+      if (this.devices.length === 0) return
+      this.refreshing = true
+      this.devices.forEach(d => {
+        this.axios.get(`http://${d.ip}/settings`).then(resp => {
+          const data = resp.data
+          d.info = toInfoText(data)
+          d.type = toDeviceType(data)
+          d.connected = true
+          this.refreshing = false
+        }).catch(() => {
+          d.connected = false
+          this.refreshing = false
+        });
+      })
+    },
     initAndScan: function () {
       if (this.refreshing) {
-        return;
+        return
       }
-      this.devices = []
-
       this.scanByZeroConf()
     },
   },
@@ -250,19 +378,45 @@ export default {
       flex: 1 1 auto;
       display: flex;
       justify-content: space-between;
+      .image {
+        flex: 0 0 3em;
+        margin-right: 0.5em;
+        position: relative;
+        .connection-state {
+          position: absolute;
+          height: 0.8em;
+          width: 0.8em;
+          top: -0.1em;
+          right: -0.1em;
+          background-color: red;
+          border-radius: 0.8em;
+          &.lower {
+            top: 0.25em;
+          }
+          &.connected {
+            background-color: lightgreen;
+          }
+        }
+        img {
+          height: 100%;
+          width: 100%;
+        }
+      }
       .name-address {
         display: flex;
         flex-direction: column;
         flex: 1 1 auto;
         color: #fff;
         .name {
+          margin-top: 0;
           font-size: 1em;
           .space {
             margin-right: 0.5em;
           }
         }
-        .address {
-          font-size: 0.8em;
+        .address,.info {
+          font-weight: 300;
+          font-size: 0.75em;
           margin-left: 0.3em;
         }
       }
