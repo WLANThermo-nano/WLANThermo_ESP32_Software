@@ -49,6 +49,4 @@ private:
   static TFT_eSPI tft;
   lv_disp_buf_t lvDispBuffer;
   lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
-
-  PCA9533 pca9533;
 };

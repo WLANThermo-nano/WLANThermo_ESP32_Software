@@ -25,6 +25,7 @@
 #include "lvScreen.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
+#define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
 
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
@@ -48,16 +49,7 @@ void DisplayTft::hwInit()
   //pinMode(TFT_RST, INPUT);
 
   // configure dimming IC
-  pca9533.init();
-  Serial.println("Setup LED Controller:");
-  Serial.println(pca9533.ping());
-  pca9533.setPSC(REG_PSC0, 0);
-  pca9533.setPSC(REG_PSC1, 29);
-  pca9533.setMODE(IO0, LED_MODE_PWM0);
-  pca9533.setMODE(IO1, LED_MODE_PWM0);
-  pca9533.setMODE(IO2, LED_MODE_PWM0);
-  pca9533.setMODE(IO3, LED_MODE_PWM0);
-  pca9533.setPWM(REG_PWM0, 255);
+  this->setBrightness(100u);
 }
 
 void DisplayTft::init()
@@ -140,7 +132,10 @@ void DisplayTft::calibrate()
 void DisplayTft::setBrightness(uint8_t brightness)
 {
   int value = (int)(brightness * 2.55);
-  pca9533.setPWM(REG_PWM0, value);
+
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(value);
+  Wire.endTransmission();
 }
 
 void DisplayTft::drawCharging()
@@ -152,15 +147,10 @@ void DisplayTft::drawCharging()
   tft.setTextColor(TFT_WHITE, 0x31a6);
   tft.setTextSize(3);
 
-  // configure dimming IC
-  PCA9533 pca9533;
-  pca9533.init();
-  pca9533.setPSC(REG_PSC0, 0);
-  pca9533.setPSC(REG_PSC1, 29);
-  pca9533.setMODE(IO0, LED_MODE_ON);
-  pca9533.setMODE(IO1, LED_MODE_ON);
-  pca9533.setMODE(IO2, LED_MODE_ON);
-  pca9533.setMODE(IO3, LED_MODE_ON);
+  // set brightness
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(255);
+  Wire.endTransmission();
 
   if (gSystem->battery->isCharging())
   {
