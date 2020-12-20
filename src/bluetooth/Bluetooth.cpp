@@ -19,8 +19,10 @@
 ****************************************************/
 
 #include "Bluetooth.h"
-#include "bleFirmwareDat.h"
-#include "bleFirmwareBin.h"
+#include "bleFirmwareBin_nrf52832.h"
+#include "bleFirmwareDat_nrf52832.h"
+#include "bleFirmwareBin_nrf52840.h"
+#include "bleFirmwareDat_nrf52840.h"
 #include "temperature/TemperatureBase.h"
 #include "system/SystemBase.h"
 #include "Settings.h"
@@ -50,6 +52,7 @@ Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
     this->resetPin = resetPin;
     this->builtIn = false;
     this->chipEnabled = false;
+    this->isNrf52840 = false;
     pinMode(this->resetPin, OUTPUT);
     digitalWrite(this->resetPin, LOW);
 }
@@ -61,6 +64,7 @@ Bluetooth::Bluetooth(HardwareSerial *serial, uint8_t resetPin)
     this->resetPin = resetPin;
     this->builtIn = false;
     this->chipEnabled = false;
+    this->isNrf52840 = false;
     pinMode(this->resetPin, OUTPUT);
     digitalWrite(this->resetPin, LOW);
 }
@@ -381,26 +385,39 @@ void Bluetooth::task(void *parameter)
 boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)
 {
     const char bootloaderString[] = {'@', '@', 'B', 'O', 'O', 'T', 'L', 'O', 'A', 'D', 'E', 'R'};
+    const uint8_t variantIndex = 8u;
     uint32_t currentMillis = millis();
     uint32_t serialStringIndex = 0u;
     uint32_t bootloaderStringIndex = 0u;
     boolean success = false;
+    boolean nrf52840Check = false;
 
     while ((millis() - currentMillis) < timeoutInMs)
     {
         if (serialBle->available())
         {
-            if (bootloaderString[bootloaderStringIndex++] == (char)serialBle->read())
+            char currentChar = (char)serialBle->read();
+
+            // check for nrf52840 variant
+            if((variantIndex == bootloaderStringIndex) && ('4' == currentChar))
+            {
+                nrf52840Check = true;
+                bootloaderStringIndex++;
+                continue;
+            }
+            else if (bootloaderString[bootloaderStringIndex++] == currentChar)
             {
                 if (sizeof(bootloaderString) == bootloaderStringIndex)
                 {
                     success = true;
+                    this->isNrf52840 = nrf52840Check;
                     break;
                 }
             }
             else
             {
                 bootloaderStringIndex = 0u;
+                nrf52840Check = false;
             }
         }
     }
@@ -431,18 +448,33 @@ boolean Bluetooth::doDfu()
     {
         Serial.println("Hello from BLE bootloader");
         Serial.println("Start flashing of BLE application");
-        Log.notice("BLE chip detected" CR);
         uint32_t flashStart = millis();
 
         TFwu sFwu;
         memset(&sFwu, 0, sizeof(TFwu));
-        sFwu.commandObject = (uint8_t *)bleFirmwareDat_h;
-        sFwu.commandObjectLen = sizeof(bleFirmwareDat_h);
-        sFwu.dataObject = (uint8_t *)bleFirmwareBin_h;
-        sFwu.dataObjectLen = sizeof(bleFirmwareBin_h);
-        sFwu.dataObjectVer = bleFirmwareBin_h_version;
         sFwu.txFunction = Bluetooth::dfuTxFunction;
         sFwu.responseTimeoutMillisec = 5000u;
+        
+        if(this->isNrf52840)
+        {
+            // nrf52840 firmware
+            sFwu.commandObject = (uint8_t *)bleFirmwareDat_nrf52840_h;
+            sFwu.commandObjectLen = sizeof(bleFirmwareDat_nrf52840_h);
+            sFwu.dataObject = (uint8_t *)bleFirmwareBin_nrf52840_h;
+            sFwu.dataObjectLen = sizeof(bleFirmwareBin_nrf52840_h);
+            sFwu.dataObjectVer = bleFirmwareBin_nrf52840_h_version;
+            Log.notice("BLE chip: nrf52840" CR);
+        }
+        else
+        {
+            // nrf52832 firmware
+            sFwu.commandObject = (uint8_t *)bleFirmwareDat_nrf52832_h;
+            sFwu.commandObjectLen = sizeof(bleFirmwareDat_nrf52832_h);
+            sFwu.dataObject = (uint8_t *)bleFirmwareBin_nrf52832_h;
+            sFwu.dataObjectLen = sizeof(bleFirmwareBin_nrf52832_h);
+            sFwu.dataObjectVer = bleFirmwareBin_nrf52832_h_version;
+            Log.notice("BLE chip: nrf52832" CR);
+        }
 
         fwuInit(&sFwu);
         fwuExec(&sFwu);

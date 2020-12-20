@@ -74,6 +74,7 @@ private:
     boolean builtIn;
     static boolean enabled;
     boolean chipEnabled;
+    boolean isNrf52840;
     static std::vector<BleDeviceType *> bleDevices;
     static HardwareSerial *serialBle;
 };
