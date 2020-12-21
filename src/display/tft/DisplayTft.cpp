@@ -39,14 +39,13 @@ DisplayTft::DisplayTft()
 
 void DisplayTft::hwInit()
 {
+  DisplayTft::setBrightness(0u);
+
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
   tft.fillScreen(0x31a6);
   tft.pushImage(33, 70, 254, 100, DisplayTftStartScreenImg);
-
-  // configure PIN mode
-  //pinMode(TFT_RST, INPUT);
 
   // configure dimming IC
   this->setBrightness(100u);
@@ -140,6 +139,8 @@ void DisplayTft::setBrightness(uint8_t brightness)
 
 void DisplayTft::drawCharging()
 {
+  DisplayTft::setBrightness(0u);
+
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
@@ -148,9 +149,7 @@ void DisplayTft::drawCharging()
   tft.setTextSize(3);
 
   // set brightness
-  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
-  Wire.write(255);
-  Wire.endTransmission();
+  DisplayTft::setBrightness(100u);
 
   if (gSystem->battery->isCharging())
   {

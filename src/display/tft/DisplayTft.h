@@ -36,7 +36,7 @@ public:
   void hwInit();
   void update();
   void calibrate();
-  void setBrightness(uint8_t brightness);
+  static void setBrightness(uint8_t brightness);
   static void drawCharging();
 
 private:
