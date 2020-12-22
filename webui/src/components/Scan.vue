@@ -44,6 +44,14 @@
             </div>
           </div>
         </form>
+        <div style="color: #fff">
+          debug message:
+        </div>
+        <div style="max-height: 50vh; overflow-y:scroll;color:#fff;border: grey solid 1px; padding: 2px">
+          <div v-for="msg in debugMessages" :key="msg">
+            {{msg}}
+          </div>
+        </div>
       </div>
     </div>
     <div class="connection-lost-toast" v-if="showConnectionLost">
@@ -116,7 +124,9 @@ export default {
           type: 'demo'
         }
       ],
-      devices: [],
+      devices: [
+      ],
+      debugMessages: [],
       requestCompletedCount: 0,
       blockSize: 0,
       requestCancelTokenSource: '',
@@ -131,8 +141,9 @@ export default {
         this.showConnectionLost = false
       }, 3000)
     }
-    this.getStoredData()
-    document.addEventListener('deviceready', this.initAndScan.bind(this), false)
+    this.getStoredData().then(() => {
+      document.addEventListener('deviceready', this.initAndScan.bind(this), false)
+    })
   },
   methods: {
     checkScanCompleted: function() {
@@ -186,7 +197,6 @@ export default {
                 this.requestCompletedCount++;
                 if (resp?.data?.system?.host) {
                   const deviceName = resp.data.system.host
-                  this.deviceName = deviceName
                   this.devices.push({
                     ip: addr,
                     name: deviceName,
@@ -210,24 +220,25 @@ export default {
       zeroconf.registerAddressFamily = "ipv4";
       zeroconf.watchAddressFamily = "ipv4";
 
+      this.addToDebug(`start watching _wlanthermo._tcp.`)
       zeroconf.watch("_wlanthermo._tcp.", "local.", (result) => {
         var action = result.action;
         var service = result.service;
         console.log(`action ${action}`)
         console.log(service)
+        this.addToDebug(`action ${action}`)
         if (action == "added") {
           console.log(`service added`)
           const ip = service.ipv4Addresses[0]
           const name = service.txtRecord.device
-          this.deviceName = service.txtRecord.device
+          this.addToDebug(`action added, ip: ${ip}, name: ${name}`)
           if (ip && name) {
             this.checkAndAddDevice(name, ip)
           }
         } else if (action == "resolved") {
           const ip = service.ipv4Addresses[0]
           const name = service.txtRecord.device
-          // ipAddress = service.ipv4Addresses[0];
-          this.deviceName = service.txtRecord.device
+          this.addToDebug(`action resolved, ip: ${ip}, name: ${name}`)
           if (ip && name) {
             this.checkAndAddDevice(name, ip)
           }
@@ -240,8 +251,14 @@ export default {
         }
       });
     },
+    addToDebug: function(msg) {
+      var d = new Date();
+      var n = d.toLocaleTimeString();
+      this.debugMessages.push(`${n}: ${msg}`)
+    },
     checkAndAddDevice: function(name, ip) {
       console.log(`checking device ${name} - ${ip}`)
+      this.addToDebug(`calling /settings API of ip: ${ip}, name: ${name}`)
       this.axios.get(`http://${ip}/settings`).then(resp => {
           const data = resp.data
           console.log(`resp data`)
@@ -253,7 +270,11 @@ export default {
           console.log(`deviceInListAndHasDifferentIp: ${deviceInListAndHasDifferentIp}`)
           console.log(`deviceInList: ${deviceInList}`)
 
+          this.addToDebug(`got device settings device name: ${name}, ip: ${ip}, sn: ${sn}`)
+          this.addToDebug(`device name: ${name}, ip: ${ip} already in the list? => ${deviceInList}`)
+
           if (!deviceInList || deviceInListAndHasDifferentIp) {
+            this.addToDebug(`adding device name: ${name}, ip: ${ip} to the list`)
             if (deviceInListAndHasDifferentIp) {
               this.devices = this.devices.filter(d => d.sn !== sn)
             }
@@ -268,6 +289,8 @@ export default {
               connected: true
             })
             this.updateStoredData()
+          } else {
+            this.addToDebug(`device name: ${name}, ip: ${ip} already in the list... skipped`)
           }
         });
     },
@@ -277,17 +300,21 @@ export default {
       storage.setItem(MY_DEVICES_KEY, JSON.stringify(this.devices))
     },
     getStoredData: function() {
-      const storage = window.localStorage
-      const value = storage.getItem(MY_DEVICES_KEY)
-      const version = storage.getItem(DEVICE_SCHEMA_VERSION_KEY)
-      if (value !== null && version === DEVICE_SCHEMA_VERSION) {
-        this.devices = JSON.parse(value)
-        this.devices = this.devices.map(d => {
-          d.connected = false
-          return d
-        })
-        this.checkConnection()
-      }
+      return new Promise(resolve => {
+        const storage = window.localStorage
+        const value = storage.getItem(MY_DEVICES_KEY)
+        const version = storage.getItem(DEVICE_SCHEMA_VERSION_KEY)
+        this.addToDebug(`get data from local storage`)
+        if (value !== null && version === DEVICE_SCHEMA_VERSION) {
+          this.devices = JSON.parse(value)
+          this.devices = this.devices.map(d => {
+            d.connected = false
+            return d
+          })
+          this.checkConnection()
+        }
+        resolve()
+      })
     },
     checkConnection: function() {
       if (this.devices.length === 0) return
@@ -306,9 +333,7 @@ export default {
       })
     },
     initAndScan: function () {
-      if (this.refreshing) {
-        return
-      }
+      this.addToDebug(`scan with ZeroConf`)
       this.scanByZeroConf()
     },
   },
