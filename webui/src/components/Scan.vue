@@ -23,7 +23,7 @@
             <div class="info">
               <div class="body">
                 <div class="image" style="width: 30px;">
-                  <div class="connection-state" 
+                  <div class="connection-state"
                        v-if="device.type !== 'demo'"
                        :class="{ connected: device.connected, lower: device.type === 'linkv1' }">
                   </div>
@@ -263,7 +263,7 @@ export default {
           const data = resp.data
           console.log(`resp data`)
           console.log(resp)
-          const sn = data.device?.sn
+          const sn = data.device?.serial
 
           const deviceInListAndHasDifferentIp = this.devices.some(d => d.sn === sn && d.ip !== ip)
           const deviceInList = this.devices.some(d => d.sn === sn)
