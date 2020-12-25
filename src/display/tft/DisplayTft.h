@@ -41,6 +41,7 @@ public:
 
 private:
   boolean initDisplay();
+  boolean isCalibrated();
   static void task(void *parameter);
 
   static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
