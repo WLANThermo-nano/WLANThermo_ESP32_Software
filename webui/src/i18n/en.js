@@ -83,8 +83,9 @@ export default {
 	//Menü Notification
 	notificationTitle: "Notification service",
 	notificationActivate: "Activate push notification",
-	notificationToken: "API Token/Key",
-	notificationKey: "Chat ID / User Key",
+	notificationToken: "Token",
+	notificationChatId: "Chat ID",
+    notificationUserKey: "User Key",
 	notificationService: "Service",
 	repeadOnce: "1x",
 	repeadThreeTimes: "3x",
@@ -92,6 +93,9 @@ export default {
 	repeadTenTimes: "10x",
 	notificationRepead: "Repeats",
 	notificationSendMessage: "Send a test message",
+    notificationPriorityNormal: "Normal",
+    notificationPriorityHigh: "High",
+    notificationPriority: "Priority",
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Activate Cloud Service",

@@ -83,8 +83,9 @@ export default {
 	//Menü Notification
 	notificationTitle: "Benachrichtungsdienst",
 	notificationActivate: "Push-Benachrichtung aktivieren",
-	notificationToken: "API Token/Key",
-	notificationKey: "Chat ID / User Key",
+	notificationToken: "Token",
+	notificationChatId: "Chat ID",
+    notificationUserKey: "User Key",
 	notificationService: "Dienst",
 	repeadOnce: "1x",
 	repeadThreeTimes: "3x",
@@ -92,6 +93,9 @@ export default {
 	repeadTenTimes: "10x",
 	notificationRepead: "Wiederholungen",
 	notificationSendMessage: "Testnachricht senden",
+    notificationPriorityNormal: "Normal",
+    notificationPriorityHigh: "Hoch",
+    notificationPriority: "Priorität",
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Cloud Service aktivieren",

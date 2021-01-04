@@ -207,20 +207,6 @@ export const Data = {
             "CLtoken": "c82b96995b705ec91d87bb",
             "CLint": 30,
             "CLurl": "cloud.wlanthermo.de/index.html"
-        },
-        "notes": {
-            "fcm": [],
-            "ext": {
-                "on": 1,
-                "token": "token",
-                "id": "id",
-                "repeat": 1,
-                "service": 0,
-                "services": [
-                    "telegram",
-                    "pushover"
-                ]
-            }
         }
     },
     data: {
@@ -440,5 +426,33 @@ export const Data = {
                 "selected": 7
             }
         ]
+    },
+    getpush: {
+        "telegram": {
+            "enabled": false,
+            "token": "Telegram Token",
+            "chat_id": 123
+        },
+        "pushover": {
+            "enabled": true,
+            "token": "Pushover Token",
+            "user_key": "User Key",
+            "priority": 1
+        },
+        "app": {
+            "enabled": true,
+            "devices": [
+                {
+                    "name": "Dummys iPhone",
+                    "id": "123",
+                    "token": "abc"
+                },
+                {
+                    "name": "Dummys iPad",
+                    "id": "456",
+                    "token": "def"
+                }
+            ]
+        }
     }
 }
