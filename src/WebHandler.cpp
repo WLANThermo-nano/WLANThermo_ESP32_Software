@@ -90,6 +90,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
     {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
+    {"/getpush", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleGetPush, NULL},
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
@@ -97,7 +98,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setpitmaster", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPitmaster},
     {"/setpid", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPID},
     {"/setIoT", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setIoT},
-    {"/setPush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
+    {"/setpush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
     {"/setapi", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setServerAPI},
     {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest},
     {"/setbluetooth", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setBluetooth}};
@@ -485,6 +486,52 @@ void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
   request->send(200, TEXTPLAIN, gLogRingBuffer.get());
 }
 
+void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
+{
+  AsyncJsonResponse *response = new AsyncJsonResponse();
+  response->addHeader("Server", "ESP Async Web Server");
+
+  JsonObject &json = response->getRoot();
+
+  PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
+  PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
+  PushAppType pushApp = gSystem->notification.getAppConfig();
+
+  JsonObject &telegram = json.createNestedObject("telegram");
+
+  telegram["enabled"] = pushTelegram.enabled;
+  telegram["token"] = pushTelegram.token;
+  telegram["chat_id"] = pushTelegram.chatId;
+
+  JsonObject &pushover = json.createNestedObject("pushover");
+
+  pushover["enabled"] = pushPushover.enabled;
+  pushover["token"] = pushPushover.token;
+  pushover["user_key"] = pushPushover.userKey;
+  pushover["priority"] = pushPushover.priority;
+
+  JsonObject &app = json.createNestedObject("app");
+
+  app["enabled"] = pushApp.enabled;
+
+  JsonArray &devices = app.createNestedArray("devices");
+
+  for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
+  {
+    if (strlen(pushApp.devices[i].token) > 0u)
+    {
+      JsonObject &device = devices.createNestedObject();
+
+      device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
+      device["token"] = pushApp.devices[i].token;
+    }
+  }
+
+  response->setLength();
+  request->send(response);
+}
+
 int NanoWebHandler::checkStringLength(String tex)
 {
   int index = tex.length();
@@ -721,23 +768,80 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
   if (!_push.success())
     return 0;
 
-  if (_push.containsKey("on"))
-    gSystem->notification.pushService.on = (byte)_push["on"];
-  if (_push.containsKey("token"))
-    gSystem->notification.pushService.token = _push["token"].asString();
-  if (_push.containsKey("id"))
-    gSystem->notification.pushService.id = _push["id"].asString();
-  if (_push.containsKey("repeat"))
-    gSystem->notification.pushService.repeat = _push["repeat"];
-  if (_push.containsKey("service"))
-    gSystem->notification.pushService.service = _push["service"];
-
-  if (gSystem->notification.pushService.on == 2)
-    gSystem->notification.notificationData.type = 1; // Verbindungstest
-  else
+  if (_push.containsKey("telegram"))
   {
-    gSystem->notification.saveConfig();
+    JsonObject &_telegram = _push["telegram"];
+
+    if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
+        _telegram.containsKey("chat_id"))
+    {
+      // set telegram
+      PushTelegramType telegram;
+      memset(&telegram, 0, sizeof(telegram));
+
+      telegram.enabled = _telegram["enabled"];
+      strcpy(telegram.token, _telegram["token"].asString());
+      telegram.chatId = _telegram["chat_id"];
+      gSystem->notification.setTelegramConfig(telegram);
+    }
   }
+
+  if (_push.containsKey("pushover"))
+  {
+    JsonObject &_pushover = _push["pushover"];
+
+    if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
+        _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
+    {
+      // set pushover
+      PushPushoverType pushover;
+      memset(&pushover, 0, sizeof(pushover));
+      pushover.enabled = _pushover["enabled"];
+      strcpy(pushover.token, _pushover["token"].asString());
+      strcpy(pushover.userKey, _pushover["user_key"].asString());
+      gSystem->notification.setPushoverConfig(pushover);
+    }
+  }
+
+  if (_push.containsKey("app"))
+  {
+    JsonObject &_app = _push["app"];
+
+    if (_app.containsKey("enabled") && _app.containsKey("devices"))
+    {
+      // set app
+      PushAppType app;
+      memset(&app, 0, sizeof(app));
+
+      app.enabled = _app["enabled"];
+
+      JsonArray &_devices = _app["devices"];
+      uint8_t deviceIndex = 0u;
+      Serial.println("0");
+
+      for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
+      {
+        JsonObject &_device = it->asObject();
+        Serial.println("1");
+
+        if (_device.containsKey("name") && _device.containsKey("id") &&
+            _device.containsKey("token"))
+        {
+          PushAppDeviceType appDevice;
+          strcpy(app.devices[deviceIndex].name, _device["name"].asString());
+          strcpy(app.devices[deviceIndex].id, _device["id"].asString());
+          strcpy(app.devices[deviceIndex].token, _device["token"].asString());
+          deviceIndex++;
+          Serial.println("2");
+        }
+      }
+
+      gSystem->notification.setAppConfig(app);
+    }
+  }
+
+  gSystem->notification.saveConfig();
+
   return 1;
 }
 

@@ -31,12 +31,9 @@ Notification::Notification()
 
 void Notification::loadDefaultValues()
 {
-  pushService.on = 0;
-  pushService.token = "";
-  pushService.id = "";
-  pushService.repeat = 1;
-  pushService.service = 0;
-
+  memset(&pushTelegram, 0, sizeof(pushTelegram));
+  memset(&pushPushover, 0, sizeof(pushPushover));
+  memset(&pushApp, 0, sizeof(pushApp));
   memset(&notificationData, 0u, sizeof(Notification));
 }
 
@@ -73,36 +70,36 @@ void Notification::check(TemperatureBase *temperature)
   {
     // delete channel from index
     this->notificationData.index &= ~(1 << index);
-    temperature->setNotificationCounter(this->pushService.repeat);
+    temperature->setNotificationCounter(1u);
   }
 }
 
 void Notification::update()
 {
 
-  if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
+  /*if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
   {
     // Testnachricht
     Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
   }
-  else if (this->notificationData.index > 0)
+  else */
+  if (this->notificationData.index > 0u)
   { // CHANNEL NOTIFICATION
 
-    for (int i = 0; i < 32u; i++)
+    for (uint8_t i = 0u; i < 32u; i++)
     {
-      if (this->notificationData.index & (1 << i))
+      if (this->notificationData.index & (1u << i))
       {
-        if (this->pushService.on > 0)
+        if (this->pushTelegram.enabled || this->pushPushover.enabled || this->pushApp.enabled)
         {
-          this->notificationData.ch = i;
-          Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
+          this->notificationData.channel = i;
+          this->notificationData.type = (this->notificationData.index & (1u << i)) ? NotificationType::UpperLimit : NotificationType::LowerLimit;
+          Cloud::sendAPI(APINOTIFICATION, NOTELINK, NOPARA);
+          break;
         }
       }
     }
   }
-
-  if (this->pushService.on == 3)
-    loadConfig();
 }
 
 void Notification::saveConfig()
@@ -110,11 +107,36 @@ void Notification::saveConfig()
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
 
-  json["onP"] = pushService.on;
-  json["tokP"] = pushService.token;
-  json["idP"] = pushService.id;
-  json["rptP"] = pushService.repeat;
-  json["svcP"] = pushService.service;
+  JsonObject &telegram = json.createNestedObject("telegram");
+
+  telegram["enabled"] = pushTelegram.enabled;
+  telegram["token"] = pushTelegram.token;
+  telegram["chat_id"] = pushTelegram.chatId;
+
+  JsonObject &pushover = json.createNestedObject("pushover");
+
+  pushover["enabled"] = pushPushover.enabled;
+  pushover["token"] = pushPushover.token;
+  pushover["user_key"] = pushPushover.userKey;
+  pushover["priority"] = pushPushover.priority;
+
+  JsonObject &app = json.createNestedObject("app");
+
+  app["enabled"] = pushApp.enabled;
+
+  JsonArray &devices = app.createNestedArray("devices");
+
+  for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
+  {
+    if (strlen(pushApp.devices[i].token) > 0u)
+    {
+      JsonObject &device = devices.createNestedObject();
+
+      device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
+      device["token"] = pushApp.devices[i].token;
+    }
+  }
 
   Settings::write(kPush, json);
 }
@@ -126,30 +148,25 @@ void Notification::loadConfig()
 
   if (json.success())
   {
-
-    if (json.containsKey("onP"))
-      pushService.on = json["onP"];
-    if (json.containsKey("tokP"))
-      pushService.token = json["tokP"].asString();
-    if (json.containsKey("idP"))
-      pushService.id = json["idP"].asString();
-    if (json.containsKey("rptP"))
-      pushService.repeat = json["rptP"];
-    if (json.containsKey("svcP"))
-      pushService.service = json["svcP"];
+    // migrate from old structure
+    if (json.containsKey("onP") && json.containsKey("tokP") &&
+        json.containsKey("idP") && json.containsKey("rptP") &&
+        json.containsKey("svcP"))
+    {
+      switch (json["svcP"].as<uint8_t>())
+      {
+      // telegram
+      case 0u:
+        pushTelegram.enabled = json["onP"];
+        strcpy(pushTelegram.token, json["tokP"].asString());
+        pushTelegram.chatId = json["idP"];
+        break;
+      // pushover
+      case 1u:
+        pushPushover.enabled = json["onP"];
+        strcpy(pushPushover.token, json["tokP"].asString());
+        strcpy(pushPushover.userKey, json["idP"].asString());
+      }
+    }
   }
-}
-
-PushService Notification::getConfig()
-{
-  return pushService;
-}
-
-void Notification::setConfig(PushService newConfig)
-{
-  // copy new config
-  pushService = newConfig;
-
-  // save to NvM
-  saveConfig();
 }
