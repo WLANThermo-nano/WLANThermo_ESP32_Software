@@ -80,7 +80,7 @@ void Notification::update()
   /*if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
   {
     // Testnachricht
-    Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
+    Cloud::sendAPI(APINOTE, NOTELINK);
   }
   else */
   if (this->notificationData.index > 0u)
@@ -94,7 +94,7 @@ void Notification::update()
         {
           this->notificationData.channel = i;
           this->notificationData.type = (this->notificationData.index & (1u << i)) ? NotificationType::UpperLimit : NotificationType::LowerLimit;
-          Cloud::sendAPI(APINOTIFICATION, NOTELINK, NOPARA);
+          Cloud::sendAPI(APINOTIFICATION, NOTELINK);
           break;
         }
       }
