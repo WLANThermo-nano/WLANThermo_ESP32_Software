@@ -27,7 +27,7 @@
         <form>
           <div class="form-checkbox">
             <label for="notificationActivate" class="pure-checkbox checkbox">
-              <input v-model="telegram.enabled" :true-value="1" :false-value="0" type="checkbox" id="notificationActivate" />
+              <input v-model="telegram.enabled" type="checkbox" id="notificationActivate" />
               {{$t("notificationActivate")}}
             </label>
           </div>
@@ -53,7 +53,7 @@
         <form>
           <div class="form-checkbox">
             <label for="notificationActivate" class="pure-checkbox checkbox">
-              <input v-model="pushover.enabled" :true-value="1" :false-value="0" type="checkbox" id="notificationActivate" />
+              <input v-model="pushover.enabled" type="checkbox" id="notificationActivate" />
               {{$t("notificationActivate")}}
             </label>
           </div>
@@ -95,6 +95,7 @@ export default {
       priorityOptions: [
         { value: '0', translationKey: 'notificationPriorityNormal' },
         { value: '1', translationKey: 'notificationPriorityHigh' },
+        { value: '2', translationKey: 'notificationPriorityEmergency' },
       ],
       telegram: {
         enabled: false,
@@ -147,9 +148,8 @@ export default {
       });
     },
     sendTestMessage: function(serviceName, serviceData) {
-      let dataObj = {}
-      dataObj[serviceName] = JSON.parse(JSON.stringify(serviceData))
-      dataObj[serviceName].test = true
+      let dataObj = {test: true}
+      dataObj[serviceName] = serviceData
       const requestObj = Object.assign({}, dataObj)
       this.axios.post('/setpush', requestObj).then(() => {});
     }
