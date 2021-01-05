@@ -768,6 +768,17 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
   if (!_push.success())
     return 0;
 
+  boolean sendTestMessage = false;
+
+  // check if test message is requested
+  if (_push.containsKey("test"))
+  {
+    if (true == _push["test"].as<boolean>())
+    {
+      sendTestMessage = true;
+    }
+  }
+
   if (_push.containsKey("telegram"))
   {
     JsonObject &_telegram = _push["telegram"];
@@ -782,7 +793,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       telegram.enabled = _telegram["enabled"];
       strcpy(telegram.token, _telegram["token"].asString());
       telegram.chatId = _telegram["chat_id"];
-      gSystem->notification.setTelegramConfig(telegram);
+      gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
     }
   }
 
@@ -799,7 +810,15 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       pushover.enabled = _pushover["enabled"];
       strcpy(pushover.token, _pushover["token"].asString());
       strcpy(pushover.userKey, _pushover["user_key"].asString());
-      gSystem->notification.setPushoverConfig(pushover);
+      pushover.priority = _pushover["priority"];
+
+      if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
+      {
+        pushover.retry = _pushover["retry"];
+        pushover.expire = _pushover["expire"];
+      }
+
+      gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
     }
   }
 
@@ -817,30 +836,29 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
       JsonArray &_devices = _app["devices"];
       uint8_t deviceIndex = 0u;
-      Serial.println("0");
 
       for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
       {
         JsonObject &_device = it->asObject();
-        Serial.println("1");
 
         if (_device.containsKey("name") && _device.containsKey("id") &&
             _device.containsKey("token"))
         {
-          PushAppDeviceType appDevice;
           strcpy(app.devices[deviceIndex].name, _device["name"].asString());
           strcpy(app.devices[deviceIndex].id, _device["id"].asString());
           strcpy(app.devices[deviceIndex].token, _device["token"].asString());
           deviceIndex++;
-          Serial.println("2");
         }
       }
 
-      gSystem->notification.setAppConfig(app);
+      gSystem->notification.setAppConfig(app, sendTestMessage);
     }
   }
 
-  gSystem->notification.saveConfig();
+  if (false == sendTestMessage)
+  {
+    gSystem->notification.saveConfig();
+  }
 
   return 1;
 }

@@ -217,21 +217,50 @@ void API::notificationObj(JsonObject &jObj)
   PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
   PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
   PushAppType pushApp = gSystem->notification.getAppConfig();
+  NotificationData notificationData = gSystem->notification.getNotificationData();
 
   JsonObject &_message = jObj.createNestedObject("message");
   JsonArray &_services = jObj.createNestedArray("services");
 
-  _message["type"] = (uint32_t)gSystem->notification.notificationData.type;
+  _message["type"] = (uint32_t)notificationData.type;
 
-  // Add channel for temperature alarms
-  if ((NotificationType::LowerLimit == gSystem->notification.notificationData.type) ||
-      (NotificationType::UpperLimit == gSystem->notification.notificationData.type))
+  // Handle test message
+  if (NotificationType::Test == notificationData.type)
   {
-    TemperatureBase *temperature = gSystem->temperatures[gSystem->notification.notificationData.channel];
-    if (temperature != NULL)
+    // Disable all services
+    pushTelegram.enabled = false;
+    pushPushover.enabled = false;
+    pushApp.enabled = false;
+
+    // Copy test config and enable test service
+    switch (notificationData.testService)
     {
-      temperature->updateNotificationCounter();
-      _message["channel"] = (uint32_t)gSystem->notification.notificationData.channel;
+    case NotificationService::Telegram:
+      memcpy(&pushTelegram, notificationData.testConfig, sizeof(PushTelegramType));
+      pushTelegram.enabled = true;
+      break;
+    case NotificationService::Pushover:
+      memcpy(&pushPushover, notificationData.testConfig, sizeof(PushPushoverType));
+      pushPushover.enabled = true;
+      break;
+    case NotificationService::App:
+      memcpy(&pushApp, notificationData.testConfig, sizeof(PushAppType));
+      pushApp.enabled = true;
+      break;
+    }
+  }
+  // Add channel for temperature alarms
+  else if ((NotificationType::LowerLimit == notificationData.type) ||
+           (NotificationType::UpperLimit == notificationData.type))
+  {
+    _message["channel"] = (uint32_t)notificationData.channel;
+    _message["unit"] = String((char)gSystem->temperatures.getUnit());
+    TemperatureBase *temperature = gSystem->temperatures[notificationData.channel];
+
+    if(temperature)
+    {
+      _message["temp"] = (int)temperature->getValue();
+      _message["limit"] = (NotificationType::LowerLimit == notificationData.type) ? temperature->getMinValue() : temperature->getMaxValue();
     }
   }
 
@@ -250,6 +279,8 @@ void API::notificationObj(JsonObject &jObj)
     _pushover["token"] = String(pushPushover.token);
     _pushover["user_key"] = String(pushPushover.userKey);
     _pushover["priority"] = pushPushover.priority;
+    _pushover["retry"] = pushPushover.retry;
+    _pushover["expire"] = pushPushover.expire;
   }
 
   if (pushApp.enabled)

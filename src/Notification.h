@@ -26,20 +26,30 @@
 
 enum class NotificationType
 {
-  Test,
+  Test = 0,
   LowerLimit,
   UpperLimit,
   Battery
 };
 
+enum class NotificationService
+{
+  None,
+  Telegram,
+  Pushover,
+  App
+};
+
 // NOTIFICATION
-struct NotificationData
+typedef struct
 {
   uint32_t index;
   uint32_t limit;
   uint8_t channel;
   NotificationType type;
-};
+  NotificationService testService;
+  void *testConfig;
+} NotificationData;
 
 typedef struct
 {
@@ -54,6 +64,8 @@ typedef struct
   char token[31];
   char userKey[31];
   uint8_t priority;
+  uint32_t retry;
+  uint32_t expire;
 } PushPushoverType;
 
 typedef struct
@@ -77,17 +89,20 @@ public:
   void loadConfig();
   void loadDefaultValues();
   PushTelegramType getTelegramConfig() { return pushTelegram; };
-  void setTelegramConfig(PushTelegramType config) { pushTelegram = config; };
   PushPushoverType getPushoverConfig() { return pushPushover; };
-  void setPushoverConfig(PushPushoverType config) { pushPushover = config; };
   PushAppType getAppConfig() { return pushApp; };
-  void setAppConfig(PushAppType config) { pushApp = config; };
+  NotificationData getNotificationData() { return notificationData; };
+  void setTelegramConfig(PushTelegramType config, boolean testMessage);
+  void setPushoverConfig(PushPushoverType config, boolean testMessage);
+  void setAppConfig(PushAppType config, boolean testMessage);
+  void sendTestMessage(NotificationService service, void *config);
   void check(TemperatureBase *temperature);
   void update();
-  NotificationData notificationData;
 
 private:
+  NotificationData notificationData;
   PushTelegramType pushTelegram;
   PushPushoverType pushPushover;
   PushAppType pushApp;
+  
 };
