@@ -335,6 +335,14 @@ export default {
     initAndScan: function () {
       this.addToDebug(`scan with ZeroConf`)
       this.scanByZeroConf()
+      // eslint-disable-next-line
+      var messaging = cordova.plugins.firebase.messaging
+      messaging.requestPermission().then(function() {
+      console.log("Push messaging is allowed");
+      });
+      messaging.getToken().then(function(token) {
+        console.log(`Got device token: ${token}`)
+      });
     },
   },
   components: {
