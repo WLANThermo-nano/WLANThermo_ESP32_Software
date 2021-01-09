@@ -17,21 +17,24 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
+#pragma once
 
-#define TASK_PRIORITY_OTA_UPDATE 100
-#define TASK_PRIORITY_SYSTEM_TASK 30
-#define TASK_PRIORITY_MAIN_TASK 3
-#define TASK_PRIORITY_CONNECT_TASK 2
-#define TASK_PRIORITY_DISPLAY_TASK 2
-#define TASK_PRIORITY_BLUETOOTH_TASK 2
-#define TASK_PRIORITY_PBGUARD_TASK 1
+#include "Arduino.h"
 
-#define TASK_CYCLE_TIME_SYSTEM_TASK 200
-#define TASK_CYCLE_TIME_MAIN_TASK 200
-
-#define TASK_CYCLE_TIME_CONNECT_TASK 1000
-
-#define TASK_CYCLE_TIME_DISPLAY_FAST_TASK 10
-#define TASK_CYCLE_TIME_DISPLAY_SLOW_TASK 100
-
-#define TASK_CYCLE_TIME_BLUETOOTH_TASK 1000
+class PbGuard
+{
+  public:
+    PbGuard();
+    void enable();
+    void disable();
+    void update();
+    void saveConfig();
+  private:
+    static void task(void *parameter);
+    void loadConfig();
+    boolean enabled;
+    uint32_t lowInterval;
+    uint32_t highInterval;
+    uint32_t previousMillis;
+    uint8_t state;
+};
