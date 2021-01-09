@@ -38,6 +38,7 @@ char SystemBase::serialNumber[13] = "";
 SystemBase::SystemBase()
 {
   buzzer = NULL;
+  pbGuard = NULL;
   battery = NULL;
   bluetooth = NULL;
   sdCard = NULL;
@@ -177,6 +178,11 @@ void SystemBase::update()
     }
 
     setPowerSaveMode(enablePsm);
+  }
+
+  if(pbGuard != NULL)
+  {
+    pbGuard->update();
   }
 }
 

@@ -389,11 +389,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
 
   switch (type)
   {
-  case SensorType::Maverick: // Maverik
-    Rn = 1000;
-    a = 0.003358;
-    b = 0.0002242;
-    c = 0.00000261;
+  case SensorType::Maverick: // 1000K/Maverik
+    Rn = 999.05;
+    a = 3.3537355e-03;
+    b = 2.2320379e-04;
+    c = 2.3380330e-06;
     break;
   case SensorType::FantastNeu: // Fantast-Neu
     Rn = 220;
@@ -407,11 +407,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     b = 2.5698192e-04;
     c = 1.6391056e-06;
     break;
-  case SensorType::iGrill2: // iGrill2
-    Rn = 99.61;
-    a = 3.3562424e-03;
-    b = 2.5319218e-04;
-    c = 2.7988397e-06;
+  case SensorType::iGrill2: // 100K/iGrill2
+    Rn = 100.075;
+    a = 3.3525233e-03;
+    b = 2.5293916e-04;
+    c = 2.7388783e-06;
     break;
   case SensorType::ET73: // ET-73
     Rn = 200;
@@ -441,9 +441,9 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     break;
   case SensorType::NTC100K6A1B: // NTC 100K6A1B (lila Kopf)
     Rn = 100;
-    a = 0.00335639;
-    b = 0.000241116;
-    c = 0.00000243362;
+    a = 3.3544846e-03;
+    b = 2.4144443e-04;
+    c = 2.6788747e-06;
     break;
   case SensorType::Weber6743: // Weber_6743
     Rn = 102.315;
