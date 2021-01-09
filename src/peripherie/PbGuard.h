@@ -28,6 +28,7 @@ class PbGuard
     void enable();
     void disable();
     void update();
+    void saveConfig();
   private:
     static void task(void *parameter);
     void loadConfig();

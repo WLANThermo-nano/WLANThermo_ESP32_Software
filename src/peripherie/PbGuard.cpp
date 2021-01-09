@@ -22,7 +22,7 @@
 #include "TaskConfig.h"
 #include <WiFi.h>
 
-#define PBGUARD_DEFAULT_LOW_INTERVAL 5000u
+#define PBGUARD_DEFAULT_LOW_INTERVAL 10000u
 #define PBGUARD_DEFAULT_HIGH_INTERVAL 1000u
 
 void PbGuard::task(void *parameter)
@@ -41,6 +41,7 @@ PbGuard::PbGuard()
   this->highInterval = PBGUARD_DEFAULT_HIGH_INTERVAL;
   this->previousMillis = 0u;
   loadConfig();
+  saveConfig();
 }
 
 void PbGuard::enable()
@@ -77,6 +78,16 @@ void PbGuard::loadConfig()
     if (json.containsKey("enabled"))
       this->enabled = json["enabled"];
   }
+}
+
+void PbGuard::saveConfig()
+{
+  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
+  JsonObject &json = jsonBuffer.createObject();
+  json["low"]  = this->lowInterval;
+  json["high"]  = this->highInterval;
+  json["enabled"] = this->enabled;
+  Settings::write(kPbGuard, json);
 }
 
 void PbGuard::update()
