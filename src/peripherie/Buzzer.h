@@ -22,17 +22,24 @@
 #include "Arduino.h"
 
 #define BUZZER_INTERVALL_MS 1000u
-#define BUZZER_FREQUENCY 2000
+
+#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
+#define BUZZER_FREQUENCY 2700
+#else
+#define BUZZER_FREQUENCY 4000
+#endif
 
 class Buzzer
 {
   public:
     Buzzer(uint8_t ioPin, uint8_t channel);
-    virtual void enable();
-    virtual void disable();
-    virtual void update();
+    void enable();
+    void disable();
+    void test();
+    void update();
   private:
     boolean enabled;
+    boolean testEnabled;
     uint8_t ioPin;
     uint8_t channel;
     double frequency;

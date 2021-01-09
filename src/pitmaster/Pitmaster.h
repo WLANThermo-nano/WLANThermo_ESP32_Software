@@ -113,6 +113,12 @@ public:
   void setValue(float value);
   void setTargetTemperature(float temperature);
   float getTargetTemperature();
+  void setServoMinDutyCyle(uint16_t dutyCycle);
+  uint16_t getServoMinDutyCyle() { return this->servoDcMin; }
+  void setServoMaxDutyCyle(uint16_t dutyCycle);
+  uint16_t getServoMaxDutyCyle() { return this->servoDcMax; }
+  void setDCount(uint8_t dutyCycle);
+  uint8_t getDCount() { return this->dCount; }
   boolean getOPLStatus();
   float getOPLTemperature();
   uint8_t getGlobalIndex() { return this->globalIndex; };
@@ -171,8 +177,14 @@ private:
   float esum;   // PITMASTER I-PART DIFFERENZ SUM
   float elast;  // PITMASTER D-PART DIFFERENZ LAST
   float Ki_alt; // PITMASTER I-PART CACHE
+  uint8_t ecount;
+  uint8_t dCount;
+  float edif;
   bool jump;
 
   uint16_t pause;
   uint previousMillis;
+
+  uint16_t servoDcMin;
+  uint16_t servoDcMax;
 };

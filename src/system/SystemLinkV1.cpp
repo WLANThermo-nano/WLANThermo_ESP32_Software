@@ -108,6 +108,11 @@ void SystemLinkV1::init()
 
   pitmasters.loadConfig();
 */
+
+  // initialize PBGuard (temporary)
+  pinMode(26u, OUTPUT);
+  digitalWrite(26u, HIGH);
+
   sdCard = new SdCard(CS_SD_CARD);
 
   pbGuard = new PbGuard();

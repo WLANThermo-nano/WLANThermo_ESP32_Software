@@ -37,14 +37,13 @@ public:
     static String getPassword();
     static const char *getRealm() { return "WLANThermo Device"; }
     static void setPassword(String newPassword);
-    static boolean getRequireAuth() { return requireAuth; }
+    static boolean requireAuth() { return password.length() > 0u; }
 
 private:
     void loadConfig();
     AsyncWebServer *webServer;
     static const char *username;
     static String password;
-    static boolean requireAuth;
 };
 
 extern WServer gWebServer;

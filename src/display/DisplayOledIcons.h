@@ -40,5 +40,6 @@ extern const uint8_t xbmarrow2[7];
 extern const uint8_t xbmcharge[10];
 extern const uint8_t xbmback[112];
 extern const uint8_t xbmnano[795];
+extern const uint8_t xbmlink[795];
 extern const char *menutextde[16];
  

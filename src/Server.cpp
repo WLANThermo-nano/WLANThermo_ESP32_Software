@@ -32,16 +32,23 @@
 #include <SPIFFS.h>
 
 // include html files
-#include "webui/index.html.gz.h"
-#include "webui/fwupdate.html.gz.h"
-#include "webui/displayupdate.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-#define DEFAULT_PASSWORD "admin"
+#if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3)
+#define WEB_SUBFOLDER "mini"
+#elif HW_NANO_V3
+#define WEB_SUBFOLDER "nano"
+#elif HW_LINK_V1
+#define WEB_SUBFOLDER "link"
+#endif
+
+extern const uint8_t index_html_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_start");
+extern const size_t index_html_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_size");
+extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_start");
+extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
 
 const char *WServer::username = "admin";
-String WServer::password = DEFAULT_PASSWORD;
-boolean WServer::requireAuth = true;
+String WServer::password = "";
 
 WServer::WServer()
 {
@@ -142,17 +149,38 @@ void WServer::init()
 
   // to avoid multiple requests to ESP
   webServer->on("/", [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, sizeof(index_html_gz));
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
+  // favicon.ico
+  webServer->on("/favicon.ico", [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "image/x-icon", favicon_ico_start, (size_t)&favicon_ico_size);
+    response->addHeader("Content-Disposition", "inline; filename=\"favicon.ico\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
 
   // 404 NOT found: called when the url is not defined here
   webServer->onNotFound([](AsyncWebServerRequest *request) {
-    request->send(404);
+    if (request->method() == HTTP_OPTIONS)
+    {
+      request->send(200);
+    }
+    else
+    {
+      request->send(404);
+    }
   });
 
+  /* Add default headers */
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+  DefaultHeaders::Instance().addHeader("Access-Control-Max-Age", "1000");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, client-security-token, scan");
+    
   webServer->begin();
   IPRINTPLN("HTTP server started");
 }
@@ -162,7 +190,6 @@ void WServer::saveConfig()
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
   json["password"] = password;
-  json["auth"] = requireAuth;
   Settings::write(kServer, json);
 }
 
@@ -176,8 +203,6 @@ void WServer::loadConfig()
 
     if (json.containsKey("password"))
       this->password = json["password"].asString();
-    if (json.containsKey("auth"))
-      this->requireAuth = json["auth"].as<boolean>();
   }
 }
 

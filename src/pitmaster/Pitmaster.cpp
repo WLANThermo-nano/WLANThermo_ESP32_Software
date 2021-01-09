@@ -42,12 +42,27 @@
 #define OPL_FALL 97   // OPEN LID LIMIT FALLING
 #define OPL_RISE 100  // OPEN LID LIMIT RISING
 #define OPL_PAUSE 300 // OPEN LID PAUSE
-#define OPL_THRESHOLD 4
+#define OPL_THRESHOLD 2
 
 #define ATOVERTEMP 30             // AUTOTUNE OVERTEMPERATURE LIMIT
 #define ATTIMELIMIT 120L * 60000L // AUTOTUNE TIMELIMIT
 
-#define MEDIAN_SIZE 5u
+#define MEDIAN_SIZE 10u
+#define PM_DEFAULT_DCOUNT 15u
+#define PM_DEFAULT_DCOUNT_MIN 1u
+#define PM_DEFAULT_DCOUNT_MAX 60u
+
+// duty cycle calculation
+// frequency: 50Hz --> 20ms
+// timer resolution: 16 bit --> 65535
+// resolution: 20.000us / 65535 --> 0,305us
+// e.g. servo min duty cyle:  550us / 0,305...us --> 1802
+// e.g. servo min duty cyle: 2250us / 0,305...us --> 7373
+#define PM_SERVO_DUTY_CYCLE_DIVISOR 0.30518f
+#define PM_DEFAULT_SERVO_MIN_DUTY_CYCLE 550u    //in uS
+#define PM_DEFAULT_SERVO_MAX_DUTY_CYCLE 2250u   //in uS
+#define PM_CONFIG_SERVO_MIN_DUTY_CYCLE 400u     //in uS
+#define PM_CONFIG_SERVO_MAX_DUTY_CYCLE 2600     //in uS
 
 uint8_t Pitmaster::ioSupply = PITMASTER_NO_SUPPLY_IO;
 uint8_t Pitmaster::ioSupplyRequested = 0u;
@@ -74,6 +89,13 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->registeredCbUserData = NULL;
     this->cbValue = 0u;
     this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
+    this->ecount = PM_DEFAULT_DCOUNT;
+    this->dCount = PM_DEFAULT_DCOUNT;
+    this->edif = 0;
+    this->jump = 0;
+
+    this->servoDcMin = PM_DEFAULT_SERVO_MIN_DUTY_CYCLE;
+    this->servoDcMax = PM_DEFAULT_SERVO_MAX_DUTY_CYCLE;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -146,6 +168,46 @@ void Pitmaster::setTargetTemperature(float temperature)
 float Pitmaster::getTargetTemperature()
 {
     return this->targetTemperature;
+}
+
+void Pitmaster::setServoMinDutyCyle(uint16_t dutyCycle)
+{
+    // duty cycle is inside limit?
+    if((dutyCycle >= PM_CONFIG_SERVO_MIN_DUTY_CYCLE) && (dutyCycle <= PM_CONFIG_SERVO_MAX_DUTY_CYCLE))
+    {
+        this->servoDcMin = dutyCycle;
+    }
+    else
+    {
+        Log.error("Pitmaster::setServoMinDutyCyle: dutyCycle = %d out of range!" CR, dutyCycle);
+    }
+}
+
+void Pitmaster::setServoMaxDutyCyle(uint16_t dutyCycle)
+{
+    // duty cycle is inside limit?
+    if((dutyCycle >= PM_CONFIG_SERVO_MIN_DUTY_CYCLE) && (dutyCycle <= PM_CONFIG_SERVO_MAX_DUTY_CYCLE))
+    {
+        this->servoDcMax = dutyCycle;
+    }
+    else
+    {
+        Log.error("Pitmaster::setServoMaxDutyCyle: dutyCycle = %d out of range!" CR, dutyCycle);
+    }
+}
+
+void Pitmaster::setDCount(uint8_t dCount)
+{
+    // dCount is inside limit?
+    if((dCount >= PM_DEFAULT_DCOUNT_MIN) && (dCount <= PM_DEFAULT_DCOUNT_MAX))
+    {
+        this->dCount = dCount;
+        this->ecount = dCount;
+    }
+    else
+    {
+        Log.error("Pitmaster::setDCount: dCount = %d out of range!" CR, dCount);
+    }
 }
 
 void Pitmaster::registerCallback(PitmasterCallback_t callback, void *userData)
@@ -462,53 +524,6 @@ boolean Pitmaster::checkAutoTune()
 
     return false;
 }
-/*
-boolean Pitmaster::checkOpenLid()
-{
-    if ((pm_auto == this->type) && (true == this->profile->opl))
-    {
-        openLid.ref[0] = openLid.ref[1];
-        openLid.ref[1] = openLid.ref[2];
-        openLid.ref[2] = openLid.ref[3];
-        openLid.ref[3] = openLid.ref[4];
-        openLid.ref[4] = this->temperature->getValue();
-
-        float temp_ref = (openLid.ref[0] + openLid.ref[1] + openLid.ref[2]) / 3.0;
-
-        // erkennen ob Temperatur wieder eingependelt oder Timeout
-        if (openLid.detected)
-        { // Open Lid Detected
-
-            openLid.count--;
-
-            // extremes Überschwingen vermeiden
-            if (openLid.temp > this->targetTemperature && this->temperature->getValue() < this->targetTemperature)
-                openLid.temp = this->targetTemperature;
-
-            if (openLid.count <= 0) // Timeout
-                openLid.detected = false;
-
-            else if (this->temperature->getValue() > (openLid.temp * (OPL_RISE / 100.0))) // Lid Closed
-                openLid.detected = false;
-        }
-        else if (this->temperature->getValue() < (temp_ref * (OPL_FALL / 100.0)))
-        { // Opened lid detected!
-            // Wenn Temp innerhalb der letzten beiden Messzyklen den falling Wert unterschreitet
-
-            openLid.detected = true;
-            openLid.temp = openLid.ref[0];
-            openLid.count = OPL_PAUSE; // TODO: check pause
-
-            Serial.println("OPL");
-        }
-    }
-    else
-    {
-        openLid.detected = false;
-    }
-
-    return openLid.detected;
-}*/
 
 boolean Pitmaster::checkOpenLid()
 {
@@ -551,21 +566,25 @@ boolean Pitmaster::checkOpenLid()
         }
         else if (openLid.fall_c == 2)
         {
-            Log.notice("OPL 1: %F" CR, (float)(openLid.ref));
-            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getPreValue()));
-            Log.notice("OPL 3: %F" CR, (float)(this->temperature->getValue()));
+            Log.notice("OPL 0: %F" CR, (float)(openLid.ref));
+            Log.notice("OPL 1: %F" CR, (float)(this->temperature->getPreValue()));
+            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getValue()));
+        }
+        else if (openLid.fall_c > 10) {
+            openLid.fall_c = 0;  // Zurücksetzen wenn über max. Count
         }
         // wenn in 4 Schritten nicht unter Threshold, dann ist es auch keine Deckelöffnung
-        else if (openLid.fall_c == 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
+        else if (openLid.fall_c >= 3 && (openLid.ref - this->temperature->getValue()) > OPL_THRESHOLD)
         { // Opened lid detected!            
             openLid.detected = true;
             openLid.temp = openLid.ref;
             openLid.count = OPL_PAUSE; // TODO: check pause
             
-            Log.notice("OPL detected" CR);
+            Log.notice("OPL: %d" CR, (int)(openLid.fall_c));
+            Log.notice("OPL detected: %F" CR, (float)(this->temperature->getValue()));
             Log.notice("OPL Reference: %F" CR, (float)(openLid.temp));
-
         }
+        
     }
     else
     {
@@ -624,6 +643,11 @@ void Pitmaster::update()
 void Pitmaster::controlActuators()
 {
     float linkedvalue;
+    
+    // JUMP DROSSEL
+    if (this->jump && (this->value > this->profile->jumppw))
+          this->value = this->profile->jumppw;
+
     initActuators();
 
     switch (this->profile->actuator)
@@ -643,20 +667,24 @@ void Pitmaster::controlActuators()
     case DAMPER:
         this->enableStepUp(true);
         this->controlFan(this->value, this->profile->dcmin, this->profile->dcmax);
-        if (0 == this->profile->link)
+        switch(this->profile->link)
         {
-            // degressiv link
-            if (this->value > 0)
-                linkedvalue = 100;
-            else
-                linkedvalue = 0;
+            case 0: // degressiv link
+                linkedvalue = (this->value > 0) ? 100 : 0;
+                break;
+            case 1: // linear link
+                linkedvalue = (ceil(this->value * 0.1)) * 10.0;
+                break;
+            case 2: // lowpass link
+                linkedvalue = constrain(((ceil(this->value * 5 * 0.03))*34.0), 0 ,100);
+                break;
+            default:
+                break;
         }
-        else
-        {
-            // linear link
-            linkedvalue = (ceil(this->value * 0.1)) * 10.0;
-            //Serial.println(linkedvalue);
-        }
+
+        //Log.notice("OUTOUT_VALUE: %F" CR, (float)(this->value));
+        //Log.notice("DAMPER_VALUE: %F" CR, (float)(linkedvalue));
+
         this->controlServo(linkedvalue, this->profile->spmin, this->profile->spmax);
 
         break;
@@ -755,14 +783,11 @@ void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
     uint16_t spmin = newSPMin * 10u; // 1. Nachkommastelle
     uint16_t spmax = newSPMax * 10u; // 1. Nachkommastelle
 
-    // duty cycle calculation
-    // frequency: 50Hz --> 20ms
-    // timer resolution: 16 bit --> 65535
-    // resolution: 20.000us / 65535 --> 0,305us
-    // servo min duty cyle:  550us / 0,305...us --> 1802
-    // servo min duty cyle: 2250us / 0,305...us --> 7373
-    const uint16_t servoPulseMin = 1802u;
-    const uint16_t servoPulseMax = 7373u;
+    uint16_t servoPulseMin = (uint16_t)(this->servoDcMin / PM_SERVO_DUTY_CYCLE_DIVISOR);
+    uint16_t servoPulseMax = (uint16_t)(this->servoDcMax / PM_SERVO_DUTY_CYCLE_DIVISOR);
+
+    //Serial.printf("Pitmaster::controlServo: servoPulseMin = %d\n", servoPulseMin);
+    //Serial.printf("Pitmaster::controlServo: servoPulseMax = %d\n", servoPulseMax);
 
     spmin = map(spmin, 0, 1000, servoPulseMin, servoPulseMax);
     spmax = map(spmax, 0, 1000, servoPulseMin, servoPulseMax);
@@ -872,7 +897,6 @@ float Pitmaster::pidCalc()
     float e;
 
     // Abweichung bestimmen
-    // Abweichung bestimmen
     switch (this->profile->actuator)
     {
     case SSR: // SSR
@@ -889,23 +913,24 @@ float Pitmaster::pidCalc()
     this->profile->jumpth = (w * 0.05);
     if (this->profile->jumpth > (100.0 / kp))
         this->profile->jumpth = 100.0 / kp;
-    //Serial.println(this->profile->jumpth);
-    if (diff > this->profile->jumpth)
-        this->jump = true; // Memory bis Soll erreicht
-    else if (diff <= 0)
+    if (e > this->profile->jumpth)
+        this->jump = true; 
+    else if (e <= 0) // Memory bis Soll erreicht
         this->jump = false;
-
-    //float e = w - x;
 
     // Proportional-Anteil
     float p_out = kp * e;
 
-    // Differential-Anteil
-    float edif = (e - this->elast) / (this->pause / 1000.0);
-    this->elast = e;
+    // Differential-Anteil (Intervall-Berechnung)
+    this->ecount++;
+    if (this->ecount >= this->dCount) {
+        this->edif = (e - this->elast) / (this->pause / 1000.0);
+        this->edif = this->edif / (float) this->dCount;
+        this->elast = e;
+        this->ecount = 0u;
+    }
+
     float d_out = kd * edif;
-    if ((x - w) > 0)
-        d_out = 0; // Begrenzung auf Untertemperaturbereich
 
     // i-Anteil wechsl: https://github.com/WLANThermo/WLANThermo_v2/blob/b7bd6e1b56fe5659e8750c17c6dd1cd489872f6c/software/usr/sbin/wlt_2_pitmaster.py
     // Integral-Anteil
@@ -957,4 +982,5 @@ void Pitmaster::pidReset()
     this->esum = 0;
     this->elast = 0;
     this->Ki_alt = 0;
+    this->jump = 0;
 }

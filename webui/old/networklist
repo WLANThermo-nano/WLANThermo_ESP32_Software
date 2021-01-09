@@ -1,0 +1,30 @@
+{
+    "Connect": true,
+    "SSID": "WLAN-XXXXX",
+    "BSSID": "38:10:D5:D1:BC:8B",
+    "IP": "192.168.178.53",
+    "Mask": "255.255.255.0",
+    "Gate": "192.168.178.1",
+    "Scan": [
+        {
+            "SSID": "WLAN-XXXXX",
+            "BSSID": "38:10:D5:D1:BC:8B",
+            "RSSI": -42,
+            "Enc": true
+        },
+        {
+            "SSID": "EasyBox-767780",
+            "BSSID": "D4:60:E3:BD:BA:9C",
+            "RSSI": -104,
+            "Enc": true
+        },
+        {
+            "SSID": "FRITZ!Box 7590 LD",
+            "BSSID": "44:4E:6D:3B:0E:0F",
+            "RSSI": -76,
+            "Enc": true
+        }
+    ],
+    "RSSI": -46,
+    "Enc": true
+}

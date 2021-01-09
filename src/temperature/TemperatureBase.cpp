@@ -62,6 +62,7 @@ void TemperatureBase::loadDefaultValues(uint8_t index)
   this->currentValue = INACTIVEVALUE;
   this->preValue = INACTIVEVALUE;
   this->currentGradient = 0;
+  this->gradientSign = 0;
   this->minValue = DEFAULT_MIN_VALUE;
   this->maxValue = DEFAULT_MAX_VALUE;
   this->name = DEFAULT_CHANNEL_NAME + String(index + 1u);
@@ -101,6 +102,7 @@ void TemperatureBase::loadConfig()
         {
           this->name = json["tname"][i].asString();
           this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
+          setType((uint8_t)this->type);
           this->minValue = json["tmin"][i];
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
@@ -302,10 +304,37 @@ boolean TemperatureBase::isActive()
 
 void TemperatureBase::refresh()
 {
+  // save last
   this->preValue = this->currentValue;
-  this->currentValue = this->medianValue->GetFiltered();
-  float gradient = (isActive() == true) ? decimalPlace(this->currentValue) - decimalPlace(this->preValue) : 0;
+  int8_t preGradientSign = this->gradientSign;
+
+  // get current
+  float currentVal = this->medianValue->GetFiltered();
+  float gradient = (isActive() == true) ? decimalPlace(currentVal) - decimalPlace(this->preValue) : 0;
+  this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
+
+   
+  if (INACTIVEVALUE == currentVal) 
+  {
+    this->currentValue = INACTIVEVALUE;
+  }
+  // gradient sign filter
+  else if (preGradientSign == gradientSign) 
+  {
+    if (this->type == SensorType::TypeK && INACTIVEVALUE != preValue)
+    {
+      this->currentValue = ((currentVal*2.0) + preValue)/3.0;
+    }
+    else {
+      this->currentValue = currentVal;
+    }
+  }
+  else
+  {
+    this->currentValue = this->preValue;
+  }
+  
 }
 
 void TemperatureBase::update()
@@ -355,11 +384,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
 
   switch (type)
   {
-  case SensorType::Maverick: // Maverik
-    Rn = 1000;
-    a = 0.003358;
-    b = 0.0002242;
-    c = 0.00000261;
+  case SensorType::Maverick: // 1000K/Maverik
+    Rn = 999.05;
+    a = 3.3537355e-03;
+    b = 2.2320379e-04;
+    c = 2.3380330e-06;
     break;
   case SensorType::FantastNeu: // Fantast-Neu
     Rn = 220;
@@ -373,11 +402,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     b = 2.5698192e-04;
     c = 1.6391056e-06;
     break;
-  case SensorType::iGrill2: // iGrill2
-    Rn = 99.61;
-    a = 3.3562424e-03;
-    b = 2.5319218e-04;
-    c = 2.7988397e-06;
+  case SensorType::iGrill2: // 100K/iGrill2
+    Rn = 100.075;
+    a = 3.3525233e-03;
+    b = 2.5293916e-04;
+    c = 2.7388783e-06;
     break;
   case SensorType::ET73: // ET-73
     Rn = 200;
@@ -407,9 +436,9 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     break;
   case SensorType::NTC100K6A1B: // NTC 100K6A1B (lila Kopf)
     Rn = 100;
-    a = 0.00335639;
-    b = 0.000241116;
-    c = 0.00000243362;
+    a = 3.3544846e-03;
+    b = 2.4144443e-04;
+    c = 2.6788747e-06;
     break;
   case SensorType::Weber6743: // Weber_6743
     Rn = 102.315;

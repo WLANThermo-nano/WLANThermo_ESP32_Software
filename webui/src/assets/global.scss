@@ -1,0 +1,114 @@
+@import "./external/normalized.scss";
+@import "./external/pure.scss";
+@import "./external/pure-responsive.scss";
+@import "./icons/style.scss";
+@import "./icons/icons.scss";
+@import "./colors.scss";
+@import "./controls.scss";
+
+$nav_width: 200px;
+
+/*
+ * -- BASE STYLES --
+ * Most of these are inherited from Base, but I want to change a few.
+ */
+body {
+    background-color: $dark;
+}
+
+.pure-menu-link {
+    &:hover {
+        background-color: $medium_dark;
+    }
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.mr5 {
+    margin-right: 5px;
+}
+
+.mt10 {
+    margin-top: 10px !important;
+}
+
+
+.config-form-container {
+    .name {
+        padding: 0.1em;
+        margin-left: 0.2em;
+        margin-top: 0.2em;
+        color: $light;
+        font-size: 1.5em;
+        font-weight: 600;
+        .icon-question {
+            padding: 0.2em;
+            font-size: 0.7em;
+            float: right;
+            cursor: pointer;
+        }
+    }
+    .config-form {
+        background-color: $medium_dark;
+        padding: 0.25rem 0.5rem 0.75rem;
+        margin: 0.25rem;
+    }
+    .form-checkbox {
+        margin-top: 1.25rem;
+        margin-bottom: 1rem;
+        .checkbox {
+            color: #fff;
+        }  
+    }
+}
+
+.app-bar-wrapper {
+    margin-bottom: 1.9em;
+}
+
+.app-bar-actions {
+    z-index: 5;
+    display: block;
+    background-color: $medium;
+    font-size: 1.2em;
+    display: flex;
+    justify-content: space-between;
+    height: 1.7em;
+    position: fixed;
+    width: calc(100% - #{$nav_width});
+    @media screen and (max-width: 48em) {
+        width: 100%;
+    }
+    .button-container {
+      padding: 0.2em;
+      color: $primary;
+      cursor: pointer;
+    }
+}
+
+.ic_white {
+    color: #fff;
+}
+
+
+.spinner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height:60px;
+    width:60px;
+    margin:0px auto;
+    animation: spinner_rotation .6s infinite linear;
+    border-left:6px solid rgba(0,174,239,.15);
+    border-right:6px solid rgba(0,174,239,.15);
+    border-bottom:6px solid rgba(0,174,239,.15);
+    border-top:6px solid $primary;
+    border-radius:100%;
+}
+
+@keyframes spinner_rotation {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(359deg);}
+}

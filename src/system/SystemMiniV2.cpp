@@ -25,7 +25,6 @@
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
 #include "temperature/TemperatureMavRadio.h"
-#include "display/DisplayNextion.h"
 #include "Constants.h"
 
 // TEMPERATURES

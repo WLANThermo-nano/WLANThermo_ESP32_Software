@@ -28,6 +28,7 @@
 #define MAX31855_BUILT_IN_TEST_SHIFT 4u
 #define MAX31855_NEGATIVE_SIGN_BIT 0x2000u
 #define MAX31855_TEMPERATURE_UNIT 0.25
+#define MAX31855_TEMPERATURE_ADJ 1.0
 
 union SplitFourBytes
 {
@@ -88,6 +89,7 @@ uint32_t TemperatureMax31855::readChip()
 {
   SplitFourBytes receive;
 
+  SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
   // write CS
   digitalWrite(csPin, LOW);
   delay(1u);
@@ -99,6 +101,8 @@ uint32_t TemperatureMax31855::readChip()
 
   // write CS
   digitalWrite(csPin, HIGH);
+
+  SPI.endTransaction();
 
   return receive.value;
 }
@@ -132,6 +136,9 @@ float TemperatureMax31855::calcTemperatureTypeK(uint32_t rawValue)
     }
 
     temperature *= MAX31855_TEMPERATURE_UNIT;
+
+    // adjustment Typ K
+    temperature -= MAX31855_TEMPERATURE_ADJ;
   }
 
   return temperature;

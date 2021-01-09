@@ -21,7 +21,9 @@
 #include <Update.h>
 #include <Preferences.h>
 #include <rom/rtc.h>
+#if defined HW_MINI_V1 || defined HW_MINI_V2 
 #include "ESPNexUpload.h"
+#endif
 #include "RecoveryMode.h"
 #include "DbgPrint.h"
 #include "Settings.h"
@@ -226,7 +228,7 @@ void RecoveryMode::run()
           if (final)
             Update.end(true);
           break;
-#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2 
         case UploadFileType::Nextion:
           if (!index)
           {
