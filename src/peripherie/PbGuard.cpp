@@ -58,6 +58,7 @@ void PbGuard::disable()
   {
     this->enabled = false;
     this->state = LOW;
+    // digitalWrite(this->ioPin, LOW);
   }
 }
 
@@ -115,3 +116,48 @@ void PbGuard::update()
     }
   }
 }
+
+// über IO
+/*
+PbGuard::PbGuard(uint8_t ioPin)
+{
+  this->ioPin = ioPin;
+  this->enabled = false;
+  this->state = (uint8_t)LOW;
+  this->lowInterval = PBGUARD_DEFAULT_LOW_INTERVAL;
+  this->highInterval = PBGUARD_DEFAULT_HIGH_INTERVAL;
+  this->previousMillis = 0u;
+  pinMode(this->ioPin, OUTPUT);
+  digitalWrite(this->ioPin, LOW);
+  loadConfig();
+}
+
+void PbGuard::update()
+{
+  if (this->enabled)
+  {
+    uint32_t currentMillis = millis();
+
+    if(((uint8_t)LOW) == this->state)
+    {
+      if ((currentMillis - this->previousMillis) >= this->lowInterval)
+      {
+        this->previousMillis = currentMillis;
+        this->state = (uint8_t)HIGH;
+        digitalWrite(this->ioPin, HIGH);
+        //Serial.println("HIGH");
+      }
+    }
+    else
+    {
+      if ((currentMillis - this->previousMillis) >= this->highInterval)
+      {
+        this->previousMillis = currentMillis;
+        this->state = (uint8_t)LOW;
+        digitalWrite(this->ioPin, LOW);
+        //Serial.println("LOW");
+      }
+    }
+  }
+}
+*/

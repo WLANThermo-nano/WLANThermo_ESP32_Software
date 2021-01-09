@@ -115,7 +115,7 @@ void SystemLinkV1::init()
 
   sdCard = new SdCard(CS_SD_CARD);
 
-  pbGuard = new PbGuard();
+  //pbGuard = new PbGuard();
 
   initDone = true;
 }
