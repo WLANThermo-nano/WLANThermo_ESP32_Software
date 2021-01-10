@@ -24,7 +24,7 @@
 #include "SystemMiniV3.h"
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMax31855.h"
-#include "display\tft\DisplayTft.h"
+#include "display/tft/DisplayTft.h"
 #include "Constants.h"
 
 // TEMPERATURES

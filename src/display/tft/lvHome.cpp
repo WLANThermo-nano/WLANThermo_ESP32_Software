@@ -20,9 +20,9 @@
 #include "lvHome.h"
 #include "lvScreen.h"
 #include "lv_qrcode.h"
-#include "system\SystemBase.h"
-#include "display\DisplayBase.h"
-#include "display\tft\DisplayTft.h"
+#include "system/SystemBase.h"
+#include "display/DisplayBase.h"
+#include "display/tft/DisplayTft.h"
 
 #define UPDATE_ALL 0xFFFFFFFFu
 
