@@ -26,15 +26,8 @@ DisplayBase::DisplayBase()
   this->blocked = false;
   this->orientation = DisplayOrientation::_0;
   this->modelName = "";
+  this->system = gSystem;
   this->timeout = 0u;
-}
-
-DisplayBase::DisplayBase(SystemBase *system)
-{
-  this->blocked = false;
-  this->orientation = DisplayOrientation::_0;
-  this->modelName = "";
-  this->system = system;
 }
 
 void DisplayBase::init()

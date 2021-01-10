@@ -20,35 +20,17 @@
 #pragma once
 
 #include "Arduino.h"
-#include "system/SystemBase.h"
-#include "display/DisplayBase.h"
 #include <lvgl.h>
-#include <Ticker.h>
-#include <TFT_eSPI.h>
-#include "Wire.h"
-#include <PCA9533.h>
 
-class DisplayTft : public DisplayBase
+typedef struct lvDisplay
 {
-public:
-  DisplayTft();
-  void init();
-  void hwInit();
-  void update();
-  void calibrate();
-  void setBrightness(uint8_t brightness);
-  static void drawCharging();
 
-private:
-  boolean initDisplay();
-  static void task(void *parameter);
+  lv_obj_t *screen;
+  lv_obj_t *btnClose;
+  lv_obj_t *labelBrightness;
+  lv_obj_t *sliderBrightness;
+} lvDisplayType;
 
-  static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
-
-  static TFT_eSPI tft;
-  lv_disp_buf_t lvDispBuffer;
-  lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
-
-  PCA9533 pca9533;
-};
+void lvDisplay_Create(void);
+void lvDisplay_Update(boolean forceUpdate);
+void lvDisplay_Delete(void);

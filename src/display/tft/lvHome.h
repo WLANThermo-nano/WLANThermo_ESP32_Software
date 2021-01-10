@@ -20,35 +20,42 @@
 #pragma once
 
 #include "Arduino.h"
-#include "system/SystemBase.h"
-#include "display/DisplayBase.h"
 #include <lvgl.h>
-#include <Ticker.h>
-#include <TFT_eSPI.h>
-#include "Wire.h"
-#include <PCA9533.h>
 
-class DisplayTft : public DisplayBase
+#define LV_HOME_SENSORS_PER_PAGE 6u
+
+typedef struct lvHomeSensorTile
 {
-public:
-  DisplayTft();
-  void init();
-  void hwInit();
-  void update();
-  void calibrate();
-  void setBrightness(uint8_t brightness);
-  static void drawCharging();
+  lv_obj_t *objTile;
+  lv_obj_t *objColor;
+  lv_style_t objColorStyle;
+  lv_obj_t *labelName;
+  lv_obj_t *labelNumber;
+  lv_obj_t *labelSymbolMax;
+  lv_obj_t *labelMax;
+  lv_obj_t *labelSymbolMin;
+  lv_obj_t *labelMin;
+  lv_obj_t *labelCurrent;
+} lvHomeSensorTileType;
 
-private:
-  boolean initDisplay();
-  static void task(void *parameter);
+typedef struct lvSymbols
+{
+  lv_style_t *style;
+  lv_obj_t *btnMenu;
+  lv_obj_t *btnLeft;
+  lv_obj_t *btnRight;
+  lv_obj_t *btnAlarm;
+  lv_obj_t *btnCloud;
+  lv_obj_t *btnWifi;
+} lvHomeSymbolsType;
 
-  static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+typedef struct lvHome
+{
+  lv_obj_t *screen;
+  lvHomeSymbolsType symbols;
+  lvHomeSensorTileType sensorTiles[LV_HOME_SENSORS_PER_PAGE];
+} lvHomeType;
 
-  static TFT_eSPI tft;
-  lv_disp_buf_t lvDispBuffer;
-  lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
-
-  PCA9533 pca9533;
-};
+void lvHome_Create(void);
+void lvHome_Update(boolean forceUpdate);
+void lvHome_Delete(void);
