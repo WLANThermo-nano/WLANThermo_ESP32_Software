@@ -19,9 +19,9 @@
 ****************************************************/
 #include "lvMenu.h"
 #include "lvScreen.h"
-#include "system\SystemBase.h"
-#include "display\DisplayBase.h"
-#include "display\tft\DisplayTft.h"
+#include "system/SystemBase.h"
+#include "display/DisplayBase.h"
+#include "display/tft/DisplayTft.h"
 
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 

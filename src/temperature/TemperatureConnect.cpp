@@ -17,36 +17,32 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#pragma once
 
-#include "Arduino.h"
-#include "system/SystemBase.h"
-#include "display/DisplayBase.h"
-#include <lvgl.h>
-#include <Ticker.h>
-#include <TFT_eSPI.h>
-#include "Wire.h"
+#include "TemperatureConnect.h"
+#include "connect/Connect.h"
 
-class DisplayTft : public DisplayBase
+TemperatureConnect::TemperatureConnect()
 {
-public:
-  DisplayTft();
-  void init();
-  void hwInit();
-  void update();
-  void calibrate();
-  static void setBrightness(uint8_t brightness);
-  static void drawCharging();
+}
 
-private:
-  boolean initDisplay();
-  boolean isCalibrated();
-  static void task(void *parameter);
+TemperatureConnect::TemperatureConnect(String peerAddress, uint8_t index) : TemperatureBase()
+{
+  this->address = peerAddress;
+  this->localIndex = index;
+  this->type = SensorType::Connect;
+  this->fixedSensor = true;
+}
 
-  static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+void TemperatureConnect::refresh()
+{
+  this->connected = Connect::isDeviceConnected(this->address);
 
-  static TFT_eSPI tft;
-  lv_disp_buf_t lvDispBuffer;
-  lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
-};
+  if (this->connected)
+  {
+    this->currentValue = Connect::getTemperatureValue(this->address, this->localIndex);
+  }
+  else
+  {
+    this->currentValue = INACTIVEVALUE;
+  }
+}

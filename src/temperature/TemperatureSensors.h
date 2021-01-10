@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 
-#define NUM_OF_TYPES 18u
+#define NUM_OF_TYPES 19u
 
 enum class SensorType
 {
@@ -42,7 +42,8 @@ enum class SensorType
   ThermoWorks = 14,
   TypeK = 15,
   Ble = 16,
-  MaverickRadio = 17
+  MaverickRadio = 17,
+  Connect = 18
 };
 
 typedef struct
@@ -70,4 +71,5 @@ const SensorTypeInfoType sensorTypeInfo[NUM_OF_TYPES] = {
     {SensorType::ThermoWorks, "ThermoWorks", false},
     {SensorType::TypeK, "Typ K", true},
     {SensorType::Ble, "Bluetooth", true},
-    {SensorType::MaverickRadio, "Maverick", true}};
+    {SensorType::MaverickRadio, "Maverick", true},
+    {SensorType::Connect, "Connect", true}};

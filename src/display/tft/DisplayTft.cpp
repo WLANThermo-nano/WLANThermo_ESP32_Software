@@ -23,8 +23,10 @@
 #include "Preferences.h"
 #include "lv_qrcode.h"
 #include "lvScreen.h"
+#include "PCA9533.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
+#define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
 
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
@@ -38,16 +40,19 @@ DisplayTft::DisplayTft()
 
 void DisplayTft::hwInit()
 {
+  DisplayTft::setBrightness(0u);
+
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
   tft.fillScreen(0x31a6);
   tft.pushImage(33, 70, 254, 100, DisplayTftStartScreenImg);
 
-  // configure PIN mode
-  //pinMode(TFT_RST, INPUT);
+  // configure dimming IC
+  this->setBrightness(100u);
 
   // configure dimming IC (old TFT, aktuell noch in gebrauch)
+  PCA9533 pca9533;
   pca9533.init();
   Serial.println("Setup LED Controller:");
   Serial.println(pca9533.ping());
@@ -83,7 +88,10 @@ boolean DisplayTft::initDisplay()
 
   lv_init();
 
-  calibrate();
+  if (!isCalibrated())
+  {
+    calibrate();
+  }
 
   lv_disp_buf_init(&lvDispBuffer, lvBuffer, NULL, LV_HOR_RES_MAX * 10);
 
@@ -106,45 +114,56 @@ boolean DisplayTft::initDisplay()
   return true;
 }
 
-void DisplayTft::calibrate()
+boolean DisplayTft::isCalibrated()
 {
   Preferences prefs;
   uint16_t touchCalibration[TFT_TOUCH_CALIBRATION_ARRAY_SIZE];
   size_t touchCalibrationSize;
 
   prefs.begin("TFT", true);
-  touchCalibrationSize = prefs.getBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
+  touchCalibrationSize = prefs.getBytesLength("Touch");
   prefs.end();
 
-  if (((sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE) == touchCalibrationSize))
-  {
-    tft.setTouch(touchCalibration);
-  }
-  else
-  {
-    tft.fillScreen((0xFFFF));
+  return (((sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE) == touchCalibrationSize));
+}
 
-    tft.setCursor(20, 0, 2);
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);
-    tft.setTextSize(1);
-    tft.println("calibration run");
+void DisplayTft::calibrate()
+{
+  Preferences prefs;
+  uint16_t touchCalibration[TFT_TOUCH_CALIBRATION_ARRAY_SIZE];
+  size_t touchCalibrationSize;
 
-    tft.calibrateTouch(touchCalibration, TFT_RED, TFT_BLACK, 15);
+  this->blocked = true;
 
-    prefs.begin("TFT", false);
-    touchCalibrationSize = prefs.putBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
-    prefs.end();
-  }
+  tft.fillScreen((0xFFFF));
+
+  tft.setCursor(20, 0, 2);
+  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+  tft.setTextSize(1);
+  tft.println("calibration run");
+
+  tft.calibrateTouch(touchCalibration, TFT_RED, TFT_BLACK, 15);
+
+  this->blocked = false;
+
+  prefs.begin("TFT", false);
+  touchCalibrationSize = prefs.putBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
+  prefs.end();
 }
 
 void DisplayTft::setBrightness(uint8_t brightness)
 {
   int value = (int)(brightness * 2.55);
-  pca9533.setPWM(REG_PWM0, value);
+
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(value);
+  Wire.endTransmission();
 }
 
 void DisplayTft::drawCharging()
 {
+  DisplayTft::setBrightness(0u);
+
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
@@ -152,15 +171,8 @@ void DisplayTft::drawCharging()
   tft.setTextColor(TFT_WHITE, 0x31a6);
   tft.setTextSize(3);
 
-  // configure dimming IC
-  PCA9533 pca9533;
-  pca9533.init();
-  pca9533.setPSC(REG_PSC0, 0);
-  pca9533.setPSC(REG_PSC1, 29);
-  pca9533.setMODE(IO0, LED_MODE_ON);
-  pca9533.setMODE(IO1, LED_MODE_ON);
-  pca9533.setMODE(IO2, LED_MODE_ON);
-  pca9533.setMODE(IO3, LED_MODE_ON);
+  // set brightness
+  DisplayTft::setBrightness(100u);
 
   if (gSystem->battery->isCharging())
   {
@@ -201,7 +213,7 @@ void DisplayTft::update()
   static uint8_t updateInProgress = false;
   static boolean wakeup = false;
 
-  if (this->disabled)
+  if (this->disabled || this->blocked)
     return;
 
   if (gSystem->otaUpdate.isUpdateInProgress())
@@ -258,4 +270,3 @@ bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
   return false;
 }
-

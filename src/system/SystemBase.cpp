@@ -41,6 +41,7 @@ SystemBase::SystemBase()
   pbGuard = NULL;
   battery = NULL;
   bluetooth = NULL;
+  connect = NULL;
   sdCard = NULL;
   deviceName = "undefined";
   cpuName = "esp32";

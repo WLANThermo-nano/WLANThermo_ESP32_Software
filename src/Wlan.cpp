@@ -341,6 +341,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
     MDNS.addServiceTxt("wlanthermo", "tcp", "device", gSystem->getDeviceName());
     MDNS.addServiceTxt("wlanthermo", "tcp", "hw_version", String("v") + String(gSystem->getHardwareVersion()));
     MDNS.addServiceTxt("wlanthermo", "tcp", "sw_version", FIRMWAREVERSION);
+    MDNS.addServiceTxt("wlanthermo", "tcp", "mac_address", getMacAddress());
   }
 }
 

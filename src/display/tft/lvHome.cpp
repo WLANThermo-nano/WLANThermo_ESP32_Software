@@ -20,9 +20,9 @@
 #include "lvHome.h"
 #include "lvScreen.h"
 #include "lv_qrcode.h"
-#include "system\SystemBase.h"
-#include "display\DisplayBase.h"
-#include "display\tft\DisplayTft.h"
+#include "system/SystemBase.h"
+#include "display/DisplayBase.h"
+#include "display/tft/DisplayTft.h"
 
 #define UPDATE_ALL 0xFFFFFFFFu
 
@@ -145,7 +145,7 @@ void lvHome_Create(void)
   lv_obj_set_pos(contTemperature, 0, 40);
   lv_cont_set_layout(contTemperature, LV_LAYOUT_GRID);
 
-  for (uint8_t i = 0u; i < LV_HOME_SENSORS_PER_PAGE; i++)
+  for (uint8_t i = 0u; (i < LV_HOME_SENSORS_PER_PAGE) && (i < gSystem->temperatures.count()); i++)
   {
     lvHomeSensorTileType *tile = &lvHome.sensorTiles[i];
 
