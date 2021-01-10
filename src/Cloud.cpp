@@ -24,13 +24,17 @@
 #include "API.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
+#include "ArduinoLog.h"
 #include <SPIFFS.h>
+#include "ArduinoLog.h"
 
 // API
 #define APISERVER "api.wlanthermo.de"
 #define CHECKAPI "/"
 #define URL_FILE "/url.json"
 #define DEFAULT_INTERVAL 30u
+#define TOKEN_BYTE_LENGTH 11u
+#define TOKEN_STRING_LENGTH ((2u * TOKEN_BYTE_LENGTH) + 1u)
 
 #define READY_STATE_UNSENT 0
 #define READY_STATE_OPENED 1
@@ -130,18 +134,19 @@ String Cloud::newToken()
 
 String Cloud::createToken()
 {
-  String stamp = String(now(), HEX);
-  int x = 10 - stamp.length(); //pow(16,(10 - timestamp.length()));
-  long y = 1;                  // long geht bis 16^7
-  if (x > 7)
+  uint8_t random[TOKEN_BYTE_LENGTH] = {0u};
+  char token[TOKEN_STRING_LENGTH] = {0};
+
+  // use hardware RNG
+  esp_fill_random(random, TOKEN_BYTE_LENGTH);
+
+  // copy byte array to hex string
+  for(uint8_t index = 0u; index < TOKEN_BYTE_LENGTH; index++)
   {
-    stamp += String(random(268435456), HEX);
-    x -= 7;
+    sprintf(&token[index*2u], "%02x", random[index]);
   }
-  for (int i = 0; i < x; i++)
-    y *= 16;
-  stamp += String(random(y), HEX);
-  return (String)(gSystem->getSerialNumber() + stamp);
+
+  return String(token);
 }
 
 void Cloud::saveConfig()
@@ -243,16 +248,19 @@ void Cloud::setConfig(CloudConfig newConfig)
 // Read time stamp from HTTP Header
 void Cloud::readUTCfromHeader(String payload)
 {
-  // Jahr 1971
-  if (now() < 31536000)
-  {
     tmElements_t tmx;
-    string_to_tm(&tmx, (char *)payload.c_str());
-    setTime(makeTime(tmx));
+    time_t seconds;
+    time_t delta;
 
-    IPRINTP("UTC: ");
-    DPRINTLN(digitalClockDisplay(now()));
-  }
+    string_to_tm(&tmx, (char *)payload.c_str());
+    seconds = makeTime(tmx);
+    delta = abs(seconds - now());
+
+    if(delta > 1u)
+    {
+      setTime(seconds);
+      Log.notice("Updated time from http header. New UTC time: %s" CR, digitalClockDisplay(now()).c_str());
+    }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -299,14 +307,23 @@ tmElements_t *Cloud::string_to_tm(tmElements_t *tme, char *str)
 void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
 {
   boolean *requestDone = (boolean *)optParm;
+  int responseCode;
 
   if (READY_STATE_DONE == readyState)
   {
     if (request->respHeaderExists("Date"))
       readUTCfromHeader(request->respHeaderValue("Date"));
 
-    if(request->responseHTTPcode() == HTTP_STATUS_OK)
+    responseCode = request->responseHTTPcode();
+
+    if (HTTP_STATUS_OK == responseCode)
+    {
       nanoWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
+    }
+    else
+    {
+      Log.warning("API response HTTP code: %d" CR, responseCode);
+    }
     
     *requestDone = true;
   }
@@ -330,7 +347,7 @@ void Cloud::handleQueue()
 
   if (requestDone)
   {
-    if(xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
+    if (xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
       return;
 
     requestDone = false;
