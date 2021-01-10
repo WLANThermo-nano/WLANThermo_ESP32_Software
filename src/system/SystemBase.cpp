@@ -198,8 +198,11 @@ void SystemBase::resetConfig()
   }
 
   temperatures.setUnit(TemperatureUnit::Celsius);
+  gSystem->temperatures.saveConfig();
+  
   wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
   wlan.setAccessPointName(DEFAULT_APNAME);
+  wlan.saveConfig();
 }
 
 void SystemBase::saveConfig()

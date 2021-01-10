@@ -563,10 +563,12 @@ void DisplayNextion::saveSystemSettings(void *ptr)
   if (String(unit) == "Fahrenheit")
   {
     system->temperatures.setUnit(TemperatureUnit::Fahrenheit);
+    gSystem->temperatures.saveConfig();
   }
   else if (String(unit) == "Celsius")
   {
     system->temperatures.setUnit(TemperatureUnit::Celsius);
+    gSystem->temperatures.saveConfig();
   }
 
   QUERY(NexVariable(DONT_CARE, DONT_CARE, "timeoutV").getValue(&value));

@@ -163,7 +163,6 @@ void read_serial(char *buffer)
     else if (str == "configreset")
     {
       gSystem->resetConfig();
-      gSystem->temperatures.saveConfig();
       return;
     }
 #if defined HW_MINI_V2 || defined HW_MINI_V3

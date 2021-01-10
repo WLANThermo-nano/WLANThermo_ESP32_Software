@@ -1193,8 +1193,8 @@ void DisplayOled::drawSystemSettings(OLEDDisplay *display, OLEDDisplayUiState *s
     else if (MenuMode::Set == menuMode)
     {
       system->temperatures.setUnit((TemperatureUnit)currentData);
+      gSystem->temperatures.saveConfig();
       menuMode = MenuMode::Show;
-      system->temperatures.saveConfig();
     }
     display->drawString(114 + x, 36 + y, String((char)currentData));
     break;

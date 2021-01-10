@@ -296,11 +296,11 @@ void TemperatureGrp::loadConfig()
   if (json.success())
   {
     if (json.containsKey("temp_unit"))
-      this->setUnit((TemperatureUnit)json["temp_unit"].asString()[0u]);
+      this->currentUnit = (TemperatureUnit)json["temp_unit"].asString()[0u];
 
     for (uint8_t i = 0u; i < temperatures.size(); i++)
     {
-      temperatures[i]->loadConfig();
+      temperatures[i]->loadConfig(this->currentUnit);
     }
   }
 }
