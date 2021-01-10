@@ -47,7 +47,7 @@ void DisplayTft::hwInit()
   // configure PIN mode
   //pinMode(TFT_RST, INPUT);
 
-  // configure dimming IC
+  // configure dimming IC (old TFT, aktuell noch in gebrauch)
   pca9533.init();
   Serial.println("Setup LED Controller:");
   Serial.println(pca9533.ping());
