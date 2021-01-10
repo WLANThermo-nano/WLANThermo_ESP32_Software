@@ -48,6 +48,7 @@ export default {
 	display_settings: "Display settings",
 	rotate_display: "Rotate display",
 	calibrate_touch: "Calibrate touch",
+	rotate_restart_prompt: "Reboot to rotate the display?",
 	// Buttons
 	back: "Back",
 	save: "Save",

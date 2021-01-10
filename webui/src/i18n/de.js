@@ -48,6 +48,7 @@ export default {
 	display_settings: "Display-Einstellungen",
 	rotate_display: "Display drehen",
 	calibrate_touch: "Touch kalibrieren",
+	rotate_restart_prompt: "Neustarten, um das Display zu drehen?",
 	// Buttons
 	back: "Zurück",
 	save: "Speichern",

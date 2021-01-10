@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,28 +21,20 @@
 
 #include "Arduino.h"
 
-#define BUZZER_INTERVALL_MS 1000u
-
-#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
-#define BUZZER_FREQUENCY 2700
-#else
-#define BUZZER_FREQUENCY 4000
-#endif
-
-class Buzzer
+class PbGuard
 {
   public:
-    Buzzer(uint8_t ioPin, uint8_t channel);
+    PbGuard();
     void enable();
     void disable();
-    void test();
     void update();
+    void saveConfig();
   private:
+    static void task(void *parameter);
+    void loadConfig();
     boolean enabled;
-    boolean testEnabled;
-    uint8_t ioPin;
-    uint8_t channel;
-    double frequency;
-    const uint intervall = BUZZER_INTERVALL_MS;
-    uint previousMillis;
+    uint32_t lowInterval;
+    uint32_t highInterval;
+    uint32_t previousMillis;
+    uint8_t state;
 };

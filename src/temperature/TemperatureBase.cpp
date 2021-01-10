@@ -87,7 +87,7 @@ void TemperatureBase::loadDefaultValues(uint8_t index)
   settingsChanged = true;
 }
 
-void TemperatureBase::loadConfig()
+void TemperatureBase::loadConfig(TemperatureUnit unit)
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = Settings::read(kChannels, &jsonBuffer);
@@ -107,6 +107,7 @@ void TemperatureBase::loadConfig()
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
           this->color = json["tcolor"][i].asString();
+          this->currentUnit = unit;
         }
       }
     }
@@ -122,7 +123,7 @@ boolean TemperatureBase::checkNewValue()
   if ((cbAlarmStatus != newAlarmStatus) || (cbCurrentValue != currentValue))
   {
     cbAlarmStatus = newAlarmStatus;
-    cbCurrentValue = getValue();
+    cbCurrentValue = currentValue;
     newValue = true;
   }
 
@@ -154,12 +155,12 @@ int8_t TemperatureBase::getGradient()
 
 float TemperatureBase::getMinValue()
 {
-  return getUnitValue(this->minValue);
+  return this->minValue;
 }
 
 float TemperatureBase::getMaxValue()
 {
-  return getUnitValue(this->maxValue);
+  return this->maxValue;
 }
 
 String TemperatureBase::getName()
@@ -220,7 +221,7 @@ void TemperatureBase::setMinValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
   {
-    this->minValue = setUnitValue(value);
+    this->minValue = value;
     settingsChanged = true;
   }
 }
@@ -229,7 +230,7 @@ void TemperatureBase::setMaxValue(float value)
 {
   if (value > LOWEST_VALUE && value < HIGHEST_VALUE)
   {
-    this->maxValue = setUnitValue(value);
+    this->maxValue = value;
     settingsChanged = true;
   }
 }
@@ -260,8 +261,25 @@ void TemperatureBase::setAlarmSetting(AlarmSetting alarmSetting)
 
 void TemperatureBase::setUnit(TemperatureUnit unit)
 {
-  this->currentUnit = unit;
-  settingsChanged = true;
+  if (unit != this->currentUnit)
+  {
+    /* Convert min and max values */
+    switch (unit)
+    {
+    case Celsius:
+      this->minValue = (this->minValue - 32) * (5.0 / 9);
+      this->maxValue = (this->maxValue - 32) * (5.0 / 9);
+      break;
+    case Fahrenheit:
+      this->minValue = ((this->minValue * (1.8)) + 32);
+      this->maxValue = ((this->maxValue * (1.8)) + 32);
+      break;
+    default:
+      break;
+    }
+    this->currentUnit = unit;
+    settingsChanged = true;
+  }
 }
 
 uint8_t TemperatureBase::getNotificationCounter()
@@ -286,9 +304,9 @@ AlarmStatus TemperatureBase::getAlarmStatus()
 
   if (INACTIVEVALUE == this->currentValue)
     status = NoAlarm;
-  else if (this->currentValue <= this->minValue)
+  else if (this->getUnitValue(this->currentValue) <= this->minValue)
     status = MinAlarm;
-  else if (this->currentValue >= this->maxValue)
+  else if (this->getUnitValue(this->currentValue) >= this->maxValue)
     status = MaxAlarm;
 
   if (NoAlarm == status)
@@ -314,19 +332,19 @@ void TemperatureBase::refresh()
   this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);
 
-   
-  if (INACTIVEVALUE == currentVal) 
+  if (INACTIVEVALUE == currentVal)
   {
     this->currentValue = INACTIVEVALUE;
   }
   // gradient sign filter
-  else if (preGradientSign == gradientSign) 
+  else if (preGradientSign == gradientSign)
   {
     if (this->type == SensorType::TypeK && INACTIVEVALUE != preValue)
     {
-      this->currentValue = ((currentVal*2.0) + preValue)/3.0;
+      this->currentValue = ((currentVal * 2.0) + preValue) / 3.0;
     }
-    else {
+    else
+    {
       this->currentValue = currentVal;
     }
   }
@@ -334,7 +352,6 @@ void TemperatureBase::refresh()
   {
     this->currentValue = this->preValue;
   }
-  
 }
 
 void TemperatureBase::update()
@@ -358,18 +375,6 @@ float TemperatureBase::getUnitValue(float value)
   return convertedValue;
 }
 
-float TemperatureBase::setUnitValue(float value)
-{
-  float convertedValue = value;
-
-  if (this->currentUnit == Fahrenheit)
-  {
-    convertedValue = (value - 32) * (5.0 / 9);
-  }
-
-  return convertedValue;
-}
-
 float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
 {
 
@@ -384,11 +389,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
 
   switch (type)
   {
-  case SensorType::Maverick: // Maverik
-    Rn = 1000;
-    a = 0.003358;
-    b = 0.0002242;
-    c = 0.00000261;
+  case SensorType::Maverick: // 1000K/Maverik
+    Rn = 999.05;
+    a = 3.3537355e-03;
+    b = 2.2320379e-04;
+    c = 2.3380330e-06;
     break;
   case SensorType::FantastNeu: // Fantast-Neu
     Rn = 220;
@@ -402,11 +407,11 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     b = 2.5698192e-04;
     c = 1.6391056e-06;
     break;
-  case SensorType::iGrill2: // iGrill2
-    Rn = 99.61;
-    a = 3.3562424e-03;
-    b = 2.5319218e-04;
-    c = 2.7988397e-06;
+  case SensorType::iGrill2: // 100K/iGrill2
+    Rn = 100.075;
+    a = 3.3525233e-03;
+    b = 2.5293916e-04;
+    c = 2.7388783e-06;
     break;
   case SensorType::ET73: // ET-73
     Rn = 200;
@@ -436,9 +441,9 @@ float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
     break;
   case SensorType::NTC100K6A1B: // NTC 100K6A1B (lila Kopf)
     Rn = 100;
-    a = 0.00335639;
-    b = 0.000241116;
-    c = 0.00000243362;
+    a = 3.3544846e-03;
+    b = 2.4144443e-04;
+    c = 2.6788747e-06;
     break;
   case SensorType::Weber6743: // Weber_6743
     Rn = 102.315;

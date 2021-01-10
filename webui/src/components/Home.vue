@@ -1,4 +1,4 @@
-<<template>
+<template>
  <div class="pure-g">
     <template v-if="!editing">
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
@@ -213,8 +213,8 @@ export default {
   },
   methods: {
     transformChannels: function() {
-      this.transformedChannels = this.channels.map((c, i) => {
-        c.pm = this.pitmasterpm[i]
+      this.transformedChannels = this.channels.map((c) => {
+        c.pm = this.pitmasterpm.find(pm => pm.channel === c.number)
         return c
       });
       if (this.channels.some(c => c.temp != '999')) {

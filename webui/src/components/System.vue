@@ -75,6 +75,21 @@
           </div>
         </form>
       </div>
+      <template v-if="showDisplaySettings">
+        <div class="name">
+          {{ $t('display_settings') }}
+        </div>
+        <div class="config-form">
+          <div class="mt10">
+            <button class="pure-button pure-button-primary mr5" type="button" @click.stop="rotateDisplay">
+              {{ $t('rotate_display') }}
+            </button>
+            <button class="pure-button pure-button-primary" type="button" @click.stop="calibrateTouch">
+              {{ $t('calibrate_touch') }}
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -84,7 +99,11 @@ import EventBus from "../event-bus";
 
 export default {
   name: "System",
-  props: {},
+  props: {
+    settings: {
+      type: Object
+    }
+  },
   data: () => {
     return {
       copyOfSystem: null,
@@ -106,6 +125,13 @@ export default {
       ],
       hardwareVersions: [],
     };
+  },
+  computed: {
+    showDisplaySettings: function () {
+      return this.settings && 
+             this.settings.device.device === 'mini' && 
+             (this.settings.device.hw_version === 'v1' || this.settings.device.hw_version === 'v2')
+    }
   },
   watch: {},
   mounted: function () {
@@ -135,6 +161,25 @@ export default {
         EventBus.$emit("loading", false)
         EventBus.$emit("getSettings")
         this.backToHome()
+      }).catch(() => {
+        EventBus.$emit("loading", false)
+      })
+    },
+    rotateDisplay: function() {
+      if (confirm(this.$t('rotate_restart_prompt')) === true) {
+        EventBus.$emit("loading", true)
+        this.axios.post('/rotate', this.systemSettings).then(() => {
+          EventBus.$emit("loading", false)
+          location.reload()
+        }).catch(() => {
+          EventBus.$emit("loading", false)
+        })
+      }
+    },
+    calibrateTouch: function() {
+      EventBus.$emit("loading", true)
+      this.axios.post('/calibrate', this.systemSettings).then(() => {
+        EventBus.$emit("loading", false)
       }).catch(() => {
         EventBus.$emit("loading", false)
       })

@@ -250,9 +250,9 @@ boolean TemperatureGrp::hasAlarm(boolean filterAcknowledged)
     {
       if (temperatures[i]->getAlarmStatus() != NoAlarm)
       {
-        if(true == filterAcknowledged)
+        if (true == filterAcknowledged)
         {
-          if(false == temperatures[i]->isAlarmAcknowledged())
+          if (false == temperatures[i]->isAlarmAcknowledged())
           {
             hasAlarm = true;
           }
@@ -289,11 +289,11 @@ void TemperatureGrp::loadConfig()
   if (json.success())
   {
     if (json.containsKey("temp_unit"))
-      this->setUnit((TemperatureUnit)json["temp_unit"].asString()[0u]);
+      this->currentUnit = (TemperatureUnit)json["temp_unit"].asString()[0u];
 
     for (uint8_t i = 0u; i < temperatures.size(); i++)
     {
-      temperatures[i]->loadConfig();
+      temperatures[i]->loadConfig(this->currentUnit);
     }
   }
 }
