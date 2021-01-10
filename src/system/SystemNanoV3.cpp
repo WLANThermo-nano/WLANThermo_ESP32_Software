@@ -135,6 +135,8 @@ void SystemNanoVx::init()
 
   pitmasters.loadConfig();
 
+  pbGuard = new PbGuard();
+
   powerSaveModeSupport = true;
 
   initDone = true;

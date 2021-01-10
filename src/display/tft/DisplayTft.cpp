@@ -49,6 +49,18 @@ void DisplayTft::hwInit()
 
   // configure dimming IC
   this->setBrightness(100u);
+
+  // configure dimming IC (old TFT, aktuell noch in gebrauch)
+  pca9533.init();
+  Serial.println("Setup LED Controller:");
+  Serial.println(pca9533.ping());
+  pca9533.setPSC(REG_PSC0, 0);
+  pca9533.setPSC(REG_PSC1, 29);
+  pca9533.setMODE(IO0, LED_MODE_PWM0);
+  pca9533.setMODE(IO1, LED_MODE_PWM0);
+  pca9533.setMODE(IO2, LED_MODE_PWM0);
+  pca9533.setMODE(IO3, LED_MODE_PWM0);
+  pca9533.setPWM(REG_PWM0, 255);
 }
 
 void DisplayTft::init()
