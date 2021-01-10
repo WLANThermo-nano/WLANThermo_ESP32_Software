@@ -26,7 +26,6 @@
 #include <Ticker.h>
 #include <TFT_eSPI.h>
 #include "Wire.h"
-#include <PCA9533.h>
 
 class DisplayTft : public DisplayBase
 {

@@ -23,6 +23,7 @@
 #include "Preferences.h"
 #include "lv_qrcode.h"
 #include "lvScreen.h"
+#include "PCA9533.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 #define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
@@ -51,6 +52,7 @@ void DisplayTft::hwInit()
   this->setBrightness(100u);
 
   // configure dimming IC (old TFT, aktuell noch in gebrauch)
+  PCA9533 pca9533;
   pca9533.init();
   Serial.println("Setup LED Controller:");
   Serial.println(pca9533.ping());
