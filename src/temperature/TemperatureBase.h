@@ -74,6 +74,7 @@ public:
   uint8_t getType();
   static uint8_t getTypeCount();
   String getTypeName();
+  TemperatureUnit getUnit();
   static String getTypeName(uint8_t index);
   static boolean isTypeFixed(uint8_t index);
   boolean isFixedSensor() { return this->fixedSensor; }
