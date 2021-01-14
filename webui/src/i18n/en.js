@@ -64,6 +64,7 @@ export default {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
+	menuScan: "My Devices",
 	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
@@ -158,5 +159,9 @@ export default {
 	pitlink: "Linking Actuators",
 	pitlinkdegressiv: "degressive",
 	pitlinklinear: "linear",
-	pitlinklowpass: "lowpass"
+	pitlinklowpass: "lowpass",
+	// scan
+	mobileAppHeader: "WLANThermo App",
+	scanTitle: "My Devices",
+	scanDevices: "Devices",
 };
