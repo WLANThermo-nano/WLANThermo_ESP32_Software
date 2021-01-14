@@ -33,6 +33,11 @@ DisplayBase *gDisplay = new DisplayNextion();
 #include "display/tft/DisplayTft.h"
 SystemBase *gSystem = new SystemMiniV3();
 DisplayBase *gDisplay = new DisplayTft();
+#elif HW_CONNECT_V1
+#include "system/SystemConnectV1.h"
+#include "display/tft/DisplayTft.h"
+SystemBase *gSystem = new SystemConnectV1();
+DisplayBase *gDisplay = new DisplayTft();
 #elif HW_NANO_V3
 #include "system/SystemNanoV3.h"
 #include "display/DisplayOled.h"

@@ -294,7 +294,6 @@ void NanoWebHandler::handleConfigReset(AsyncWebServerRequest *request)
   else if (request->method() == HTTP_POST)
   {
     gSystem->resetConfig();
-    gSystem->temperatures.saveConfig();
     request->send(200, TEXTPLAIN, TEXTTRUE);
   }
   else
@@ -593,10 +592,8 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 
   gSystem->wlan.saveConfig();
 
-  if (gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0)))
-  {
-    gSystem->temperatures.saveConfig();
-  }
+  gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0));
+  gSystem->temperatures.saveConfig();
 
   return 1;
 }

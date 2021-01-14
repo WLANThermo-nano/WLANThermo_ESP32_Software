@@ -34,7 +34,7 @@
 // include html files
 #include "webui/restart.html.gz.h"
 
-#if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3)
+#if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3) || defined(HW_CONNECT_V1)
 #define WEB_SUBFOLDER "mini"
 #elif HW_NANO_V3
 #define WEB_SUBFOLDER "nano"

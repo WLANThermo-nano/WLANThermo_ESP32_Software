@@ -60,7 +60,7 @@ public:
   TemperatureBase();
   ~TemperatureBase();
   void loadDefaultValues(uint8_t index);
-  void loadConfig();
+  void loadConfig(TemperatureUnit unit);
   float getValue();
   float getPreValue();
   int8_t getGradient();
@@ -74,6 +74,7 @@ public:
   uint8_t getType();
   static uint8_t getTypeCount();
   String getTypeName();
+  TemperatureUnit getUnit();
   static String getTypeName(uint8_t index);
   static boolean isTypeFixed(uint8_t index);
   boolean isFixedSensor() { return this->fixedSensor; }
@@ -125,7 +126,6 @@ private:
   boolean acknowledgedAlarm;
   float cbCurrentValue;
   float getUnitValue(float value);
-  float setUnitValue(float value);
   float decimalPlace(float value);
   static float calcTemperatureNTC(uint16_t rawValue, SensorType type);
   static float calcTemperaturePTx(uint16_t rawValue, SensorType type);

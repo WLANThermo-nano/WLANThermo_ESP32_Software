@@ -38,8 +38,10 @@ char SystemBase::serialNumber[13] = "";
 SystemBase::SystemBase()
 {
   buzzer = NULL;
+  pbGuard = NULL;
   battery = NULL;
   bluetooth = NULL;
+  connect = NULL;
   sdCard = NULL;
   deviceName = "undefined";
   cpuName = "esp32";
@@ -178,6 +180,11 @@ void SystemBase::update()
 
     setPowerSaveMode(enablePsm);
   }
+
+  if(pbGuard != NULL)
+  {
+    pbGuard->update();
+  }
 }
 
 void SystemBase::resetConfig()
@@ -191,8 +198,11 @@ void SystemBase::resetConfig()
   }
 
   temperatures.setUnit(TemperatureUnit::Celsius);
+  gSystem->temperatures.saveConfig();
+  
   wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
   wlan.setAccessPointName(DEFAULT_APNAME);
+  wlan.saveConfig();
 }
 
 void SystemBase::saveConfig()

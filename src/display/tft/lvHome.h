@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,38 +20,42 @@
 #pragma once
 
 #include "Arduino.h"
-#include "system/SystemBase.h"
+#include <lvgl.h>
 
-enum class DisplayOrientation
+#define LV_HOME_SENSORS_PER_PAGE 6u
+
+typedef struct lvHomeSensorTile
 {
-  _0 = 0,
-  _180 = 180
-};
+  lv_obj_t *objTile;
+  lv_obj_t *objColor;
+  lv_style_t objColorStyle;
+  lv_obj_t *labelName;
+  lv_obj_t *labelNumber;
+  lv_obj_t *labelSymbolMax;
+  lv_obj_t *labelMax;
+  lv_obj_t *labelSymbolMin;
+  lv_obj_t *labelMin;
+  lv_obj_t *labelCurrent;
+} lvHomeSensorTileType;
 
-class DisplayBase
+typedef struct lvSymbols
 {
-public:
-  DisplayBase();
-  virtual void init();
-  virtual void hwInit(){};
-  virtual void update();
-  void saveConfig();
-  void loadConfig();
-  void disable(boolean disabled);
-  void toggleOrientation();
-  uint16_t getOrientation() { return (int16_t)this->orientation; };
-  void block(boolean block);
-  virtual String getUpdateName() { return this->modelName; };
-  virtual void calibrate();
-  static String debugString;
+  lv_style_t *style;
+  lv_obj_t *btnMenu;
+  lv_obj_t *btnLeft;
+  lv_obj_t *btnRight;
+  lv_obj_t *btnAlarm;
+  lv_obj_t *btnCloud;
+  lv_obj_t *btnWifi;
+} lvHomeSymbolsType;
 
-protected:
-  SystemBase *system;
-  boolean disabled;
-  boolean blocked;
-  DisplayOrientation orientation;
-  String modelName;
-  uint16_t timeout;
-};
+typedef struct lvHome
+{
+  lv_obj_t *screen;
+  lvHomeSymbolsType symbols;
+  lvHomeSensorTileType sensorTiles[LV_HOME_SENSORS_PER_PAGE];
+} lvHomeType;
 
-extern DisplayBase *gDisplay;
+void lvHome_Create(void);
+void lvHome_Update(boolean forceUpdate);
+void lvHome_Delete(void);

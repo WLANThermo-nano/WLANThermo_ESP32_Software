@@ -20,6 +20,7 @@
 
 #include "TemperatureGrp.h"
 #include "TemperatureBle.h"
+#include "TemperatureConnect.h"
 #include "Settings.h"
 #include "bluetooth/Bluetooth.h"
 #include "ArduinoLog.h"
@@ -56,6 +57,11 @@ void TemperatureGrp::add(uint8_t type, String address, uint8_t localIndex)
       temperature->setUnit(this->currentUnit);
       add(temperature);
       break;
+    case SensorType::Connect:
+      temperature = new TemperatureConnect(address, localIndex);
+      temperature->setUnit(this->currentUnit);
+      add(temperature);
+      break;
     default:
       break;
     }
@@ -80,6 +86,7 @@ void TemperatureGrp::remove(uint8_t type, String address, uint8_t localIndex)
     switch ((SensorType)type)
     {
     case SensorType::Ble:
+    case SensorType::Connect:
       delete temperature;
       temperatures.erase(it);
       break;
@@ -250,9 +257,9 @@ boolean TemperatureGrp::hasAlarm(boolean filterAcknowledged)
     {
       if (temperatures[i]->getAlarmStatus() != NoAlarm)
       {
-        if(true == filterAcknowledged)
+        if (true == filterAcknowledged)
         {
-          if(false == temperatures[i]->isAlarmAcknowledged())
+          if (false == temperatures[i]->isAlarmAcknowledged())
           {
             hasAlarm = true;
           }
@@ -289,11 +296,11 @@ void TemperatureGrp::loadConfig()
   if (json.success())
   {
     if (json.containsKey("temp_unit"))
-      this->setUnit((TemperatureUnit)json["temp_unit"].asString()[0u]);
+      this->currentUnit = (TemperatureUnit)json["temp_unit"].asString()[0u];
 
     for (uint8_t i = 0u; i < temperatures.size(); i++)
     {
-      temperatures[i]->loadConfig();
+      temperatures[i]->loadConfig(this->currentUnit);
     }
   }
 }

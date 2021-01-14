@@ -52,6 +52,11 @@
 #define PM_DEFAULT_DCOUNT_MIN 1u
 #define PM_DEFAULT_DCOUNT_MAX 60u
 
+#define JP_THRESHOLD_CELSIUS 100u
+#define JP_THRESHOLD_FAHRENHEIT 212u
+#define JP_THRESHOLD_RANGE 25u
+#define JP_THRESHOLD_RANGE_OUT 1000u
+
 // duty cycle calculation
 // frequency: 50Hz --> 20ms
 // timer resolution: 16 bit --> 65535
@@ -135,8 +140,9 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
     // Skip BLE and Maverick Radio temperatures for assignment
-    if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
-        (temperature->getType() != (uint8_t)SensorType::MaverickRadio))
+    /*   if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
+        (temperature->getType() != (uint8_t)SensorType::MaverickRadio))*/
+      if (temperature->getType() != (uint8_t)SensorType::MaverickRadio)
     {
         this->temperature = temperature;
         memset((void *)&this->openLid, 0u, sizeof(this->openLid));
@@ -886,7 +892,7 @@ float Pitmaster::pidCalc()
     float x = medianValue->AddValue(this->temperature->getValue()); // IST
     //Serial.printf("GetMedianValue: %f\n", x);
     float w = this->targetTemperature; // SOLL
-
+    
     // PID Parameter
     float kp, ki, kd;
     kp = this->profile->kp;
@@ -909,14 +915,25 @@ float Pitmaster::pidCalc()
         e = diff / 10.0; // nur Temperaturunterschiede von >0.1°C beachten
     }
 
-    // JUMP DROSSEL
-    this->profile->jumpth = (w * 0.05);
-    if (this->profile->jumpth > (100.0 / kp))
-        this->profile->jumpth = 100.0 / kp;
-    if (e > this->profile->jumpth)
-        this->jump = true; 
-    else if (e <= 0) // Memory bis Soll erreicht
+    // JUMP DETECTION
+    float jpthres = JP_THRESHOLD_CELSIUS;
+    if (Fahrenheit == this->temperature->getUnit())
+    {
+        jpthres = JP_THRESHOLD_FAHRENHEIT;
+    }
+    float jumpth = JP_THRESHOLD_RANGE_OUT;  // unendlich
+    if (x < jpthres)
+    {
+        jumpth = JP_THRESHOLD_RANGE;
+    }   
+    if (e > jumpth)
+    {
+        this->jump = true;
+    }
+    else if (e <= 0) // Memory (daher else if) bis Soll erreicht
+    {
         this->jump = false;
+    }
 
     // Proportional-Anteil
     float p_out = kp * e;

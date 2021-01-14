@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,38 +20,19 @@
 #pragma once
 
 #include "Arduino.h"
-#include "system/SystemBase.h"
+#include <lvgl.h>
 
-enum class DisplayOrientation
+typedef struct lvMenu
 {
-  _0 = 0,
-  _180 = 180
-};
+  lv_obj_t *screen;
+  lv_style_t *btnStyle;
+  lv_obj_t *btnTemperatures;
+  lv_obj_t *btnWifi;
+  lv_obj_t *btnSystem;
+  lv_obj_t *btnPitmaster;
+  lv_obj_t *btnDisplay;
+} lvMenuType;
 
-class DisplayBase
-{
-public:
-  DisplayBase();
-  virtual void init();
-  virtual void hwInit(){};
-  virtual void update();
-  void saveConfig();
-  void loadConfig();
-  void disable(boolean disabled);
-  void toggleOrientation();
-  uint16_t getOrientation() { return (int16_t)this->orientation; };
-  void block(boolean block);
-  virtual String getUpdateName() { return this->modelName; };
-  virtual void calibrate();
-  static String debugString;
-
-protected:
-  SystemBase *system;
-  boolean disabled;
-  boolean blocked;
-  DisplayOrientation orientation;
-  String modelName;
-  uint16_t timeout;
-};
-
-extern DisplayBase *gDisplay;
+void lvMenu_Create(void);
+void lvMenu_Update(boolean forceUpdate);
+void lvMenu_Delete(void);

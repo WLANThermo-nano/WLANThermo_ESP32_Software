@@ -28,4 +28,6 @@ class SystemMiniV3 : public SystemBase
     void init();
     void hwInit();
   private:
+    static RTC_DATA_ATTR boolean didSleep;
+    static RTC_DATA_ATTR boolean didCharge;
 };
