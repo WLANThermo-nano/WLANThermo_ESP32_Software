@@ -71,7 +71,6 @@ typedef struct
 typedef struct
 {
   char name[31];
-  char id[65];
   char token[255];
 } PushAppDeviceType;
 
@@ -96,6 +95,8 @@ public:
   void setPushoverConfig(PushPushoverType config, boolean testMessage);
   void setAppConfig(PushAppType config, boolean testMessage);
   void sendTestMessage(NotificationService service, void *config);
+  static String getTokenSha256(String token);
+  String getDeviceTokenFromHash(String hash);
   void check(TemperatureBase *temperature);
   void update();
 

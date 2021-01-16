@@ -23,6 +23,7 @@
 #include "Cloud.h"
 #include "Settings.h"
 #include "temperature/TemperatureGrp.h"
+#include "mbedtls/md.h"
 
 #define PUSHOVER_RETRY_DEFAULT 30u
 #define PUSHOVER_EXPIRE_DEFAULT 300u
@@ -116,7 +117,7 @@ void Notification::setTelegramConfig(PushTelegramType config, boolean testMessag
 void Notification::setPushoverConfig(PushPushoverType config, boolean testMessage)
 {
   // load default when values not set
-  if((0u == config.expire) || (0u == config.retry))
+  if ((0u == config.expire) || (0u == config.retry))
   {
     config.retry = PUSHOVER_RETRY_DEFAULT;
     config.expire = PUSHOVER_EXPIRE_DEFAULT;
@@ -212,7 +213,6 @@ void Notification::saveConfig()
       JsonObject &device = devices.createNestedObject();
 
       device["name"] = pushApp.devices[i].name;
-      device["id"] = pushApp.devices[i].id;
       device["token"] = pushApp.devices[i].token;
     }
   }
@@ -301,7 +301,6 @@ void Notification::loadConfig()
                 _device.containsKey("token"))
             {
               strcpy(pushApp.devices[deviceIndex].name, _device["name"].asString());
-              strcpy(pushApp.devices[deviceIndex].id, _device["id"].asString());
               strcpy(pushApp.devices[deviceIndex].token, _device["token"].asString());
               deviceIndex++;
             }
@@ -310,4 +309,46 @@ void Notification::loadConfig()
       }
     }
   }
+}
+
+String Notification::getTokenSha256(String token)
+{
+  byte shaResult[32];
+  mbedtls_md_context_t ctx;
+  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+
+  const size_t tokenLength = strlen(token.c_str());
+
+  mbedtls_md_init(&ctx);
+  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
+  mbedtls_md_starts(&ctx);
+  mbedtls_md_update(&ctx, (const unsigned char *)token.c_str(), tokenLength);
+  mbedtls_md_finish(&ctx, shaResult);
+  mbedtls_md_free(&ctx);
+
+  String hash;
+  for (uint8_t index = 0u; index < sizeof(shaResult); index++)
+  {
+    char byteString[3];
+    sprintf(byteString, "%02x", (int)shaResult[index]);
+    hash += byteString;
+  }
+
+  return hash;
+}
+
+String Notification::getDeviceTokenFromHash(String hash)
+{
+  String token;
+
+  for (uint8_t deviceIndex = 0u; deviceIndex < PUSH_APP_MAX_DEVICES; deviceIndex++)
+  {
+    if(getTokenSha256(pushApp.devices[deviceIndex].token) == hash)
+    {
+      token = pushApp.devices[deviceIndex].token;
+      break;
+    }
+  }
+
+  return token;
 }

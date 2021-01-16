@@ -512,6 +512,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
   JsonObject &app = json.createNestedObject("app");
 
   app["enabled"] = pushApp.enabled;
+  app["max_devices"] = PUSH_APP_MAX_DEVICES;
 
   JsonArray &devices = app.createNestedArray("devices");
 
@@ -522,8 +523,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
       JsonObject &device = devices.createNestedObject();
 
       device["name"] = pushApp.devices[i].name;
-      device["id"] = pushApp.devices[i].id;
-      device["token"] = pushApp.devices[i].token;
+      device["token_sha256"] = Notification::getTokenSha256(pushApp.devices[i].token);
     }
   }
 
@@ -839,11 +839,23 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
         JsonObject &_device = it->asObject();
 
         if (_device.containsKey("name") && _device.containsKey("id") &&
-            _device.containsKey("token"))
+            (_device.containsKey("token") || _device.containsKey("token_sha256")))
         {
+          String token;
+
           strcpy(app.devices[deviceIndex].name, _device["name"].asString());
-          strcpy(app.devices[deviceIndex].id, _device["id"].asString());
-          strcpy(app.devices[deviceIndex].token, _device["token"].asString());
+
+          // user token or hash to get token
+          if(_device.containsKey("token"))
+          {
+            token = _device["token"].asString();
+          }
+          else if(_device.containsKey("token_sha256"))
+          {
+            token = gSystem->notification.getDeviceTokenFromHash(_device["token_sha256"].asString());
+          }
+
+          strcpy(app.devices[deviceIndex].token, token.c_str());
           deviceIndex++;
         }
       }

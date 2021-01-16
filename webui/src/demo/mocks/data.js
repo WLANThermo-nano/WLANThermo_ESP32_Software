@@ -441,16 +441,15 @@ export const Data = {
         },
         "app": {
             "enabled": true,
+            "max_devices": 3,
             "devices": [
                 {
                     "name": "Dummys iPhone",
-                    "id": "123",
-                    "token": "abc"
+                    "token_sha256": "Device 0 SHA256"
                 },
                 {
                     "name": "Dummys iPad",
-                    "id": "456",
-                    "token": "def"
+                    "token_sha256": "Device 1 SHA256"
                 }
             ]
         }
