@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { MockData } from './mock-data'
 import EventBus from "../event-bus";
-
-export const SPECIAL_URL_FOR_DEMO_API = 'wlan.demo.not.real.url'
+import { SPECIAL_URL_FOR_DEMO_API } from './mock-apis-mobile.models';
 
 const getMockError = config => {
   const mockError = new Error()
@@ -14,10 +13,11 @@ const getMockError = config => {
 axios.interceptors.request.use(config => {
   console.log('request interceptors: ')
   console.log(config)
-  if (config.url.includes(SPECIAL_URL_FOR_DEMO_API)) {
+  if (config.baseURL.includes(SPECIAL_URL_FOR_DEMO_API)) {
     console.log('using fake api')
     return getMockError(config)
   }
+  console.log('return request config')
   return config;
 }, error => Promise.reject(error))
 
@@ -32,6 +32,7 @@ axios.interceptors.response.use(response => response, error => {
   if (!error?.config?.headers?.scan) {
     EventBus.$emit('api-error')
   }
+  console.log('normal error')
   return error
 })
 

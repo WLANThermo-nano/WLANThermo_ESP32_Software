@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "axios": "0.21.1",
-    "axios-mock-adapter": "^1.19.0",
     "base64-inline-loader": "^1.1.1",
     "core-js": "^3.6.5",
     "netmask": "^1.0.6",

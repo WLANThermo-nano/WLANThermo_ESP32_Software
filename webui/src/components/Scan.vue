@@ -62,7 +62,7 @@
 
 <script>
 import EventBus from "../event-bus";
-import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile';
+import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile.models';
 
 const Netmask = require("netmask").Netmask;
 

@@ -1,26 +1,38 @@
 import axios from 'axios'
-import MockAdapter from 'axios-mock-adapter'
 import { MockData } from './mock-data'
 
-if (process.env.VUE_APP_PRODUCT_NAME === 'demo') {
+const getMockError = config => {
+  const mockError = new Error()
+  mockError.config = config
+  return Promise.reject(mockError)
+}
 
-  var mock = new MockAdapter(axios)
+// Add a request interceptor
+axios.interceptors.request.use(config => {
+  return getMockError(config)
+}, error => Promise.reject(error))
 
-  mock.onAny().reply(function (config) {
-    
-    if (process.env.VUE_APP_DEBUG_MOCK_API) {
-      if (config.url !== '/data') {
-        console.log(config)
-      }
+// Add a response interceptor
+axios.interceptors.response.use(response => response, error => {
+  return getMockResponse(error)
+})
+
+const getMockResponse = mockError => {
+  const {config} = mockError
+
+  if (process.env.VUE_APP_DEBUG_MOCK_API) {
+    if (config.url !== '/data') {
+      console.log(config)
     }
+  }
 
-    return Promise.resolve(Object.assign({
-      data: {},
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config,
-      isMock: true
-    }, {data: MockData.mock(config)}))
-  });
+  // Handle mocked success
+  return Promise.resolve(Object.assign({
+    data: {},
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config,
+    isMock: true
+  }, {data: MockData.mock(config)}))
 }
