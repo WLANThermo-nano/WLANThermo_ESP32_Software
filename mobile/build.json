@@ -1,0 +1,15 @@
+{
+    "ios": {
+        "debug": {
+            "codeSignIdentity": "Apple Distribution",
+            "developmentTeam": "___DEV_TEAM___",
+            "provisioningProfile": "320e0b10-8a91-4dfb-b554-524ef9bcbe1c",
+            "packageType": "ad-hoc",
+            "buildFlag": [
+                "EMBEDDED_CONTENT_CONTAINS_SWIFT = YES",
+                "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO",
+                "LD_RUNPATH_SEARCH_PATHS = \"@executable_path/Frameworks\""
+            ]
+        }
+    }
+}

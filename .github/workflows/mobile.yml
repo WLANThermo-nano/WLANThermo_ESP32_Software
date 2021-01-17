@@ -1,8 +1,8 @@
 name: Mobile build
 on:
   push:
-    branches:    
-      - feature/adding-vue-router
+    branches:
+      - push
 
 jobs:
   main:
@@ -22,10 +22,28 @@ jobs:
         with:
           node-version: 13.x
 
-      - name: Install Cordova
+      - name: Install Cordova and Cordova Resource Generator
         working-directory: ./mobile
-        run: npm install -g cordova
-      
+        run: npm install -g cordova cordova-res
+
+      - name: Decrypt files
+        working-directory: ./.github/secrets
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/GoogleService-Info.plist GoogleService-Info.plist.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/google-services.json google-services.json.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovision.gpg
+
+      - name: Replaces tokens
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: '___'
+          tokenSuffix: '___'
+          files: '["**/build.json"]'
+        env:
+          DEV_TEAM: ${{ secrets.DEV_TEAM }}
+
       - name: Add Android platform
         working-directory: ./mobile
         run: cordova platform add android@latest
@@ -46,16 +64,32 @@ jobs:
         working-directory: ./mobile
         run: npm install
 
+      - name: Create icons
+        working-directory: ./mobile
+        run: cordova-res
+
       - name: Build Android app
         working-directory: ./mobile
         run: npm run build-android
 
-      - name: Build IOS app
-        working-directory: ./mobile
-        run: npm run build-ios
+      - name: Prepare iOS provisioning
+        working-directory: ./.github/secrets
+        run: |
+          security create-keychain -p "" build.keychain >/dev/null 2>&1
+          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
+          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
 
-      - name: Upload dev APK
-        uses: actions/upload-artifact@v1
+      - name: Build iOS app
+        working-directory: ./mobile
+        run: cordova build ios --device
+
+      - name: Upload dev APK and IPA
+        uses: actions/upload-artifact@v2
         with:
           name: app-dev
-          path: ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+            ./mobile/platforms/ios/build/device/WLANThermo.ipa

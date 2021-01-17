@@ -26,10 +26,4 @@ function onDeviceReady() {
 
     // console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
     // document.getElementById('deviceready').classList.add('ready');
-
-    cordova.plugins.notification.local.schedule({
-        title: 'From WLANThermo',
-        text: 'Message from WLANThermo',
-        foreground: true
-    });
 }
