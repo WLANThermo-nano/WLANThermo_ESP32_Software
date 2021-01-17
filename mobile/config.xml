@@ -17,6 +17,11 @@
     <allow-intent href="geo:*" />
     <access origin="*" />
     <allow-navigation href="*" />
+    <!-- preferences -->
+    <preference name="StatusBarOverlaysWebView" value="true" />
+    <preference name="StatusBarBackgroundColor" value="#222831" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+
     <platform name="android">
         <allow-intent href="market:*" />
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application" xmlns:android="http://schemas.android.com/apk/res/android">
