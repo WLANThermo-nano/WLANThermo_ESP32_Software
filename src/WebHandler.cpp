@@ -838,7 +838,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       {
         JsonObject &_device = it->asObject();
 
-        if (_device.containsKey("name") && _device.containsKey("id") &&
+        if (_device.containsKey("name") &&
             (_device.containsKey("token") || _device.containsKey("token_sha256")))
         {
           String token;
