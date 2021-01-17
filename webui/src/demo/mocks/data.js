@@ -445,10 +445,12 @@ export const Data = {
             "devices": [
                 {
                     "name": "Dummys iPhone",
+                    "id": "123",
                     "token_sha256": "Device 0 SHA256"
                 },
                 {
                     "name": "Dummys iPad",
+                    "id": "456",
                     "token_sha256": "Device 1 SHA256"
                 }
             ]

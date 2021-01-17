@@ -213,6 +213,7 @@ void Notification::saveConfig()
       JsonObject &device = devices.createNestedObject();
 
       device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
       device["token"] = pushApp.devices[i].token;
     }
   }
@@ -301,6 +302,7 @@ void Notification::loadConfig()
                 _device.containsKey("token"))
             {
               strcpy(pushApp.devices[deviceIndex].name, _device["name"].asString());
+              strcpy(pushApp.devices[deviceIndex].id, _device["id"].asString());
               strcpy(pushApp.devices[deviceIndex].token, _device["token"].asString());
               deviceIndex++;
             }
