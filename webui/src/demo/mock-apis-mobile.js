@@ -13,7 +13,7 @@ const getMockError = config => {
 axios.interceptors.request.use(config => {
   console.log('request interceptors: ')
   console.log(config)
-  if (config.baseURL.includes(SPECIAL_URL_FOR_DEMO_API)) {
+  if (config.url.includes(SPECIAL_URL_FOR_DEMO_API)) {
     console.log('using fake api')
     return getMockError(config)
   }
