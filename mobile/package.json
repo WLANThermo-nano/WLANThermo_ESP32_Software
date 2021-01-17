@@ -19,21 +19,25 @@
     "cordova-android": "^9.0.0",
     "cordova-disable-http-cache": "^1.0.0",
     "cordova-plugin-add-swift-support": "^2.0.2",
-    "cordova-plugin-badge": "^0.8.8",
-    "cordova-plugin-device": "^2.0.3",
-    "cordova-plugin-local-notification": "git+https://github.com/katzer/cordova-plugin-local-notifications.git",
+    "cordova-plugin-androidx": "^3.0.0",
+    "cordova-plugin-firebase-analytics": "^5.0.0",
+    "cordova-plugin-firebase-messaging": "^5.0.1",
+    "cordova-plugin-networkinterface": "^2.0.0",
     "cordova-plugin-whitelist": "^1.3.4",
-    "cordova-plugin-zeroconf": "^1.4.2"
+    "cordova-plugin-zeroconf": "^1.4.2",
+    "cordova-support-android-plugin": "^1.0.2",
+    "cordova-support-google-services": "^1.4.1"
   },
   "cordova": {
     "plugins": {
       "cordova-plugin-whitelist": {},
-      "cordova-plugin-local-notification": {
-        "ANDROID_SUPPORT_V4_VERSION": "26.+"
-      },
       "cordova-plugin-zeroconf": {},
       "cordova-plugin-networkinterface": {},
-      "cordova-disable-http-cache": {}
+      "cordova-disable-http-cache": {},
+      "cordova-plugin-firebase-messaging": {
+        "ANDROID_FIREBASE_MESSAGING_VERSION": "21.0.+",
+        "ANDROIDX_CORE_VERSION": "1.3.+"
+      }
     },
     "platforms": [
       "android"
