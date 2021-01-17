@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,41 +17,32 @@
     HISTORY: Please refer Github History
     
 ****************************************************/
-#pragma once
 
-#include "Arduino.h"
-#include "system/SystemBase.h"
+#include "TemperatureConnect.h"
+#include "connect/Connect.h"
 
-enum class DisplayOrientation
+TemperatureConnect::TemperatureConnect()
 {
-  _0 = 0,
-  _180 = 180
-};
+}
 
-class DisplayBase
+TemperatureConnect::TemperatureConnect(String peerAddress, uint8_t index) : TemperatureBase()
 {
-public:
-  DisplayBase();
-  virtual void init();
-  virtual void hwInit(){};
-  virtual void update();
-  void saveConfig();
-  void loadConfig();
-  void disable(boolean disabled);
-  void toggleOrientation();
-  uint16_t getOrientation() { return (int16_t)this->orientation; };
-  void block(boolean block);
-  virtual String getUpdateName() { return this->modelName; };
-  virtual void calibrate();
-  static String debugString;
+  this->address = peerAddress;
+  this->localIndex = index;
+  this->type = SensorType::Connect;
+  this->fixedSensor = true;
+}
 
-protected:
-  SystemBase *system;
-  boolean disabled;
-  boolean blocked;
-  DisplayOrientation orientation;
-  String modelName;
-  uint16_t timeout;
-};
+void TemperatureConnect::refresh()
+{
+  this->connected = Connect::isDeviceConnected(this->address);
 
-extern DisplayBase *gDisplay;
+  if (this->connected)
+  {
+    this->currentValue = Connect::getTemperatureValue(this->address, this->localIndex);
+  }
+  else
+  {
+    this->currentValue = INACTIVEVALUE;
+  }
+}

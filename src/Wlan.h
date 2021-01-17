@@ -66,7 +66,7 @@ public:
   WifiStrength getSignalStrength();
   int32_t getRssi();
   static void clearCredentials();
-  String getMacAddress();
+  static String getMacAddress();
   WifiState getWifiState();
   boolean isConnected();
   boolean isAP();

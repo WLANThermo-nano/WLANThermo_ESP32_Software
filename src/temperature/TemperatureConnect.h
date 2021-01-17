@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,39 +19,12 @@
 ****************************************************/
 #pragma once
 
-#include "Arduino.h"
-#include "system/SystemBase.h"
+#include "TemperatureBase.h"
 
-enum class DisplayOrientation
-{
-  _0 = 0,
-  _180 = 180
-};
-
-class DisplayBase
+class TemperatureConnect : public TemperatureBase
 {
 public:
-  DisplayBase();
-  virtual void init();
-  virtual void hwInit(){};
-  virtual void update();
-  void saveConfig();
-  void loadConfig();
-  void disable(boolean disabled);
-  void toggleOrientation();
-  uint16_t getOrientation() { return (int16_t)this->orientation; };
-  void block(boolean block);
-  virtual String getUpdateName() { return this->modelName; };
-  virtual void calibrate();
-  static String debugString;
-
-protected:
-  SystemBase *system;
-  boolean disabled;
-  boolean blocked;
-  DisplayOrientation orientation;
-  String modelName;
-  uint16_t timeout;
+  TemperatureConnect();
+  TemperatureConnect(String peerAddress, uint8_t index);
+  void refresh();
 };
-
-extern DisplayBase *gDisplay;

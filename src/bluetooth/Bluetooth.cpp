@@ -19,8 +19,10 @@
 ****************************************************/
 
 #include "Bluetooth.h"
-#include "bleFirmwareDat.h"
-#include "bleFirmwareBin.h"
+#include "bleFirmwareBin_nrf52832.h"
+#include "bleFirmwareDat_nrf52832.h"
+#include "bleFirmwareBin_nrf52840.h"
+#include "bleFirmwareDat_nrf52840.h"
 #include "temperature/TemperatureBase.h"
 #include "system/SystemBase.h"
 #include "Settings.h"
@@ -35,9 +37,11 @@
 #define BLE_JSON_ADDRESS "a"
 #define BLE_JSON_STATUS "s"
 #define BLE_JSON_COUNT "c"
-#define BLE_JSON_TEMPERATURES "t"
 #define BLE_JSON_LAST_SEEN "ls"
 #define BLE_JSON_RSSI "r"
+#define BLE_JSON_SENSORS "t"
+#define BLE_JSON_SENSORS_VALUE "v"
+#define BLE_JSON_SENSORS_UNIT "u"
 
 HardwareSerial *Bluetooth::serialBle = NULL;
 std::vector<BleDeviceType *> Bluetooth::bleDevices;
@@ -50,6 +54,7 @@ Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
     this->resetPin = resetPin;
     this->builtIn = false;
     this->chipEnabled = false;
+    this->isNrf52840 = false;
     pinMode(this->resetPin, OUTPUT);
     digitalWrite(this->resetPin, LOW);
 }
@@ -61,6 +66,7 @@ Bluetooth::Bluetooth(HardwareSerial *serial, uint8_t resetPin)
     this->resetPin = resetPin;
     this->builtIn = false;
     this->chipEnabled = false;
+    this->isNrf52840 = false;
     pinMode(this->resetPin, OUTPUT);
     digitalWrite(this->resetPin, LOW);
 }
@@ -94,10 +100,10 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
                 memset(bleDevice, 0, sizeof(BleDeviceType));
                 bleDevice->remoteIndex = BLE_DEVICE_REMOTE_INDEX_INIT;
 
-                // reset temperatures
-                for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+                // reset sensors
+                for (uint8_t i = 0; i < BLE_SENSORS_MAX_COUNT; i++)
                 {
-                    bleDevice->temperatures[i] = INACTIVEVALUE;
+                    bleDevice->sensors[i] = INACTIVEVALUE;
                 }
 
                 strcpy(bleDevice->name, json["tname"][i]);
@@ -266,15 +272,32 @@ void Bluetooth::getDevices()
             bleDevice->count = _device[BLE_JSON_COUNT];
         }
 
-        // reset temperatures before updating
-        for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+        // reset sensors before updating
+        for (uint8_t i = 0; i < BLE_SENSORS_MAX_COUNT; i++)
         {
-            bleDevice->temperatures[i] = INACTIVEVALUE;
+            bleDevice->sensors[i] = INACTIVEVALUE;
+            memset(bleDevice->units[i], 0u, BLE_SENSOR_UNIT_MAX_SIZE);
         }
 
-        if (_device.containsKey(BLE_JSON_TEMPERATURES) == true)
+        if (_device.containsKey(BLE_JSON_SENSORS) == true)
         {
-            _device[BLE_JSON_TEMPERATURES].asArray().copyTo(bleDevice->temperatures, BLE_TEMPERATURE_MAX_COUNT);
+            JsonArray &_sensors = _device[BLE_JSON_SENSORS].asArray();
+            uint8_t sensorIndex = 0u;
+
+            for (JsonArray::iterator itSensor = _sensors.begin(); (itSensor != _sensors.end()) && (sensorIndex < BLE_SENSORS_MAX_COUNT); ++itSensor, sensorIndex++)
+            {
+                JsonObject &_sensor = itSensor->asObject();
+
+                if (_sensor.containsKey(BLE_JSON_SENSORS_VALUE) == true)
+                {
+                    bleDevice->sensors[sensorIndex] = _sensor[BLE_JSON_SENSORS_VALUE];
+                }
+
+                if (_sensor.containsKey(BLE_JSON_SENSORS_UNIT) == true)
+                {
+                    memcpy(bleDevice->units[sensorIndex], _sensor[BLE_JSON_SENSORS_UNIT].asString(), BLE_SENSOR_UNIT_MAX_SIZE - 1u);
+                }
+            }
         }
     }
 }
@@ -328,10 +351,10 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
         if (false == enabled)
         {
             isConnected = false;
-            // reset temperatures
-            for (uint8_t i = 0; i < BLE_TEMPERATURE_MAX_COUNT; i++)
+            // reset sensors
+            for (uint8_t i = 0; i < BLE_SENSORS_MAX_COUNT; i++)
             {
-                (*it)->temperatures[i] = INACTIVEVALUE;
+                (*it)->sensors[i] = INACTIVEVALUE;
             }
         }
     }
@@ -339,7 +362,7 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
     return isConnected;
 }
 
-float Bluetooth::getTemperatureValue(String peerAddress, uint8_t index)
+float Bluetooth::getSensorValue(String peerAddress, uint8_t index)
 {
     float value = INACTIVEVALUE;
     const auto isKnownDevice = [peerAddress](BleDevice *d) {
@@ -348,12 +371,29 @@ float Bluetooth::getTemperatureValue(String peerAddress, uint8_t index)
 
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
-    if ((it != bleDevices.end()) && (index < BLE_TEMPERATURE_MAX_COUNT))
+    if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
     {
-        value = (*it)->temperatures[index];
+        value = (*it)->sensors[index];
     }
 
     return value;
+}
+
+String Bluetooth::getSensorUnit(String peerAddress, uint8_t index)
+{
+    char unit[BLE_SENSOR_UNIT_MAX_SIZE] = {0u};
+    const auto isKnownDevice = [peerAddress](BleDevice *d) {
+        return (peerAddress.equalsIgnoreCase(d->address));
+    };
+
+    auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
+
+    if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
+    {
+        memcpy(unit, (*it)->units[index], BLE_SENSOR_UNIT_MAX_SIZE);
+    }
+
+    return unit;
 }
 
 void Bluetooth::task(void *parameter)
@@ -381,26 +421,39 @@ void Bluetooth::task(void *parameter)
 boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)
 {
     const char bootloaderString[] = {'@', '@', 'B', 'O', 'O', 'T', 'L', 'O', 'A', 'D', 'E', 'R'};
+    const uint8_t variantIndex = 8u;
     uint32_t currentMillis = millis();
     uint32_t serialStringIndex = 0u;
     uint32_t bootloaderStringIndex = 0u;
     boolean success = false;
+    boolean nrf52840Check = false;
 
     while ((millis() - currentMillis) < timeoutInMs)
     {
         if (serialBle->available())
         {
-            if (bootloaderString[bootloaderStringIndex++] == (char)serialBle->read())
+            char currentChar = (char)serialBle->read();
+
+            // check for nrf52840 variant
+            if ((variantIndex == bootloaderStringIndex) && ('4' == currentChar))
+            {
+                nrf52840Check = true;
+                bootloaderStringIndex++;
+                continue;
+            }
+            else if (bootloaderString[bootloaderStringIndex++] == currentChar)
             {
                 if (sizeof(bootloaderString) == bootloaderStringIndex)
                 {
                     success = true;
+                    this->isNrf52840 = nrf52840Check;
                     break;
                 }
             }
             else
             {
                 bootloaderStringIndex = 0u;
+                nrf52840Check = false;
             }
         }
     }
@@ -431,18 +484,33 @@ boolean Bluetooth::doDfu()
     {
         Serial.println("Hello from BLE bootloader");
         Serial.println("Start flashing of BLE application");
-        Log.notice("BLE chip detected" CR);
         uint32_t flashStart = millis();
 
         TFwu sFwu;
         memset(&sFwu, 0, sizeof(TFwu));
-        sFwu.commandObject = (uint8_t *)bleFirmwareDat_h;
-        sFwu.commandObjectLen = sizeof(bleFirmwareDat_h);
-        sFwu.dataObject = (uint8_t *)bleFirmwareBin_h;
-        sFwu.dataObjectLen = sizeof(bleFirmwareBin_h);
-        sFwu.dataObjectVer = bleFirmwareBin_h_version;
         sFwu.txFunction = Bluetooth::dfuTxFunction;
         sFwu.responseTimeoutMillisec = 5000u;
+
+        if (this->isNrf52840)
+        {
+            // nrf52840 firmware
+            sFwu.commandObject = (uint8_t *)bleFirmwareDat_nrf52840_h;
+            sFwu.commandObjectLen = sizeof(bleFirmwareDat_nrf52840_h);
+            sFwu.dataObject = (uint8_t *)bleFirmwareBin_nrf52840_h;
+            sFwu.dataObjectLen = sizeof(bleFirmwareBin_nrf52840_h);
+            sFwu.dataObjectVer = bleFirmwareBin_nrf52840_h_version;
+            Log.notice("BLE chip: nrf52840" CR);
+        }
+        else
+        {
+            // nrf52832 firmware
+            sFwu.commandObject = (uint8_t *)bleFirmwareDat_nrf52832_h;
+            sFwu.commandObjectLen = sizeof(bleFirmwareDat_nrf52832_h);
+            sFwu.dataObject = (uint8_t *)bleFirmwareBin_nrf52832_h;
+            sFwu.dataObjectLen = sizeof(bleFirmwareBin_nrf52832_h);
+            sFwu.dataObjectVer = bleFirmwareBin_nrf52832_h_version;
+            Log.notice("BLE chip: nrf52832" CR);
+        }
 
         fwuInit(&sFwu);
         fwuExec(&sFwu);

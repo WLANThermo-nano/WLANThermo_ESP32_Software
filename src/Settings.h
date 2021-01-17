@@ -36,6 +36,7 @@ enum SettingsNvsKeys
   kOtaUpdate,
   kServer,
   kBluetooth,
+  kConnect,
   kPbGuard
 };
 

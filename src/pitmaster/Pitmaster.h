@@ -42,7 +42,6 @@ typedef struct TPitmasterProfile
   byte link;   // Link between Actuators
   byte opl;
   byte autotune;
-  float jumpth;
 } PitmasterProfile;
 
 typedef struct TDutyCycleTest

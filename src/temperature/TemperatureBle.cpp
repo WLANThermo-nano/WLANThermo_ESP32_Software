@@ -39,7 +39,7 @@ void TemperatureBle::refresh()
 
   if (this->connected)
   {
-    this->currentValue = Bluetooth::getTemperatureValue(this->address, this->localIndex);
+    this->currentValue = Bluetooth::getSensorValue(this->address, this->localIndex);
   }
   else
   {

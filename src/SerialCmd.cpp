@@ -25,6 +25,7 @@
 #include "WebHandler.h"
 #include "API.h"
 #include "DbgPrint.h"
+#include <Preferences.h>
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // React to Serial Input
@@ -185,6 +186,16 @@ void read_serial(char *buffer)
       gDisplay->calibrate();
       return;
     }
+    else if (str == "removecalibrationTFT")
+    {
+      Preferences prefs;
+      prefs.begin("TFT");
+      prefs.remove("Touch");
+      Serial.println("Settings::remove: Touch");
+      prefs.end();
+      return;
+    }
+    
 #endif
 
 #if defined HW_NANO_V3

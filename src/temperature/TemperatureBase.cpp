@@ -375,6 +375,11 @@ float TemperatureBase::getUnitValue(float value)
   return convertedValue;
 }
 
+TemperatureUnit TemperatureBase::getUnit()
+{
+  return this->currentUnit;
+}
+
 float TemperatureBase::calcTemperatureNTC(uint16_t rawValue, SensorType type)
 {
 

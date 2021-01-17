@@ -21,63 +21,42 @@
 
 #include "Arduino.h"
 #include <ArduinoJson.h>
-#include "fwu.h"
+#include <asyncHTTPrequest.h>
 #include "temperature/TemperatureGrp.h"
 
-#define BLUETOOTH_MAX_DEVICE_COUNT 4u
-
-#define BLE_ADDRESS_STRING_MAX_SIZE 18u
-#define BLE_NAME_STRING_MAX_SIZE 18u
-#define BLE_SENSOR_UNIT_MAX_SIZE 4u
-#define BLE_SENSORS_MAX_COUNT 8u
-
-#define BLE_DEVICE_REMOTE_INDEX_INIT 0xFFu
+#define CONNECT_ADDRESS_STRING_MAX_SIZE 18u
+#define CONNECT_NAME_STRING_MAX_SIZE 18u
+#define CONNECT_TEMPERATURE_MAX_COUNT 32u
 
 typedef float (*BleGetTemperatureValue_t)(String, uint8_t);
 
-typedef struct BleDevice
+typedef struct ConnectDevice
 {
-    char name[BLE_ADDRESS_STRING_MAX_SIZE];
-    char address[BLE_NAME_STRING_MAX_SIZE];
-    float sensors[BLE_SENSORS_MAX_COUNT];
-    char units[BLE_SENSORS_MAX_COUNT][BLE_SENSOR_UNIT_MAX_SIZE];
+    char name[CONNECT_ADDRESS_STRING_MAX_SIZE];
+    char address[CONNECT_NAME_STRING_MAX_SIZE];
+    float temperatures[CONNECT_TEMPERATURE_MAX_COUNT];
     uint8_t count;
     uint8_t selected;
     uint8_t status;
-    uint8_t remoteIndex;
-} BleDeviceType;
+} ConnectDeviceType;
 
-class Bluetooth
+class Connect
 {
 public:
-    Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin);
-    Bluetooth(HardwareSerial *serial, uint8_t resetPin);
+    Connect();
     void init();
     void loadConfig(TemperatureGrp *temperatureGrp);
     void saveConfig();
-    boolean isBuiltIn() { return builtIn; }
-    void enable(boolean enable);
-    boolean isEnabled() { return enabled; }
     uint8_t getDeviceCount();
-    boolean getDevice(uint8_t index, BleDevice *device);
+    boolean getDevice(uint8_t index, ConnectDevice *device);
     void setDeviceSelected(String peerAddress, uint8_t selected);
     static boolean isDeviceConnected(String peerAddress);
-    static float getSensorValue(String peerAddress, uint8_t index);
-    static String getSensorUnit(String peerAddress, uint8_t index);
+    static float getTemperatureValue(String peerAddress, uint8_t index);
 
 private:
-    static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
-    uint8_t dfuRxFunction(uint8_t *data, int maxLen);
     void getDevices();
-    boolean waitForBootloader(uint32_t timeoutInMs);
     static void task(void *parameter);
-    boolean doDfu();
-    void enableChip(boolean enable);
-    uint8_t resetPin;
-    boolean builtIn;
+    static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
     static boolean enabled;
-    boolean chipEnabled;
-    boolean isNrf52840;
-    static std::vector<BleDeviceType *> bleDevices;
-    static HardwareSerial *serialBle;
+    static std::vector<ConnectDeviceType *> connectDevices;
 };
