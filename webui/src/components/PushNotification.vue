@@ -208,7 +208,7 @@ export default {
         this.app.devices.push({
           id: this.currentPhoneUUID,
           name: model,
-          token_sha256: token
+          token: token
         })
       }).catch((error) => {
         console.log(`don't get got token`)
