@@ -444,10 +444,12 @@ export const Data = {
             "max_devices": 3,
             "devices": [
                 {
+                    "id": '1',
                     "name": "Dummys iPhone",
                     "token_sha256": "Device 0 SHA256"
                 },
                 {
+                    "id": '2',
                     "name": "Dummys iPad",
                     "token_sha256": "Device 1 SHA256"
                 }

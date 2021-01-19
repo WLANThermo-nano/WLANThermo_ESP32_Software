@@ -79,6 +79,43 @@
           {{ $t('notificationSendMessage') }}
         </button>
       </div>
+
+      <div class="form-section-name" v-if="isMobile">
+        Firebasse Push
+      </div>
+      <div class="config-form" v-if="isMobile">
+        <button
+          v-if="!currentPhoneIsConfigured"
+          @click="configuredCurrentPhone"
+          class="pure-button pure-button-primary test-msg-button" style="margin-top: 5px" >
+          {{ $t('notificationConfigureThisPhone') }}
+        </button>
+        <div class="form-group">
+          <div v-for="(d) in app.devices" :key="d.id">
+            <div class="pure-u-2-5 control pure-grid">
+              <div class="form-group">
+                <input v-model="d.name" required />
+                <label class="control-label" for="input"> {{ $t('deviceName') }} </label>
+                <i class="bar"></i>
+              </div>
+            </div>
+            <div class="pure-u-2-5 control pure-grid">
+              <div class="form-group">
+                <input class="with-icon" v-model="d.token_sha256" required readonly />
+                <label class="control-label" for="input"> {{ $t('notificationToken') }} </label>
+                <i class="bar"></i>
+                <span v-if="currentPhoneUUID !== d.id" class="icon-refresh icon-form"></span>
+              </div>
+            </div>
+            <div class="pure-u-1-5 control pure-grid delete-button-container">
+              <button class="pure-button pure-button-error renew-token-button" @click="removeDevice(d.id)">
+                <span class="icon-trash"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -114,11 +151,22 @@ export default {
         test: false,
         devices: [],
       },
+      isMobile: false,
+      currentPhoneUUID: null,
     };
   },
   watch: {},
+  computed: {
+    currentPhoneIsConfigured: function() {
+      return this.app.devices.some(d => d.id === this.currentPhoneUUID)
+    }
+  },
   mounted: function () {
     EventBus.$emit("loading", true)
+    this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
+    if (this.isMobile) {
+      document.addEventListener('deviceready', this.initMobileInfo.bind(this), false)
+    }
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
       this.telegram = response.data.telegram
@@ -128,6 +176,46 @@ export default {
     });
   },
   methods: {
+    removeDevice: function(deviceId) {
+      this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
+    },
+    initMobileInfo: function() {
+      // eslint-disable-next-line
+      this.currentPhoneUUID = device.uuid;
+    },
+    getNewToken: function() {
+      const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneUUID));
+      if (currentPhoneIndex !== -1) {
+        // eslint-disable-next-line
+        const messaging = cordova.plugins.firebase.messaging
+        messaging.getToken().then((token) => {
+          this.app.devices[currentPhoneIndex].token_sha256 = token
+        })
+      }
+    },
+    configuredCurrentPhone: function() {
+      EventBus.$emit("loading", true)
+      // eslint-disable-next-line
+      const messaging = cordova.plugins.firebase.messaging
+      messaging.requestPermission().then(function() {
+        console.log("Push messaging is allowed");
+      });
+      messaging.getToken().then((token) => {
+        EventBus.$emit("loading", false)
+        console.log(`got token ${token}`)
+        // eslint-disable-next-line
+        const model = device.model
+        this.app.devices.push({
+          id: this.currentPhoneUUID,
+          name: model,
+          token_sha256: token
+        })
+      }).catch((error) => {
+        console.log(`don't get got token`)
+        console.log(error)
+        EventBus.$emit("loading", false)
+      });
+    },
     backToHome: function () {
       EventBus.$emit("back-to-home");
     },
@@ -167,5 +255,13 @@ export default {
 }
 .test-msg-button {
   margin-bottom: 1em;
+}
+
+.renew-token-button {
+  margin-top: 0.5em;
+}
+
+.delete-button-container {
+  text-align: center;
 }
 </style>

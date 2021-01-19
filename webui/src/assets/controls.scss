@@ -200,7 +200,7 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-.pure-u-1-2, .pure-u-1-3 {
+.pure-u-1-2, .pure-u-1-3, .pure-grid {
     &.control {
         margin-top: -.7em;
         margin-bottom: .6em;
@@ -210,6 +210,11 @@ input[type=number] {
         margin-top: 0.75rem;
         margin-bottom: 0.85rem;
     }
+}
+
+.pure-button-error {
+    background: rgb(202, 60, 60);
+    color: #fff;
 }
 
 .form-group.control-at-top {
@@ -233,5 +238,11 @@ input[type=number] {
                 background: $error_color;
             }
         }
+    }
+}
+
+input {
+    &.with-icon {
+        width: calc(100% - 1.8em);
     }
 }

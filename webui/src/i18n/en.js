@@ -98,6 +98,8 @@ export default {
 	notificationPriorityHigh: "High",
 	notificationPriorityEmergency: "Emergency",
 	notificationPriority: "Priority",
+	notificationConfigureThisPhone: "Add this phone to receive push message",
+	deviceName: "Device name",
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Activate Cloud Service",
