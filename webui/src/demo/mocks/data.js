@@ -446,11 +446,13 @@ export const Data = {
                 {
                     "id": '1',
                     "name": "Dummys iPhone",
+                    "id": "123",
                     "token_sha256": "Device 0 SHA256"
                 },
                 {
                     "id": '2',
                     "name": "Dummys iPad",
+                    "id": "456",
                     "token_sha256": "Device 1 SHA256"
                 }
             ]

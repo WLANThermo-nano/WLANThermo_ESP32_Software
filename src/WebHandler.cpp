@@ -523,6 +523,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
       JsonObject &device = devices.createNestedObject();
 
       device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
       device["token_sha256"] = Notification::getTokenSha256(pushApp.devices[i].token);
     }
   }
@@ -838,12 +839,13 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       {
         JsonObject &_device = it->asObject();
 
-        if (_device.containsKey("name") &&
+        if (_device.containsKey("name") && _device.containsKey("id") &&
             (_device.containsKey("token") || _device.containsKey("token_sha256")))
         {
           String token;
 
           strcpy(app.devices[deviceIndex].name, _device["name"].asString());
+          strcpy(app.devices[deviceIndex].id, _device["id"].asString());
 
           // user token or hash to get token
           if(_device.containsKey("token"))

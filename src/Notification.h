@@ -71,6 +71,7 @@ typedef struct
 typedef struct
 {
   char name[31];
+  char id[65];
   char token[255];
 } PushAppDeviceType;
 
