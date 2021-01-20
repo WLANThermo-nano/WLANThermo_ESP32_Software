@@ -14,35 +14,45 @@
               @click="checkConnection"
             ></span>
           </div>
-          <div
-            class="scan-device-item"
-            v-for="(device, deviceIndex) in displayedDevices"
-            :key="deviceIndex"
-            @click="deviceSelected(device)"
-          >
-            <div class="info">
-              <div class="body">
-                <div class="image" style="width: 30px;">
-                  <div class="connection-state"
-                       v-if="device.type !== 'demo'"
-                       :class="{ connected: device.connected, lower: device.type === 'linkv1' }">
-                  </div>
-                  <img :src="images[device.type]" alt="">
-                </div>
-                <div class="name-address">
-                  <div class="name">
-                    {{ device.name }}
-                  </div>
-                  <div class="address">
-                    {{ device.ip }}
-                  </div>
+          <swipe-list
+            :items="displayedDevices"
+            :item-disabled="disableSwipe"
+            item-key="name"
+            >
+              <template v-slot="{ item }">
+                <div 
+                  @click="deviceSelected(item)"
+                  class="scan-device-item">
                   <div class="info">
-                    {{ device.info }}
+                    <div class="body">
+                      <div class="image" style="width: 30px;">
+                        <div class="connection-state"
+                            v-if="item.type !== 'demo'"
+                            :class="{ connected: item.connected, lower: item.type === 'linkv1' }">
+                        </div>
+                        <img :src="images[item.type]" alt="">
+                      </div>
+                      <div class="name-address">
+                        <div class="name">
+                          {{ item.name }}
+                        </div>
+                        <div class="address">
+                          {{ item.ip }}
+                        </div>
+                        <div class="info">
+                          {{ item.info }}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </template>
+              <template v-slot:right="{ item }">
+                <div class="swipeout-action red" @click="removeDevice(item)">
+                  <span class="icon-trash icon"></span>
+                </div>
+              </template>
+          </swipe-list>
         </form>
         <div style="color: #fff">
           debug message:
@@ -63,6 +73,8 @@
 <script>
 import EventBus from "../event-bus";
 import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile.models';
+import { SwipeList } from 'vue-swipe-actions';
+
 
 const Netmask = require("netmask").Netmask;
 
@@ -124,13 +136,13 @@ export default {
           type: 'demo'
         }
       ],
-      devices: [
-      ],
+      devices: [],
       debugMessages: [],
       requestCompletedCount: 0,
       blockSize: 0,
       requestCancelTokenSource: '',
       showConnectionLost: false,
+      disableSwipe: (device) => device.type === 'demo'
     };
   },
   watch: {},
@@ -150,6 +162,10 @@ export default {
       if (this.requestCompletedCount >= this.blockSize) {
         this.refreshing = false
       }
+    },
+    removeDevice: function(device) {
+      this.devices = this.devices.filter(d => d.sn !== device.sn)
+      this.updateStoredData()
     },
     deviceSelected: function(device) {
       if (device.type === 'demo') {
@@ -338,10 +354,14 @@ export default {
     },
   },
   components: {
+    SwipeList, 
   },
 };
 </script>
 
+<style src='vue-swipe-actions/dist/vue-swipe-actions.css'>
+    /* global styles */
+</style> 
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
 
@@ -386,7 +406,7 @@ export default {
   flex-direction: column;
   cursor: pointer;
   padding: 0.6em;
-  border-radius: 0.4em;
+
   &:hover {
     background-color: $dark;
   }
@@ -464,5 +484,21 @@ export default {
   margin-right: auto;
   width: 200px;
   text-align: center;
+}
+
+.swipeout-action {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 0;
+  width: 6em;
+  &.red {
+    background-color: $error_color;
+  }
+  .icon {
+    font-size: 2em;
+    color: #fff;
+  }
 }
 </style>
