@@ -231,6 +231,7 @@ void lvHome_Create(void)
     lv_obj_set_pos(tile->labelCurrent, 71, 37);
   }
 
+  lvHome_UpdateSensorTiles(true);
   lvHome_UpdateSymbols(true);
 
   if (false == lvHome_InitOnceDone)
