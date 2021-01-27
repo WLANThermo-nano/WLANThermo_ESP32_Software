@@ -43,7 +43,7 @@ export default {
 	ap_name: "APN",
 	hw_version: "Hardwareversion",
 	update_search: "Automatisch nach Updates suchen",
-	prerelease: "Beta-Versionen in der Suche mit einschießen",
+	prerelease: "Beta-Versionen in der Suche mit einschließen",
 	// Reiter Display-Einstellungen
 	display_settings: "Display-Einstellungen",
 	rotate_display: "Display drehen",
