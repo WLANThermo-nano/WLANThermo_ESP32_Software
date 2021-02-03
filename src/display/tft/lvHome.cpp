@@ -217,14 +217,14 @@ void lvHome_Create(void)
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
     lv_obj_set_size(tile->labelMin, 37, 21);
     lv_obj_set_pos(tile->labelMin, 34, 42);
-
+/*
     tile->labelSymbolBLE = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelSymbolBLE, "B");
     lv_obj_set_style_local_text_font(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
     lv_obj_set_style_local_text_color(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelSymbolBLE, 20, 21);
     lv_obj_set_pos(tile->labelSymbolBLE, 109, 1);
-
+*/
     tile->labelCurrent = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelCurrent, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelCurrent, LV_LABEL_LONG_BREAK);
