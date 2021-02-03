@@ -35,6 +35,7 @@ typedef struct lvHomeSensorTile
   lv_obj_t *labelMax;
   lv_obj_t *labelSymbolMin;
   lv_obj_t *labelMin;
+  lv_obj_t *labelSymbolBLE;
   lv_obj_t *labelCurrent;
 } lvHomeSensorTileType;
 

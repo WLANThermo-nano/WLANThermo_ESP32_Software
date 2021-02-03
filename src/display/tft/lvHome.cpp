@@ -26,13 +26,16 @@
 
 #define UPDATE_ALL 0xFFFFFFFFu
 
-LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
-LV_FONT_DECLARE(Font_Gothic_A1_Medium_h21);
-LV_FONT_DECLARE(Font_Nano_Temp_Limit_h16);
+LV_FONT_DECLARE(Font_Nano_Temp_Limit_h14);
 LV_FONT_DECLARE(Font_Nano_h24);
+LV_FONT_DECLARE(Font_Roboto_Medium_h22);
+LV_FONT_DECLARE(Font_Roboto_Regular_h16);
+LV_FONT_DECLARE(Font_Roboto_Regular_h14);
+
+#define LV_COLOR_LIGHTBLUE LV_COLOR_MAKE(0x00, 0xBF, 0xFF)
 
 static const char *lvHome_WifiSymbolText[4] = {"I", "H", "G", ""};
-static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_BLUE, LV_COLOR_RED};
+static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_LIGHTBLUE, LV_COLOR_RED};
 static uint32_t lvHome_UpdateTemperature = 0u;
 static uint32_t lvHome_UpdatePitmaster = 0u;
 static uint8_t lvHome_TempPageIndex = 0u;
@@ -169,51 +172,58 @@ void lvHome_Create(void)
 
     tile->labelName = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelName, gSystem->temperatures[i]->getName().c_str());
-    lv_obj_set_style_local_text_font(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+    lv_obj_set_style_local_text_font(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
     lv_obj_set_style_local_text_color(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelName, 109, 21);
-    lv_obj_set_pos(tile->labelName, 15, 0);
+    lv_obj_set_pos(tile->labelName, 15, 1);
 
     tile->labelNumber = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelNumber, LV_LABEL_ALIGN_RIGHT);
     lv_label_set_long_mode(tile->labelNumber, LV_LABEL_LONG_BREAK);
     lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
-    lv_obj_set_style_local_text_font(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+    lv_obj_set_style_local_text_font(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
     lv_obj_set_style_local_text_color(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-    lv_obj_set_size(tile->labelNumber, 28, 21);
-    lv_obj_set_pos(tile->labelNumber, 124, 0);
+    lv_obj_set_size(tile->labelNumber, 40, 21);
+    lv_obj_set_pos(tile->labelNumber, 112, 1);
 
     tile->labelSymbolMax = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelSymbolMax, "F");
-    lv_obj_set_style_local_text_font(tile->labelSymbolMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h16);
+    lv_obj_set_style_local_text_font(tile->labelSymbolMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h14);
     lv_obj_set_style_local_text_color(tile->labelSymbolMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelSymbolMax, 20, 21);
-    lv_obj_set_pos(tile->labelSymbolMax, 15, 21);
+    lv_obj_set_pos(tile->labelSymbolMax, 15, 24);
 
     tile->labelMax = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelMax, LV_LABEL_ALIGN_LEFT);
     lv_label_set_long_mode(tile->labelMax, LV_LABEL_LONG_BREAK);
-    lv_obj_set_style_local_text_font(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+    lv_obj_set_style_local_text_font(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h14);
     lv_obj_set_style_local_text_color(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMax, "%i°", (int)gSystem->temperatures[i]->getMaxValue());
     lv_obj_set_size(tile->labelMax, 37, 21);
-    lv_obj_set_pos(tile->labelMax, 35, 18);
+    lv_obj_set_pos(tile->labelMax, 34, 22);
 
     tile->labelSymbolMin = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelSymbolMin, "E");
-    lv_obj_set_style_local_text_font(tile->labelSymbolMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h16);
+    lv_obj_set_style_local_text_font(tile->labelSymbolMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h14);
     lv_obj_set_style_local_text_color(tile->labelSymbolMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelSymbolMin, 20, 21);
-    lv_obj_set_pos(tile->labelSymbolMin, 15, 42);
+    lv_obj_set_pos(tile->labelSymbolMin, 15, 44);
 
     tile->labelMin = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelMin, LV_LABEL_ALIGN_LEFT);
     lv_label_set_long_mode(tile->labelMin, LV_LABEL_LONG_BREAK);
-    lv_obj_set_style_local_text_font(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
+    lv_obj_set_style_local_text_font(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h14);
     lv_obj_set_style_local_text_color(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
     lv_obj_set_size(tile->labelMin, 37, 21);
-    lv_obj_set_pos(tile->labelMin, 35, 37);
+    lv_obj_set_pos(tile->labelMin, 34, 42);
+
+    tile->labelSymbolBLE = lv_label_create(tile->objTile, NULL);
+    lv_label_set_text(tile->labelSymbolBLE, "B");
+    lv_obj_set_style_local_text_font(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
+    lv_obj_set_style_local_text_color(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_size(tile->labelSymbolBLE, 20, 21);
+    lv_obj_set_pos(tile->labelSymbolBLE, 109, 1);
 
     tile->labelCurrent = lv_label_create(tile->objTile, NULL);
     lv_label_set_align(tile->labelCurrent, LV_LABEL_ALIGN_RIGHT);
@@ -225,10 +235,10 @@ void lvHome_Create(void)
       sprintf(labelCurrentText, "%.1lf°%c", gSystem->temperatures[i]->getValue(), (char)gSystem->temperatures.getUnit());
 
     lv_label_set_text(tile->labelCurrent, labelCurrentText);
-    lv_obj_set_style_local_text_font(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h21);
+    lv_obj_set_style_local_text_font(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h22);
     lv_obj_set_style_local_text_color(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->labelCurrent, 82, 42);
-    lv_obj_set_pos(tile->labelCurrent, 71, 37);
+    lv_obj_set_pos(tile->labelCurrent, 70, 33);
   }
 
   lvHome_UpdateSensorTiles(true);
