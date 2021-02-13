@@ -20,7 +20,7 @@
 #pragma once
 
 #include "Arduino.h"
-#include "MedianFilterLib.h"
+#include "MedianFilterFloat.h"
 #include "TemperatureSensors.h"
 
 #define INACTIVEVALUE 999
@@ -105,7 +105,7 @@ protected:
   float preValue;
   int8_t currentGradient;
   int8_t gradientSign;
-  MedianFilter<float> *medianValue;
+  MedianFilterFloat *medianValue;
   float minValue;
   float maxValue;
   SensorType type;
