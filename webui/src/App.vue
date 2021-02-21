@@ -71,6 +71,34 @@
     </div>
     <!-- modal end -->
 
+    <!-- auth dialog -->
+    <div class="dialog-mask" v-if="authDialogActive"></div>
+    <div class="dialog" v-if="authDialogActive">
+      <div class="title">
+        {{ $t("authentication") }}
+        <span @click="authDialogActive = false" class="close-btn">×</span>
+      </div>
+      <div class="auth-dialog-body">
+         <form>
+            <div class="form-group">
+              <input type="text" v-model="authUsername" maxlength="30" required>
+              <label class="control-label" for="input">{{$t("username")}}</label>
+              <i class="bar"></i>
+            </div>
+            <div class="form-group">
+              <input type="password" v-model="authPass" maxlength="30" required>
+              <label class="control-label" for="input">{{$t("password")}}</label>
+              <i class="bar"></i>
+            </div>
+            <div style="text-aligh: end;">
+              <button class="pure-button pure-button-primary" @click.stop="onAuthConfirm">
+                  {{ $t('save') }}
+              </button>
+            </div>
+         </form>
+      </div>
+    </div>
+
     <!-- spinner -->
     <div class="dialog-mask" v-if="showSpinner"></div>
     <div class="spinner" v-if="showSpinner"></div>
@@ -116,6 +144,12 @@ export default {
       dialogBodyText: '',
       wikiLink: '',
       linkText: '',
+
+      // auth
+      authDialogActive: false,
+      authUsername: '',
+      authPass: '',
+      requestToRetry: null,
 
       // menu
       menuItems: menuItem,
@@ -222,6 +256,17 @@ export default {
         window.location = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken;
       })
     },
+    onAuthConfirm: function() {
+      const base64Secret = btoa(`${this.authUsername}:${this.authPass}`)
+      this.axios.defaults.headers.common['Authorization'] = `Basic ${base64Secret}`;
+      this.authDialogActive = false
+      this.showSpinner = true
+      this.axios(this.requestToRetry).then(() => {
+        this.showSpinner = false
+      }).catch(() => {
+        this.showSpinner = false
+      })
+    },
     prepareStatusIcons: function() {
       // wifi icon
       const dbm = this.system.rssi
@@ -291,6 +336,12 @@ export default {
       this.menuItems = menuItem
       this.getSettings()
       this.initGetDataPeriodically()
+    })
+    EventBus.$on('show-auth-popup', (axiosError) => {
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        this.requestToRetry = axiosError.config
+        this.authDialogActive = true
+      }
     })
     EventBus.$on('api-error', () => {
       this.showSpinner = false
@@ -467,6 +518,15 @@ export default {
   }
 }
 
+.auth-dialog-body {
+  padding: 1em;
+  width: 40vw;
+  text-align: end;
+  input {
+    color: $dark !important;
+  }
+}
+
 @media screen and (max-width: 48em) {
   #nav {
     flex-basis: 200px;
@@ -492,6 +552,9 @@ export default {
   }
   .menu-link {
     display: block;
+  }
+  .auth-dialog-body {
+    width: 80vw;
   }
 }
 

@@ -166,4 +166,8 @@ export default {
 	mobileAppHeader: "WLANThermo App",
 	scanTitle: "My Devices",
 	scanDevices: "Devices",
+	// auth dialog
+	authentication: 'Authentication',
+	username: 'Username',
+	password: 'Password'
 };

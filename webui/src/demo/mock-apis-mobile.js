@@ -29,11 +29,17 @@ axios.interceptors.response.use(response => response, error => {
     console.log('using fake response')
     return getMockResponse(error)
   }
-  if (!error?.config?.headers?.scan) {
+  console.log(`error`)
+  console.log(error)
+
+  // auth error
+  if (error.response.headers['www-authenticate'] && error.response.status === 401) {
+    EventBus.$emit('show-auth-popup', error)
+  } else if (!error?.config?.headers?.scan) {
     EventBus.$emit('api-error')
   }
   console.log('normal error')
-  return error
+  return Promise.reject(error)
 })
 
 const getMockResponse = mockError => {
