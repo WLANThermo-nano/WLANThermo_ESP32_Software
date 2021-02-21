@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2020  Martin Koerner
+    Copyright (C) 2021  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,32 +19,20 @@
 ****************************************************/
 #pragma once
 
-#include "Arduino.h"
-#include <lvgl.h>
+#include "lvgl.h"
 
-typedef void (*lvMenu_Create_FuncPtr)(void);
-typedef void (*lvMenu_Update_FuncPtr)(boolean forceUpdate);
-typedef void (*lvMenu_Delete_FuncPtr)(void);
-
-typedef enum class lvScreen
+typedef struct lvTemperature
 {
-  None = 0,
-  Menu,
-  Home,
-  Wifi,
-  Display,
-  Temperature,
-  Max
-} lvScreenType;
+  lv_obj_t *screen;
+  lv_obj_t *tabview;
 
-typedef struct
-{
-  lvScreenType screen;
-  lvMenu_Create_FuncPtr createFunc;
-  lvMenu_Update_FuncPtr updateFunc;
-  lvMenu_Delete_FuncPtr deleteFunc;
+  lv_obj_t  *spinboxMin;
+  lv_obj_t  *spinboxMax;
+  lv_obj_t *rollerType;
 
-} lvScreenFuncType;
+} lvTemperatureType;
 
-void lvScreen_Open(lvScreenType screen);
-void lvScreen_Update(void);
+void lvTemperature_Create(void);
+void lvTemperature_Update(bool forceUpdate);
+void lvTemperature_Delete(void);
+

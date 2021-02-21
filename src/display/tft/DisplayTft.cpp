@@ -109,6 +109,10 @@ boolean DisplayTft::initDisplay()
   indev_drv.read_cb = DisplayTft::touchRead;
   lv_indev_drv_register(&indev_drv);
 
+  LV_THEME_DEFAULT_INIT(lv_theme_get_color_primary(), lv_theme_get_color_secondary(),
+                        LV_THEME_MATERIAL_FLAG_DARK,
+                        lv_theme_get_font_small(), lv_theme_get_font_normal(), lv_theme_get_font_subtitle(), lv_theme_get_font_title());
+
   lvScreen_Open(lvScreenType::Home);
 
   return true;
@@ -212,6 +216,8 @@ void DisplayTft::update()
 {
   static uint8_t updateInProgress = false;
   static boolean wakeup = false;
+  static uint32_t lastMillis = millis();
+  uint32_t currentMillis;
 
   if (this->disabled || this->blocked)
     return;
@@ -227,7 +233,9 @@ void DisplayTft::update()
 
   lvScreen_Update();
 
-  lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
+  currentMillis = millis();
+  lv_tick_inc(currentMillis - lastMillis);
+  lastMillis = currentMillis;
   lv_task_handler();
 }
 

@@ -476,6 +476,7 @@ void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event)
 
   if (LV_EVENT_CLICKED == event)
   {
+    lvScreen_Open(lvScreenType::Temperature);
   }
 }
 
