@@ -19,13 +19,16 @@
 ****************************************************/
 #include "lvTemperature.h"
 #include "lvScreen.h"
-#include "temperature/TemperatureSensors.h"
+#include "temperature/TemperatureBase.h"
+#include "system/SystemBase.h"
 
 LV_FONT_DECLARE(Font_Roboto_Medium_h28);
 LV_FONT_DECLARE(Font_Roboto_Medium_h80);
 LV_FONT_DECLARE(Font_Nano_h24);
 
 static lvTemperatureType lvTemperature = {NULL};
+static TemperatureBase *lvTemperature_temperatureBase = NULL;
+static uint32_t lvTemperature_selectedColor = 0u;
 
 static void lvTemperature_CreateTabMin(void);
 static void lvTemperature_CreateTabMax(void);
@@ -36,13 +39,18 @@ static void lvTemperature_CreateTabNotif(void);
 static void lvTemperature_BtnClose(lv_obj_t *obj, lv_event_t event);
 static void lvTemperature_TabLimitInc(lv_obj_t *obj, lv_event_t event);
 static void lvTemperature_TabLimitDec(lv_obj_t *obj, lv_event_t event);
+static void lvTemperature_TabColorBtn(lv_obj_t *obj, lv_event_t event);
+
+static void lvTemperature_saveTemperature(void);
 
 static const uint32_t lvTemperature_colors[] = {0xFFFF00, 0xFFC002, 0x00FF00, 0xFFFFFF, 0xFF1DC4, 0xE46C0A, 0xC3D69B,
                                                 0x0FE6F1, 0x0000FF, 0x03A923, 0xC84B32, 0xFF9B69, 0x5082BE, 0xFFB1D0,
                                                 0xA6EF03, 0xD42A6B, 0xFFDA8F, 0x00B0F0, 0x948A54};
 
-void lvTemperature_Create(void)
+void lvTemperature_Create(void *userData)
 {
+  lvTemperature_temperatureBase = (TemperatureBase *)userData;
+
   /* create screen for temperature */
   lvTemperature.screen = lv_obj_create(NULL, NULL);
   lv_obj_set_size(lvTemperature.screen, LV_HOR_RES, LV_VER_RES);
@@ -81,26 +89,25 @@ void lvTemperature_CreateTabMin(void)
   lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
 
-  lv_obj_t *spinbox = lvTemperature.spinboxMin;
-
-  spinbox = lv_spinbox_create(cont, NULL);
-  lv_spinbox_set_range(spinbox, -200, 9989);
-  lv_spinbox_set_digit_format(spinbox, 4, 3);
-  lv_spinbox_step_prev(spinbox);
-  lv_obj_set_width(spinbox, 270);
-  lv_obj_align(spinbox, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_obj_set_style_local_text_font(spinbox, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h80);
+  lvTemperature.spinboxMin = lv_spinbox_create(cont, NULL);
+  lv_spinbox_set_range(lvTemperature.spinboxMin, -200, 9989);
+  lv_spinbox_set_digit_format(lvTemperature.spinboxMin, 4, 3);
+  lv_spinbox_set_value(lvTemperature.spinboxMin, ((int32_t)lvTemperature_temperatureBase->getMinValue()) * 10.0f);
+  lv_spinbox_step_prev(lvTemperature.spinboxMin);
+  lv_obj_set_width(lvTemperature.spinboxMin, 270);
+  lv_obj_align(lvTemperature.spinboxMin, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_local_text_font(lvTemperature.spinboxMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h80);
 
   lv_obj_t *btnDec = lv_btn_create(cont, NULL);
   lv_obj_set_size(btnDec, 100, 50);
   lv_obj_set_style_local_value_str(btnDec, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_MINUS);
-  lv_obj_set_user_data(btnDec, spinbox);
+  lv_obj_set_user_data(btnDec, lvTemperature.spinboxMin);
   lv_obj_set_event_cb(btnDec, lvTemperature_TabLimitDec);
 
   lv_obj_t *btnInc = lv_btn_create(cont, NULL);
   lv_obj_set_size(btnInc, 100, 50);
   lv_obj_set_style_local_value_str(btnInc, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_PLUS);
-  lv_obj_set_user_data(btnInc, spinbox);
+  lv_obj_set_user_data(btnInc, lvTemperature.spinboxMin);
   lv_obj_set_event_cb(btnInc, lvTemperature_TabLimitInc);
 }
 
@@ -114,26 +121,25 @@ void lvTemperature_CreateTabMax(void)
   lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
 
-  lv_obj_t *spinbox = lvTemperature.spinboxMax;
-
-  spinbox = lv_spinbox_create(cont, NULL);
-  lv_spinbox_set_range(spinbox, -200, 9989);
-  lv_spinbox_set_digit_format(spinbox, 4, 3);
-  lv_spinbox_step_prev(spinbox);
-  lv_obj_set_width(spinbox, 270);
-  lv_obj_align(spinbox, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_obj_set_style_local_text_font(spinbox, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h80);
+  lvTemperature.spinboxMax = lv_spinbox_create(cont, NULL);
+  lv_spinbox_set_range(lvTemperature.spinboxMax, -200, 9989);
+  lv_spinbox_set_digit_format(lvTemperature.spinboxMax, 4, 3);
+  lv_spinbox_set_value(lvTemperature.spinboxMax, ((int32_t)lvTemperature_temperatureBase->getMaxValue()) * 10.0f);
+  lv_spinbox_step_prev(lvTemperature.spinboxMax);
+  lv_obj_set_width(lvTemperature.spinboxMax, 270);
+  lv_obj_align(lvTemperature.spinboxMax, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_local_text_font(lvTemperature.spinboxMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h80);
 
   lv_obj_t *btnDec = lv_btn_create(cont, NULL);
   lv_obj_set_size(btnDec, 100, 50);
   lv_obj_set_style_local_value_str(btnDec, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_MINUS);
-  lv_obj_set_user_data(btnDec, spinbox);
+  lv_obj_set_user_data(btnDec, lvTemperature.spinboxMax);
   lv_obj_set_event_cb(btnDec, lvTemperature_TabLimitDec);
 
   lv_obj_t *btnInc = lv_btn_create(cont, NULL);
   lv_obj_set_size(btnInc, 100, 50);
   lv_obj_set_style_local_value_str(btnInc, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_PLUS);
-  lv_obj_set_user_data(btnInc, spinbox);
+  lv_obj_set_user_data(btnInc, lvTemperature.spinboxMax);
   lv_obj_set_event_cb(btnInc, lvTemperature_TabLimitInc);
 }
 
@@ -150,25 +156,43 @@ void lvTemperature_CreateTabType(void)
   lvTemperature.rollerType = lv_roller_create(cont, NULL);
 
   String sensorTypes;
-  boolean skipNewLine = true;
+  uint8_t sensorTypeNum = lvTemperature_temperatureBase->getType();
+  uint8_t selectedOption = 0u;
+  boolean isFixed = lvTemperature_temperatureBase->isFixedSensor();
 
-  for (uint8_t i = 0u; i < NUM_OF_TYPES; i++)
+  if (isFixed)
   {
-    if (sensorTypeInfo[i].fixed != true)
-    {
-      if (false == skipNewLine)
-      {
-        sensorTypes += "\n";
-      }
+    sensorTypes = sensorTypeInfo[sensorTypeNum].name;
+  }
+  else
+  {
+    uint8_t optionCount = 0u;
 
-      sensorTypes += sensorTypeInfo[i].name;
-      skipNewLine = false;
+    for (uint8_t i = 0u; i < NUM_OF_TYPES; i++)
+    {
+      if (sensorTypeInfo[i].fixed != true)
+      {
+        if (optionCount > 0u)
+        {
+          sensorTypes += "\n";
+        }
+
+        sensorTypes += sensorTypeInfo[i].name;
+
+        if (((uint8_t)sensorTypeInfo[i].type) == sensorTypeNum)
+        {
+          selectedOption = optionCount;
+        }
+
+        optionCount++;
+      }
     }
   }
 
   lv_roller_set_options(lvTemperature.rollerType, sensorTypes.c_str(), LV_ROLLER_MODE_INFINITE);
+  lv_roller_set_selected(lvTemperature.rollerType, selectedOption, LV_ANIM_OFF);
 
-  lv_roller_set_visible_row_count(lvTemperature.rollerType, 3);
+  lv_roller_set_visible_row_count(lvTemperature.rollerType, 3u);
   lv_obj_align(lvTemperature.rollerType, NULL, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_local_text_font(lvTemperature.rollerType, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h28);
 }
@@ -191,6 +215,7 @@ static void lvTemperature_CreateTabColor(void)
     lv_obj_set_style_local_border_width(btn, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_border_color(btn, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(lvTemperature_colors[i]));
     lv_obj_add_protect(btn, LV_PROTECT_CLICK_FOCUS);
+    lv_obj_set_event_cb(btn, lvTemperature_TabColorBtn);
   }
 }
 
@@ -213,6 +238,7 @@ void lvTemperature_BtnClose(lv_obj_t *obj, lv_event_t event)
 {
   if (LV_EVENT_CLICKED == event)
   {
+    lvTemperature_saveTemperature();
     lvScreen_Open(lvScreenType::Home);
   }
 }
@@ -231,4 +257,45 @@ void lvTemperature_TabLimitDec(lv_obj_t *obj, lv_event_t event)
   {
     lv_spinbox_decrement((lv_obj_t *)lv_obj_get_user_data(obj));
   }
+}
+
+void lvTemperature_TabColorBtn(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+
+  }
+}
+
+void lvTemperature_saveTemperature(void)
+{
+  float value;
+
+  value = ((float)lv_spinbox_get_value(lvTemperature.spinboxMin)) / 10.0f;
+  lvTemperature_temperatureBase->setMinValue(value);
+
+  value = ((float)lv_spinbox_get_value(lvTemperature.spinboxMax)) / 10.0f;
+  lvTemperature_temperatureBase->setMaxValue(value);
+
+  if (lvTemperature_temperatureBase->isFixedSensor() == false)
+  {
+    uint8_t optionCount = 0u;
+    uint8_t selectedOption = lv_roller_get_selected(lvTemperature.rollerType);
+
+    for (uint8_t i = 0u; i < NUM_OF_TYPES; i++)
+    {
+      if (sensorTypeInfo[i].fixed != true)
+      {
+        if (optionCount == selectedOption)
+        {
+          lvTemperature_temperatureBase->setType((uint8_t)sensorTypeInfo[i].type);
+          break;
+        }
+
+        optionCount++;
+      }
+    }
+  }
+
+  gSystem->temperatures.saveConfig();
 }

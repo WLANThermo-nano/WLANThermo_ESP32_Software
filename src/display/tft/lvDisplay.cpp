@@ -31,7 +31,7 @@ static lv_obj_t *lvDisplay_CreateSettingsLabel(lv_obj_t *parent, const char *lab
 static void lvDisplay_CloseEvent(lv_obj_t *obj, lv_event_t event);
 static void lvDisplay_BrightnessEvent(lv_obj_t *obj, lv_event_t event);
 
-void lvDisplay_Create(void)
+void lvDisplay_Create(void *userData)
 {
   /* create screen for display */
   lvDisplay.screen = lv_obj_create(NULL, NULL);

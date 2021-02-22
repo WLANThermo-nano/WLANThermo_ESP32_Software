@@ -29,7 +29,7 @@ static lvWifiType lvWifi = {NULL};
 
 static void lvWifi_CloseEvent(lv_obj_t *obj, lv_event_t event);
 
-void lvWifi_Create(void)
+void lvWifi_Create(void *userData)
 {
   /* create screen for wifi */
   lvWifi.screen = lv_obj_create(NULL, NULL);

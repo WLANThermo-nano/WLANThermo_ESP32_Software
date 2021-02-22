@@ -54,7 +54,7 @@ static void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_AlarmEvent(lv_obj_t *obj, lv_event_t event);
 
-void lvHome_Create(void)
+void lvHome_Create(void *userData)
 {
   /* create style for symbols */
   lvHome.symbols.style = new lv_style_t();
@@ -160,6 +160,7 @@ void lvHome_Create(void)
     lv_obj_set_style_local_text_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_size(tile->objTile, 156, 63);
     lv_obj_set_click(tile->objTile, true);
+    lv_obj_set_user_data(tile->objTile, gSystem->temperatures[i]);
     lv_obj_set_event_cb(tile->objTile, lvHome_TileEvent);
 
     tile->objColor = lv_obj_create(tile->objTile, NULL);
@@ -321,6 +322,7 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
           lv_label_set_text_fmt(tile->labelMax, "%i°", (int)gSystem->temperatures[i]->getMaxValue());
           lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
           lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
+          lv_obj_set_user_data(tile->objTile, gSystem->temperatures[i]);
           lv_obj_set_hidden(tile->objTile, false);
         }
         else if (lvHome_UpdateTemperature & (1u << i))
@@ -476,7 +478,7 @@ void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event)
 
   if (LV_EVENT_CLICKED == event)
   {
-    lvScreen_Open(lvScreenType::Temperature);
+    lvScreen_Open(lvScreenType::Temperature, lv_obj_get_user_data(obj));
   }
 }
 

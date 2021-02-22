@@ -57,6 +57,6 @@ typedef struct lvHome
   lvHomeSensorTileType sensorTiles[LV_HOME_SENSORS_PER_PAGE];
 } lvHomeType;
 
-void lvHome_Create(void);
+void lvHome_Create(void *userData);
 void lvHome_Update(boolean forceUpdate);
 void lvHome_Delete(void);

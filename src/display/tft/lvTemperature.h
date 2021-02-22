@@ -32,7 +32,7 @@ typedef struct lvTemperature
 
 } lvTemperatureType;
 
-void lvTemperature_Create(void);
+void lvTemperature_Create(void *userData);
 void lvTemperature_Update(bool forceUpdate);
 void lvTemperature_Delete(void);
 
