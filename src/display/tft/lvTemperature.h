@@ -26,13 +26,13 @@ typedef struct lvTemperature
   lv_obj_t *screen;
   lv_obj_t *tabview;
 
-  lv_obj_t  *spinboxMin;
-  lv_obj_t  *spinboxMax;
+  lv_obj_t *spinboxMin;
+  lv_obj_t *spinboxMax;
   lv_obj_t *rollerType;
+  lv_obj_t *contColor;
 
 } lvTemperatureType;
 
 void lvTemperature_Create(void *userData);
 void lvTemperature_Update(bool forceUpdate);
 void lvTemperature_Delete(void);
-

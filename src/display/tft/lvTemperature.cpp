@@ -42,10 +42,11 @@ static void lvTemperature_TabLimitDec(lv_obj_t *obj, lv_event_t event);
 static void lvTemperature_TabColorBtn(lv_obj_t *obj, lv_event_t event);
 
 static void lvTemperature_saveTemperature(void);
+static uint32_t lvTemperature_htmlColorStringToNum(String htmlColor);
 
-static const uint32_t lvTemperature_colors[] = {0xFFFF00, 0xFFC002, 0x00FF00, 0xFFFFFF, 0xFF1DC4, 0xE46C0A, 0xC3D69B,
-                                                0x0FE6F1, 0x0000FF, 0x03A923, 0xC84B32, 0xFF9B69, 0x5082BE, 0xFFB1D0,
-                                                0xA6EF03, 0xD42A6B, 0xFFDA8F, 0x00B0F0, 0x948A54};
+static const uint32_t lvTemperature_colors[] = {0xFFFF00, 0xFFC002, 0x00FF00, 0xFFFFFF, 0xE46C0A, 0xC3D69B,
+                                                0x0FE6F1, 0x0000FF, 0x03A923, 0xC84B32, 0xFF9B69, 0x5082BE,
+                                                0xFFB1D0, 0xA6EF03, 0xD42A6B, 0xFFDA8F, 0x00B0F0, 0x948A54};
 
 void lvTemperature_Create(void *userData)
 {
@@ -158,11 +159,15 @@ void lvTemperature_CreateTabType(void)
   String sensorTypes;
   uint8_t sensorTypeNum = lvTemperature_temperatureBase->getType();
   uint8_t selectedOption = 0u;
-  boolean isFixed = lvTemperature_temperatureBase->isFixedSensor();
 
-  if (isFixed)
+  if (lvTemperature_temperatureBase->isFixedSensor())
   {
+    /* Add dummy elements for fixed sensors and disable click */
+    sensorTypes += "\n";
     sensorTypes = sensorTypeInfo[sensorTypeNum].name;
+    sensorTypes += "\n";
+    selectedOption = 1;
+    lv_obj_set_click(lvTemperature.rollerType, false);
   }
   else
   {
@@ -201,21 +206,34 @@ static void lvTemperature_CreateTabColor(void)
 {
   lv_obj_t *tab = lv_tabview_add_tab(lvTemperature.tabview, "m");
 
+  lvTemperature_selectedColor = lvTemperature_htmlColorStringToNum(lvTemperature_temperatureBase->getColor());
+
   lv_obj_t *cont = lv_cont_create(tab, NULL);
   lv_cont_set_fit(cont, LV_FIT_PARENT);
-  lv_cont_set_layout(cont, LV_LAYOUT_GRID);
+  lv_cont_set_layout(cont, LV_LAYOUT_PRETTY_MID);
   lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+  lv_obj_set_style_local_pad_top(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+  lv_obj_set_style_local_pad_left(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 20);
+
+  lvTemperature.contColor = lv_cont_create(tab, NULL);
+  lv_obj_set_pos(lvTemperature.contColor, lv_obj_get_x(cont), lv_obj_get_y(cont));
+  lv_obj_set_height(lvTemperature.contColor, lv_obj_get_height(cont));
+  lv_obj_set_width(lvTemperature.contColor, 10);
+  lv_obj_set_style_local_bg_color(lvTemperature.contColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(lvTemperature_selectedColor));
+  lv_obj_set_style_local_border_width(lvTemperature.contColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_radius(lvTemperature.contColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
 
   for (uint8_t i = 0u; i < (sizeof(lvTemperature_colors) / sizeof(uint32_t)); i++)
   {
     lv_obj_t *btn = lv_btn_create(cont, NULL);
-    lv_obj_set_size(btn, 28, 28);
+    lv_obj_set_size(btn, 50, 28);
     lv_obj_set_style_local_bg_color(btn, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(lvTemperature_colors[i]));
     lv_obj_set_style_local_border_width(btn, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_border_color(btn, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(lvTemperature_colors[i]));
     lv_obj_add_protect(btn, LV_PROTECT_CLICK_FOCUS);
     lv_obj_set_event_cb(btn, lvTemperature_TabColorBtn);
+    lv_obj_set_user_data(btn, (void *)&lvTemperature_colors[i]);
   }
 }
 
@@ -263,7 +281,8 @@ void lvTemperature_TabColorBtn(lv_obj_t *obj, lv_event_t event)
 {
   if (LV_EVENT_CLICKED == event)
   {
-
+    lvTemperature_selectedColor = *(uint32_t *)lv_obj_get_user_data(obj);
+    lv_obj_set_style_local_bg_color(lvTemperature.contColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(lvTemperature_selectedColor));
   }
 }
 
@@ -297,5 +316,13 @@ void lvTemperature_saveTemperature(void)
     }
   }
 
+  lvTemperature_temperatureBase->setColor(lvTemperature_selectedColor);
+
   gSystem->temperatures.saveConfig();
+}
+
+uint32_t lvTemperature_htmlColorStringToNum(String htmlColor)
+{
+  // Get rid of '#' and convert it to integer
+  return (uint32_t)strtol(htmlColor.substring(1).c_str(), NULL, 16);
 }
