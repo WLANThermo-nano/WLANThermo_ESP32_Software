@@ -35,6 +35,7 @@ LV_FONT_DECLARE(Font_Roboto_Regular_h14);
 #define LV_COLOR_LIGHTBLUE LV_COLOR_MAKE(0x00, 0xBF, 0xFF)
 
 static const char *lvHome_WifiSymbolText[4] = {"I", "H", "G", ""};
+static const char *lvHome_BatterySymbolText[8] = {"u", "v", "w", "x", "y", "z", "{", "|"};
 static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_LIGHTBLUE, LV_COLOR_RED};
 static uint32_t lvHome_UpdateTemperature = 0u;
 static uint32_t lvHome_UpdatePitmaster = 0u;
@@ -111,7 +112,7 @@ void lvHome_Create(void *userData)
   lv_obj_set_style_local_value_str(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "o");
   lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
   lv_obj_set_size(lvHome.symbols.btnAlarm, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnAlarm, 200, 0);
+  lv_obj_set_pos(lvHome.symbols.btnAlarm, 160, 0);
   lv_obj_set_event_cb(lvHome.symbols.btnAlarm, lvHome_AlarmEvent);
 
   /* create cloud symbol */
@@ -121,7 +122,15 @@ void lvHome_Create(void *userData)
   lv_obj_set_style_local_value_str(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "h");
   lv_obj_set_style_local_value_color(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
   lv_obj_set_size(lvHome.symbols.btnCloud, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnCloud, 240, 0);
+  lv_obj_set_pos(lvHome.symbols.btnCloud, 200, 0);
+
+  /* create battery symbol */
+  lvHome.symbols.btnBattery = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvHome.symbols.btnBattery, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_add_style(lvHome.symbols.btnBattery, LV_CONT_PART_MAIN, lvHome.symbols.style);
+  lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
+  lv_obj_set_size(lvHome.symbols.btnBattery, 40, 40);
+  lv_obj_set_pos(lvHome.symbols.btnBattery, 240, 0);
 
   /* create wifi symbol */
   lvHome.symbols.btnWifi = lv_btn_create(contHeader, NULL);
@@ -364,6 +373,7 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
 void lvHome_UpdateSymbols(boolean forceUpdate)
 {
   boolean newHasAlarm = gSystem->temperatures.hasAlarm();
+  uint8_t newBatterySymbolIndex = (gSystem->battery->isCharging()) ? 0u : map(gSystem->battery->percentage, 0, 100, 1, 7);
   WifiState newWifiState = gSystem->wlan.getWifiState();
   WifiStrength newWifiStrength = gSystem->wlan.getSignalStrength();
   const char *newWifiSymbolText = lvHome_WifiSymbolText[(uint8_t)WifiStrength::None];
@@ -374,11 +384,18 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
   static WifiStrength wifiStrength = newWifiStrength;
   static uint32_t debounceWifiSymbol = millis();
   static boolean delayApSymbol = true;
+  static uint8_t batterySymbolIndex = newBatterySymbolIndex;
 
   if ((cloudState != gSystem->cloud.state) || forceUpdate)
   {
     lv_obj_set_hidden(lvHome.symbols.btnCloud, (gSystem->cloud.state != 2));
     cloudState = gSystem->cloud.state;
+  }
+
+  if ((batterySymbolIndex != newBatterySymbolIndex) || forceUpdate)
+  {
+    lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_BatterySymbolText[newBatterySymbolIndex]);
+    batterySymbolIndex = newBatterySymbolIndex;
   }
 
   if ((hasAlarm != newHasAlarm) || forceUpdate)
