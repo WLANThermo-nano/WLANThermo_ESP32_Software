@@ -114,6 +114,7 @@ boolean DisplayTft::initDisplay()
                         lv_theme_get_font_small(), lv_theme_get_font_normal(), lv_theme_get_font_subtitle(), lv_theme_get_font_title());
 
   lvScreen_Open(lvScreenType::Home);
+  setBrightness(this->brightness);
 
   return true;
 }
@@ -157,16 +158,25 @@ void DisplayTft::calibrate()
 
 void DisplayTft::setBrightness(uint8_t brightness)
 {
-  int value = (int)(brightness * 2.55);
+  this->brightness = brightness;
+  int value = (int)(this->brightness * 2.55);
 
   Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
   Wire.write(value);
   Wire.endTransmission();
 }
 
+uint8_t DisplayTft::getBrightness()
+{
+  return this->brightness;
+}
+
 void DisplayTft::drawCharging()
 {
-  DisplayTft::setBrightness(0u);
+  // set brightness
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(0);
+  Wire.endTransmission();
 
   tft.init();
   tft.setRotation(1);
@@ -176,7 +186,9 @@ void DisplayTft::drawCharging()
   tft.setTextSize(3);
 
   // set brightness
-  DisplayTft::setBrightness(100u);
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(100);
+  Wire.endTransmission();
 
   if (gSystem->battery->isCharging())
   {

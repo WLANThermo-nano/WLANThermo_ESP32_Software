@@ -486,7 +486,7 @@ void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event)
 {
   if (LV_EVENT_CLICKED == event)
   {
-    lvScreen_Open(lvScreenType::Menu);
+    lvScreen_Open(lvScreenType::Display);
   }
 }
 
