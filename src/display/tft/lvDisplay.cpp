@@ -44,7 +44,7 @@ void lvDisplay_Create(void *userData)
   lv_obj_set_style_local_pad_bottom(tabview, LV_TABVIEW_PART_TAB_BG, LV_STATE_DEFAULT, 5);
   lv_obj_set_style_local_pad_top(tabview, LV_TABVIEW_PART_TAB_BTN, LV_STATE_DEFAULT, 5);
   lv_obj_set_style_local_pad_bottom(tabview, LV_TABVIEW_PART_TAB_BTN, LV_STATE_DEFAULT, 5);
-  lv_obj_set_style_local_pad_right(tabview, LV_TABVIEW_PART_TAB_BG, LV_STATE_DEFAULT, LV_HOR_RES / 3);
+  lv_obj_set_style_local_pad_right(tabview, LV_TABVIEW_PART_TAB_BG, LV_STATE_DEFAULT, LV_HOR_RES - 50);
   lv_tabview_set_anim_time(tabview, 0);
   lv_obj_set_style_local_text_font(tabview, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
 
