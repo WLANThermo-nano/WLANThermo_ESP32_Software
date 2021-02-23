@@ -76,6 +76,7 @@ void lvTemperature_Create(void *userData)
   lvTemperature_CreateTabMax();
   lvTemperature_CreateTabType();
   lvTemperature_CreateTabColor();
+  lvTemperature_CreateTabNotif();
 
   lv_scr_load(lvTemperature.screen);
 }
@@ -239,8 +240,44 @@ static void lvTemperature_CreateTabColor(void)
 
 void lvTemperature_CreateTabNotif(void)
 {
-
+  /* create notification tab */
   lv_obj_t *tab = lv_tabview_add_tab(lvTemperature.tabview, "o");
+
+  lv_obj_t *cont = lv_cont_create(tab, NULL);
+  lv_cont_set_fit(cont, LV_FIT_PARENT);
+  lv_cont_set_layout(cont, LV_LAYOUT_COLUMN_LEFT);
+  lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+  lv_obj_set_style_local_pad_inner(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 20);
+  lv_obj_set_style_local_pad_left(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 60);
+
+  lvTemperature.swPush = lv_switch_create(cont, NULL);
+  lv_obj_set_style_local_value_font(lvTemperature.swPush, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_value_str(lvTemperature.swPush, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, "p");
+  lv_obj_set_style_local_value_align(lvTemperature.swPush, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, LV_ALIGN_OUT_LEFT_MID);
+  lv_obj_set_style_local_value_ofs_x(lvTemperature.swPush, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, -20);
+
+  lvTemperature.swBuzzer = lv_switch_create(cont, NULL);
+  lv_obj_set_style_local_value_font(lvTemperature.swBuzzer, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_local_value_str(lvTemperature.swBuzzer, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, "q");
+  lv_obj_set_style_local_value_align(lvTemperature.swBuzzer, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, LV_ALIGN_OUT_LEFT_MID);
+  lv_obj_set_style_local_value_ofs_x(lvTemperature.swBuzzer, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, -20);
+
+  switch (lvTemperature_temperatureBase->getAlarmSetting())
+  {
+  case AlarmViaPush:
+    lv_switch_on(lvTemperature.swPush, LV_ANIM_OFF);
+    break;
+  case AlarmViaSummer:
+    lv_switch_on(lvTemperature.swBuzzer, LV_ANIM_OFF);
+    break;
+  case AlarmAll:
+    lv_switch_on(lvTemperature.swPush, LV_ANIM_OFF);
+    lv_switch_on(lvTemperature.swBuzzer, LV_ANIM_OFF);
+    break;
+  default:
+    break;
+  }
 }
 
 void lvTemperature_Update(bool forceUpdate)
@@ -317,6 +354,10 @@ void lvTemperature_saveTemperature(void)
   }
 
   lvTemperature_temperatureBase->setColor(lvTemperature_selectedColor);
+
+  uint8_t alarmSetting = (lv_switch_get_state(lvTemperature.swPush)) ? 1u : 0u;
+  alarmSetting |= (((lv_switch_get_state(lvTemperature.swBuzzer)) ? 1u : 0u) << 1u);
+  lvTemperature_temperatureBase->setAlarmSetting((AlarmSetting)alarmSetting);
 
   gSystem->temperatures.saveConfig();
 }

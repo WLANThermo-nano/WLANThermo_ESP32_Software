@@ -30,6 +30,8 @@ typedef struct lvTemperature
   lv_obj_t *spinboxMax;
   lv_obj_t *rollerType;
   lv_obj_t *contColor;
+  lv_obj_t *swBuzzer;
+  lv_obj_t *swPush;
 
 } lvTemperatureType;
 
