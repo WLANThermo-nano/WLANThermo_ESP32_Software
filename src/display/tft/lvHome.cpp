@@ -28,14 +28,17 @@
 
 LV_FONT_DECLARE(Font_Nano_Temp_Limit_h14);
 LV_FONT_DECLARE(Font_Nano_h24);
+LV_FONT_DECLARE(Font_Nano_h40);
 LV_FONT_DECLARE(Font_Roboto_Medium_h22);
 LV_FONT_DECLARE(Font_Roboto_Regular_h16);
 LV_FONT_DECLARE(Font_Roboto_Regular_h14);
 
 #define LV_COLOR_LIGHTBLUE LV_COLOR_MAKE(0x00, 0xBF, 0xFF)
+#define LVHOME_SYMBOL_BATTERY_PLUGGED_INDEX 7u
+#define LVHOME_SYMBOL_BATTERY_CHARGING_INDEX 8u
+#define LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX 6u
 
 static const char *lvHome_WifiSymbolText[4] = {"I", "H", "G", ""};
-static const char *lvHome_BatterySymbolText[8] = {"u", "v", "w", "x", "y", "z", "{", "|"};
 static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_LIGHTBLUE, LV_COLOR_RED};
 static uint32_t lvHome_UpdateTemperature = 0u;
 static uint32_t lvHome_UpdatePitmaster = 0u;
@@ -45,6 +48,10 @@ static boolean lvHome_InitOnceDone = false;
 static lvHomeType lvHome = {NULL};
 
 static void lvHome_UpdateSensorTiles(boolean forceUpdate);
+static void lvHome_CreateMsgBox(const char *text, lv_color_t textColor);
+static void lvHome_UpdateBuzzerMsgBox(void);
+static void lvHome_UpdateBatterySymbol(boolean forceUpdate);
+static void lvHome_UpdateAlarmSymbol(boolean forceUpdate);
 static void lvHome_UpdateSymbols(boolean forceUpdate);
 static lv_color_t htmlColorToLvColor(String htmlColor);
 static void lvlvHome_UpdateSensorCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData);
@@ -53,7 +60,6 @@ static void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event);
 static void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_AlarmEvent(lv_obj_t *obj, lv_event_t event);
 
 void lvHome_Create(void *userData)
 {
@@ -113,7 +119,6 @@ void lvHome_Create(void *userData)
   lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
   lv_obj_set_size(lvHome.symbols.btnAlarm, 40, 40);
   lv_obj_set_pos(lvHome.symbols.btnAlarm, 160, 0);
-  lv_obj_set_event_cb(lvHome.symbols.btnAlarm, lvHome_AlarmEvent);
 
   /* create cloud symbol */
   lvHome.symbols.btnCloud = lv_btn_create(contHeader, NULL);
@@ -227,7 +232,7 @@ void lvHome_Create(void *userData)
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
     lv_obj_set_size(tile->labelMin, 37, 21);
     lv_obj_set_pos(tile->labelMin, 34, 42);
-/*
+    /*
     tile->labelSymbolBLE = lv_label_create(tile->objTile, NULL);
     lv_label_set_text(tile->labelSymbolBLE, "B");
     lv_obj_set_style_local_text_font(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
@@ -370,38 +375,111 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
   lvHome_UpdatePitmaster = 0u;
 }
 
-void lvHome_UpdateSymbols(boolean forceUpdate)
+void lvHome_CreateMsgBox(const char *text, lv_color_t textColor)
 {
-  boolean newHasAlarm = gSystem->temperatures.hasAlarm();
-  uint8_t newBatterySymbolIndex = (gSystem->battery->isCharging()) ? 0u : map(gSystem->battery->percentage, 0, 100, 1, 7);
-  WifiState newWifiState = gSystem->wlan.getWifiState();
-  WifiStrength newWifiStrength = gSystem->wlan.getSignalStrength();
-  const char *newWifiSymbolText = lvHome_WifiSymbolText[(uint8_t)WifiStrength::None];
-  char wifiSymbol = 'I';
-  static uint8_t cloudState = gSystem->cloud.state;
-  static boolean hasAlarm = newHasAlarm;
-  static WifiState wifiState = newWifiState;
-  static WifiStrength wifiStrength = newWifiStrength;
-  static uint32_t debounceWifiSymbol = millis();
-  static boolean delayApSymbol = true;
-  static uint8_t batterySymbolIndex = newBatterySymbolIndex;
+  static const char *btns[] = {"OK", ""};
 
-  if ((cloudState != gSystem->cloud.state) || forceUpdate)
+  lv_obj_t *mbox = lv_msgbox_create(lvHome.screen, NULL);
+  lv_msgbox_set_text(mbox, "o");
+  lv_msgbox_ext_t *ext = (lv_msgbox_ext_t *)lv_obj_get_ext_attr(mbox);
+  lv_obj_set_style_local_text_font(ext->text, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h40);
+  lv_obj_set_style_local_text_color(ext->text, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, textColor);
+
+  lv_msgbox_add_btns(mbox, btns);
+  lv_obj_set_width(mbox, 200);
+  lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_event_cb(mbox,
+                      [](lv_obj_t *obj, lv_event_t event) {
+                        if (event == LV_EVENT_VALUE_CHANGED)
+                        {
+                          const char *buttonText = lv_msgbox_get_text(obj);
+
+                          if (0u == strcmp(buttonText, "o"))
+                          {
+                            gSystem->temperatures.acknowledgeAlarm();
+                            gSystem->getBuzzer()->disable();
+                            lv_msgbox_start_auto_close(obj, 0);
+                          }
+                        }
+                      });
+}
+
+void lvHome_UpdateBuzzerMsgBox(void)
+{
+  boolean newBuzzerEnabled = gSystem->getBuzzer()->isEnabled();
+  static boolean BuzzerEnabled = false;
+
+  if (BuzzerEnabled != newBuzzerEnabled)
   {
-    lv_obj_set_hidden(lvHome.symbols.btnCloud, (gSystem->cloud.state != 2));
-    cloudState = gSystem->cloud.state;
+    if (true == newBuzzerEnabled)
+    {
+      lvHome_CreateMsgBox("o", LV_COLOR_MAKE(0xFFu, 0x00u, 0x00u));
+    }
+
+    BuzzerEnabled = newBuzzerEnabled;
+  }
+}
+
+void lvHome_UpdateBatterySymbol(boolean forceUpdate)
+{
+  const char *batterySymbolText[9] = {"v", "w", "x", "y", "z", "{", "|", "s", "u"};
+  const char *newBatterySymbol;
+
+  if (true == gSystem->battery->isCharging())
+  {
+    newBatterySymbol = batterySymbolText[LVHOME_SYMBOL_BATTERY_CHARGING_INDEX];
+  }
+  else if (true == gSystem->battery->isUsbPowered())
+  {
+    newBatterySymbol = batterySymbolText[LVHOME_SYMBOL_BATTERY_PLUGGED_INDEX];
+  }
+  else
+  {
+    long symbolIndex = map(gSystem->battery->percentage, 0, 100, 0, LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX);
+    newBatterySymbol = batterySymbolText[symbolIndex];
   }
 
-  if ((batterySymbolIndex != newBatterySymbolIndex) || forceUpdate)
+  static const char *batterySymbol = newBatterySymbol;
+
+  if ((batterySymbol != newBatterySymbol) || forceUpdate)
   {
-    lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_BatterySymbolText[newBatterySymbolIndex]);
-    batterySymbolIndex = newBatterySymbolIndex;
+    lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, newBatterySymbol);
+    batterySymbol = newBatterySymbol;
   }
+}
+
+void lvHome_UpdateAlarmSymbol(boolean forceUpdate)
+{
+  boolean newHasAlarm = gSystem->temperatures.hasAlarm(false);
+  static boolean hasAlarm = false;
 
   if ((hasAlarm != newHasAlarm) || forceUpdate)
   {
     lv_obj_set_hidden(lvHome.symbols.btnAlarm, !newHasAlarm);
     hasAlarm = newHasAlarm;
+  }
+}
+
+void lvHome_UpdateSymbols(boolean forceUpdate)
+{
+  WifiState newWifiState = gSystem->wlan.getWifiState();
+  WifiStrength newWifiStrength = gSystem->wlan.getSignalStrength();
+  const char *newWifiSymbolText = lvHome_WifiSymbolText[(uint8_t)WifiStrength::None];
+  char wifiSymbol = 'I';
+  static uint8_t cloudState = gSystem->cloud.state;
+  static WifiState wifiState = newWifiState;
+  static WifiStrength wifiStrength = newWifiStrength;
+  static uint32_t debounceWifiSymbol = millis();
+  static boolean delayApSymbol = true;
+
+  lvHome_UpdateBatterySymbol(forceUpdate);
+  lvHome_UpdateAlarmSymbol(forceUpdate);
+  lvHome_UpdateBuzzerMsgBox();
+
+  if ((cloudState != gSystem->cloud.state) || forceUpdate)
+  {
+    lv_obj_set_hidden(lvHome.symbols.btnCloud, (gSystem->cloud.state != 2));
+    cloudState = gSystem->cloud.state;
   }
 
   if (delayApSymbol && (millis() > 10000u))
@@ -439,23 +517,16 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
         break;
       lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
       lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
-      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(gSystem->wlan.getAccessPointName().c_str());
-      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
       break;
     case WifiState::SoftAPClientConnected:
       if (delayApSymbol)
         break;
       lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
       lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
-      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
-      //NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("http://192.168.66.1");
       break;
     case WifiState::ConnectedToSTA:
-      //info = "http://" + WiFi.localIP().toString();
       lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, newWifiSymbolText);
       lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
-      //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(WiFi.SSID().c_str());
-      //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText(info.c_str());
       break;
     case WifiState::ConnectingToSTA:
     case WifiState::AddCredentials:
@@ -463,8 +534,6 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
     default:
       lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
       lv_obj_set_hidden(lvHome.symbols.btnWifi, true);
-      //NexText(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText("");
-      //NexText(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("");
       break;
     }
     wifiState = newWifiState;
@@ -570,13 +639,5 @@ void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event)
   if (LV_EVENT_CLICKED == event)
   {
     lvScreen_Open(lvScreenType::Wifi);
-  }
-}
-
-void lvHome_AlarmEvent(lv_obj_t *obj, lv_event_t event)
-{
-  if (LV_EVENT_CLICKED == event)
-  {
-    gSystem->temperatures.acknowledgeAlarm();
   }
 }

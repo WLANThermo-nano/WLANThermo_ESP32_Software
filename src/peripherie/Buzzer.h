@@ -35,6 +35,7 @@ class Buzzer
     Buzzer(uint8_t ioPin, uint8_t channel);
     void enable();
     void disable();
+    boolean isEnabled() { return this->enabled; }
     void test();
     void update();
   private:
