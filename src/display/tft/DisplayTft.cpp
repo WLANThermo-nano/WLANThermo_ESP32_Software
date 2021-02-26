@@ -29,6 +29,8 @@
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 #define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
 
+extern const uint16_t DisplayTftCharged[];
+extern const uint16_t DisplayTftCharging[];
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
 TFT_eSPI DisplayTft::tft = TFT_eSPI();
@@ -185,9 +187,7 @@ void DisplayTft::drawCharging()
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
-  tft.fillScreen(0x31a6);
-  tft.setTextColor(TFT_WHITE, 0x31a6);
-  tft.setTextSize(3);
+  tft.fillScreen(TFT_BLACK);
 
   // set brightness
   Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
@@ -196,11 +196,11 @@ void DisplayTft::drawCharging()
 
   if (gSystem->battery->isCharging())
   {
-    tft.drawCentreString("CHARGING...", 160, 120, 1);
+    tft.pushImage(80, 56, 160, 127, DisplayTftCharging);
   }
   else
   {
-    tft.drawCentreString("READY!", 160, 120, 1);
+    tft.pushImage(80, 56, 160, 127, DisplayTftCharged);
   }
 }
 
