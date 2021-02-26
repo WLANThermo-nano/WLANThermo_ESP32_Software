@@ -23,6 +23,7 @@
 #include "Preferences.h"
 #include "lv_qrcode.h"
 #include "lvScreen.h"
+#include "lvTheme.h"
 #include "PCA9533.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
@@ -109,9 +110,12 @@ boolean DisplayTft::initDisplay()
   indev_drv.read_cb = DisplayTft::touchRead;
   lv_indev_drv_register(&indev_drv);
 
-  LV_THEME_DEFAULT_INIT(lv_theme_get_color_primary(), lv_theme_get_color_secondary(),
-                        LV_THEME_MATERIAL_FLAG_DARK,
-                        lv_theme_get_font_small(), lv_theme_get_font_normal(), lv_theme_get_font_subtitle(), lv_theme_get_font_title());
+  lv_theme_t *theme = lvTheme_Init(lv_theme_get_color_primary(), lv_theme_get_color_secondary(),
+                                   LVTHEME_FLAG_DARK | LVTHEME_FLAG_NO_FOCUS,
+                                   lv_theme_get_font_small(), lv_theme_get_font_normal(),
+                                   lv_theme_get_font_subtitle(), lv_theme_get_font_title());
+
+  lv_theme_set_act(theme);
 
   lvScreen_Open(lvScreenType::Home);
   setBrightness(this->brightness);
