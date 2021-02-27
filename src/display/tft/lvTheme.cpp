@@ -20,7 +20,7 @@
 #define COLOR_SCR_TEXT (IS_LIGHT ? lv_color_hex(0x3b3e42) : lv_color_hex(0xe7e9ec))
 
 /*BUTTON*/
-#define COLOR_BTN (IS_LIGHT ? lv_color_hex(0xffffff) : lv_color_hex(0x00cef2))
+#define COLOR_BTN (IS_LIGHT ? lv_color_hex(0xffffff) : lv_color_hex(0x0aa5c4))
 #define COLOR_BTN_PR (IS_LIGHT ? lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_20) : lv_color_mix(theme.color_primary, COLOR_BTN, LV_OPA_30))
 
 #define COLOR_BTN_CHK (theme.color_primary)
