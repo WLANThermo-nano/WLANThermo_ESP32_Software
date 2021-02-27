@@ -31,6 +31,6 @@ typedef struct lvDisplay
   lv_obj_t *sliderBrightness;
 } lvDisplayType;
 
-void lvDisplay_Create(void);
+void lvDisplay_Create(void *userData);
 void lvDisplay_Update(boolean forceUpdate);
 void lvDisplay_Delete(void);

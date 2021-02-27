@@ -33,6 +33,6 @@ typedef struct lvMenu
   lv_obj_t *btnDisplay;
 } lvMenuType;
 
-void lvMenu_Create(void);
+void lvMenu_Create(void *userData);
 void lvMenu_Update(boolean forceUpdate);
 void lvMenu_Delete(void);

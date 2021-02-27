@@ -85,6 +85,7 @@ public:
   void setName(const char *address);
   void setAddress(const char *name);
   void setColor(const char *color);
+  void setColor(uint32_t color);
   void setAlarmSetting(AlarmSetting alarmSetting);
   void setUnit(TemperatureUnit unit);
   uint8_t getNotificationCounter();

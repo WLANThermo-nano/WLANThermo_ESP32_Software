@@ -22,7 +22,7 @@
 #include "Arduino.h"
 #include <lvgl.h>
 
-typedef void (*lvMenu_Create_FuncPtr)(void);
+typedef void (*lvMenu_Create_FuncPtr)(void *userData);
 typedef void (*lvMenu_Update_FuncPtr)(boolean forceUpdate);
 typedef void (*lvMenu_Delete_FuncPtr)(void);
 
@@ -33,6 +33,7 @@ typedef enum class lvScreen
   Home,
   Wifi,
   Display,
+  Temperature,
   Max
 } lvScreenType;
 
@@ -45,5 +46,5 @@ typedef struct
 
 } lvScreenFuncType;
 
-void lvScreen_Open(lvScreenType screen);
+void lvScreen_Open(lvScreenType screen, void *userData = NULL);
 void lvScreen_Update(void);

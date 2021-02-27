@@ -10,3 +10,4 @@
 data/
 
 *.map
+.DS_Store

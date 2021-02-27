@@ -22,22 +22,26 @@
 #include "lvWifi.h"
 #include "lvMenu.h"
 #include "lvDisplay.h"
+#include "lvTemperature.h"
 
 static lvScreenType lvScreen_CurrentScreen = lvScreenType::None;
 static lvScreenType lvScreen_RequestedScreen = lvScreenType::None;
+static void *lvScreen_UserDataPtr = NULL;
 
 static lvScreenFuncType lvScreen_Functions[] = {
     {lvScreenType::None, NULL, NULL, NULL},
     {lvScreenType::Menu, lvMenu_Create, lvMenu_Update, lvMenu_Delete},
     {lvScreenType::Home, lvHome_Create, lvHome_Update, lvHome_Delete},
     {lvScreenType::Wifi, lvWifi_Create, lvWifi_Update, lvWifi_Delete},
-    {lvScreenType::Display, lvDisplay_Create, lvDisplay_Update, lvDisplay_Delete}};
+    {lvScreenType::Display, lvDisplay_Create, lvDisplay_Update, lvDisplay_Delete},
+    {lvScreenType::Display, lvTemperature_Create, lvTemperature_Update, lvTemperature_Delete}};
 
-void lvScreen_Open(lvScreenType screen)
+void lvScreen_Open(lvScreenType screen, void *userData)
 {
   if (screen != lvScreen_CurrentScreen)
   {
     lvScreen_RequestedScreen = screen;
+    lvScreen_UserDataPtr = userData;
   }
 }
 
@@ -51,7 +55,8 @@ void lvScreen_Update(void)
     screenIndex = (uint8_t)lvScreen_RequestedScreen;
     if (lvScreen_Functions[screenIndex].createFunc)
     {
-      lvScreen_Functions[screenIndex].createFunc();
+      lvScreen_Functions[screenIndex].createFunc(lvScreen_UserDataPtr);
+      lvScreen_UserDataPtr = NULL;
     }
 
     screenIndex = (uint8_t)lvScreen_CurrentScreen;

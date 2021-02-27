@@ -253,6 +253,14 @@ void TemperatureBase::setColor(const char *color)
   settingsChanged = true;
 }
 
+void TemperatureBase::setColor(uint32_t color)
+{
+  char colorChar[8];
+  sprintf(colorChar, "#%06X", (color & 0xFFFFFF));
+  this->color = colorChar;
+  settingsChanged = true;
+}
+
 void TemperatureBase::setAlarmSetting(AlarmSetting alarmSetting)
 {
   this->alarmSetting = alarmSetting;

@@ -35,6 +35,7 @@ typedef struct lvHomeSensorTile
   lv_obj_t *labelMax;
   lv_obj_t *labelSymbolMin;
   lv_obj_t *labelMin;
+  lv_obj_t *labelSymbolBLE;
   lv_obj_t *labelCurrent;
 } lvHomeSensorTileType;
 
@@ -46,6 +47,7 @@ typedef struct lvSymbols
   lv_obj_t *btnRight;
   lv_obj_t *btnAlarm;
   lv_obj_t *btnCloud;
+  lv_obj_t *btnBattery;
   lv_obj_t *btnWifi;
 } lvHomeSymbolsType;
 
@@ -56,6 +58,6 @@ typedef struct lvHome
   lvHomeSensorTileType sensorTiles[LV_HOME_SENSORS_PER_PAGE];
 } lvHomeType;
 
-void lvHome_Create(void);
+void lvHome_Create(void *userData);
 void lvHome_Update(boolean forceUpdate);
 void lvHome_Delete(void);

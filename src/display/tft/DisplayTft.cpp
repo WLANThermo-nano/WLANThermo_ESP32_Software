@@ -23,11 +23,14 @@
 #include "Preferences.h"
 #include "lv_qrcode.h"
 #include "lvScreen.h"
+#include "lvTheme.h"
 #include "PCA9533.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 #define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
 
+extern const uint16_t DisplayTftCharged[];
+extern const uint16_t DisplayTftCharging[];
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
 TFT_eSPI DisplayTft::tft = TFT_eSPI();
@@ -109,7 +112,15 @@ boolean DisplayTft::initDisplay()
   indev_drv.read_cb = DisplayTft::touchRead;
   lv_indev_drv_register(&indev_drv);
 
+  lv_theme_t *theme = lvTheme_Init(lv_theme_get_color_primary(), lv_theme_get_color_secondary(),
+                                   LVTHEME_FLAG_DARK | LVTHEME_FLAG_NO_FOCUS,
+                                   lv_theme_get_font_small(), lv_theme_get_font_normal(),
+                                   lv_theme_get_font_subtitle(), lv_theme_get_font_title());
+
+  lv_theme_set_act(theme);
+
   lvScreen_Open(lvScreenType::Home);
+  setBrightness(this->brightness);
 
   return true;
 }
@@ -153,34 +164,43 @@ void DisplayTft::calibrate()
 
 void DisplayTft::setBrightness(uint8_t brightness)
 {
-  int value = (int)(brightness * 2.55);
+  this->brightness = brightness;
+  int value = (int)(this->brightness * 2.55);
 
   Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
   Wire.write(value);
   Wire.endTransmission();
 }
 
+uint8_t DisplayTft::getBrightness()
+{
+  return this->brightness;
+}
+
 void DisplayTft::drawCharging()
 {
-  DisplayTft::setBrightness(0u);
+  // set brightness
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(0);
+  Wire.endTransmission();
 
   tft.init();
   tft.setRotation(1);
   tft.setSwapBytes(true);
-  tft.fillScreen(0x31a6);
-  tft.setTextColor(TFT_WHITE, 0x31a6);
-  tft.setTextSize(3);
+  tft.fillScreen(TFT_BLACK);
 
   // set brightness
-  DisplayTft::setBrightness(100u);
+  Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
+  Wire.write(100);
+  Wire.endTransmission();
 
   if (gSystem->battery->isCharging())
   {
-    tft.drawCentreString("CHARGING...", 160, 120, 1);
+    tft.pushImage(80, 56, 160, 127, DisplayTftCharging);
   }
   else
   {
-    tft.drawCentreString("READY!", 160, 120, 1);
+    tft.pushImage(80, 56, 160, 127, DisplayTftCharged);
   }
 }
 
@@ -212,6 +232,8 @@ void DisplayTft::update()
 {
   static uint8_t updateInProgress = false;
   static boolean wakeup = false;
+  static uint32_t lastMillis = millis();
+  uint32_t currentMillis;
 
   if (this->disabled || this->blocked)
     return;
@@ -227,7 +249,9 @@ void DisplayTft::update()
 
   lvScreen_Update();
 
-  lv_tick_inc(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
+  currentMillis = millis();
+  lv_tick_inc(currentMillis - lastMillis);
+  lastMillis = currentMillis;
   lv_task_handler();
 }
 
