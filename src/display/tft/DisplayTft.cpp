@@ -196,11 +196,11 @@ void DisplayTft::drawCharging()
 
   if (gSystem->battery->isCharging())
   {
-    tft.pushImage(80, 56, 160, 127, DisplayTftCharging);
+    tft.pushImage(89, 56, 160, 127, DisplayTftCharging);
   }
   else
   {
-    tft.pushImage(80, 56, 160, 127, DisplayTftCharged);
+    tft.pushImage(89, 56, 160, 127, DisplayTftCharged);
   }
 }
 
