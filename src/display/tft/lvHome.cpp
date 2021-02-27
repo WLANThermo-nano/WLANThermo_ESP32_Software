@@ -34,6 +34,9 @@ LV_FONT_DECLARE(Font_Roboto_Regular_h16);
 LV_FONT_DECLARE(Font_Roboto_Regular_h14);
 
 #define LV_COLOR_LIGHTBLUE LV_COLOR_MAKE(0x00, 0xBF, 0xFF)
+#define LVHOME_COLOR_TILE LV_COLOR_MAKE(0x29, 0x31, 0x3A)
+#define LVHOME_COLOR_BG LV_COLOR_MAKE(0x18, 0x1d, 0x23)
+
 #define LVHOME_SYMBOL_BATTERY_PLUGGED_INDEX 7u
 #define LVHOME_SYMBOL_BATTERY_CHARGING_INDEX 8u
 #define LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX 6u
@@ -66,8 +69,8 @@ void lvHome_Create(void *userData)
   /* create style for symbols */
   lvHome.symbols.style = new lv_style_t();
   lv_style_init(lvHome.symbols.style);
-  lv_style_set_bg_color(lvHome.symbols.style, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_style_set_bg_grad_color(lvHome.symbols.style, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_style_set_bg_color(lvHome.symbols.style, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
+  lv_style_set_bg_grad_color(lvHome.symbols.style, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
   lv_style_set_border_width(lvHome.symbols.style, LV_STATE_DEFAULT, 0);
   lv_style_set_clip_corner(lvHome.symbols.style, LV_STATE_DEFAULT, false);
   lv_style_set_radius(lvHome.symbols.style, LV_STATE_DEFAULT, 0);
@@ -116,7 +119,7 @@ void lvHome_Create(void *userData)
   lv_obj_add_protect(lvHome.symbols.btnAlarm, LV_PROTECT_CLICK_FOCUS);
   lv_obj_add_style(lvHome.symbols.btnAlarm, LV_CONT_PART_MAIN, lvHome.symbols.style);
   lv_obj_set_style_local_value_str(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "o");
-  lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF, 0x00, 0x00));
+  lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
   lv_obj_set_size(lvHome.symbols.btnAlarm, 40, 40);
   lv_obj_set_pos(lvHome.symbols.btnAlarm, 160, 0);
 
@@ -125,7 +128,7 @@ void lvHome_Create(void *userData)
   lv_obj_add_protect(lvHome.symbols.btnCloud, LV_PROTECT_CLICK_FOCUS);
   lv_obj_add_style(lvHome.symbols.btnCloud, LV_CONT_PART_MAIN, lvHome.symbols.style);
   lv_obj_set_style_local_value_str(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "h");
-  lv_obj_set_style_local_value_color(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0xFF, 0x00));
+  lv_obj_set_style_local_value_color(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_LIME);
   lv_obj_set_size(lvHome.symbols.btnCloud, 40, 40);
   lv_obj_set_pos(lvHome.symbols.btnCloud, 200, 0);
 
@@ -148,7 +151,7 @@ void lvHome_Create(void *userData)
   lv_obj_set_event_cb(lvHome.symbols.btnWifi, lvHome_NavigationWifiEvent);
 
   lv_obj_t *contTemperature = lv_cont_create(lvHome.screen, NULL);
-  lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
   lv_obj_set_style_local_border_width(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_clip_corner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
   lv_obj_set_style_local_radius(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
@@ -167,7 +170,7 @@ void lvHome_Create(void *userData)
     lvHomeSensorTileType *tile = &lvHome.sensorTiles[i];
 
     tile->objTile = lv_obj_create(contTemperature, NULL);
-    lv_obj_set_style_local_bg_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x4A, 0x4A, 0x4A));
+    lv_obj_set_style_local_bg_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LVHOME_COLOR_TILE);
     lv_obj_set_style_local_border_width(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_clip_corner(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
     lv_obj_set_style_local_radius(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
@@ -413,7 +416,7 @@ void lvHome_UpdateBuzzerMsgBox(void)
   {
     if (true == newBuzzerEnabled)
     {
-      lvHome_CreateMsgBox("o", LV_COLOR_MAKE(0xFFu, 0x00u, 0x00u));
+      lvHome_CreateMsgBox("o", LV_COLOR_RED);
     }
 
     BuzzerEnabled = newBuzzerEnabled;
