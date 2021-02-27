@@ -112,7 +112,7 @@ boolean DisplayTft::initDisplay()
   indev_drv.read_cb = DisplayTft::touchRead;
   lv_indev_drv_register(&indev_drv);
 
-  lv_theme_t *theme = lvTheme_Init(lv_color_hex(0x00cef2), lv_theme_get_color_secondary(),
+  lv_theme_t *theme = lvTheme_Init(lv_color_hex(0x0aa5c4), lv_theme_get_color_secondary(),
                                    LVTHEME_FLAG_DARK | LVTHEME_FLAG_NO_FOCUS,
                                    lv_theme_get_font_small(), lv_theme_get_font_normal(),
                                    lv_theme_get_font_subtitle(), lv_theme_get_font_title());
