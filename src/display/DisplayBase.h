@@ -52,6 +52,7 @@ protected:
   DisplayOrientation orientation;
   String modelName;
   uint16_t timeout;
+  uint8_t brightness;
 };
 
 extern DisplayBase *gDisplay;

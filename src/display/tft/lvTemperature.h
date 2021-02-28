@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2021  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,31 +19,22 @@
 ****************************************************/
 #pragma once
 
-#include "Arduino.h"
+#include "lvgl.h"
 
-#define BUZZER_INTERVALL_MS 1000u
-
-#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
-#define BUZZER_FREQUENCY 2700
-#else
-#define BUZZER_FREQUENCY 4000
-#endif
-
-class Buzzer
+typedef struct lvTemperature
 {
-  public:
-    Buzzer(uint8_t ioPin, uint8_t channel);
-    void enable();
-    void disable();
-    boolean isEnabled() { return this->enabled; }
-    void test();
-    void update();
-  private:
-    boolean enabled;
-    boolean testEnabled;
-    uint8_t ioPin;
-    uint8_t channel;
-    double frequency;
-    const uint intervall = BUZZER_INTERVALL_MS;
-    uint previousMillis;
-};
+  lv_obj_t *screen;
+  lv_obj_t *tabview;
+
+  lv_obj_t *spinboxMin;
+  lv_obj_t *spinboxMax;
+  lv_obj_t *rollerType;
+  lv_obj_t *contColor;
+  lv_obj_t *swBuzzer;
+  lv_obj_t *swPush;
+
+} lvTemperatureType;
+
+void lvTemperature_Create(void *userData);
+void lvTemperature_Update(bool forceUpdate);
+void lvTemperature_Delete(void);

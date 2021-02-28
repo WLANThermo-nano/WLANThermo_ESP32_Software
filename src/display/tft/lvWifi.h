@@ -32,6 +32,6 @@ typedef struct lvWifi
   lv_obj_t *btnClose;
 } lvWifiType;
 
-void lvWifi_Create(void);
+void lvWifi_Create(void *userData);
 void lvWifi_Update(boolean forceUpdate);
 void lvWifi_Delete(void);
