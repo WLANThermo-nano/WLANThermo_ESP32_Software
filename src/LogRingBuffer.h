@@ -21,7 +21,7 @@
 
 #include <Arduino.h>
 
-#define LOG_BUFFER_SIZE 5000u
+#define LOG_BUFFER_SIZE 2048u
 
 class LogRingBuffer : public Print
 {
