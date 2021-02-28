@@ -81,6 +81,12 @@ void MainTask(void *parameter)
   for (;;)
   {
 
+    if (gSystem->otaUpdate.isUpdateInProgress())
+    {
+      // exit task loop for better update performance
+      break;
+    }
+
     // Detect Serial Input
     static char serialbuffer[300];
     if (readline(Serial.read(), serialbuffer, 300) > 0)
@@ -90,12 +96,10 @@ void MainTask(void *parameter)
 
     // Wait for the next cycle.
     vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_MAIN_TASK);
-
-// Detect OTA
-#ifdef OTA
-    ArduinoOTA.handle();
-#endif
   }
+
+  Serial.println("Delete MainTask task");
+  vTaskDelete(NULL);
 }
 
 void ConnectTask(void *parameter)
@@ -104,6 +108,12 @@ void ConnectTask(void *parameter)
 
   for (;;)
   {
+    if (gSystem->otaUpdate.isUpdateInProgress())
+    {
+      // exit task loop for better update performance
+      break;
+    }
+
     // WiFi - Monitoring
     gSystem->wlan.update();
 
@@ -118,6 +128,9 @@ void ConnectTask(void *parameter)
     // Wait for the next cycle.
     vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_CONNECT_TASK);
   }
+
+  Serial.println("Delete ConnectTask task");
+  vTaskDelete(NULL);
 }
 
 void createTasks()
