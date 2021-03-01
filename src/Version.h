@@ -28,7 +28,7 @@
 /*REL_VER*/
 
 #ifndef FIRMWAREVERSION
-#define FIRMWAREVERSION "v1.1.1"
+#define FIRMWAREVERSION "v1.1.3"
 #endif
 #define GUIAPIVERSION "1"
 #define SERVERAPIVERSION "1"
