@@ -73,7 +73,6 @@ void OtaUpdate::task(void *parameter)
   {
     Serial.println("OTA update failed.");
     otaUpdate->otaUpdateState = OtaUpdateState::UpdateFailed;
-    ESP.restart();
   }
 
   vTaskDelete(NULL);

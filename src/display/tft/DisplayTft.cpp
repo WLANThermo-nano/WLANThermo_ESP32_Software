@@ -73,7 +73,7 @@ void DisplayTft::init()
   xTaskCreatePinnedToCore(
       DisplayTft::task,           /* Task function. */
       "DisplayTft::task",         /* String with name of task. */
-      10000,                      /* Stack size in bytes. */
+      5000,                       /* Stack size in bytes. */
       this,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */
@@ -222,6 +222,8 @@ void DisplayTft::task(void *parameter)
 
   for (;;)
   {
+    //Serial.printf("DisplayTft::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
     display->update();
     // Wait for the next cycle.
     vTaskDelay(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);

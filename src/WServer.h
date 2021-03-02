@@ -24,8 +24,7 @@
 #pragma once
 
 #include <Arduino.h>
-
-class AsyncWebServer;
+#include <ESPAsyncWebServer.h>
 
 class WServer
 {
@@ -41,7 +40,7 @@ public:
 
 private:
     void loadConfig();
-    AsyncWebServer *webServer;
+    AsyncWebServer webServer;
     static const char *username;
     static String password;
 };
