@@ -288,3 +288,16 @@ boolean OtaUpdate::setPrerelease(boolean prerelease)
   if (checkForUpdate)
     resetUpdateInfo();
 }
+
+uint8_t OtaUpdate::getUpdateProgress()
+{
+  static uint8_t progress = 0u;
+  uint8_t newProgress = (uint8_t)((100.0f / ((float)Update.size())) * (float)Update.progress());
+
+  if (Update.isRunning() && (newProgress > progress))
+  {
+    progress = newProgress;
+  }
+
+  return progress;
+};

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "Arduino.h"
+#include "Update.h"
 
 enum class OtaUpdateState
 {
@@ -43,19 +44,20 @@ public:
   void setFirmwareUrl(const char *url);
   void setDisplayUrl(const char *url);
   void setAutoUpdate(boolean enable);
-  void setUpdateVersion(String version){this->version = version;};
+  void setUpdateVersion(String version) { this->version = version; };
   void requestVersion(String version);
   void requestFile(String file);
-  void setForceFlag(boolean force){this->forceUpdate = force;};
+  void setForceFlag(boolean force) { this->forceUpdate = force; };
   void resetUpdateInfo();
-  void askUpdateInfo(){this->otaUpdateState = OtaUpdateState::GetUpdateInfo;};
-  String getRequestedVersion(){return this->requestedVersion;};
-  String getRequestedFile(){return this->requestedFile;};
-  String getVersion(){return this->version;};
-  boolean getForceFlag(){return this->forceUpdate;};
+  void askUpdateInfo() { this->otaUpdateState = OtaUpdateState::GetUpdateInfo; };
+  String getRequestedVersion() { return this->requestedVersion; };
+  String getRequestedFile() { return this->requestedFile; };
+  String getVersion() { return this->version; };
+  boolean getForceFlag() { return this->forceUpdate; };
   boolean checkForUpdate(String version);
   boolean getAutoUpdate();
-  boolean isUpdateInProgress(){return (OtaUpdateState::UpdateInProgress == otaUpdateState);};
+  boolean isUpdateInProgress() { return (OtaUpdateState::UpdateInProgress == otaUpdateState); };
+  uint8_t getUpdateProgress();
   void startUpdate();
   boolean getPrerelease();
   boolean setPrerelease(boolean prerelease);

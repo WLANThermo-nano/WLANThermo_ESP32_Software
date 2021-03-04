@@ -232,8 +232,6 @@ void DisplayTft::task(void *parameter)
 
 void DisplayTft::update()
 {
-  static uint8_t updateInProgress = false;
-  static boolean wakeup = false;
   static uint32_t lastMillis = millis();
   uint32_t currentMillis;
 
@@ -242,11 +240,7 @@ void DisplayTft::update()
 
   if (gSystem->otaUpdate.isUpdateInProgress())
   {
-    if (false == updateInProgress)
-    {
-      updateInProgress = true;
-    }
-    return;
+    lvScreen_Open(lvScreenType::Update);
   }
 
   lvScreen_Update();
