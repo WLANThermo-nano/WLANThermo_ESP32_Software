@@ -42,6 +42,7 @@ LV_FONT_DECLARE(Font_Roboto_Regular_h14);
 #define LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX 6u
 
 static const char *lvHome_WifiSymbolText[4] = {"I", "H", "G", ""};
+static const char *lvHome_PitSymbols[3] = {"J", "}", "~"};
 static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_LIGHTBLUE, LV_COLOR_RED};
 static uint32_t lvHome_UpdateTemperature = 0u;
 static uint32_t lvHome_UpdatePitmaster = 0u;
@@ -54,6 +55,7 @@ static void lvHome_UpdateSensorTiles(boolean forceUpdate);
 static void lvHome_CreateMsgBox(const char *text, lv_color_t textColor);
 static void lvHome_UpdateBuzzerMsgBox(void);
 static void lvHome_UpdateBatterySymbol(boolean forceUpdate);
+static void lvHome_UpdatePitmasterSymbol(boolean forceUpdate);
 static void lvHome_UpdateAlarmSymbol(boolean forceUpdate);
 static void lvHome_UpdateSymbols(boolean forceUpdate);
 static lv_color_t htmlColorToLvColor(String htmlColor);
@@ -114,6 +116,14 @@ void lvHome_Create(void *userData)
   lv_obj_set_pos(lvHome.symbols.btnRight, 80, 0);
   lv_obj_set_event_cb(lvHome.symbols.btnRight, lvHome_NavigationRightEvent);
 
+  /* create pitmaster symbol */
+  lvHome.symbols.btnPitmaster = lv_btn_create(contHeader, NULL);
+  lv_obj_add_protect(lvHome.symbols.btnPitmaster, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_add_style(lvHome.symbols.btnPitmaster, LV_CONT_PART_MAIN, lvHome.symbols.style);
+  lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "J");
+  lv_obj_set_size(lvHome.symbols.btnPitmaster, 40, 40);
+  lv_obj_set_pos(lvHome.symbols.btnPitmaster, 160, 0);
+
   /* create alarm symbol */
   lvHome.symbols.btnAlarm = lv_btn_create(contHeader, NULL);
   lv_obj_add_protect(lvHome.symbols.btnAlarm, LV_PROTECT_CLICK_FOCUS);
@@ -122,6 +132,7 @@ void lvHome_Create(void *userData)
   lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
   lv_obj_set_size(lvHome.symbols.btnAlarm, 40, 40);
   lv_obj_set_pos(lvHome.symbols.btnAlarm, 160, 0);
+  lv_obj_set_hidden(lvHome.symbols.btnAlarm, true);
 
   /* create cloud symbol */
   lvHome.symbols.btnCloud = lv_btn_create(contHeader, NULL);
@@ -451,6 +462,19 @@ void lvHome_UpdateBatterySymbol(boolean forceUpdate)
   }
 }
 
+void lvHome_UpdatePitmasterSymbol(boolean forceUpdate)
+{
+  static uint8_t angle = 0u;
+  static uint32_t counter = 0u;
+
+  if ((counter++ % 10u) == 0u)
+  {
+    lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
+    angle = (angle >= 2u) ? 0u : (angle + 1);
+    Serial.println("Change angle");
+  }
+}
+
 void lvHome_UpdateAlarmSymbol(boolean forceUpdate)
 {
   boolean newHasAlarm = gSystem->temperatures.hasAlarm(false);
@@ -476,6 +500,7 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
   static boolean delayApSymbol = true;
 
   lvHome_UpdateBatterySymbol(forceUpdate);
+  lvHome_UpdatePitmasterSymbol(forceUpdate);
   lvHome_UpdateAlarmSymbol(forceUpdate);
   lvHome_UpdateBuzzerMsgBox();
 
