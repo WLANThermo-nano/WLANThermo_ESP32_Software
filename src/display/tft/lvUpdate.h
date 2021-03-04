@@ -22,30 +22,13 @@
 #include "Arduino.h"
 #include <lvgl.h>
 
-typedef void (*lvMenu_Create_FuncPtr)(void *userData);
-typedef void (*lvMenu_Update_FuncPtr)(boolean forceUpdate);
-typedef void (*lvMenu_Delete_FuncPtr)(void);
-
-typedef enum class lvScreen
+typedef struct lvUpdate
 {
-  None = 0,
-  Menu,
-  Home,
-  Wifi,
-  Display,
-  Temperature,
-  Update,
-  Max
-} lvScreenType;
 
-typedef struct
-{
-  lvScreenType screen;
-  lvMenu_Create_FuncPtr createFunc;
-  lvMenu_Update_FuncPtr updateFunc;
-  lvMenu_Delete_FuncPtr deleteFunc;
+  lv_obj_t *screen;
+  lv_obj_t *bar;
+} lvUpdateType;
 
-} lvScreenFuncType;
-
-void lvScreen_Open(lvScreenType screen, void *userData = NULL);
-void lvScreen_Update(void);
+void lvUpdate_Create(void *userData);
+void lvUpdate_Update(boolean forceUpdate);
+void lvUpdate_Delete(void);
