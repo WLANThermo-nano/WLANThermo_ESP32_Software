@@ -33,6 +33,7 @@
     </platform>
     <platform name="ios">
         <preference name="deployment-target" value="12.0" />
+        <preference name="StatusBarOverlaysWebView" value="false" />
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
         <config-file parent="NSBonjourServices" target="*-Info.plist">
