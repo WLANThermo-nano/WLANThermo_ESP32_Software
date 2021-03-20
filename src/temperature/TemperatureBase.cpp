@@ -41,7 +41,7 @@ TemperatureCalculation_t TemperatureBase::typeFunctions[NUM_OF_TYPES] = {
 
 TemperatureBase::TemperatureBase()
 {
-  this->medianValue = new MedianFilter<float>(MEDIAN_SIZE);
+  this->medianValue = new MedianFilterFloat(MEDIAN_SIZE);
   this->fixedSensor = false;
   this->loadDefaultValues(TemperatureGrp::count());
   this->settingsChanged = false;
@@ -253,6 +253,14 @@ void TemperatureBase::setColor(const char *color)
   settingsChanged = true;
 }
 
+void TemperatureBase::setColor(uint32_t color)
+{
+  char colorChar[8];
+  sprintf(colorChar, "#%06X", (color & 0xFFFFFF));
+  this->color = colorChar;
+  settingsChanged = true;
+}
+
 void TemperatureBase::setAlarmSetting(AlarmSetting alarmSetting)
 {
   this->alarmSetting = alarmSetting;
@@ -327,7 +335,7 @@ void TemperatureBase::refresh()
   int8_t preGradientSign = this->gradientSign;
 
   // get current
-  float currentVal = this->medianValue->GetFiltered();
+  float currentVal = this->medianValue->getFiltered();
   float gradient = (isActive() == true) ? decimalPlace(currentVal) - decimalPlace(this->preValue) : 0;
   this->gradientSign = (0 == gradient) ? 0 : (0 < gradient) ? 1 : -1;
   this->currentGradient = (0 == gradient) ? 0 : gradient / abs(gradient);

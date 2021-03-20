@@ -403,6 +403,12 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
+        if(gSystem->otaUpdate.isUpdateInProgress())
+        {
+            // exit task loop for better update performance
+            break;
+        }
+
         // check if bluetooth has been enabled or disabled
         if (bluetooth->enabled != bluetooth->chipEnabled)
         {
@@ -416,6 +422,9 @@ void Bluetooth::task(void *parameter)
         }
         vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
+
+    Serial.println("Delete Bluetooth task");
+    vTaskDelete(NULL);
 }
 
 boolean Bluetooth::waitForBootloader(uint32_t timeoutInMs)

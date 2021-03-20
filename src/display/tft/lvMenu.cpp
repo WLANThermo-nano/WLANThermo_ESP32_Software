@@ -30,7 +30,7 @@ static lvMenuType lvMenu = {NULL};
 static void lvMenu_TemperaturesEvent(lv_obj_t *obj, lv_event_t event);
 static void lvMenu_DisplayEvent(lv_obj_t *obj, lv_event_t event);
 
-void lvMenu_Create(void)
+void lvMenu_Create(void *userData)
 {
   /* create screen for menu */
   lvMenu.screen = lv_obj_create(NULL, NULL);
