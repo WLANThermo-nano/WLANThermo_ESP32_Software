@@ -64,8 +64,8 @@ export default {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
-	menuBluetooth: "Bluetooth",
 	menuScan: "Meine Geräte",
+	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
 	menuIOT: "IoT",
@@ -161,5 +161,11 @@ export default {
 	pitlinklinear: "linear",
 	pitlinklowpass: "lowpass",
 	// scan
+	mobileAppHeader: "WLANThermo Connect",
 	scanTitle: "Meine Geräte",
+	scanDevices: "Geräte",
+	// auth dialog
+	authentication: 'Authentifizierung',
+	username: 'Benutzername',
+	password: 'Passwort'
 };

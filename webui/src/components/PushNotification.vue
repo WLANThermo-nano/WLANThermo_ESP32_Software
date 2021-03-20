@@ -20,6 +20,39 @@
           class="icon-question_sign icon-question"
         ></span>
       </div>
+      <div class="form-section-name" v-if="isMobile">
+        WLANThermo Connect
+      </div>
+      <div class="config-form" v-if="isMobile">
+      <div class="form-checkbox">
+          <label for="notificationActivate" class="pure-checkbox checkbox">
+            <input v-model="app.enabled" type="checkbox" id="notificationActivate" />
+            {{$t("notificationActivate")}}
+          </label>
+        </div>
+        <button
+          v-if="!currentPhoneIsConfigured"
+          @click="configuredCurrentPhone"
+          class="pure-button pure-button-primary test-msg-button" style="margin-top: 5px" >
+          {{ $t('notificationConfigureThisPhone') }}
+        </button>
+        <div class="form-group">
+          <div v-for="(d) in app.devices" :key="d.id">
+            <div class="pure-u-2-5 control pure-grid">
+              <div class="form-group">
+                <input v-model="d.name" required />
+                <label class="control-label" for="input"> {{ $t('deviceName') }} </label>
+                <i class="bar"></i>
+              </div>
+            </div>
+            <div class="pure-u-1-5 control pure-grid delete-button-container">
+              <button class="pure-button pure-button-error renew-token-button" @click="removeDevice(d.id)">
+                <span class="icon-trash"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-section-name">
         Telegram
       </div>
@@ -79,43 +112,6 @@
           {{ $t('notificationSendMessage') }}
         </button>
       </div>
-
-      <div class="form-section-name" v-if="isMobile">
-        Firebasse Push
-      </div>
-      <div class="config-form" v-if="isMobile">
-        <button
-          v-if="!currentPhoneIsConfigured"
-          @click="configuredCurrentPhone"
-          class="pure-button pure-button-primary test-msg-button" style="margin-top: 5px" >
-          {{ $t('notificationConfigureThisPhone') }}
-        </button>
-        <div class="form-group">
-          <div v-for="(d) in app.devices" :key="d.id">
-            <div class="pure-u-2-5 control pure-grid">
-              <div class="form-group">
-                <input v-model="d.name" required />
-                <label class="control-label" for="input"> {{ $t('deviceName') }} </label>
-                <i class="bar"></i>
-              </div>
-            </div>
-            <div class="pure-u-2-5 control pure-grid">
-              <div class="form-group">
-                <input class="with-icon" v-model="d.token_sha256" required readonly />
-                <label class="control-label" for="input"> {{ $t('notificationToken') }} </label>
-                <i class="bar"></i>
-                <span v-if="currentPhoneUUID !== d.id" class="icon-refresh icon-form"></span>
-              </div>
-            </div>
-            <div class="pure-u-1-5 control pure-grid delete-button-container">
-              <button class="pure-button pure-button-error renew-token-button" @click="removeDevice(d.id)">
-                <span class="icon-trash"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </template>
