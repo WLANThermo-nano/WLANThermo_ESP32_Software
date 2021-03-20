@@ -54,6 +54,7 @@
               </template>
           </swipe-list>
         </form>
+        <!--
         <div style="color: #fff">
           debug message:
         </div>
@@ -62,6 +63,7 @@
             {{msg}}
           </div>
         </div>
+        -->
       </div>
     </div>
     <div class="connection-lost-toast" v-if="showConnectionLost">
