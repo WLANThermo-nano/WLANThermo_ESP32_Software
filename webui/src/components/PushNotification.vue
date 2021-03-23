@@ -193,7 +193,7 @@ export default {
       EventBus.$emit("loading", true)
       // eslint-disable-next-line
       const messaging = cordova.plugins.firebase.messaging
-      messaging.requestPermission().then(function() {
+      messaging.requestPermission({forceShow: true}).then(function() {
         console.log("Push messaging is allowed");
       });
       messaging.getToken().then((token) => {
