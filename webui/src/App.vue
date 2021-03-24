@@ -253,7 +253,14 @@ export default {
       this.axios.get('/settings').then((response) => {
         const data = response.data
         this.settings = data
-        window.location = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken;
+        var url = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken
+
+        if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+          // eslint-disable-next-line
+          cordova.InAppBrowser.open(url, '_system')
+        } else {
+          window.location = url
+        }
       })
     },
     onAuthConfirm: function() {
