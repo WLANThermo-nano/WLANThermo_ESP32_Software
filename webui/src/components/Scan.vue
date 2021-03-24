@@ -248,14 +248,14 @@ export default {
         if (action == "added") {
           console.log(`service added`)
           const ip = service.ipv4Addresses[0]
-          const name = service.txtRecord.device
+          const name = service.name
           this.addToDebug(`action added, ip: ${ip}, name: ${name}`)
           if (ip && name) {
             this.checkAndAddDevice(name, ip)
           }
         } else if (action == "resolved") {
           const ip = service.ipv4Addresses[0]
-          const name = service.txtRecord.device
+          const name = service.name
           this.addToDebug(`action resolved, ip: ${ip}, name: ${name}`)
           if (ip && name) {
             this.checkAndAddDevice(name, ip)
