@@ -321,7 +321,7 @@ export default {
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
       this.$router.push('/scan')
       this.settings.system.host = this.$t('mobileAppHeader')
-      this.menuItems = this.menuItems.filter(i => i.id === 'scan')
+      this.menuItems = this.menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
     } else {
       this.menuItems = this.menuItems.filter(i => i.id !== 'scan')
       this.getSettings()
@@ -335,7 +335,15 @@ export default {
       this.dialogActive = true
     })
     EventBus.$on('back-to-home', () => {
-      this.toPage('/')
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
+          this.toPage('/')
+        } else {
+          this.toPage('scan')
+        }
+      } else {
+        this.toPage('/')
+      }
     })
     EventBus.$on('device-selected', () => {
       this.clearGetDataInteval()
