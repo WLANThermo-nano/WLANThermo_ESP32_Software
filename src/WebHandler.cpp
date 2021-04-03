@@ -90,6 +90,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/bluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
     {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
+    {"/getpush", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleGetPush, NULL},
     // Body handler
     {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
@@ -97,7 +98,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setpitmaster", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPitmaster},
     {"/setpid", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPID},
     {"/setIoT", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setIoT},
-    {"/setPush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
+    {"/setpush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
     {"/setapi", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setServerAPI},
     {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest},
     {"/setbluetooth", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setBluetooth}};
@@ -484,6 +485,54 @@ void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
   request->send(200, TEXTPLAIN, gLogRingBuffer.get());
 }
 
+void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
+{
+  AsyncJsonResponse *response = new AsyncJsonResponse();
+  response->addHeader("Server", "ESP Async Web Server");
+
+  JsonObject &json = response->getRoot();
+
+  PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
+  PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
+  PushAppType pushApp = gSystem->notification.getAppConfig();
+
+  JsonObject &telegram = json.createNestedObject("telegram");
+
+  telegram["enabled"] = pushTelegram.enabled;
+  telegram["token"] = pushTelegram.token;
+  telegram["chat_id"] = pushTelegram.chatId;
+
+  JsonObject &pushover = json.createNestedObject("pushover");
+
+  pushover["enabled"] = pushPushover.enabled;
+  pushover["token"] = pushPushover.token;
+  pushover["user_key"] = pushPushover.userKey;
+  pushover["priority"] = pushPushover.priority;
+
+  JsonObject &app = json.createNestedObject("app");
+
+  app["enabled"] = pushApp.enabled;
+  app["max_devices"] = PUSH_APP_MAX_DEVICES;
+
+  JsonArray &devices = app.createNestedArray("devices");
+
+  for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
+  {
+    if (strlen(pushApp.devices[i].token) > 0u)
+    {
+      JsonObject &device = devices.createNestedObject();
+
+      device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
+      device["token_sha256"] = Notification::getTokenSha256(pushApp.devices[i].token);
+      device["sound"] = pushApp.devices[i].sound;
+    }
+  }
+
+  response->setLength();
+  request->send(response);
+}
+
 int NanoWebHandler::checkStringLength(String tex)
 {
   int index = tex.length();
@@ -718,23 +767,145 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
   if (!_push.success())
     return 0;
 
-  if (_push.containsKey("on"))
-    gSystem->notification.pushService.on = (byte)_push["on"];
-  if (_push.containsKey("token"))
-    gSystem->notification.pushService.token = _push["token"].asString();
-  if (_push.containsKey("id"))
-    gSystem->notification.pushService.id = _push["id"].asString();
-  if (_push.containsKey("repeat"))
-    gSystem->notification.pushService.repeat = _push["repeat"];
-  if (_push.containsKey("service"))
-    gSystem->notification.pushService.service = _push["service"];
+  boolean sendTestMessage = false;
 
-  if (gSystem->notification.pushService.on == 2)
-    gSystem->notification.notificationData.type = 1; // Verbindungstest
-  else
+  // check if test message is requested
+  if (_push.containsKey("test"))
+  {
+    if (true == _push["test"].as<boolean>())
+    {
+      sendTestMessage = true;
+    }
+  }
+
+  if (_push.containsKey("telegram"))
+  {
+    JsonObject &_telegram = _push["telegram"];
+
+    if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
+        _telegram.containsKey("chat_id"))
+    {
+      // check length of token
+      if (strlen(_telegram["token"].asString()) < sizeof(PushTelegramType::token))
+      {
+        // set telegram
+        PushTelegramType telegram;
+        memset(&telegram, 0, sizeof(telegram));
+
+        telegram.enabled = _telegram["enabled"];
+        strcpy(telegram.token, _telegram["token"].asString());
+        telegram.chatId = _telegram["chat_id"];
+        gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
+      }
+    }
+  }
+
+  if (_push.containsKey("pushover"))
+  {
+    JsonObject &_pushover = _push["pushover"];
+
+    if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
+        _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
+    {
+      // check length of token and user_key
+      if ((strlen(_pushover["token"].asString()) < sizeof(PushPushoverType::token)) &&
+          (strlen(_pushover["user_key"].asString()) < sizeof(PushPushoverType::userKey)))
+      {
+        // set pushover
+        PushPushoverType pushover;
+        memset(&pushover, 0, sizeof(pushover));
+        pushover.enabled = _pushover["enabled"];
+        strcpy(pushover.token, _pushover["token"].asString());
+        strcpy(pushover.userKey, _pushover["user_key"].asString());
+        pushover.priority = _pushover["priority"];
+
+        if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
+        {
+          pushover.retry = _pushover["retry"];
+          pushover.expire = _pushover["expire"];
+        }
+
+        gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
+      }
+    }
+  }
+
+  if (_push.containsKey("app"))
+  {
+    JsonObject &_app = _push["app"];
+
+    if (_app.containsKey("enabled") && _app.containsKey("devices"))
+    {
+      // set app
+      PushAppType app;
+      memset(&app, 0, sizeof(app));
+
+      app.enabled = _app["enabled"];
+
+      JsonArray &_devices = _app["devices"];
+      uint8_t deviceIndex = 0u;
+
+      for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
+      {
+        JsonObject &_device = it->asObject();
+
+        if (_device.containsKey("name") && _device.containsKey("id") &&
+            (_device.containsKey("token") || _device.containsKey("token_sha256")))
+        {
+          String token;
+          boolean hasToken = _device.containsKey("token");
+          boolean hasHashedToken = _device.containsKey("token_sha256");
+          boolean hasSound = _device.containsKey("sound");
+
+          // check length of name and id
+          if ((strlen(_device["name"].asString()) >= sizeof(PushAppDeviceType::name)) &&
+              (strlen(_device["id"].asString()) >= sizeof(PushAppDeviceType::id)))
+          {
+            continue;
+          }
+
+          // check length of token
+          if(hasToken)
+          {
+            if(strlen(_device["token"].asString()) >= sizeof(PushAppDeviceType::token))
+            {
+              continue;
+            }
+          }
+
+          strcpy(app.devices[deviceIndex].name, _device["name"].asString());
+          strcpy(app.devices[deviceIndex].id, _device["id"].asString());
+
+          // user token or hash to get token
+          if (hasToken)
+          {
+            token = _device["token"].asString();
+          }
+          else if (hasHashedToken)
+          {
+            token = gSystem->notification.getDeviceTokenFromHash(_device["token_sha256"].asString());
+          }
+
+          strcpy(app.devices[deviceIndex].token, token.c_str());
+
+          if(hasSound)
+          {
+            app.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+          }
+
+          deviceIndex++;
+        }
+      }
+
+      gSystem->notification.setAppConfig(app, sendTestMessage);
+    }
+  }
+
+  if (false == sendTestMessage)
   {
     gSystem->notification.saveConfig();
   }
+
   return 1;
 }
 
