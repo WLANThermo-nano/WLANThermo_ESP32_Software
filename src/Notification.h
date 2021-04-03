@@ -73,6 +73,7 @@ typedef struct
   char name[31];
   char id[65];
   char token[255];
+  uint8_t sound;
 } PushAppDeviceType;
 
 typedef struct
@@ -98,6 +99,7 @@ public:
   void sendTestMessage(NotificationService service, void *config);
   static String getTokenSha256(String token);
   String getDeviceTokenFromHash(String hash);
+  String getNotificationSound(uint8_t soundIndex);
   void check(TemperatureBase *temperature);
   void update();
 

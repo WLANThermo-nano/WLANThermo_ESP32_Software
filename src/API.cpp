@@ -292,6 +292,7 @@ void API::notificationObj(JsonObject &jObj)
         JsonObject &_app = _services.createNestedObject();
         _app["service"] = "app";
         _app["token"] = String(pushApp.devices[i].token);
+        _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
       }
     }
   }

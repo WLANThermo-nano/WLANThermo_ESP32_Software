@@ -45,6 +45,15 @@
                 <i class="bar"></i>
               </div>
             </div>
+            <div class="pure-u-2-5 control pure-grid">
+              <div class="form-group">
+                <select v-model="d.sound">
+                  <option v-for="r in soundOptions" :key="r.value" :value="r.value">{{$t(r.translationKey)}}</option>
+                </select>
+                <label class="control-label" for="select"> {{ $t('notificationSound') }} </label>
+                <i class="bar"></i>
+              </div>
+            </div>
             <div class="pure-u-1-5 control pure-grid delete-button-container">
               <button class="pure-button pure-button-error renew-token-button" @click="removeDevice(d.id)">
                 <span class="icon-trash"></span>
@@ -130,6 +139,10 @@ export default {
         { value: '1', translationKey: 'notificationPriorityHigh' },
         { value: '2', translationKey: 'notificationPriorityEmergency' },
       ],
+      soundOptions: [
+        { value: '0', translationKey: 'notificationSoundDefault' },
+        { value: '1', translationKey: 'notificationSoundBells' },
+      ],
       telegram: {
         enabled: false,
         token: '',
@@ -204,7 +217,8 @@ export default {
         this.app.devices.push({
           id: this.currentPhoneUUID,
           name: model,
-          token: token
+          token: token,
+          sound: 0
         })
       }).catch((error) => {
         console.log(`don't get got token`)

@@ -525,6 +525,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
       device["name"] = pushApp.devices[i].name;
       device["id"] = pushApp.devices[i].id;
       device["token_sha256"] = Notification::getTokenSha256(pushApp.devices[i].token);
+      device["sound"] = pushApp.devices[i].sound;
     }
   }
 
@@ -784,14 +785,18 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
         _telegram.containsKey("chat_id"))
     {
-      // set telegram
-      PushTelegramType telegram;
-      memset(&telegram, 0, sizeof(telegram));
+      // check length of token
+      if (strlen(_telegram["token"].asString()) < sizeof(PushTelegramType::token))
+      {
+        // set telegram
+        PushTelegramType telegram;
+        memset(&telegram, 0, sizeof(telegram));
 
-      telegram.enabled = _telegram["enabled"];
-      strcpy(telegram.token, _telegram["token"].asString());
-      telegram.chatId = _telegram["chat_id"];
-      gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
+        telegram.enabled = _telegram["enabled"];
+        strcpy(telegram.token, _telegram["token"].asString());
+        telegram.chatId = _telegram["chat_id"];
+        gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
+      }
     }
   }
 
@@ -802,21 +807,26 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
         _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
     {
-      // set pushover
-      PushPushoverType pushover;
-      memset(&pushover, 0, sizeof(pushover));
-      pushover.enabled = _pushover["enabled"];
-      strcpy(pushover.token, _pushover["token"].asString());
-      strcpy(pushover.userKey, _pushover["user_key"].asString());
-      pushover.priority = _pushover["priority"];
-
-      if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
+      // check length of token and user_key
+      if ((strlen(_pushover["token"].asString()) < sizeof(PushPushoverType::token)) &&
+          (strlen(_pushover["user_key"].asString()) < sizeof(PushPushoverType::userKey)))
       {
-        pushover.retry = _pushover["retry"];
-        pushover.expire = _pushover["expire"];
-      }
+        // set pushover
+        PushPushoverType pushover;
+        memset(&pushover, 0, sizeof(pushover));
+        pushover.enabled = _pushover["enabled"];
+        strcpy(pushover.token, _pushover["token"].asString());
+        strcpy(pushover.userKey, _pushover["user_key"].asString());
+        pushover.priority = _pushover["priority"];
 
-      gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
+        if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
+        {
+          pushover.retry = _pushover["retry"];
+          pushover.expire = _pushover["expire"];
+        }
+
+        gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
+      }
     }
   }
 
@@ -843,21 +853,46 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
             (_device.containsKey("token") || _device.containsKey("token_sha256")))
         {
           String token;
+          boolean hasToken = _device.containsKey("token");
+          boolean hasHashedToken = _device.containsKey("token_sha256");
+          boolean hasSound = _device.containsKey("sound");
+
+          // check length of name and id
+          if ((strlen(_device["name"].asString()) >= sizeof(PushAppDeviceType::name)) &&
+              (strlen(_device["id"].asString()) >= sizeof(PushAppDeviceType::id)))
+          {
+            continue;
+          }
+
+          // check length of token
+          if(hasToken)
+          {
+            if(strlen(_device["token"].asString()) >= sizeof(PushAppDeviceType::token))
+            {
+              continue;
+            }
+          }
 
           strcpy(app.devices[deviceIndex].name, _device["name"].asString());
           strcpy(app.devices[deviceIndex].id, _device["id"].asString());
 
           // user token or hash to get token
-          if(_device.containsKey("token"))
+          if (hasToken)
           {
             token = _device["token"].asString();
           }
-          else if(_device.containsKey("token_sha256"))
+          else if (hasHashedToken)
           {
             token = gSystem->notification.getDeviceTokenFromHash(_device["token_sha256"].asString());
           }
 
           strcpy(app.devices[deviceIndex].token, token.c_str());
+
+          if(hasSound)
+          {
+            app.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+          }
+
           deviceIndex++;
         }
       }

@@ -28,6 +28,11 @@
 #define PUSHOVER_RETRY_DEFAULT 30u
 #define PUSHOVER_EXPIRE_DEFAULT 300u
 
+#define APP_MAX_NOTIFICATION_SOUNDS 2u
+#define APP_DEFAULT_NOTIFICATION_SOUND "default"
+
+static const char *appNotificationSounds[APP_MAX_NOTIFICATION_SOUNDS] = {APP_DEFAULT_NOTIFICATION_SOUND, "bell.mp3"};
+
 Notification::Notification()
 {
   this->loadDefaultValues();
@@ -215,6 +220,7 @@ void Notification::saveConfig()
       device["name"] = pushApp.devices[i].name;
       device["id"] = pushApp.devices[i].id;
       device["token"] = pushApp.devices[i].token;
+      device["sound"] = pushApp.devices[i].sound;
     }
   }
 
@@ -304,6 +310,12 @@ void Notification::loadConfig()
               strcpy(pushApp.devices[deviceIndex].name, _device["name"].asString());
               strcpy(pushApp.devices[deviceIndex].id, _device["id"].asString());
               strcpy(pushApp.devices[deviceIndex].token, _device["token"].asString());
+
+              if (_device.containsKey("sound"))
+              {
+                pushApp.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+              }
+
               deviceIndex++;
             }
           }
@@ -345,7 +357,7 @@ String Notification::getDeviceTokenFromHash(String hash)
 
   for (uint8_t deviceIndex = 0u; deviceIndex < PUSH_APP_MAX_DEVICES; deviceIndex++)
   {
-    if(getTokenSha256(pushApp.devices[deviceIndex].token) == hash)
+    if (getTokenSha256(pushApp.devices[deviceIndex].token) == hash)
     {
       token = pushApp.devices[deviceIndex].token;
       break;
@@ -353,4 +365,9 @@ String Notification::getDeviceTokenFromHash(String hash)
   }
 
   return token;
+}
+
+String Notification::getNotificationSound(uint8_t soundIndex)
+{
+  return (soundIndex < APP_MAX_NOTIFICATION_SOUNDS) ? appNotificationSounds[soundIndex] : APP_DEFAULT_NOTIFICATION_SOUND;
 }
