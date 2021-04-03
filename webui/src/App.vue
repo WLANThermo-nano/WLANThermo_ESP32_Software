@@ -112,8 +112,8 @@ import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
 const menuItem = [
-        { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'search', translationKey: 'menuScan', id: 'scan' },
+        { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
         { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
         { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
