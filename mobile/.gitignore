@@ -10,6 +10,7 @@ node_modules/
 # Decrypted files
 GoogleService-Info.plist
 google-services.json
+resources/bell.mp3
 
 # Generated icons and splash screens
 resources/android/icon

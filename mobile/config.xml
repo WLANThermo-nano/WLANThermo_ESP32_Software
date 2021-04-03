@@ -45,5 +45,6 @@
           <string>Search for WLANThermo devices</string>
         </config-file>
         <resource-file src="GoogleService-Info.plist" target="GoogleService-Info.plist" />
+        <resource-file src="resources/bell.mp3" target="bell.mp3" />
     </platform>
 </widget>
