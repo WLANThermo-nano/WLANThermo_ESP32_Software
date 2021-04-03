@@ -78,6 +78,9 @@ void PitmasterGrp::loadConfig()
         pm->assignProfile(gSystem->getPitmasterProfile(_master[pitsize]["pid"].as<uint8_t>()));
         pm->setTargetTemperature(_master[pitsize]["set"]);
         pm->setType((PitmasterType)_master[pitsize]["act"].as<uint8_t>());
+        
+        if(_master[pitsize].asObject().containsKey("act_last"))
+          pm->setTypeLast((PitmasterType)_master[pitsize]["act_last"].as<uint8_t>());
 
         if (pm->getType() == pm_manual)
           pm->setValue(_master[pitsize]["val"].as<float>());
@@ -140,6 +143,7 @@ void PitmasterGrp::saveConfig()
       _ma["pid"] = pm->getAssignedProfile()->id;
       _ma["set"] = double_with_n_digits(pm->getTargetTemperature(), 1);
       _ma["act"] = (uint8_t)pm->getType();
+      _ma["act_last"] = (uint8_t)pm->getTypeLast();
       _ma["val"] = pm->getValue();
       _ma["dCount"] = pm->getDCount();
       _ma["servoDcMin"] = pm->getServoMinDutyCyle();

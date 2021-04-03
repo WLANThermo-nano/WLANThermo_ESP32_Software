@@ -23,6 +23,15 @@
 #include "Cloud.h"
 #include "Settings.h"
 #include "temperature/TemperatureGrp.h"
+#include "mbedtls/md.h"
+
+#define PUSHOVER_RETRY_DEFAULT 30u
+#define PUSHOVER_EXPIRE_DEFAULT 300u
+
+#define APP_MAX_NOTIFICATION_SOUNDS 2u
+#define APP_DEFAULT_NOTIFICATION_SOUND "default"
+
+static const char *appNotificationSounds[APP_MAX_NOTIFICATION_SOUNDS] = {APP_DEFAULT_NOTIFICATION_SOUND, "bell.mp3"};
 
 Notification::Notification()
 {
@@ -31,13 +40,13 @@ Notification::Notification()
 
 void Notification::loadDefaultValues()
 {
-  pushService.on = 0;
-  pushService.token = "";
-  pushService.id = "";
-  pushService.repeat = 1;
-  pushService.service = 0;
-
+  memset(&pushTelegram, 0, sizeof(pushTelegram));
+  memset(&pushPushover, 0, sizeof(pushPushover));
+  memset(&pushApp, 0, sizeof(pushApp));
   memset(&notificationData, 0u, sizeof(Notification));
+
+  pushPushover.retry = PUSHOVER_RETRY_DEFAULT;
+  pushPushover.expire = PUSHOVER_EXPIRE_DEFAULT;
 }
 
 void Notification::check(TemperatureBase *temperature)
@@ -58,51 +67,122 @@ void Notification::check(TemperatureBase *temperature)
       {
       case MinAlarm:
         // add lower limit
-        this->notificationData.limit &= ~(1 << index);
+        this->notificationData.limit &= ~(1u << index);
         break;
       case MaxAlarm:
         // add upper limit
-        this->notificationData.limit |= 1 << index;
+        this->notificationData.limit |= 1u << index;
         break;
       }
       // Add channel to index
-      this->notificationData.index |= 1 << index;
+      this->notificationData.index |= 1u << index;
+
+      temperature->updateNotificationCounter();
     }
   }
   else
   {
     // delete channel from index
     this->notificationData.index &= ~(1 << index);
-    temperature->setNotificationCounter(this->pushService.repeat);
+    temperature->setNotificationCounter(1u);
   }
+}
+
+NotificationService getService(String service)
+{
+  NotificationService notificationService = NotificationService::None;
+
+  if (service == "telegram")
+  {
+    notificationService = NotificationService::Telegram;
+  }
+  else if (service == "pushover")
+  {
+    notificationService = NotificationService::Pushover;
+  }
+  else if (service == "app")
+  {
+    notificationService = NotificationService::App;
+  }
+
+  return notificationService;
+}
+
+void Notification::setTelegramConfig(PushTelegramType config, boolean testMessage)
+{
+  if (true == testMessage)
+  {
+    sendTestMessage(NotificationService::Telegram, &config);
+  }
+  else
+  {
+    pushTelegram = config;
+  }
+}
+void Notification::setPushoverConfig(PushPushoverType config, boolean testMessage)
+{
+  // load default when values not set
+  if ((0u == config.expire) || (0u == config.retry))
+  {
+    config.retry = PUSHOVER_RETRY_DEFAULT;
+    config.expire = PUSHOVER_EXPIRE_DEFAULT;
+  }
+
+  if (true == testMessage)
+  {
+    sendTestMessage(NotificationService::Pushover, &config);
+  }
+  else
+  {
+    pushPushover = config;
+  }
+}
+void Notification::setAppConfig(PushAppType config, boolean testMessage)
+{
+  if (true == testMessage)
+  {
+    sendTestMessage(NotificationService::App, &config);
+  }
+  else
+  {
+    pushApp = config;
+  }
+}
+
+void Notification::sendTestMessage(NotificationService service, void *config)
+{
+  notificationData.testService = service;
+  notificationData.testConfig = config;
+  notificationData.type = NotificationType::Test;
+
+  if (NotificationService::None != notificationData.testService)
+  {
+    Cloud::sendAPI(APINOTIFICATION, NOTELINK);
+  }
+
+  notificationData.testService = NotificationService::None;
+  notificationData.testConfig = NULL;
 }
 
 void Notification::update()
 {
-
-  if ((this->notificationData.type == 1 && this->pushService.on == 2) || (this->notificationData.type == 2 && this->pushService.on == 1))
-  {
-    // Testnachricht
-    Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
-  }
-  else if (this->notificationData.index > 0)
+  if (this->notificationData.index > 0u)
   { // CHANNEL NOTIFICATION
 
-    for (int i = 0; i < 32u; i++)
+    for (uint8_t i = 0u; i < 32u; i++)
     {
-      if (this->notificationData.index & (1 << i))
+      if (this->notificationData.index & (1u << i))
       {
-        if (this->pushService.on > 0)
+        if (this->pushTelegram.enabled || this->pushPushover.enabled || this->pushApp.enabled)
         {
-          this->notificationData.ch = i;
-          Cloud::sendAPI(APINOTE, NOTELINK, NOPARA);
+          this->notificationData.channel = i;
+          this->notificationData.type = (this->notificationData.limit & (1u << i)) ? NotificationType::UpperLimit : NotificationType::LowerLimit;
+          Cloud::sendAPI(APINOTIFICATION, NOTELINK);
+          this->notificationData.index &= ~(1u << i);
         }
       }
     }
   }
-
-  if (this->pushService.on == 3)
-    loadConfig();
 }
 
 void Notification::saveConfig()
@@ -110,11 +190,39 @@ void Notification::saveConfig()
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
 
-  json["onP"] = pushService.on;
-  json["tokP"] = pushService.token;
-  json["idP"] = pushService.id;
-  json["rptP"] = pushService.repeat;
-  json["svcP"] = pushService.service;
+  JsonObject &telegram = json.createNestedObject("telegram");
+
+  telegram["enabled"] = pushTelegram.enabled;
+  telegram["token"] = pushTelegram.token;
+  telegram["chat_id"] = pushTelegram.chatId;
+
+  JsonObject &pushover = json.createNestedObject("pushover");
+
+  pushover["enabled"] = pushPushover.enabled;
+  pushover["token"] = pushPushover.token;
+  pushover["user_key"] = pushPushover.userKey;
+  pushover["priority"] = pushPushover.priority;
+  pushover["retry"] = pushPushover.retry;
+  pushover["expire"] = pushPushover.expire;
+
+  JsonObject &app = json.createNestedObject("app");
+
+  app["enabled"] = pushApp.enabled;
+
+  JsonArray &devices = app.createNestedArray("devices");
+
+  for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
+  {
+    if (strlen(pushApp.devices[i].token) > 0u)
+    {
+      JsonObject &device = devices.createNestedObject();
+
+      device["name"] = pushApp.devices[i].name;
+      device["id"] = pushApp.devices[i].id;
+      device["token"] = pushApp.devices[i].token;
+      device["sound"] = pushApp.devices[i].sound;
+    }
+  }
 
   Settings::write(kPush, json);
 }
@@ -126,30 +234,140 @@ void Notification::loadConfig()
 
   if (json.success())
   {
+    // migrate from old structure
+    if (json.containsKey("onP") && json.containsKey("tokP") &&
+        json.containsKey("idP") && json.containsKey("rptP") &&
+        json.containsKey("svcP"))
+    {
+      switch (json["svcP"].as<uint8_t>())
+      {
+      // telegram
+      case 0u:
+        pushTelegram.enabled = json["onP"];
+        strcpy(pushTelegram.token, json["tokP"].asString());
+        pushTelegram.chatId = json["idP"];
+        break;
+      // pushover
+      case 1u:
+        pushPushover.enabled = json["onP"];
+        strcpy(pushPushover.token, json["tokP"].asString());
+        strcpy(pushPushover.userKey, json["idP"].asString());
+      }
+    }
+    // load current structure
+    else
+    {
+      if (json.containsKey("telegram"))
+      {
+        JsonObject &_telegram = json["telegram"];
 
-    if (json.containsKey("onP"))
-      pushService.on = json["onP"];
-    if (json.containsKey("tokP"))
-      pushService.token = json["tokP"].asString();
-    if (json.containsKey("idP"))
-      pushService.id = json["idP"].asString();
-    if (json.containsKey("rptP"))
-      pushService.repeat = json["rptP"];
-    if (json.containsKey("svcP"))
-      pushService.service = json["svcP"];
+        if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
+            _telegram.containsKey("chat_id"))
+        {
+          // load telegram
+          pushTelegram.enabled = _telegram["enabled"];
+          strcpy(pushTelegram.token, _telegram["token"].asString());
+          pushTelegram.chatId = _telegram["chat_id"];
+        }
+      }
+
+      if (json.containsKey("pushover"))
+      {
+        JsonObject &_pushover = json["pushover"];
+
+        if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
+            _pushover.containsKey("user_key") && _pushover.containsKey("priority") &&
+            _pushover.containsKey("retry") && _pushover.containsKey("expire"))
+        {
+          // load pushover
+          pushPushover.enabled = _pushover["enabled"];
+          strcpy(pushPushover.token, _pushover["token"].asString());
+          strcpy(pushPushover.userKey, _pushover["user_key"].asString());
+          pushPushover.retry = _pushover["retry"];
+          pushPushover.expire = _pushover["expire"];
+        }
+      }
+
+      if (json.containsKey("app"))
+      {
+        JsonObject &_app = json["app"];
+
+        if (_app.containsKey("enabled") && _app.containsKey("devices"))
+        {
+          // load app
+          pushApp.enabled = _app["enabled"];
+
+          JsonArray &_devices = _app["devices"];
+          uint8_t deviceIndex = 0u;
+
+          for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
+          {
+            JsonObject &_device = it->asObject();
+
+            if (_device.containsKey("name") && _device.containsKey("id") &&
+                _device.containsKey("token"))
+            {
+              strcpy(pushApp.devices[deviceIndex].name, _device["name"].asString());
+              strcpy(pushApp.devices[deviceIndex].id, _device["id"].asString());
+              strcpy(pushApp.devices[deviceIndex].token, _device["token"].asString());
+
+              if (_device.containsKey("sound"))
+              {
+                pushApp.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+              }
+
+              deviceIndex++;
+            }
+          }
+        }
+      }
+    }
   }
 }
 
-PushService Notification::getConfig()
+String Notification::getTokenSha256(String token)
 {
-  return pushService;
+  byte shaResult[32];
+  mbedtls_md_context_t ctx;
+  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+
+  const size_t tokenLength = strlen(token.c_str());
+
+  mbedtls_md_init(&ctx);
+  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
+  mbedtls_md_starts(&ctx);
+  mbedtls_md_update(&ctx, (const unsigned char *)token.c_str(), tokenLength);
+  mbedtls_md_finish(&ctx, shaResult);
+  mbedtls_md_free(&ctx);
+
+  String hash;
+  for (uint8_t index = 0u; index < sizeof(shaResult); index++)
+  {
+    char byteString[3];
+    sprintf(byteString, "%02x", (int)shaResult[index]);
+    hash += byteString;
+  }
+
+  return hash;
 }
 
-void Notification::setConfig(PushService newConfig)
+String Notification::getDeviceTokenFromHash(String hash)
 {
-  // copy new config
-  pushService = newConfig;
+  String token;
 
-  // save to NvM
-  saveConfig();
+  for (uint8_t deviceIndex = 0u; deviceIndex < PUSH_APP_MAX_DEVICES; deviceIndex++)
+  {
+    if (getTokenSha256(pushApp.devices[deviceIndex].token) == hash)
+    {
+      token = pushApp.devices[deviceIndex].token;
+      break;
+    }
+  }
+
+  return token;
+}
+
+String Notification::getNotificationSound(uint8_t soundIndex)
+{
+  return (soundIndex < APP_MAX_NOTIFICATION_SOUNDS) ? appNotificationSounds[soundIndex] : APP_DEFAULT_NOTIFICATION_SOUND;
 }

@@ -38,20 +38,6 @@
 #define MAX_PITMASTERS 2u
 #define MAX_PITMASTERPROFILES 4u
 
-enum class SystemEdition
-{
-  Pro = 0,
-  Lite
-};
-
-typedef struct
-{
-  SystemEdition edition;
-  uint8_t pitmasterCount;
-  uint8_t typeKCount;
-  uint8_t adcChannelCount;
-} SystemConfig;
-
 class SystemBase
 {
 public:

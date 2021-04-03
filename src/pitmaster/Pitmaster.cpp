@@ -81,6 +81,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->autoTune = NULL;
     this->targetTemperature = PITMASTERSETMIN;
     this->type = pm_off;
+    this->typeLast = pm_auto;
     this->value = 0u;
     this->previousMillis = 0u;
     this->ioPin1 = ioPin1;
@@ -113,6 +114,11 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
 void Pitmaster::setType(PitmasterType type)
 {
+    if(pm_off != type)
+    {
+        this->typeLast  = type;
+    }
+
     this->type = type;
     settingsChanged = true;
 }
@@ -120,6 +126,17 @@ void Pitmaster::setType(PitmasterType type)
 PitmasterType Pitmaster::getType()
 {
     return this->type;
+}
+
+void Pitmaster::setTypeLast(PitmasterType type)
+{
+    this->typeLast = type;
+    settingsChanged = true;
+}
+
+PitmasterType Pitmaster::getTypeLast()
+{
+    return this->typeLast;
 }
 
 void Pitmaster::assignProfile(PitmasterProfile *profile)

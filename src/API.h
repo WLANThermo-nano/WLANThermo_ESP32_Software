@@ -35,7 +35,6 @@ public:
   static void pitAry(JsonArray &jAry, int cc);
   static void pidAry(JsonArray &jAry, int cc);
   static void iotObj(JsonObject &jObj);
-  static void fcmAry(JsonArray &jAry, int cc = 3);
   static void extObj(JsonObject &jObj);
   static void updateObj(JsonObject &jObj);
   static void alexaObj(JsonObject &jObj);
@@ -43,7 +42,7 @@ public:
   static void dataObj(JsonObject &jObj, bool cloud);
   static void settingsObj(JsonObject &jObj);
   static void cloudObj(JsonObject &jObj);
-  static void noteObj(JsonObject &jObj);
+  static void notificationObj(JsonObject &jObj);
   static String apiData(int typ);
   static float limit_float(float f, int i);
 

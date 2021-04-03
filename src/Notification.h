@@ -22,23 +22,65 @@
 #include "Arduino.h"
 #include "temperature/TemperatureBase.h"
 
-// NOTIFICATION
-struct NotificationData
+#define PUSH_APP_MAX_DEVICES 3u
+
+enum class NotificationType
 {
-  uint32_t index; // INDEX BIN
-  uint8_t ch;     // CHANNEL BIN
-  uint32_t limit; // LIMIT: 0 = LOW TEMPERATURE, 1 = HIGH TEMPERATURE
-  byte type;      // TYPE: 0 = NORMAL MODE, 1 = TEST MESSAGE
+  Test = 0,
+  LowerLimit,
+  UpperLimit,
+  Battery
 };
 
-struct PushService
+enum class NotificationService
 {
-  byte on;        // NOTIFICATION SERVICE OFF(0)/ON(1)/TEST(2)/CLEAR(3)
-  String token;   // API TOKEN
-  String id;      // CHAT ID
-  uint8_t repeat; // REPEAT PUSH NOTIFICATION
-  byte service;   // SERVICE
+  None,
+  Telegram,
+  Pushover,
+  App
 };
+
+// NOTIFICATION
+typedef struct
+{
+  uint32_t index;
+  uint32_t limit;
+  uint8_t channel;
+  NotificationType type;
+  NotificationService testService;
+  void *testConfig;
+} NotificationData;
+
+typedef struct
+{
+  boolean enabled;
+  char token[100];
+  int chatId;
+} PushTelegramType;
+
+typedef struct
+{
+  boolean enabled;
+  char token[31];
+  char userKey[31];
+  uint8_t priority;
+  uint32_t retry;
+  uint32_t expire;
+} PushPushoverType;
+
+typedef struct
+{
+  char name[31];
+  char id[65];
+  char token[255];
+  uint8_t sound;
+} PushAppDeviceType;
+
+typedef struct
+{
+  boolean enabled;
+  PushAppDeviceType devices[PUSH_APP_MAX_DEVICES];
+} PushAppType;
 
 class Notification
 {
@@ -46,13 +88,25 @@ public:
   Notification();
   void saveConfig();
   void loadConfig();
-  PushService getConfig();
-  void setConfig(PushService newConfig);
   void loadDefaultValues();
+  PushTelegramType getTelegramConfig() { return pushTelegram; };
+  PushPushoverType getPushoverConfig() { return pushPushover; };
+  PushAppType getAppConfig() { return pushApp; };
+  NotificationData getNotificationData() { return notificationData; };
+  void setTelegramConfig(PushTelegramType config, boolean testMessage);
+  void setPushoverConfig(PushPushoverType config, boolean testMessage);
+  void setAppConfig(PushAppType config, boolean testMessage);
+  void sendTestMessage(NotificationService service, void *config);
+  static String getTokenSha256(String token);
+  String getDeviceTokenFromHash(String hash);
+  String getNotificationSound(uint8_t soundIndex);
   void check(TemperatureBase *temperature);
   void update();
-  PushService pushService;
-  NotificationData notificationData;
 
 private:
+  NotificationData notificationData;
+  PushTelegramType pushTelegram;
+  PushPushoverType pushPushover;
+  PushAppType pushApp;
+  
 };

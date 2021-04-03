@@ -6,8 +6,11 @@ import VueI18n from 'vue-i18n'
 import Vuelidate from 'vuelidate'
 import en from './i18n/en'
 import de from './i18n/de'
+import router from './router'
 
 require(process.env.VUE_APP_DEMO_FILE_PATH)
+
+axios.defaults.timeout = 5000
 
 Vue.use(Vuelidate)
 Vue.use(VueAxios, axios)
@@ -25,5 +28,6 @@ Vue.config.productionTip = false
 
 new Vue({
   i18n,
-  render: h => h(App),
+  router,
+  render: h => h(App)
 }).$mount('#app')

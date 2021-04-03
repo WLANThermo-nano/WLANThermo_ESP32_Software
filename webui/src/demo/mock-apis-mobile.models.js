@@ -1,0 +1,1 @@
+export const SPECIAL_URL_FOR_DEMO_API = 'wlan.demo.not.real.url'
