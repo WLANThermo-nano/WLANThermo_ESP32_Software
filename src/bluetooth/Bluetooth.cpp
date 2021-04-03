@@ -76,7 +76,7 @@ void Bluetooth::init()
     if (this->doDfu())
     {
         builtIn = true;
-        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 10000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 3000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
     }
 }
 
@@ -403,7 +403,9 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
-        if(gSystem->otaUpdate.isUpdateInProgress())
+        //Serial.printf("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+        if (gSystem->otaUpdate.isUpdateInProgress())
         {
             // exit task loop for better update performance
             break;

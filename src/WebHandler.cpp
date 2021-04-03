@@ -25,7 +25,7 @@
 // https://github.com/me-no-dev/ESPAsyncWebServer#request-variables
 
 #include "WebHandler.h"
-#include "Server.h"
+#include "WServer.h"
 #include "API.h"
 #include "DbgPrint.h"
 #include "system/SystemBase.h"
