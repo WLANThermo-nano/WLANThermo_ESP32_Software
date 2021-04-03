@@ -32,6 +32,7 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/GoogleService-Info.plist GoogleService-Info.plist.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/google-services.json google-services.json.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/resources/bell.mp3 bell.mp3.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovision.gpg
 
