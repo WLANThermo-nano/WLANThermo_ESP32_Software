@@ -98,6 +98,9 @@ export default {
 	notificationPriorityHigh: "High",
 	notificationPriorityEmergency: "Emergency",
 	notificationPriority: "Priority",
+	notificationSound: "Notification sound",
+	notificationSoundDefault: "Default",
+	notificationSoundBells: "Bells",
 	notificationConfigureThisPhone: "Add this phone to receive push message",
 	deviceName: "Device name",
 	//Cloud
@@ -166,6 +169,7 @@ export default {
 	mobileAppHeader: "WLANThermo Connect",
 	scanTitle: "My Devices",
 	scanDevices: "Devices",
+	scanDeviceIncompatible: "Incompatible (Please update)",
 	// auth dialog
 	authentication: 'Authentication',
 	username: 'Username',

@@ -98,6 +98,11 @@ export default {
 	notificationPriorityHigh: "Hoch",
 	notificationPriorityEmergency: "Notfall",
 	notificationPriority: "Priorität",
+	notificationSound: "Nachrichtenton",
+	notificationSoundDefault: "Standard",
+	notificationSoundBells: "Glocken",
+	notificationConfigureThisPhone: "Dieses Gerät hinzufügen",
+	deviceName: "Gerätename",
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Cloud Service aktivieren",
@@ -164,6 +169,7 @@ export default {
 	mobileAppHeader: "WLANThermo Connect",
 	scanTitle: "Meine Geräte",
 	scanDevices: "Geräte",
+	scanDeviceIncompatible: "Inkompatibel (Bitte Update durchführen)",
 	// auth dialog
 	authentication: 'Authentifizierung',
 	username: 'Benutzername',

@@ -85,11 +85,6 @@ const DEVICE_SCHEMA_VERSION = 'v1'
 const DEVICE_SCHEMA_VERSION_KEY = '_WLANTHERMO_MY_DEVICES_VERSION'
 const DEVICE_TYPES = ['nanov1','nanov2','nanov3','miniv1','miniv2','miniv3','linkv1']
 
-function toInfoText(respData) {
-  return `${respData.device?.device} || ${respData.device?.sw_version}`
-}
-
-
 function toDeviceType(respData) {
   const type = `${respData.device?.device?.toLocaleLowerCase()}${respData.device?.hw_version.toLocaleLowerCase()}`
   if (DEVICE_TYPES.some(t => t === type)) {
@@ -98,6 +93,10 @@ function toDeviceType(respData) {
   return 'demo'
 }
 
+function toIncompatible(respData) {
+  // versions < v1.2.0 are incompatible
+  return Boolean(parseInt(respData.device.sw_version.replaceAll('v', '').replaceAll('.', '')) < 120)
+}
 
 // structure of a device: v1
 // {
@@ -176,6 +175,10 @@ export default {
         this.axios.defaults.baseURL = `http://${SPECIAL_URL_FOR_DEMO_API}`
         EventBus.$emit("loading", false)
         EventBus.$emit('device-selected')
+      } else if (device.incompatible) {
+        var url = "http://" + device.ip
+        // eslint-disable-next-line
+        cordova.InAppBrowser.open(url, '_system')
       } else if (device.connected) {
         EventBus.$emit("loading", true)
         setTimeout(() => {
@@ -296,15 +299,17 @@ export default {
             if (deviceInListAndHasDifferentIp) {
               this.devices = this.devices.filter(d => d.sn !== sn)
             }
-            const info = toInfoText(data)
+            const info = this.toInfoText(data)
             const type = toDeviceType(data)
+            const incompatible = toIncompatible(data)
             this.devices.push({
               ip: ip,
               name: name,
               sn: sn,
               info: info,
               type: type,
-              connected: true
+              connected: true,
+              incompatible: incompatible
             })
             this.updateStoredData()
           } else {
@@ -340,7 +345,7 @@ export default {
       this.devices.forEach(d => {
         this.axios.get(`http://${d.ip}/settings`).then(resp => {
           const data = resp.data
-          d.info = toInfoText(data)
+          d.info = this.toInfoText(data)
           d.type = toDeviceType(data)
           d.connected = true
           this.refreshing = false
@@ -353,6 +358,13 @@ export default {
     initAndScan: function () {
       this.addToDebug(`scan with ZeroConf`)
       this.scanByZeroConf()
+    },
+    toInfoText: function (respData) {
+      var info = `${respData.device?.device} || ${respData.device?.sw_version}`
+      if(true === toIncompatible(respData)) {
+        info += ` || ${this.$t("scanDeviceIncompatible")}`
+      }
+      return info
     },
   },
   components: {
