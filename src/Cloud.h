@@ -33,10 +33,9 @@ typedef struct
 
 typedef struct
 {
-  int apiIndex;
-  int urlIndex;
-  int parIndex;
-} CloudData;
+  uint8_t urlIndex;
+  const char* requestData;
+} CloudRequest;
 
 enum
 {
@@ -45,8 +44,7 @@ enum
   APICLOUD,
   APIDATA,
   APISETTINGS,
-  APINOTE,
-  APIALEXA
+  APINOTIFICATION
 };
 
 // URL
@@ -64,14 +62,6 @@ enum
   CLOUDLINK
 };
 
-enum
-{
-  NOPARA,
-  TESTPARA,
-  SENDTS,
-  THINGHTTP
-}; // Config GET/POST Request
-
 class Cloud
 {
 public:
@@ -85,7 +75,7 @@ public:
   String newToken();
   uint8_t state;
   static void checkAPI();
-  static void sendAPI(int apiIndex, int urlIndex, int parIndex);
+  static void sendAPI(int apiIndex, int urlIndex);
 
   static uint8_t serverurlCount;
   static ServerData serverurl[]; // 0:api, 1: note, 2:cloud

@@ -104,6 +104,8 @@ public:
   Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t channel2);
   void setType(PitmasterType type);
   PitmasterType getType();
+  void setTypeLast(PitmasterType type);
+  PitmasterType getTypeLast();
   void assignProfile(PitmasterProfile *profile);
   PitmasterProfile *getAssignedProfile();
   void assignTemperature(TemperatureBase *temperature);
@@ -147,6 +149,7 @@ private:
   void controlSSR(float newValue, float newDcMin, float newDcMax);
   void enableStepUp(boolean enable);
   PitmasterType type;
+  PitmasterType typeLast;
   PitmasterProfile *profile;
   TemperatureBase *temperature;
   DutyCycleTest *dutyCycleTest;

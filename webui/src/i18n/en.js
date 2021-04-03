@@ -64,6 +64,7 @@ export default {
 	//Menü
 	menuHome: "Home",
 	menuWlan: "WLAN",
+	menuScan: "My Devices",
 	menuBluetooth: "Bluetooth",
 	menuSystem: "System",
 	menuPitmaster: "Pitmaster",
@@ -83,8 +84,9 @@ export default {
 	//Menü Notification
 	notificationTitle: "Notification service",
 	notificationActivate: "Activate push notification",
-	notificationToken: "API Token/Key",
-	notificationKey: "Chat ID / User Key",
+	notificationToken: "Token",
+	notificationChatId: "Chat ID",
+	notificationUserKey: "User Key",
 	notificationService: "Service",
 	repeadOnce: "1x",
 	repeadThreeTimes: "3x",
@@ -92,6 +94,15 @@ export default {
 	repeadTenTimes: "10x",
 	notificationRepead: "Repeats",
 	notificationSendMessage: "Send a test message",
+	notificationPriorityNormal: "Normal",
+	notificationPriorityHigh: "High",
+	notificationPriorityEmergency: "Emergency",
+	notificationPriority: "Priority",
+	notificationSound: "Notification sound",
+	notificationSoundDefault: "Default",
+	notificationSoundBells: "Bells",
+	notificationConfigureThisPhone: "Add this phone to receive push message",
+	deviceName: "Device name",
 	//Cloud
 	cloudTitle: "Cloud Service",
 	cloudActivate: "Activate Cloud Service",
@@ -153,5 +164,14 @@ export default {
 	pitlink: "Linking Actuators",
 	pitlinkdegressiv: "degressive",
 	pitlinklinear: "linear",
-	pitlinklowpass: "lowpass"
+	pitlinklowpass: "lowpass",
+	// scan
+	mobileAppHeader: "WLANThermo Connect",
+	scanTitle: "My Devices",
+	scanDevices: "Devices",
+	scanDeviceIncompatible: "Incompatible (Please update)",
+	// auth dialog
+	authentication: 'Authentication',
+	username: 'Username',
+	password: 'Password'
 };

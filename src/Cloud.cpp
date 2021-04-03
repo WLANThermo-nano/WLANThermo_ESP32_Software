@@ -44,7 +44,7 @@
 
 #define HTTP_STATUS_OK 200
 
-#define API_QUEUE_SIZE 10u
+#define API_QUEUE_SIZE 5u
 
 enum
 {
@@ -59,7 +59,7 @@ ServerData Cloud::serverurl[3] = {
     {APISERVER, CHECKAPI, "cloud"}};
 
 asyncHTTPrequest Cloud::apiClient = asyncHTTPrequest();
-QueueHandle_t Cloud::apiQueue = xQueueCreate(API_QUEUE_SIZE, sizeof(CloudData));
+QueueHandle_t Cloud::apiQueue = xQueueCreate(API_QUEUE_SIZE, sizeof(CloudRequest));
 bool Cloud::clientlog = false;
 
 enum
@@ -107,12 +107,12 @@ void Cloud::update()
     // First get time from server before sending data
     if (now() < 31536000)
     {
-      Cloud::sendAPI(NOAPI, APILINK, NOPARA);
+      Cloud::sendAPI(NOAPI, APILINK);
     }
     else if (0u == intervalCounter)
     {
       intervalCounter = config.interval;
-      Cloud::sendAPI(APICLOUD, CLOUDLINK, NOPARA);
+      Cloud::sendAPI(APICLOUD, CLOUDLINK);
     }
   }
   else
@@ -331,10 +331,21 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Send to API
-void Cloud::sendAPI(int apiIndex, int urlIndex, int parIndex)
+void Cloud::sendAPI(int apiIndex, int urlIndex)
 {
-  CloudData data = {apiIndex, urlIndex, parIndex};
-  xQueueSend(apiQueue, &data, 0u);
+  String requestDataString = API::apiData(apiIndex);
+  char *requestDataPointer = new char[requestDataString.length() + 1u];
+  
+  if(requestDataPointer != NULL)
+  {
+    strcpy(requestDataPointer, requestDataString.c_str());
+    CloudRequest cloudRequest = {urlIndex, requestDataPointer};
+    if(xQueueSend(apiQueue, &cloudRequest, 0u) != pdTRUE)
+    {
+      delete cloudRequest.requestData;
+      Log.warning("Cloud request queue full!" CR);
+    }
+  }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -343,11 +354,11 @@ void Cloud::handleQueue()
 {
   static boolean requestDone = true;
 
-  CloudData cloudData;
+  CloudRequest cloudRequest;
 
   if (requestDone)
   {
-    if (xQueueReceive(apiQueue, &cloudData, 0u) == pdFALSE)
+    if (xQueueReceive(apiQueue, &cloudRequest, 0u) == pdFALSE)
       return;
 
     requestDone = false;
@@ -356,10 +367,11 @@ void Cloud::handleQueue()
       apiClient.setDebug(true);
 
     apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
-    apiClient.open("POST", String("http://" + serverurl[cloudData.urlIndex].host + "/").c_str());
+    apiClient.open("POST", String("http://" + serverurl[cloudRequest.urlIndex].host + "/").c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
     apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
-    apiClient.send(API::apiData(cloudData.apiIndex));
+    apiClient.send(cloudRequest.requestData);
+    delete cloudRequest.requestData;
   }
 }

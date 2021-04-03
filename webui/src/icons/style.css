@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?rnogf7');
-  src:  url('fonts/icomoon.eot?rnogf7#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?rnogf7') format('truetype'),
-    url('fonts/icomoon.woff?rnogf7') format('woff'),
-    url('fonts/icomoon.svg?rnogf7#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?oj9hfj');
+  src:  url('fonts/icomoon.eot?oj9hfj#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?oj9hfj') format('truetype'),
+    url('fonts/icomoon.woff?oj9hfj') format('woff'),
+    url('fonts/icomoon.svg?oj9hfj#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,27 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-search:before {
+  content: "\e903";
+}
+.icon-stats-dots:before {
+  content: "\e99b";
+}
+.icon-power-cord:before {
+  content: "\e9b7";
+}
+.icon-home:before {
+  content: "\e900";
+}
+.icon-bell:before {
+  content: "\e951";
+}
+.icon-cog:before {
+  content: "\e994";
+}
+.icon-fire:before {
+  content: "\e9a9";
+}
 .icon-Wlan33:before {
   content: "\e906";
 }
@@ -120,22 +141,4 @@
 }
 .icon-uniF2CB:before {
   content: "\f2cb";
-}
-.icon-stats-dots:before {
-  content: "\e99b";
-}
-.icon-power-cord:before {
-  content: "\e9b7";
-}
-.icon-home:before {
-  content: "\e900";
-}
-.icon-bell:before {
-  content: "\e951";
-}
-.icon-cog:before {
-  content: "\e994";
-}
-.icon-fire:before {
-  content: "\e9a9";
 }

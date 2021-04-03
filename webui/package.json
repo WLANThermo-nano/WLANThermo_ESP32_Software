@@ -4,26 +4,31 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --mode development",
-    "build-nano": "vue-cli-service build --mode nano",
-    "build-link": "vue-cli-service build --mode link",
+    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini && npm run build-demo && npm run build-mobile",
+    "lint": "vue-cli-service lint",
     "build-cloud": "vue-cli-service build --mode cloud",
-    "build-mini": "vue-cli-service build --mode mini",
     "build-demo": "vue-cli-service build --mode demo",
-    "build": "npm run build-nano && npm run build-link && npm run build-cloud && npm run build-mini && npm run build-demo",
-    "lint": "vue-cli-service lint"
+    "build-link": "vue-cli-service build --mode link",
+    "build-mini": "vue-cli-service build --mode mini",
+    "build-nano": "vue-cli-service build --mode nano",
+    "build-mobile": "vue-cli-service build --mode mobile && node copyMobileBuildResults.js"
   },
   "dependencies": {
     "axios": "0.21.1",
     "base64-inline-loader": "^1.1.1",
     "core-js": "^3.6.5",
+    "netmask": "^1.0.6",
     "vue": "^2.6.11",
     "vue-axios": "^2.1.5",
     "vue-i18n": "^8.20.0",
+    "vue-router": "^3.2.0",
+    "vue-swipe-actions": "^2.0.0-beta.20",
     "vuelidate": "^0.7.5"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
     "@vue/cli-plugin-eslint": "~4.4.0",
+    "@vue/cli-plugin-router": "~4.5.0",
     "@vue/cli-service": "~4.4.0",
     "babel-eslint": "^10.1.0",
     "compression-webpack-plugin": "^4.0.0",
