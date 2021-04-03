@@ -354,6 +354,7 @@ export const Data = {
                     "value": 0,
                     "set": 50.0,
                     "typ": "off",
+                    "typ_last": "manual",
                     "set_color": "#ff0000",
                     "value_color": "#000000"
                 },
@@ -364,6 +365,7 @@ export const Data = {
                     "value": 0,
                     "set": 50.0,
                     "typ": "off",
+                    "typ_last": "auto",
                     "set_color": "#FE2EF7",
                     "value_color": "#848484"
                 },
@@ -374,6 +376,7 @@ export const Data = {
                     "value": 98,
                     "set": 50.0,
                     "typ": "auto",
+                    "typ_last": "auto",
                     "set_color": "#FE2EF7",
                     "value_color": "#848484"
                 }

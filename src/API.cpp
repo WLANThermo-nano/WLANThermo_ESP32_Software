@@ -159,6 +159,15 @@ void API::pitAry(JsonArray &jAry, int cc)
         ma["typ"] = "auto";
         break;
       }
+      switch (pm->getTypeLast())
+      {
+      case pm_manual:
+        ma["typ_last"] = "manual";
+        break;
+      case pm_auto:
+        ma["typ_last"] = "auto";
+        break;
+      }
       ma["set_color"] = sc[i];
       ma["value_color"] = vc[i];
     }
