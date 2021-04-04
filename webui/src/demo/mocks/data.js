@@ -413,7 +413,7 @@ export const Data = {
         "RSSI": -46,
         "Enc": true
     },
-    bluetooth: {
+    getbluetooth: {
         "enabled": true,
         "devices": [
             {

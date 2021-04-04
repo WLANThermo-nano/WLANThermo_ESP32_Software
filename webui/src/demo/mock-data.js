@@ -4,7 +4,7 @@ const mock = {
     '/settings': Data.settings,
     '/data': Data.data,
     '/networklist': Data.networklist,
-    '/bluetooth': Data.bluetooth,
+    '/getbluetooth': Data.getbluetooth,
     '/getpush': Data.getpush
 }
 
