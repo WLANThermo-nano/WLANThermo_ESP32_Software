@@ -2,7 +2,7 @@ name: Mobile build
 on:
   push:
     branches:
-      - push
+      - develop
 
 jobs:
   main:
