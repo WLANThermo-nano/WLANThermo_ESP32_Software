@@ -125,7 +125,7 @@ void SystemNanoVx::init()
 
   //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 7.0, 0.01, 128, 25, 100, 70};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 7.0, 0.01, 128, 25, 100, 80, 25, 75, 0, 1};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Custom", 3, 1, 7.0, 0.2, 0, 0, 100, 100, 0, 100};
 

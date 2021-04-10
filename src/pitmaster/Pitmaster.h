@@ -183,6 +183,7 @@ private:
   uint8_t dCount;
   float edif;
   bool jump;
+  uint8_t ampch;  // Amplitudenwechsel
 
   uint16_t pause;
   uint previousMillis;
