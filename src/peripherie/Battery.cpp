@@ -37,9 +37,8 @@
 #define BATTDIV 5.7F        // VOLTAGE DIVIDER
 #define CORRECTIONTIME 60000
 #define BATTERYSTARTUP 20000
-#define REF_VOLTAGE_DEFAULT 1120
-#define SWITCHED_OFF_THRESHOLD (20u * BATTDIV)
-#define STARTUP_COMPENSATION (15u * BATTDIV)
+#define SWITCHED_OFF_THRESHOLD 20u
+#define STARTUP_COMPENSATION 15u
 
 esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
 
@@ -62,7 +61,7 @@ Battery::Battery()
   this->correction = 0;
   adcVoltMedian = new MedianFilter<uint16_t>(MEDIAN_SIZE);
   loadConfig();
-  
+
   updatePowerMode();
 }
 
@@ -71,10 +70,6 @@ void Battery::update()
   updatePowerMode();
   setReference();
   updatePowerPercentage();
-  
-  //char buffer[64];
-  //sprintf(buffer, "U:%d,ADC:%d,M:%d", this->voltage, this->adcRawValue, this->powerMode);
-  //gDisplay->debugString = buffer;
 }
 
 void Battery::updatePowerPercentage()
@@ -94,17 +89,12 @@ void Battery::updatePowerPercentage()
   }
   //Serial.println("Battery::updatePowerPercentage");
 
-  // Calculate battery percentage
-  uint32_t percraw;
-  // linear
-  //percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
-  // polynom
+  // Calculate battery percentage - polynom
   float rVol = this->voltage/1000.0;
-  percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
-
+  uint32_t percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
   percraw = constrain(percraw, 0, 100);
 
-  // Korrektur
+  // Mode Correction
   switch (this->powerMode)
   {
 
@@ -122,7 +112,6 @@ void Battery::updatePowerPercentage()
     break;
 
   case PowerMode::NoBattery:
-    // Anzeige während des Ladens auf 99 % beschränken
     this->percentage = 100;
     break;
 
@@ -183,17 +172,17 @@ void Battery::updatePowerMode()
   {
     // Beim Start anheben um Spannungsverlust auszugleichen
     this->adcVoltFilteredValue = this->adcVoltValue + STARTUP_COMPENSATION;
-    //this->adcFilteredValue = this->adcRawValue > this->adcFilteredValue ? this->adcRawValue : this->adcFilteredValue;
   }
   else
   {
     this->adcVoltFilteredValue = adcVoltMedian->AddValue(this->adcVoltValue);
   }
   
+  // Correction Voltage Divider
   this->adcvoltage = this->adcVoltValue * BATTDIV;
   this->voltage = this->adcVoltFilteredValue * BATTDIV;
 
-   // Power Mode Selection
+  // Power Mode Selection
   if (this->nobattery == true)
   {
     this->powerMode = PowerMode::NoBattery;     // No Battery
@@ -269,7 +258,6 @@ void Battery::loadConfig()
 
   if (json.success())
   {
-
     if (json.containsKey("batmax"))
       this->max = json["batmax"];
     if (json.containsKey("batmin"))
