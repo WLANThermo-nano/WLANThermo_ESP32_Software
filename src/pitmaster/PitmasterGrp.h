@@ -30,12 +30,13 @@ public:
   PitmasterGrp();
   void virtual update();
   void add(Pitmaster *pitmaster);
-  Pitmaster* operator[](int index);
+  Pitmaster *operator[](int index);
   uint8_t count();
   void saveConfig();
   void loadConfig();
   void enable(boolean enabled);
-  Pitmaster* getActivePitmaster(TemperatureBase *temperature);
+  boolean isEnabled(void) { return this->enabled; };
+  Pitmaster *getActivePitmaster(TemperatureBase *temperature);
 
 private:
   Pitmaster *pitmasters[MAX_PITMASTERS];

@@ -467,11 +467,41 @@ void lvHome_UpdatePitmasterSymbol(boolean forceUpdate)
   static uint8_t angle = 0u;
   static uint32_t counter = 0u;
 
-  if ((counter++ % 10u) == 0u)
+  boolean pitmasterIsRunning = false;
+  boolean pitmasterShouldSpin = false;
+  boolean pitmasterIsEnabled = gSystem->pitmasters.isEnabled();
+
+  for (uint8_t index = 0u; index < gSystem->pitmasters.count(); index++)
   {
-    lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
-    angle = (angle >= 2u) ? 0u : (angle + 1);
-    Serial.println("Change angle");
+    if (gSystem->pitmasters[index]->getType() != pm_off)
+    {
+      pitmasterIsRunning = true;
+      pitmasterShouldSpin = (gSystem->pitmasters[index]->getValue() > 0u) && pitmasterIsEnabled;
+      break;
+    }
+  }
+
+  if (pitmasterIsRunning)
+  {
+    if (pitmasterShouldSpin)
+    {
+      // do animation
+      if ((counter++ % 10u) == 0u)
+      {
+        lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
+        angle = (angle >= 2u) ? 0u : (angle + 1u);
+      }
+    }
+    else
+    {
+      // stop animation
+      angle = 0u;
+      lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
+    }
+  }
+  else
+  {
+    lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
   }
 }
 
