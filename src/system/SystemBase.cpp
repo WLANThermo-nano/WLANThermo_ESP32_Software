@@ -328,7 +328,7 @@ void SystemBase::setPowerSaveMode(boolean enable)
 
   if ((ret = esp_pm_configure(&pm_config)) != ESP_OK)
   {
-    Serial.printf("esp_pm_configure error %s\n", ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
+    Log.error("esp_pm_configure error %s" CR, ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
   }
   else
   {
