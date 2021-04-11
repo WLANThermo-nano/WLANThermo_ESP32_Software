@@ -37,7 +37,7 @@
 #define BATTDIV 5.7F        // VOLTAGE DIVIDER
 #define CORRECTIONTIME 60000
 #define BATTERYSTARTUP 20000
-#define SWITCHED_OFF_THRESHOLD 20u
+#define SWITCHED_OFF_THRESHOLD 100u
 #define STARTUP_COMPENSATION 15u
 
 esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
