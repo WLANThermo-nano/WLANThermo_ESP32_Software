@@ -34,6 +34,8 @@
 // include html files
 #include "webui/restart.html.gz.h"
 
+#define WEB_VUE_ROUTER_PATHS_MAX 8u
+
 #if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3) || defined(HW_CONNECT_V1)
 #define WEB_SUBFOLDER "mini"
 #elif HW_NANO_V3
@@ -46,6 +48,9 @@ extern const uint8_t index_html_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_
 extern const size_t index_html_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_size");
 extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_start");
 extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
+
+const char *vueRouterPaths[WEB_VUE_ROUTER_PATHS_MAX] = {
+    "/wlan", "/system", "/bluetooth", "/pitmaster", "/about", "/iot", "/notification", "/scan"};
 
 const char *WServer::username = "admin";
 String WServer::password = "";
@@ -170,7 +175,28 @@ void WServer::init()
     }
     else
     {
-      request->send(404);
+      boolean isVueRouterUrl = false;
+      for(uint8_t index = 0u; index < WEB_VUE_ROUTER_PATHS_MAX; index++)
+      {
+        if(request->url() == vueRouterPaths[index])
+        {
+          isVueRouterUrl = true;
+          break;
+        }
+      }
+
+      if(true == isVueRouterUrl)
+      {
+        // send index.html
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
+        response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+        response->addHeader("Content-Encoding", "gzip");
+        request->send(response);
+      }
+      else
+      {
+        request->send(404);
+      }
     }
   });
 

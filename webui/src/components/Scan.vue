@@ -154,9 +154,7 @@ export default {
         this.showConnectionLost = false
       }, 3000)
     }
-    this.getStoredData().then(() => {
-      document.addEventListener('deviceready', this.initAndScan.bind(this), false)
-    })
+    document.addEventListener('deviceready', this.initAndScan.bind(this), false)
   },
   methods: {
     checkScanCompleted: function() {
@@ -356,6 +354,8 @@ export default {
       })
     },
     initAndScan: function () {
+      this.addToDebug(`load stored data`)
+      this.getStoredData()
       this.addToDebug(`scan with ZeroConf`)
       this.scanByZeroConf()
     },
