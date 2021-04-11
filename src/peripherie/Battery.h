@@ -66,10 +66,9 @@ private:
   boolean usbPowerEnabled;
   boolean chargeEnabled;
   boolean switchedOff;
-  uint16_t refvoltage;
-  uint16_t adcRawValue;
-  uint32_t adcFilteredValue;
+  uint16_t adcVoltValue;
+  uint32_t adcVoltFilteredValue;
   boolean standbyRequest;
-  MedianFilter<uint16_t> *adcRawMedian;
+  MedianFilter<uint16_t> *adcVoltMedian;
   
 };

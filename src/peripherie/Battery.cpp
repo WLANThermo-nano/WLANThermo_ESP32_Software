@@ -38,6 +38,8 @@
 #define CORRECTIONTIME 60000
 #define BATTERYSTARTUP 20000
 #define REF_VOLTAGE_DEFAULT 1120
+#define SWITCHED_OFF_THRESHOLD (20u * BATTDIV)
+#define STARTUP_COMPENSATION (15u * BATTDIV)
 
 esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
 
@@ -48,7 +50,8 @@ Battery::Battery()
 
   // Calibration function
   analogSetPinAttenuation(BATTERY_ADC_IO, ADC_0db);
-  analogReadResolution(10u);
+  analogSetAttenuation(ADC_0db);
+  analogSetWidth(10u);
 
   this->min = BATTMIN;
   this->max = BATTMAX;
@@ -56,12 +59,10 @@ Battery::Battery()
   this->percentage = 0;
   this->standbyRequest = false;
   this->nobattery = false;
-  this->refvoltage = REF_VOLTAGE_DEFAULT;
   this->correction = 0;
-  adcRawMedian = new MedianFilter<uint16_t>(MEDIAN_SIZE);
+  adcVoltMedian = new MedianFilter<uint16_t>(MEDIAN_SIZE);
   loadConfig();
-
-  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_0, ADC_WIDTH_BIT_10, this->refvoltage, adc_chars);
+  
   updatePowerMode();
 }
 
@@ -162,10 +163,10 @@ void Battery::updatePowerMode()
   this->chargeEnabled = (true == this->usbPowerEnabled) ? !digitalRead(BATTERTY_CHARGE_IO) : false;
 
   // Battery Digital Value Measurement
-  this->adcRawValue = analogRead(BATTERY_ADC_IO);
+  this->adcVoltValue = analogReadMilliVolts(BATTERY_ADC_IO);
   
   // Switch Position Detection
-  this->switchedOff = (20u > this->adcRawValue) ? true : false;
+  this->switchedOff = (SWITCHED_OFF_THRESHOLD > this->adcVoltValue) ? true : false;
 
   // Standby Detection
   if (this->switchedOff == true)
@@ -181,20 +182,16 @@ void Battery::updatePowerMode()
   if (millis() < BATTERYSTARTUP)
   {
     // Beim Start anheben um Spannungsverlust auszugleichen
-    this->adcFilteredValue = this->adcRawValue +15;
+    this->adcVoltFilteredValue = this->adcVoltValue + STARTUP_COMPENSATION;
     //this->adcFilteredValue = this->adcRawValue > this->adcFilteredValue ? this->adcRawValue : this->adcFilteredValue;
   }
   else
   {
-    this->adcFilteredValue = adcRawMedian->AddValue(this->adcRawValue);
+    this->adcVoltFilteredValue = adcVoltMedian->AddValue(this->adcVoltValue);
   }
-
-  // Transformation Digitalwert in Batteriespannung
-  uint32_t adcRawVol = esp_adc_cal_raw_to_voltage(this->adcRawValue, adc_chars);
-  uint32_t adcFilteredVol = esp_adc_cal_raw_to_voltage(this->adcFilteredValue, adc_chars);
-
-  this->adcvoltage = adcRawVol * BATTDIV;
-  this->voltage = adcFilteredVol * BATTDIV;
+  
+  this->adcvoltage = this->adcVoltValue * BATTDIV;
+  this->voltage = this->adcVoltFilteredValue * BATTDIV;
 
    // Power Mode Selection
   if (this->nobattery == true)
@@ -262,7 +259,6 @@ void Battery::saveConfig()
   json["batmax"]  = this->max;
   json["batmin"]  = this->min;
   json["batfull"] = this->setreference;
-  json["batref"]  = this->refvoltage;
   Settings::write(kBattery, json);
 }
 
@@ -280,7 +276,5 @@ void Battery::loadConfig()
       this->min = json["batmin"];
     if (json.containsKey("batfull"))
       this->setreference = json["batfull"];    
-    if (json.containsKey("batref"))
-      this->refvoltage = json["batref"];
   }
 }
