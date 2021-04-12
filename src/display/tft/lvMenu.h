@@ -26,7 +26,7 @@ typedef struct lvMenu
 {
   lv_obj_t *screen;
   lv_style_t *btnStyle;
-  lv_obj_t *btnTemperatures;
+  lv_obj_t *btnHome;
   lv_obj_t *btnWifi;
   lv_obj_t *btnSystem;
   lv_obj_t *btnPitmaster;

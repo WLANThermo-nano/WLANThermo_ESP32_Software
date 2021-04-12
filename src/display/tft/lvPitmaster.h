@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2020  Martin Koerner
+    Copyright (C) 2021  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,31 +22,14 @@
 #include "Arduino.h"
 #include <lvgl.h>
 
-typedef void (*lvMenu_Create_FuncPtr)(void *userData);
-typedef void (*lvMenu_Update_FuncPtr)(boolean forceUpdate);
-typedef void (*lvMenu_Delete_FuncPtr)(void);
-
-typedef enum class lvScreen
+typedef struct lvPitmaster
 {
-  None = 0,
-  Menu,
-  Home,
-  Wifi,
-  Display,
-  Temperature,
-  Update,
-  Pitmaster,
-  Max
-} lvScreenType;
 
-typedef struct
-{
-  lvScreenType screen;
-  lvMenu_Create_FuncPtr createFunc;
-  lvMenu_Update_FuncPtr updateFunc;
-  lvMenu_Delete_FuncPtr deleteFunc;
+  lv_obj_t *screen;
+  lv_obj_t *btnClose;
+  lv_obj_t *swEnable;
+} lvPitmasterType;
 
-} lvScreenFuncType;
-
-void lvScreen_Open(lvScreenType screen, void *userData = NULL);
-void lvScreen_Update(void);
+void lvPitmaster_Create(void *userData);
+void lvPitmaster_Update(boolean forceUpdate);
+void lvPitmaster_Delete(void);

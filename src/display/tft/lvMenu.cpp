@@ -27,44 +27,43 @@ LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 
 static lvMenuType lvMenu = {NULL};
 
-static void lvMenu_TemperaturesEvent(lv_obj_t *obj, lv_event_t event);
+static void lvMenu_HomeEvent(lv_obj_t *obj, lv_event_t event);
 static void lvMenu_DisplayEvent(lv_obj_t *obj, lv_event_t event);
+static void lvMenu_PitmasterEvent(lv_obj_t *obj, lv_event_t event);
 
 void lvMenu_Create(void *userData)
 {
   /* create screen for menu */
   lvMenu.screen = lv_obj_create(NULL, NULL);
-  lv_obj_set_style_local_bg_color(lvMenu.screen, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
 
-  /* create style for buttons */
-  lvMenu.btnStyle = new lv_style_t();
-  lv_style_init(lvMenu.btnStyle);
-  lv_style_set_bg_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_style_set_bg_grad_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_style_set_border_width(lvMenu.btnStyle, LV_STATE_DEFAULT, 1);
-  lv_style_set_clip_corner(lvMenu.btnStyle, LV_STATE_DEFAULT, false);
-  lv_style_set_radius(lvMenu.btnStyle, LV_STATE_DEFAULT, 0);
-  lv_style_set_value_font(lvMenu.btnStyle, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
-  lv_style_set_value_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_style_set_value_align(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_ALIGN_CENTER);
+  lv_obj_t *cont = lv_cont_create(lvMenu.screen, NULL);
+  lv_cont_set_fit(cont, LV_FIT_PARENT);
+  lv_cont_set_layout(cont, LV_LAYOUT_PRETTY_MID);
+  lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+  //lv_obj_set_style_local_pad_inner(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 20);
+  //lv_obj_set_style_local_pad_left(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 20);
 
   /* create temperatures button */
-  lvMenu.btnTemperatures = lv_btn_create(lvMenu.screen, NULL);
-  lv_obj_add_protect(lvMenu.btnTemperatures, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvMenu.btnTemperatures, LV_CONT_PART_MAIN, lvMenu.btnStyle);
-  lv_obj_set_style_local_value_str(lvMenu.btnTemperatures, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Temperatures");
-  lv_obj_set_size(lvMenu.btnTemperatures, 200, 40);
-  lv_obj_set_pos(lvMenu.btnTemperatures, 40, 40);
-  lv_obj_set_event_cb(lvMenu.btnTemperatures, lvMenu_TemperaturesEvent);
+  lvMenu.btnHome = lv_btn_create(cont, NULL);
+  lv_obj_add_protect(lvMenu.btnHome, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_value_str(lvMenu.btnHome, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Home");
+  lv_obj_set_size(lvMenu.btnHome, 100, 60);
+  lv_obj_set_event_cb(lvMenu.btnHome, lvMenu_HomeEvent);
 
   /* create display button */
-  lvMenu.btnDisplay = lv_btn_create(lvMenu.screen, NULL);
+  lvMenu.btnDisplay = lv_btn_create(cont, NULL);
   lv_obj_add_protect(lvMenu.btnDisplay, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvMenu.btnDisplay, LV_CONT_PART_MAIN, lvMenu.btnStyle);
   lv_obj_set_style_local_value_str(lvMenu.btnDisplay, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Display");
-  lv_obj_set_size(lvMenu.btnDisplay, 200, 40);
-  lv_obj_set_pos(lvMenu.btnDisplay, 40, 100);
+  lv_obj_set_size(lvMenu.btnDisplay, 100, 60);
   lv_obj_set_event_cb(lvMenu.btnDisplay, lvMenu_DisplayEvent);
+
+  /* create display button */
+  lvMenu.btnPitmaster = lv_btn_create(cont, NULL);
+  lv_obj_add_protect(lvMenu.btnPitmaster, LV_PROTECT_CLICK_FOCUS);
+  lv_obj_set_style_local_value_str(lvMenu.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Pitmaster");
+  lv_obj_set_size(lvMenu.btnPitmaster, 100, 60);
+  lv_obj_set_event_cb(lvMenu.btnPitmaster, lvMenu_PitmasterEvent);
 
   lvMenu_Update(true);
 
@@ -81,7 +80,7 @@ void lvMenu_Delete(void)
   lv_obj_del(lvMenu.screen);
 }
 
-void lvMenu_TemperaturesEvent(lv_obj_t *obj, lv_event_t event)
+void lvMenu_HomeEvent(lv_obj_t *obj, lv_event_t event)
 {
   if (LV_EVENT_CLICKED == event)
   {
@@ -94,5 +93,13 @@ void lvMenu_DisplayEvent(lv_obj_t *obj, lv_event_t event)
   if (LV_EVENT_CLICKED == event)
   {
     lvScreen_Open(lvScreenType::Display);
+  }
+}
+
+void lvMenu_PitmasterEvent(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    lvScreen_Open(lvScreenType::Pitmaster);
   }
 }
