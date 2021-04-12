@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2019  Martin Koerner
+    Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,26 +20,15 @@
 #pragma once
 
 #include "Arduino.h"
-#include "Pitmaster.h"
+#include <lvgl.h>
 
-#define MAX_PITMASTERS 2u
-
-class PitmasterGrp
+typedef struct lvUpdate
 {
-public:
-  PitmasterGrp();
-  void virtual update();
-  void add(Pitmaster *pitmaster);
-  Pitmaster *operator[](int index);
-  uint8_t count();
-  void saveConfig();
-  void loadConfig();
-  void enable(boolean enabled);
-  boolean isEnabled(void) { return this->enabled; };
-  Pitmaster *getActivePitmaster(TemperatureBase *temperature);
 
-private:
-  Pitmaster *pitmasters[MAX_PITMASTERS];
-  uint8_t addIndex;
-  boolean enabled;
-};
+  lv_obj_t *screen;
+  lv_obj_t *bar;
+} lvUpdateType;
+
+void lvUpdate_Create(void *userData);
+void lvUpdate_Update(boolean forceUpdate);
+void lvUpdate_Delete(void);

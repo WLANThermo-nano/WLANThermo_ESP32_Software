@@ -34,6 +34,7 @@ typedef enum class lvScreen
   Wifi,
   Display,
   Temperature,
+  Update,
   Max
 } lvScreenType;
 

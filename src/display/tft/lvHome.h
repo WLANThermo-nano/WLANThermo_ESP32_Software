@@ -49,6 +49,7 @@ typedef struct lvSymbols
   lv_obj_t *btnCloud;
   lv_obj_t *btnBattery;
   lv_obj_t *btnWifi;
+  lv_obj_t *btnPitmaster;
 } lvHomeSymbolsType;
 
 typedef struct lvHome
