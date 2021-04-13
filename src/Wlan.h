@@ -82,6 +82,7 @@ private:
   void connectToNewStation();
   void connectToKnownStations();
   void stopAllRadio();
+  static void updateMdns();
 
   static String hostName;
   static String accessPointName;

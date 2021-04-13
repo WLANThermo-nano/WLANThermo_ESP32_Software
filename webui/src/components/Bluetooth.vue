@@ -91,7 +91,7 @@ export default {
   methods: {
     refreshBluetooth: function() {
       this.refreshing = true;
-      this.axios.get("/bluetooth").then((response) => {
+      this.axios.get("/getbluetooth").then((response) => {
         console.log(response)
         const data = response.data
         this.bluetoothSettings = {

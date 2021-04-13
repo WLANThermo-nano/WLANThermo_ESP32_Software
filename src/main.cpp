@@ -22,7 +22,7 @@
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
 #include "SerialCmd.h"
-#include "Server.h"
+#include "WServer.h"
 #include "DbgPrint.h"
 #include "ArduinoLog.h"
 #include "LogRingBuffer.h"
@@ -75,11 +75,17 @@ void setup()
 
 void MainTask(void *parameter)
 {
-
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
   for (;;)
   {
+    //Serial.printf("MainTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+    if (gSystem->otaUpdate.isUpdateInProgress())
+    {
+      // exit task loop for better update performance
+      break;
+    }
 
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
@@ -108,6 +114,8 @@ void ConnectTask(void *parameter)
 
   for (;;)
   {
+    //Serial.printf("ConnectTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
       // exit task loop for better update performance
@@ -138,7 +146,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       MainTask,                /* Task function. */
       "MainTask",              /* String with name of task. */
-      10000,                   /* Stack size in bytes. */
+      3000,                    /* Stack size in bytes. */
       NULL,                    /* Parameter passed as input of the task */
       TASK_PRIORITY_MAIN_TASK, /* Priority of the task. */
       NULL,                    /* Task handle. */
@@ -147,7 +155,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       ConnectTask,                /* Task function. */
       "ConnectTask",              /* String with name of task. */
-      10000,                      /* Stack size in bytes. */
+      3000,                       /* Stack size in bytes. */
       NULL,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_CONNECT_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */

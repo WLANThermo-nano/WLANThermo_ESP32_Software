@@ -286,7 +286,9 @@ export default {
         this.editing = false;
         EventBus.$emit("getData")
         EventBus.$emit("loading", false)
-      });
+      }).catch(() => {
+        EventBus.$emit("loading", false)
+      })
     }
   },
   components: {

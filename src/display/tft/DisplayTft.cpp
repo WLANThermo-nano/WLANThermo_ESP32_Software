@@ -73,7 +73,7 @@ void DisplayTft::init()
   xTaskCreatePinnedToCore(
       DisplayTft::task,           /* Task function. */
       "DisplayTft::task",         /* String with name of task. */
-      10000,                      /* Stack size in bytes. */
+      5000,                       /* Stack size in bytes. */
       this,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */
@@ -222,6 +222,8 @@ void DisplayTft::task(void *parameter)
 
   for (;;)
   {
+    //Serial.printf("DisplayTft::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
     display->update();
     // Wait for the next cycle.
     vTaskDelay(TASK_CYCLE_TIME_DISPLAY_FAST_TASK);
@@ -230,8 +232,6 @@ void DisplayTft::task(void *parameter)
 
 void DisplayTft::update()
 {
-  static uint8_t updateInProgress = false;
-  static boolean wakeup = false;
   static uint32_t lastMillis = millis();
   uint32_t currentMillis;
 
@@ -240,11 +240,7 @@ void DisplayTft::update()
 
   if (gSystem->otaUpdate.isUpdateInProgress())
   {
-    if (false == updateInProgress)
-    {
-      updateInProgress = true;
-    }
-    return;
+    lvScreen_Open(lvScreenType::Update);
   }
 
   lvScreen_Update();

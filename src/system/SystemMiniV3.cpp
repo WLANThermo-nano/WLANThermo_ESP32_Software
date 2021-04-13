@@ -170,11 +170,11 @@ void SystemMiniV3::init()
   pitmasters.add(new Pitmaster(PITMASTER0IO1, ledcPitMaster0IO1, PITMASTER0IO2, ledcPitMaster0IO2));
   //pitmasters.add(new Pitmaster(PITMASTER1IO1, ledcPitMaster1IO1, PITMASTER1IO2, ledcPitMaster1IO2));
 
-  //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, ...
+  //        Name,      Nr, Aktor,  Kp,    Ki,  Kd, DCmin, DCmax, JP, SPMIN, SPMAX, LINK, OPL ...
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 3.8, 0.01, 128, 25, 100, 70};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"TITAN 50x50", 1, 1, 7.0, 0.01, 128, 25, 100, 80, 25, 75, 0, 1};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"Damper", 3, 3, 3.8, 0.01, 128, 25, 100, 70, 25, 75, 0};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"Damper", 3, 3, 7.0, 0.01, 128, 25, 100, 70, 25, 75, 0};
 
   // Add Damper support
   damperSupport = true;

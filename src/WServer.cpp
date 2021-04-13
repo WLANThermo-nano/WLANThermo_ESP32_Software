@@ -22,7 +22,7 @@
 // https://github.com/spacehuhn/wifi_ducky/blob/master/esp8266_wifi_duck/esp8266_wifi_duck.ino
 // WebSocketClient: https://github.com/Links2004/arduinoWebSockets/issues/119
 
-#include "Server.h"
+#include "WServer.h"
 #include "WebHandler.h"
 #include "Cloud.h"
 #include "system/SystemBase.h"
@@ -33,6 +33,8 @@
 
 // include html files
 #include "webui/restart.html.gz.h"
+
+#define WEB_VUE_ROUTER_PATHS_MAX 8u
 
 #if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3) || defined(HW_CONNECT_V1)
 #define WEB_SUBFOLDER "mini"
@@ -47,25 +49,27 @@ extern const size_t index_html_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_inde
 extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_start");
 extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
 
+const char *vueRouterPaths[WEB_VUE_ROUTER_PATHS_MAX] = {
+    "/wlan", "/system", "/bluetooth", "/pitmaster", "/about", "/iot", "/notification", "/scan"};
+
 const char *WServer::username = "admin";
 String WServer::password = "";
 
-WServer::WServer()
+WServer::WServer() : webServer(80)
 {
 }
 
 void WServer::init()
 {
   loadConfig();
-  webServer = new AsyncWebServer(80);
-  webServer->addHandler(&nanoWebHandler);
+  webServer.addHandler(&nanoWebHandler);
 
-  webServer->on("/help", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/help", HTTP_GET, [](AsyncWebServerRequest *request) {
              request->redirect("https://github.com/WLANThermo-nano/WLANThermo_nano_Software/blob/master/README.md");
            })
       .setFilter(ON_STA_FILTER);
 
-  webServer->on("/info", [](AsyncWebServerRequest *request) {
+  webServer.on("/info", [](AsyncWebServerRequest *request) {
     size_t usedBytes;
     size_t totalBytes;
     usedBytes = SPIFFS.usedBytes();
@@ -87,7 +91,7 @@ void WServer::init()
     request->send(200, "", info);
   });
 
-  webServer->on("/setbattmin", [](AsyncWebServerRequest *request) {
+  webServer.on("/setbattmin", [](AsyncWebServerRequest *request) {
     if (gSystem->battery)
     {
       gSystem->battery->min -= 100;
@@ -96,14 +100,14 @@ void WServer::init()
     request->send(200, TEXTPLAIN, "Done");
   });
 
-  webServer->on("/settestmode", [](AsyncWebServerRequest *request) {
+  webServer.on("/settestmode", [](AsyncWebServerRequest *request) {
     CloudConfig cloudConfig = gSystem->cloud.getConfig();
     cloudConfig.interval = 3;
     gSystem->cloud.setConfig(cloudConfig);
     request->send(200, TEXTPLAIN, "3 Sekunden");
   });
 
-  webServer->on("/stop", [](AsyncWebServerRequest *request) {
+  webServer.on("/stop", [](AsyncWebServerRequest *request) {
     for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
     {
       Pitmaster *pm = gSystem->pitmasters[i];
@@ -115,14 +119,14 @@ void WServer::init()
     request->send(200, TEXTPLAIN, "Stop pitmaster");
   });
 
-  webServer->on("/clientlog", [](AsyncWebServerRequest *request) {
+  webServer.on("/clientlog", [](AsyncWebServerRequest *request) {
     Cloud::clientlog = true;
     gSystem->otaUpdate.resetUpdateInfo();
     gSystem->otaUpdate.askUpdateInfo();
     request->send(200, TEXTPLAIN, "aktiviert");
   });
 
-  webServer->on("/restart", [](AsyncWebServerRequest *request) {
+  webServer.on("/restart", [](AsyncWebServerRequest *request) {
              AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
              response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
              response->addHeader("Content-Encoding", "gzip");
@@ -131,16 +135,16 @@ void WServer::init()
            })
       .setFilter(ON_STA_FILTER);
 
-  webServer->on("/ping", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/ping", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
-  webServer->on("/newtoken", [](AsyncWebServerRequest *request) {
+  webServer.on("/newtoken", [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, gSystem->cloud.newToken());
     gSystem->cloud.saveConfig();
   });
 
-  webServer->on("/rr", [](AsyncWebServerRequest *request) {
+  webServer.on("/rr", [](AsyncWebServerRequest *request) {
     String response = "\nCPU0: " + gSystem->getResetReason(0);
     response += "\nCPU1: " + gSystem->getResetReason(1);
     response += "\nResetCounter: " + String(RecoveryMode::getResetCounter());
@@ -148,7 +152,7 @@ void WServer::init()
   });
 
   // to avoid multiple requests to ESP
-  webServer->on("/", [](AsyncWebServerRequest *request) {
+  webServer.on("/", [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
@@ -156,7 +160,7 @@ void WServer::init()
   });
 
   // favicon.ico
-  webServer->on("/favicon.ico", [](AsyncWebServerRequest *request) {
+  webServer.on("/favicon.ico", [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "image/x-icon", favicon_ico_start, (size_t)&favicon_ico_size);
     response->addHeader("Content-Disposition", "inline; filename=\"favicon.ico\"");
     response->addHeader("Content-Encoding", "gzip");
@@ -164,14 +168,35 @@ void WServer::init()
   });
 
   // 404 NOT found: called when the url is not defined here
-  webServer->onNotFound([](AsyncWebServerRequest *request) {
+  webServer.onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS)
     {
       request->send(200);
     }
     else
     {
-      request->send(404);
+      boolean isVueRouterUrl = false;
+      for(uint8_t index = 0u; index < WEB_VUE_ROUTER_PATHS_MAX; index++)
+      {
+        if(request->url() == vueRouterPaths[index])
+        {
+          isVueRouterUrl = true;
+          break;
+        }
+      }
+
+      if(true == isVueRouterUrl)
+      {
+        // send index.html
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_start, (size_t)&index_html_size);
+        response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
+        response->addHeader("Content-Encoding", "gzip");
+        request->send(response);
+      }
+      else
+      {
+        request->send(404);
+      }
     }
   });
 
@@ -181,7 +206,7 @@ void WServer::init()
   DefaultHeaders::Instance().addHeader("Access-Control-Max-Age", "1000");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, client-security-token, scan");
     
-  webServer->begin();
+  webServer.begin();
   IPRINTPLN("HTTP server started");
 }
 

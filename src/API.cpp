@@ -159,6 +159,15 @@ void API::pitAry(JsonArray &jAry, int cc)
         ma["typ"] = "auto";
         break;
       }
+      switch (pm->getTypeLast())
+      {
+      case pm_manual:
+        ma["typ_last"] = "manual";
+        break;
+      case pm_auto:
+        ma["typ_last"] = "auto";
+        break;
+      }
       ma["set_color"] = sc[i];
       ma["value_color"] = vc[i];
     }
@@ -211,38 +220,91 @@ void API::iotObj(JsonObject &jObj)
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// FCM JSON Array
-void API::fcmAry(JsonArray &jAry, int cc)
-{
-
-  int i = 0;
-  if (cc < 3)
-    i = cc - 1; // nur ein bestimmtes Profil
-
-  for (i; i < cc; i++)
-  {
-    JsonObject &_fcm = jAry.createNestedObject();
-    _fcm["id"] = i;
-    _fcm["on"] = (byte) true;
-    //_fcm["token"] = "cerAGIyShJk:APA91bGX6XYvWm7W-KQN1FUw--IDiceKfKnpa0AZ3B2gNhldbkNkz7c1-Js0ma5QA8v2nBcZsf7ndPEWBGfRogHU6RzOI08IAhOyL5cXpUeAKDOTaO5O6XMHq89IHh8UaycRi4evFMbM";
-    _fcm["pseudo"] = "AdminSamsung";
-  }
-}
-
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Update JSON Object
-void API::extObj(JsonObject &jObj)
+void API::notificationObj(JsonObject &jObj)
 {
+  PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
+  PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
+  PushAppType pushApp = gSystem->notification.getAppConfig();
+  NotificationData notificationData = gSystem->notification.getNotificationData();
 
-  jObj["on"] = gSystem->notification.pushService.on;
-  jObj["token"] = gSystem->notification.pushService.token;
-  jObj["id"] = gSystem->notification.pushService.id;
-  jObj["repeat"] = gSystem->notification.pushService.repeat;
-  jObj["service"] = gSystem->notification.pushService.service;
+  JsonObject &_message = jObj.createNestedObject("message");
+  JsonArray &_services = jObj.createNestedArray("services");
 
-  JsonArray &_noteservice = jObj.createNestedArray("services");
-  _noteservice.add("telegram"); // 0
-  _noteservice.add("pushover"); // 1
+  _message["type"] = (uint32_t)notificationData.type;
+
+  // Handle test message
+  if (NotificationType::Test == notificationData.type)
+  {
+    // Disable all services
+    pushTelegram.enabled = false;
+    pushPushover.enabled = false;
+    pushApp.enabled = false;
+
+    // Copy test config and enable test service
+    switch (notificationData.testService)
+    {
+    case NotificationService::Telegram:
+      memcpy(&pushTelegram, notificationData.testConfig, sizeof(PushTelegramType));
+      pushTelegram.enabled = true;
+      break;
+    case NotificationService::Pushover:
+      memcpy(&pushPushover, notificationData.testConfig, sizeof(PushPushoverType));
+      pushPushover.enabled = true;
+      break;
+    case NotificationService::App:
+      memcpy(&pushApp, notificationData.testConfig, sizeof(PushAppType));
+      pushApp.enabled = true;
+      break;
+    }
+  }
+  // Add channel for temperature alarms
+  else if ((NotificationType::LowerLimit == notificationData.type) ||
+           (NotificationType::UpperLimit == notificationData.type))
+  {
+    _message["channel"] = (uint32_t)notificationData.channel;
+    _message["unit"] = String((char)gSystem->temperatures.getUnit());
+    TemperatureBase *temperature = gSystem->temperatures[notificationData.channel];
+
+    if(temperature)
+    {
+      _message["temp"] = (int)temperature->getValue();
+      _message["limit"] = (NotificationType::LowerLimit == notificationData.type) ? temperature->getMinValue() : temperature->getMaxValue();
+    }
+  }
+
+  if (pushTelegram.enabled)
+  {
+    JsonObject &_telegram = _services.createNestedObject();
+    _telegram["service"] = "telegram";
+    _telegram["token"] = String(pushTelegram.token);
+    _telegram["chat_id"] = pushTelegram.chatId;
+  }
+
+  if (pushPushover.enabled)
+  {
+    JsonObject &_pushover = _services.createNestedObject();
+    _pushover["service"] = "pushover";
+    _pushover["token"] = String(pushPushover.token);
+    _pushover["user_key"] = String(pushPushover.userKey);
+    _pushover["priority"] = pushPushover.priority;
+    _pushover["retry"] = pushPushover.retry;
+    _pushover["expire"] = pushPushover.expire;
+  }
+
+  if (pushApp.enabled)
+  {
+    for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
+    {
+      if (strlen(pushApp.devices[i].token) > 0u)
+      {
+        JsonObject &_app = _services.createNestedObject();
+        _app["service"] = "app";
+        _app["token"] = String(pushApp.devices[i].token);
+        _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
+      }
+    }
+  }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -264,15 +326,6 @@ void API::updateObj(JsonObject &jObj)
 
   if (gSystem->otaUpdate.getForceFlag())
     jObj["force"] = gSystem->otaUpdate.getForceFlag();
-}
-
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Alexa JSON Object
-void API::alexaObj(JsonObject &jObj)
-{
-
-  jObj["task"] = "save"; // save or delete
-  jObj["token"] = "xxx";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -369,14 +422,6 @@ void API::settingsObj(JsonObject &jObj)
   // IOT
   JsonObject &_iot = jObj.createNestedObject("iot");
   iotObj(_iot);
-
-  // NOTES
-  JsonObject &_note = jObj.createNestedObject("notes");
-  JsonArray &_firebase = _note.createNestedArray("fcm");
-  //fcmAry(_note);
-
-  JsonObject &_ext = _note.createNestedObject("ext");
-  extObj(_ext);
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -392,75 +437,6 @@ void API::cloudObj(JsonObject &jObj)
   // aktuelle Werte
   JsonObject &_obj = data.createNestedObject();
   dataObj(_obj, true);
-}
-
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Notification JSON Object
-void API::noteObj(JsonObject &jObj)
-{
-  CloudConfig cloudConfig = gSystem->cloud.getConfig();
-
-  jObj["lang"] = gSystem->getLanguage();
-
-  if (cloudConfig.enabled)
-    jObj["api_token"] = cloudConfig.token;
-
-  // an welche Dienste soll geschickt werden?
-  JsonArray &services = jObj.createNestedArray("services");
-
-  JsonObject &_obj1 = services.createNestedObject();
-  switch (gSystem->notification.pushService.service)
-  {
-  case 0:
-    _obj1["service"] = F("telegram");
-    break;
-  case 1:
-    _obj1["service"] = F("pushover");
-    break;
-  case 2:
-    _obj1["service"] = F("prowl");
-    break;
-  }
-  _obj1["key1"] = gSystem->notification.pushService.token;
-  _obj1["key2"] = gSystem->notification.pushService.id;
-
-  // gSystem->notification.pushService.repeat;
-
-  // Nachricht
-  jObj["task"] = "alert";
-
-  if (gSystem->notification.notificationData.type == 1)
-  {
-    jObj["message"] = "test";
-    if (gSystem->notification.pushService.on == 2)
-      gSystem->notification.pushService.on = 3; // alte Werte wieder herstellen  (Testnachricht)
-  }
-  else if (gSystem->notification.notificationData.type == 2)
-  {
-    jObj["message"] = "battery";
-  }
-  else
-  {
-
-    jObj["unit"] = String((char)gSystem->temperatures.getUnit());
-
-    bool limit = gSystem->notification.notificationData.limit & (1 << gSystem->notification.notificationData.ch);
-    jObj["message"] = (limit) ? F("up") : F("down");
-    jObj["channel"] = gSystem->notification.notificationData.ch + 1;
-    gSystem->notification.notificationData.index &= ~(1 << gSystem->notification.notificationData.ch); // Kanal entfernen, sonst erneuter Aufruf
-
-    TemperatureBase *temperature = gSystem->temperatures[gSystem->notification.notificationData.ch];
-    if (temperature != NULL)
-    {
-      temperature->updateNotificationCounter();
-      JsonArray &_temp = jObj.createNestedArray("temp");
-      _temp.add(temperature->getValue());
-      if (limit)
-        _temp.add(temperature->getMaxValue());
-      else
-        _temp.add(temperature->getMinValue());
-    }
-  }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -518,18 +494,10 @@ String API::apiData(int typ)
     break;
   }
 
-  case APINOTE:
+  case APINOTIFICATION:
   {
-    JsonObject &note = root.createNestedObject("notification");
-    noteObj(note);
-    gSystem->notification.notificationData.type = 0; // Zuruecksetzen
-    break;
-  }
-
-  case APIALEXA:
-  {
-    JsonObject &alexa = root.createNestedObject("alexa");
-    alexaObj(alexa);
+    JsonObject &note = root.createNestedObject("notification_v2");
+    notificationObj(note);
     break;
   }
   }

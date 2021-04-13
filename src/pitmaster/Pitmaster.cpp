@@ -81,6 +81,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->autoTune = NULL;
     this->targetTemperature = PITMASTERSETMIN;
     this->type = pm_off;
+    this->typeLast = pm_auto;
     this->value = 0u;
     this->previousMillis = 0u;
     this->ioPin1 = ioPin1;
@@ -113,6 +114,11 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
 void Pitmaster::setType(PitmasterType type)
 {
+    if(pm_off != type)
+    {
+        this->typeLast  = type;
+    }
+
     this->type = type;
     settingsChanged = true;
 }
@@ -120,6 +126,17 @@ void Pitmaster::setType(PitmasterType type)
 PitmasterType Pitmaster::getType()
 {
     return this->type;
+}
+
+void Pitmaster::setTypeLast(PitmasterType type)
+{
+    this->typeLast = type;
+    settingsChanged = true;
+}
+
+PitmasterType Pitmaster::getTypeLast()
+{
+    return this->typeLast;
 }
 
 void Pitmaster::assignProfile(PitmasterProfile *profile)
@@ -928,12 +945,38 @@ float Pitmaster::pidCalc()
     }   
     if (e > jumpth)
     {
+	    this->jump = true;
+        this->ampch = 1;
+    }
+  
+    // Erkennung Wellenform
+    if (true == this->jump)
+    {
+        if (this->ampch == 1 && e <= 0) 
+        {
+            this->ampch = 2;
+        }
+        else if (this->ampch == 2 && e > 0) 
+        {
+            this->ampch = 3;
+        }
+    }
+
+    // JUMP DEACTIVATION
+    if (this->ampch == 3) // Deaktivierung sobald eine Welle durchlaufen
+    {
+        this->jump = false;
+    }
+    
+    /*
+    if (e > jumpth)
+    {
         this->jump = true;
     }
     else if (e <= 0) // Memory (daher else if) bis Soll erreicht
     {
         this->jump = false;
-    }
+    }*/
 
     // Proportional-Anteil
     float p_out = kp * e;
@@ -1000,4 +1043,5 @@ void Pitmaster::pidReset()
     this->elast = 0;
     this->Ki_alt = 0;
     this->jump = 0;
+    this->ampch = 0;
 }

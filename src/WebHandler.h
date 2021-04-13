@@ -62,6 +62,7 @@ public:
   void handleUpdate(AsyncWebServerRequest *request);
   void handleBluetooth(AsyncWebServerRequest *request);
   void handleLog(AsyncWebServerRequest *request);
+  void handleGetPush(AsyncWebServerRequest *request);
 
   // Body handler
   bool setServerAPI(AsyncWebServerRequest *request, uint8_t *datas);
