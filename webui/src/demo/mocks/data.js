@@ -434,7 +434,7 @@ export const Data = {
         "telegram": {
             "enabled": false,
             "token": "Telegram Token",
-            "chat_id": 123
+            "chat_id": "123"
         },
         "pushover": {
             "enabled": true,

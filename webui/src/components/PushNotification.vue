@@ -146,7 +146,7 @@ export default {
       telegram: {
         enabled: false,
         token: '',
-        chat_id: 0,
+        chat_id: '',
         test: false,
       },
       pushover: {

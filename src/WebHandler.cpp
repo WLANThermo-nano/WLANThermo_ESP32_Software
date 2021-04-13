@@ -500,7 +500,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
 
   telegram["enabled"] = pushTelegram.enabled;
   telegram["token"] = pushTelegram.token;
-  telegram["chat_id"] = pushTelegram.chatId;
+  telegram["chat_id"] = (pushTelegram.chatId > 0) ? String(pushTelegram.chatId) : String("");
 
   JsonObject &pushover = json.createNestedObject("pushover");
 
@@ -794,7 +794,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
         telegram.enabled = _telegram["enabled"];
         strcpy(telegram.token, _telegram["token"].asString());
-        telegram.chatId = _telegram["chat_id"];
+        telegram.chatId = _telegram["chat_id"].as<int>();
         gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
       }
     }
