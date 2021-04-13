@@ -316,20 +316,8 @@ void Wlan::stopAllRadio()
   wifiState = WifiState::Stopped;
 }
 
-void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
+void Wlan::updateMdns()
 {
-  Serial.printf("STA: %s\n", WiFi.SSID().c_str());
-  Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-  WiFi.mode(WIFI_STA);
-
-  if (WiFi.SSID() == newWlanCredentials.ssid)
-  {
-    saveConfig();
-  }
-  else
-  {
-  }
-
   if (!MDNS.begin(hostName.c_str()))
   {
     Serial.println("Error MDNS!");
@@ -343,6 +331,20 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
     MDNS.addServiceTxt("wlanthermo", "tcp", "sw_version", FIRMWAREVERSION);
     MDNS.addServiceTxt("wlanthermo", "tcp", "mac_address", getMacAddress());
   }
+}
+
+void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+  Serial.printf("STA: %s\n", WiFi.SSID().c_str());
+  Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
+  WiFi.mode(WIFI_STA);
+
+  if (WiFi.SSID() == newWlanCredentials.ssid)
+  {
+    saveConfig();
+  }
+
+  updateMdns();
 }
 
 void Wlan::onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)
@@ -377,7 +379,10 @@ String Wlan::getHostName()
 void Wlan::setHostName(String hostName)
 {
   if (hostName.length())
+  {
     this->hostName = hostName;
+    this->updateMdns();
+  }
 }
 
 String Wlan::getAccessPointName()
