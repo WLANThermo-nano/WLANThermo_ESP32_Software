@@ -87,6 +87,12 @@ void MainTask(void *parameter)
       break;
     }
 
+    if (gSystem->otaUpdate.isUpdateInProgress())
+    {
+      // exit task loop for better update performance
+      break;
+    }
+
     // Detect Serial Input
     static char serialbuffer[300];
     if (readline(Serial.read(), serialbuffer, 300) > 0)
