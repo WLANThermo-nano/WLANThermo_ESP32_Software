@@ -352,6 +352,10 @@ export default {
           this.refreshing = false
         });
       })
+      // eslint-disable-next-line
+      var zeroconf = cordova.plugins.zeroconf;
+      zeroconf.reInit()
+      this.scanByZeroConf()
     },
     initAndScan: function () {
       this.addToDebug(`load stored data`)
