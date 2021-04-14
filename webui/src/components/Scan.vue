@@ -352,6 +352,10 @@ export default {
           this.refreshing = false
         });
       })
+      // eslint-disable-next-line
+      var zeroconf = cordova.plugins.zeroconf;
+      zeroconf.reInit()
+      this.scanByZeroConf()
     },
     initAndScan: function () {
       this.addToDebug(`load stored data`)
@@ -360,7 +364,7 @@ export default {
       this.scanByZeroConf()
     },
     toInfoText: function (respData) {
-      var info = `${respData.device?.device} || ${respData.device?.sw_version}`
+      var info = `${respData.device?.device} ${respData.device?.hw_version} || ${respData.device?.sw_version}`
       if(true === toIncompatible(respData)) {
         info += ` || ${this.$t("scanDeviceIncompatible")}`
       }
