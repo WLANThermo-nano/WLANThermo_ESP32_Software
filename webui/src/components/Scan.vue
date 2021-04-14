@@ -364,7 +364,7 @@ export default {
       this.scanByZeroConf()
     },
     toInfoText: function (respData) {
-      var info = `${respData.device?.device} || ${respData.device?.sw_version}`
+      var info = `${respData.device?.device} ${respData.device?.hw_version} || ${respData.device?.sw_version}`
       if(true === toIncompatible(respData)) {
         info += ` || ${this.$t("scanDeviceIncompatible")}`
       }
