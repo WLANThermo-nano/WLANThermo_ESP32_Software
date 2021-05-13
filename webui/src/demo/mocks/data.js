@@ -401,7 +401,7 @@ export const Data = {
                 "SSID": "EasyBox-767780",
                 "BSSID": "D4:60:E3:BD:BA:9C",
                 "RSSI": -104,
-                "Enc": true
+                "Enc": false
             },
             {
                 "SSID": "FRITZ!Box 7590 LD",

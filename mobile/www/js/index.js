@@ -22,6 +22,7 @@
 document.addEventListener('deviceready', onDeviceReady, false);
 
 function onDeviceReady() {
+    window.open = cordova.InAppBrowser.open;
     // Cordova is now initialized. Have fun!
 
     // console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
