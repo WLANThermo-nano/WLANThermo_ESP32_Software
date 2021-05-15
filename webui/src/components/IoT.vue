@@ -89,7 +89,7 @@
           </div>
           <div class="pure-u-1-2 control">
             <div class="form-group">
-              <input type="text" v-model="iot.PMQpass" required />
+              <input type="password" v-model="iot.PMQpass" required />
               <label class="control-label" for="input">{{$t("mqttPwd")}}</label>
               <i class="bar"></i>
             </div>

@@ -57,12 +57,12 @@ const routes = [
     path: '/scan',
     name: 'scan',
     component: Scan
-  },
+  }
 ]
 
 const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+  mode: process.env.VUE_APP_ROUTER_MODE,
+  base: process.env.VUE_APP_BASE_URL,
   routes
 })
 
