@@ -2,7 +2,7 @@ name: Mobile build
 on:
   push:
     branches:
-      - develop
+      - bugfix/missing-notification-icon
 
 jobs:
   main:
