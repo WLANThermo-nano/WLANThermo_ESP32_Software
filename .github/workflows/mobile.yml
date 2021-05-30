@@ -2,7 +2,7 @@ name: Mobile build
 on:
   push:
     branches:
-      - test/firebase-notification
+      - develop
 
 jobs:
   main:
