@@ -2,7 +2,7 @@ name: Mobile build
 on:
   push:
     branches:
-      - bugfix/missing-notification-icon
+      - test/firebase-notification
 
 jobs:
   main:

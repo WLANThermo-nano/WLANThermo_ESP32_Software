@@ -30,7 +30,7 @@
     <platform name="android">
         <config-file parent="/manifest/application" target="app/src/main/AndroidManifest.xml">
             <meta-data android:name="com.google.firebase.messaging.default_notification_icon"
-                       android:resource="@drawable/notification_icon"/>
+                       android:resource="@drawable/notification"/>
         </config-file>
         <allow-intent href="market:*" />
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application" xmlns:android="http://schemas.android.com/apk/res/android">
@@ -40,8 +40,21 @@
         <resource-file src="resources/android/xml/network_security_config.xml" target="app/src/main/res/xml/network_security_config.xml"/>
         <resource-file src="google-services.json" target="app/google-services.json" />
         <resource-file
-          src="resources/android/drawable/notification_icon.png"
-          target="app/src/main/res/drawable/notification_icon.png"/>
+          src="resources/android/icon/drawable-mdpi-icon.png"
+          target="app/src/main/res/drawable-mdpi/notification.png"/>
+        <resource-file
+          src="resources/android/icon/drawable-hdpi-icon.png"
+          target="app/src/main/res/drawable-hdpi/notification.png"/>
+        <resource-file
+          src="resources/android/icon/drawable-xhdpi-icon.png"
+          target="app/src/main/res/drawable-xhdpi/notification.png"/>
+        <resource-file
+          src="resources/android/icon/drawable-xxhdpi-icon.png"
+          target="app/src/main/res/drawable-xxhdpi/notification.png"/>
+        <resource-file
+          src="resources/android/icon/drawable-xxxhdpi-icon.png"
+          target="app/src/main/res/drawable-xxxhdpi/notification.png"/>
+
     </platform>
     <platform name="ios">
         <preference name="deployment-target" value="12.0" />
