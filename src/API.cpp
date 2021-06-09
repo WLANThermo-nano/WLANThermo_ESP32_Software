@@ -312,7 +312,7 @@ void API::notificationObj(JsonObject &jObj)
 void API::crashObj(JsonObject &jObj)
 {
   jObj["reset_reason"] = gSystem->getResetReason(0u) + String (";") + gSystem->getResetReason(1u);
-  jObj["report"] = "";
+  //jObj["report"] = "";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
