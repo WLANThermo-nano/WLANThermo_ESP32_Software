@@ -105,9 +105,14 @@ void Cloud::update()
   if (config.enabled)
   {
     // First get time from server before sending data
+    // Also send crash report if enabled
     if (now() < 31536000)
     {
       Cloud::sendAPI(NOAPI, APILINK);
+      if(gSystem->getCrashReport())
+      {
+        Cloud::sendAPI(APICRASHREPORT, APILINK);
+      }
     }
     else if (0u == intervalCounter)
     {

@@ -43,6 +43,7 @@ public:
   static void settingsObj(JsonObject &jObj);
   static void cloudObj(JsonObject &jObj);
   static void notificationObj(JsonObject &jObj);
+  static void crashObj(JsonObject &jObj);
   static String apiData(int typ);
   static float limit_float(float f, int i);
 

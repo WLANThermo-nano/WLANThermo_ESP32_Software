@@ -46,6 +46,7 @@ SystemBase::SystemBase()
   deviceName = "undefined";
   cpuName = "esp32";
   language = "de";
+  crashReport = true;
   hardwareVersion = 1u;
   pitmasterProfileCount = 0u;
   powerSaveModeSupport = false;
@@ -214,6 +215,7 @@ void SystemBase::saveConfig()
   json["DisableTypeK"] = disableTypeK;
   json["DisableReceiver"] = disableReceiver;
   json["language"] = language;
+  json["CrashReport"] = crashReport;
   Settings::write(kSystem, json);
 }
 
@@ -230,6 +232,8 @@ void SystemBase::loadConfig()
       disableReceiver = json["DisableReceiver"].as<boolean>();
     if (json.containsKey("language"))
       language = json["language"].asString();
+    if (json.containsKey("CrashReport"))
+      crashReport = json["CrashReport"].asString();
   }
 
   SPIFFS.begin();

@@ -220,7 +220,7 @@ void API::iotObj(JsonObject &jObj)
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Update JSON Object
+// Notification JSON Object
 void API::notificationObj(JsonObject &jObj)
 {
   PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
@@ -305,6 +305,14 @@ void API::notificationObj(JsonObject &jObj)
       }
     }
   }
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Crash JSON Object
+void API::crashObj(JsonObject &jObj)
+{
+  jObj["reset_reason"] = gSystem->getResetReason(0u) + String (";") + gSystem->getResetReason(1u);
+  jObj["report"] = "";
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -500,11 +508,18 @@ String API::apiData(int typ)
     notificationObj(note);
     break;
   }
+
+  case APICRASHREPORT:
+  {
+    JsonObject &crash = root.createNestedObject("crash_report");
+    crashObj(crash);
+    break;
+  }
   }
 
   String jsonStr;
   root.printTo(jsonStr);
-
+  
   return jsonStr;
 }
 

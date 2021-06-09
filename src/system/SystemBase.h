@@ -65,6 +65,7 @@ public:
   size_t getFlashSize();
   static String getSerialNumber();
   String getLanguage();
+  boolean getCrashReport() { return this->crashReport; };
   void setLanguage(String language);
   uint8_t getHardwareVersion();
   void setPowerSaveMode(boolean enable);
@@ -89,6 +90,7 @@ protected:
   String cpuName;
   static char serialNumber[13];
   String language;
+  boolean crashReport;
   uint8_t hardwareVersion;
   boolean powerSaveModeSupport;
   boolean powerSaveModeEnabled;

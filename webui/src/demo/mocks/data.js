@@ -20,6 +20,7 @@ export const Data = {
             "getupdate": "false",
             "autoupd": true,
             "prerelease": false,
+            "crash_report": true,
             "hwversion": "V2"
         },
         "hardware": [
