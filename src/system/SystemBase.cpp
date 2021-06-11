@@ -253,7 +253,6 @@ void SystemBase::restart()
   WiFi.disconnect();
   delay(500);
   yield();
-  RecoveryMode::zeroResetCounter();
   ESP.restart();
 }
 

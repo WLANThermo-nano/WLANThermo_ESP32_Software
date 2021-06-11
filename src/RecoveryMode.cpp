@@ -27,6 +27,8 @@
 #include "RecoveryMode.h"
 #include "DbgPrint.h"
 #include "Settings.h"
+#include "ArduinoLog.h"
+#include "LogRingBuffer.h"
 #include "system/SystemBase.h"
 #include "webui/recoverymode.html.gz.h"
 #include "webui/restart.html.gz.h"
@@ -39,6 +41,8 @@
 #define TEXTPLAIN "text/plain"
 #define TEXTTRUE "true"
 
+const uint8_t NoInitRamValidationKey[16] = {'W', 'L', 'A', 'N', 'T', 'H', 'E', 'R', 'M', 'O', 'R', 'O', 'C', 'K', 'S', '!'};
+
 UploadFileType RecoveryMode::uploadFileType = UploadFileType::None;
 void *RecoveryMode::nexUpload = NULL;
 uint32_t RecoveryMode::nexBaudRate = 115200u;
@@ -48,7 +52,8 @@ String RecoveryMode::settingsValue = "";
 RTC_DATA_ATTR boolean RecoveryMode::fromApp = false;
 RTC_DATA_ATTR char RecoveryMode::wifiName[33];
 RTC_DATA_ATTR char RecoveryMode::wifiPassword[64];
-RTC_NOINIT_ATTR uint16_t RecoveryMode::resetCounter = 0u;
+
+RTC_NOINIT_ATTR ResetCounterType RecoveryMode::resetCounter;
 
 RecoveryMode::RecoveryMode(void)
 {
@@ -75,11 +80,24 @@ void RecoveryMode::run()
   Serial.begin(115200);
   Serial.setDebugOutput(true);
 #endif
-
   // Handle reset counter
-  boolean initResetCounter = (POWERON_RESET == rtc_get_reset_reason(0)) || (DEEPSLEEP_RESET == rtc_get_reset_reason(0));
-  resetCounter = (initResetCounter) ? 0u : resetCounter + 1u;
-  RMPRINTF("Reset counter: %d\n", resetCounter);
+  if(memcmp(resetCounter.validationKey, NoInitRamValidationKey, sizeof(NoInitRamValidationKey)) != 0u)
+  {
+    memcpy(resetCounter.validationKey, NoInitRamValidationKey, sizeof(NoInitRamValidationKey));
+    resetCounter.value = 0u;
+  }
+  else if(DEEPSLEEP_RESET != rtc_get_reset_reason(0))
+  {
+    resetCounter.value++;
+  }
+  else
+  {
+    resetCounter.value = 0u;
+  }
+
+  esp_register_shutdown_handler(RecoveryMode::shutdownHandler);
+
+  RMPRINTF("Reset counter: %d\n", resetCounter.value);
 
   RMPRINTLN("Check for Recovery Mode");
 
@@ -96,7 +114,6 @@ void RecoveryMode::run()
   }
 
   // Welcome to recovery mode
-  resetCounter = 0u;
   RMPRINTLN("Recovery Mode enabled");
 
   WiFi.persistent(false);
@@ -258,6 +275,11 @@ void RecoveryMode::run()
   {
     delay(100);
   }
+}
+
+void RecoveryMode::shutdownHandler(void)
+{
+  memset(&resetCounter, 0, sizeof(ResetCounterType));
 }
 
 UploadFileType RecoveryMode::getFileType(String fileName)
