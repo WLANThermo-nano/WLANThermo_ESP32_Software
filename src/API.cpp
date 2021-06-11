@@ -24,6 +24,7 @@
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
+#include "RecoveryMode.h"
 
 API::API()
 {
@@ -266,7 +267,7 @@ void API::notificationObj(JsonObject &jObj)
     _message["unit"] = String((char)gSystem->temperatures.getUnit());
     TemperatureBase *temperature = gSystem->temperatures[notificationData.channel];
 
-    if(temperature)
+    if (temperature)
     {
       _message["temp"] = (int)temperature->getValue();
       _message["limit"] = (NotificationType::LowerLimit == notificationData.type) ? temperature->getMinValue() : temperature->getMaxValue();
@@ -311,8 +312,8 @@ void API::notificationObj(JsonObject &jObj)
 // Crash JSON Object
 void API::crashObj(JsonObject &jObj)
 {
-  jObj["reset_reason"] = gSystem->getResetReason(0u) + String (";") + gSystem->getResetReason(1u);
-  //jObj["report"] = "";
+  jObj["reset_reason"] = gSystem->getResetReason(0u) + String(";") + gSystem->getResetReason(1u);
+  jObj["reset_counter"] = RecoveryMode::getResetCounter();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -519,7 +520,7 @@ String API::apiData(int typ)
 
   String jsonStr;
   root.printTo(jsonStr);
-  
+
   return jsonStr;
 }
 
