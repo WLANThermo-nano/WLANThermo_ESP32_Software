@@ -566,6 +566,8 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (_system.containsKey("language"))
     gSystem->setLanguage(_system["language"].asString());
+  if (_system.containsKey("crashreport"))
+    gSystem->setCrashReport((boolean)_system["crashreport"]);
 
   gSystem->saveConfig();
 

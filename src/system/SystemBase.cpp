@@ -233,7 +233,7 @@ void SystemBase::loadConfig()
     if (json.containsKey("language"))
       language = json["language"].asString();
     if (json.containsKey("CrashReport"))
-      crashReport = json["CrashReport"].asString();
+      crashReport = json["CrashReport"].as<boolean>();
   }
 
   SPIFFS.begin();

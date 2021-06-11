@@ -44,7 +44,7 @@ export default {
 	hw_version: "Hardware version",
 	update_search: "Automatically check for updates",
 	prerelease: "Include prerelease in the search",
-	crash_report: "Send crash report",
+	crashreport: "Send crash report",
 	// Reiter Display-Einstellungen
 	display_settings: "Display settings",
 	rotate_display: "Rotate display",

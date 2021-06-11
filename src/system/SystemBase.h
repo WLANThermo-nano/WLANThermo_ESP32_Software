@@ -66,6 +66,7 @@ public:
   static String getSerialNumber();
   String getLanguage();
   boolean getCrashReport() { return this->crashReport; };
+  void setCrashReport(boolean enabled) { this->crashReport = enabled; };
   void setLanguage(String language);
   uint8_t getHardwareVersion();
   void setPowerSaveMode(boolean enable);
