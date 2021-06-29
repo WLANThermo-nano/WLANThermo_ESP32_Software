@@ -63,7 +63,7 @@
               </div>
             </div>
             <div class="password-panel" v-if="index === expandingWifi">
-              <div class="form-group">
+              <div class="form-group" v-if="wifi.enc">
                 <input type="password" maxlength="63" required v-model="password" />
                 <label class="control-label" for="input">{{$t("wlanPwd")}}</label>
                 <i class="bar"></i>
@@ -71,7 +71,7 @@
               <button class="pure-button mr5" @click.stop="cancel">
                 {{ $t('cancel') }}
               </button>
-              <button class="pure-button pure-button-primary" :disabled="password.length === 0" @click.stop="save">
+              <button class="pure-button pure-button-primary" :disabled="password.length === 0 && wifi.enc" @click.stop="save">
                 {{ $t('save') }}
               </button>
             </div>

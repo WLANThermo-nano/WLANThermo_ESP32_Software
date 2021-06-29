@@ -283,6 +283,7 @@ void Notification::loadConfig()
           pushPushover.enabled = _pushover["enabled"];
           strcpy(pushPushover.token, _pushover["token"].asString());
           strcpy(pushPushover.userKey, _pushover["user_key"].asString());
+          pushPushover.priority = _pushover["priority"];
           pushPushover.retry = _pushover["retry"];
           pushPushover.expire = _pushover["expire"];
         }

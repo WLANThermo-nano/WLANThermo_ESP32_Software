@@ -73,6 +73,12 @@
               {{$t("prerelease")}}
             </label>
           </div>
+          <div class="form-checkbox" v-if="systemSettings.hasOwnProperty('crashreport')">
+            <label for="crashreport" class="pure-checkbox checkbox">
+              <input v-model="systemSettings.crashreport" :true-value="'true'" :false-value="'false'" type="checkbox" id="crashreport" />
+              {{$t("crashreport")}}
+            </label>
+          </div>
         </form>
       </div>
       <template v-if="showDisplaySettings">
@@ -113,7 +119,8 @@ export default {
         language: "de",
         unit: "C",
         autoupd: null,
-        prerelease: null
+        prerelease: null,
+        crashreport: null,
       },
       languages: [
         { value: "en", translationKey: "english" },

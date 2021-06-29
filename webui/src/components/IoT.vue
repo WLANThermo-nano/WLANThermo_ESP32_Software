@@ -42,7 +42,7 @@
           <div class="form-group cloud-link">
             <label class="control-label">{{$t("cloudUrl")}}</label>
             <label class="link" for="input">
-              <a :href="cloudUrl">{{cloudUrl}}</a>
+              <a @click="openCloudUrl">{{cloudUrl}}</a>
             </label>
             <i class="bar"></i>
           </div>
@@ -89,7 +89,7 @@
           </div>
           <div class="pure-u-1-2 control">
             <div class="form-group">
-              <input type="text" v-model="iot.PMQpass" required />
+              <input type="password" v-model="iot.PMQpass" required />
               <label class="control-label" for="input">{{$t("mqttPwd")}}</label>
               <i class="bar"></i>
             </div>
@@ -178,6 +178,14 @@ export default {
   methods: {
     backToHome: function () {
       EventBus.$emit("back-to-home")
+    },
+    openCloudUrl: function() {
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        // eslint-disable-next-line
+        cordova.InAppBrowser.open(this.cloudUrl, '_system');
+      } else {
+        window.open(this.cloudUrl, '_blank')
+      }
     },
     showHelpText: function () {
       EventBus.$emit('show-help-dialog', {

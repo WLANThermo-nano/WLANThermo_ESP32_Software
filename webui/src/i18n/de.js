@@ -44,6 +44,7 @@ export default {
 	hw_version: "Hardwareversion",
 	update_search: "Automatisch nach Updates suchen",
 	prerelease: "Beta-Versionen in der Suche mit einschließen",
+	crashreport: "Absturzbericht senden",
 	// Reiter Display-Einstellungen
 	display_settings: "Display-Einstellungen",
 	rotate_display: "Display drehen",
@@ -166,7 +167,7 @@ export default {
 	pitlinklinear: "linear",
 	pitlinklowpass: "lowpass",
 	// scan
-	mobileAppHeader: "WLANThermo Connect",
+	mobileAppHeader: "WLANThermo",
 	scanTitle: "Meine Geräte",
 	scanDevices: "Geräte",
 	scanDeviceIncompatible: "Inkompatibel (Bitte Update durchführen)",

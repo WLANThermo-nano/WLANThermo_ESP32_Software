@@ -28,16 +28,22 @@ enum class UploadFileType
   Nextion
 };
 
+typedef struct
+{
+  char validationKey[16];
+  uint8_t value;
+} ResetCounterType;
+
 class RecoveryMode
 {
 public:
   RecoveryMode(void);
   static void run();
   static void runFromApp(const char *paramWifiName, const char *paramWifiPassword);
-  static void zeroResetCounter() { resetCounter = 0u; };
-  static uint16_t getResetCounter() { return resetCounter; };
+  static uint16_t getResetCounter() { return resetCounter.value; };
 
 private:
+  static void shutdownHandler(void);
   static UploadFileType getFileType(String fileName);
   static UploadFileType uploadFileType;
   static size_t uploadFileSize;
@@ -48,5 +54,5 @@ private:
   static RTC_DATA_ATTR char wifiName[33];
   static RTC_DATA_ATTR char wifiPassword[64];
   static RTC_DATA_ATTR boolean fromApp;
-  static RTC_NOINIT_ATTR uint16_t resetCounter;
+  static RTC_NOINIT_ATTR ResetCounterType resetCounter;
 };

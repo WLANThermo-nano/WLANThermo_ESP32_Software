@@ -24,6 +24,7 @@
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
+#include "RecoveryMode.h"
 
 API::API()
 {
@@ -84,6 +85,7 @@ void API::systemObj(JsonObject &jObj, bool settings)
     jObj["getupdate"] = gSystem->otaUpdate.getVersion();
     jObj["autoupd"] = gSystem->otaUpdate.getAutoUpdate();
     jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
+    jObj["crashreport"] = gSystem->getCrashReport();
     jObj["hwversion"] = String("V") + String(gSystem->getHardwareVersion());
   }
 }
@@ -220,7 +222,7 @@ void API::iotObj(JsonObject &jObj)
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Update JSON Object
+// Notification JSON Object
 void API::notificationObj(JsonObject &jObj)
 {
   PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
@@ -266,7 +268,7 @@ void API::notificationObj(JsonObject &jObj)
     _message["unit"] = String((char)gSystem->temperatures.getUnit());
     TemperatureBase *temperature = gSystem->temperatures[notificationData.channel];
 
-    if(temperature)
+    if (temperature)
     {
       _message["temp"] = (int)temperature->getValue();
       _message["limit"] = (NotificationType::LowerLimit == notificationData.type) ? temperature->getMinValue() : temperature->getMaxValue();
@@ -305,6 +307,14 @@ void API::notificationObj(JsonObject &jObj)
       }
     }
   }
+}
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Crash JSON Object
+void API::crashObj(JsonObject &jObj)
+{
+  jObj["reset_reason"] = gSystem->getResetReason(0u) + String(";") + gSystem->getResetReason(1u);
+  jObj["reset_counter"] = RecoveryMode::getResetCounter();
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -498,6 +508,13 @@ String API::apiData(int typ)
   {
     JsonObject &note = root.createNestedObject("notification_v2");
     notificationObj(note);
+    break;
+  }
+
+  case APICRASHREPORT:
+  {
+    JsonObject &crash = root.createNestedObject("crash_report");
+    crashObj(crash);
     break;
   }
   }

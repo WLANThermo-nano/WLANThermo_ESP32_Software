@@ -21,6 +21,7 @@
 #include "Cloud.h"
 #include "system/SystemBase.h"
 #include "Settings.h"
+#include "RecoveryMode.h"
 #include "API.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
@@ -105,9 +106,15 @@ void Cloud::update()
   if (config.enabled)
   {
     // First get time from server before sending data
+    // Also send crash report if enabled
     if (now() < 31536000)
     {
       Cloud::sendAPI(NOAPI, APILINK);
+      if(gSystem->getCrashReport() && (RecoveryMode::getResetCounter() > 0u))
+      {
+        Cloud::sendAPI(APICRASHREPORT, APILINK);
+        Log.error("Crash report sent!" CR);
+      }
     }
     else if (0u == intervalCounter)
     {

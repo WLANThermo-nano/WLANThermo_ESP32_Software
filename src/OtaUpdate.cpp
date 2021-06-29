@@ -65,7 +65,6 @@ void OtaUpdate::task(void *parameter)
   if (success)
   {
     Serial.println("OTA update finished.");
-    RecoveryMode::zeroResetCounter();
     ESP.restart();
   }
 
