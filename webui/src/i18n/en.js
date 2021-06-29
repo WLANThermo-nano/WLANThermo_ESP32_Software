@@ -167,7 +167,7 @@ export default {
 	pitlinklinear: "linear",
 	pitlinklowpass: "lowpass",
 	// scan
-	mobileAppHeader: "WLANThermo Connect",
+	mobileAppHeader: "WLANThermo",
 	scanTitle: "My Devices",
 	scanDevices: "Devices",
 	scanDeviceIncompatible: "Incompatible (Please update)",

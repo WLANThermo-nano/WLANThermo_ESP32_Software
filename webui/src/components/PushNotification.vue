@@ -21,7 +21,7 @@
         ></span>
       </div>
       <div class="form-section-name" v-if="isMobile">
-        WLANThermo Connect
+        WLANThermo App
       </div>
       <div class="config-form" v-if="isMobile">
       <div class="form-checkbox">
