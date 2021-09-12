@@ -500,7 +500,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
 
   telegram["enabled"] = pushTelegram.enabled;
   telegram["token"] = pushTelegram.token;
-  telegram["chat_id"] = (pushTelegram.chatId > 0) ? String(pushTelegram.chatId) : String("");
+  telegram["chat_id"] = pushTelegram.chatId;
 
   JsonObject &pushover = json.createNestedObject("pushover");
 
@@ -787,18 +787,14 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
         _telegram.containsKey("chat_id"))
     {
-      // check length of token
-      if (strlen(_telegram["token"].asString()) < sizeof(PushTelegramType::token))
-      {
-        // set telegram
-        PushTelegramType telegram;
-        memset(&telegram, 0, sizeof(telegram));
+      // set telegram
+      PushTelegramType telegram;
+      memset(&telegram, 0, sizeof(telegram));
 
-        telegram.enabled = _telegram["enabled"];
-        strcpy(telegram.token, _telegram["token"].asString());
-        telegram.chatId = _telegram["chat_id"].as<int>();
-        gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
-      }
+      telegram.enabled = _telegram["enabled"];
+      strncpy(telegram.token, _telegram["token"].asString(), sizeof(telegram.token));
+      strncpy(telegram.chatId, _telegram["chat_id"].asString(), sizeof(telegram.chatId));
+      gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
     }
   }
 
@@ -809,26 +805,21 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
         _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
     {
-      // check length of token and user_key
-      if ((strlen(_pushover["token"].asString()) < sizeof(PushPushoverType::token)) &&
-          (strlen(_pushover["user_key"].asString()) < sizeof(PushPushoverType::userKey)))
+      // set pushover
+      PushPushoverType pushover;
+      memset(&pushover, 0, sizeof(pushover));
+      pushover.enabled = _pushover["enabled"];
+      strncpy(pushover.token, _pushover["token"].asString(), sizeof(pushover.token));
+      strncpy(pushover.userKey, _pushover["user_key"].asString(), sizeof(pushover.userKey));
+      pushover.priority = _pushover["priority"];
+
+      if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
       {
-        // set pushover
-        PushPushoverType pushover;
-        memset(&pushover, 0, sizeof(pushover));
-        pushover.enabled = _pushover["enabled"];
-        strcpy(pushover.token, _pushover["token"].asString());
-        strcpy(pushover.userKey, _pushover["user_key"].asString());
-        pushover.priority = _pushover["priority"];
-
-        if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
-        {
-          pushover.retry = _pushover["retry"];
-          pushover.expire = _pushover["expire"];
-        }
-
-        gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
+        pushover.retry = _pushover["retry"];
+        pushover.expire = _pushover["expire"];
       }
+
+      gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
     }
   }
 

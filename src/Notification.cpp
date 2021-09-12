@@ -244,14 +244,14 @@ void Notification::loadConfig()
       // telegram
       case 0u:
         pushTelegram.enabled = json["onP"];
-        strcpy(pushTelegram.token, json["tokP"].asString());
-        pushTelegram.chatId = json["idP"];
+        strncpy(pushTelegram.token, json["tokP"].asString(), sizeof(pushTelegram.token));
+        strncpy(pushTelegram.chatId, json["idP"].asString(), sizeof(pushTelegram.chatId));
         break;
       // pushover
       case 1u:
         pushPushover.enabled = json["onP"];
-        strcpy(pushPushover.token, json["tokP"].asString());
-        strcpy(pushPushover.userKey, json["idP"].asString());
+        strncpy(pushPushover.token, json["tokP"].asString(), sizeof(pushPushover.token));
+        strncpy(pushPushover.userKey, json["idP"].asString(), sizeof(pushPushover.userKey));
       }
     }
     // load current structure
@@ -266,8 +266,8 @@ void Notification::loadConfig()
         {
           // load telegram
           pushTelegram.enabled = _telegram["enabled"];
-          strcpy(pushTelegram.token, _telegram["token"].asString());
-          pushTelegram.chatId = _telegram["chat_id"];
+          strncpy(pushTelegram.token, _telegram["token"].asString(), sizeof(pushTelegram.token));
+          strncpy(pushTelegram.chatId, _telegram["chat_id"].asString(), sizeof(pushTelegram.chatId));
         }
       }
 
@@ -281,8 +281,8 @@ void Notification::loadConfig()
         {
           // load pushover
           pushPushover.enabled = _pushover["enabled"];
-          strcpy(pushPushover.token, _pushover["token"].asString());
-          strcpy(pushPushover.userKey, _pushover["user_key"].asString());
+          strncpy(pushPushover.token, _pushover["token"].asString(), sizeof(pushPushover.token));
+          strncpy(pushPushover.userKey, _pushover["user_key"].asString(), sizeof(pushPushover.userKey));
           pushPushover.priority = _pushover["priority"];
           pushPushover.retry = _pushover["retry"];
           pushPushover.expire = _pushover["expire"];

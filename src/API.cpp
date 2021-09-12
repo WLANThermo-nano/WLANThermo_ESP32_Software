@@ -280,7 +280,7 @@ void API::notificationObj(JsonObject &jObj)
     JsonObject &_telegram = _services.createNestedObject();
     _telegram["service"] = "telegram";
     _telegram["token"] = String(pushTelegram.token);
-    _telegram["chat_id"] = pushTelegram.chatId;
+    _telegram["chat_id"] = String(pushTelegram.chatId);
   }
 
   if (pushPushover.enabled)
