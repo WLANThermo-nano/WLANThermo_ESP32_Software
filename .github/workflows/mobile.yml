@@ -99,9 +99,9 @@ jobs:
       #       ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
       #       ./mobile/platforms/ios/build/device/WLANThermo.ipa
 
-      - name: Upload release APK
+      - name: Upload android release bundle
         uses: actions/upload-artifact@v2
         with:
           name: android-release
           path: |
-            ./mobile/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk
+            ./mobile/platforms/android/app/build/outputs/bundle/release/app-release.aab
