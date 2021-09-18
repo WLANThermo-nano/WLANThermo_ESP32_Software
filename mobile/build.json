@@ -11,5 +11,11 @@
                 "LD_RUNPATH_SEARCH_PATHS = \"@executable_path/Frameworks\""
             ]
         }
+    },
+    "android": {
+        "release": {
+            "minifyEnabled": false,
+            "shrinkResources": false
+        }
     }
 }
