@@ -73,6 +73,10 @@ jobs:
         working-directory: ./mobile
         run: npm run build-android
 
+      - name: Build Android release app
+        working-directory: ./mobile
+        run: npm run build-android-release
+
       - name: Prepare iOS provisioning
         working-directory: ./.github/secrets
         run: |
@@ -94,3 +98,10 @@ jobs:
           path: |
             ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
             ./mobile/platforms/ios/build/device/WLANThermo.ipa
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: android-release
+          path: |
+            ./mobile/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk
