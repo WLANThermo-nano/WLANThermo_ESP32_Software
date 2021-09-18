@@ -30,3 +30,19 @@ cordova platform add ios
 cordova run ios
 cordova build ios
 ```
+
+## Create Android app that can be published
+If you see garbled in the output message of _keytool_, try the following command in your terminal
+```
+chcp 936 
+```
+
+to create keystore file, run 
+```
+keytool -genkey -v -keystore android.keystore -alias wlanthermo-key -keyalg RSA -keysize 2048 -validity 10000
+```
+
+you can download aab file from Github Actions, put the aab file and keystore file in the same directory and run
+```
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore android.keystore app-release.aab wlanthermo-key
+```

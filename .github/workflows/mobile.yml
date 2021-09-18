@@ -69,14 +69,14 @@ jobs:
         working-directory: ./mobile
         run: cordova-res
 
-      # - name: Build Android app
-      #   working-directory: ./mobile
-      #   run: npm run build-android
+      - name: Build Android app
+        working-directory: ./mobile
+        run: npm run build-android
 
       - name: Build Android release app
         working-directory: ./mobile
         run: npm run build-android-release
-
+          
       - name: Prepare iOS provisioning
         working-directory: ./.github/secrets
         run: |
@@ -87,17 +87,17 @@ jobs:
           security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
           security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
 
-      # - name: Build iOS app
-      #   working-directory: ./mobile
-      #   run: cordova build ios --device
+      - name: Build iOS app
+        working-directory: ./mobile
+        run: cordova build ios --device
 
-      # - name: Upload dev APK and IPA
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: app-dev
-      #     path: |
-      #       ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-      #       ./mobile/platforms/ios/build/device/WLANThermo.ipa
+      - name: Upload dev APK and IPA
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-dev
+          path: |
+            ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+            ./mobile/platforms/ios/build/device/WLANThermo.ipa
 
       - name: Upload android release bundle
         uses: actions/upload-artifact@v2
