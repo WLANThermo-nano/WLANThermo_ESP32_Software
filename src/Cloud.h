@@ -26,9 +26,12 @@
 
 typedef struct
 {
-  bool enabled;
-  String token;
-  uint16_t interval;
+  bool cloudEnabled;
+  String cloudToken;
+  uint16_t cloudInterval;
+  bool customEnabled;
+  String customUrl;
+  uint16_t customInterval;
 } CloudConfig;
 
 typedef struct
@@ -42,6 +45,7 @@ enum
   NOAPI,
   APIUPDATE,
   APICLOUD,
+  APICUSTOM,
   APIDATA,
   APISETTINGS,
   APINOTIFICATION,
@@ -60,7 +64,8 @@ enum
 {
   APILINK,
   NOTELINK,
-  CLOUDLINK
+  CLOUDLINK,
+  CUSTOMLINK
 };
 
 class Cloud
@@ -91,5 +96,6 @@ private:
   CloudConfig config;
   static asyncHTTPrequest apiClient;
   static QueueHandle_t apiQueue;
-  uint16_t intervalCounter;
+  uint16_t cloudCounter;
+  uint16_t customCounter;
 };

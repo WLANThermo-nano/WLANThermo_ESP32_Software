@@ -102,7 +102,7 @@ void WServer::init()
 
   webServer.on("/settestmode", [](AsyncWebServerRequest *request) {
     CloudConfig cloudConfig = gSystem->cloud.getConfig();
-    cloudConfig.interval = 3;
+    cloudConfig.cloudInterval = 3u;
     gSystem->cloud.setConfig(cloudConfig);
     request->send(200, TEXTPLAIN, "3 Sekunden");
   });

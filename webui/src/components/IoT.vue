@@ -51,6 +51,39 @@
           </button>
         </form>
       </div>
+      <div class="name">
+        {{ $t('customCloudTitle') }}
+        <span
+          @click="showHelpText"
+          class="icon-question_sign icon-question"
+        ></span>
+      </div>
+      <div class="config-form">
+        <form>
+          <div class="form-checkbox">
+            <label for="customCloudActivate" class="pure-checkbox checkbox">
+              <input v-model="iot.CCLon" :true-value="'true'" :false-value="'false'" type="checkbox" id="customCloudActivate" />
+              {{$t("customCloudActivate")}}
+            </label>
+          </div>
+          <div class="form-group">
+            <select v-model="iot.CCLint">
+              <option
+                v-for="option in intervalOptions"
+                :key="option.value"
+                :value="option.value"
+              >{{$t(option.translationKey)}}</option>
+            </select>
+            <label class="control-label" for="select">{{$t("sendInterval")}}</label>
+            <i class="bar"></i>
+          </div>
+          <div class="form-group cloud-link">
+            <input type="text" v-model="iot.CCLurl" required />
+            <label class="control-label">{{$t("customCloudUrl")}}</label>
+            <i class="bar"></i>
+          </div>
+        </form>
+      </div>
       <div class="name mt10">
         {{ $t('mqttTitle') }}
         <span

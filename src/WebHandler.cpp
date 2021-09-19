@@ -728,7 +728,7 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 
   MqttConfig mqttConfig = gSystem->mqtt.getConfig();
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
-  bool refresh = cloudConfig.enabled;
+  bool refresh = cloudConfig.cloudEnabled;
 
   if (_chart.containsKey("PMQhost"))
     strcpy(mqttConfig.host, _chart["PMQhost"].asString());
@@ -748,11 +748,18 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   gSystem->mqtt.setConfig(mqttConfig);
 
   if (_chart.containsKey("CLon"))
-    cloudConfig.enabled = _chart["CLon"];
+    cloudConfig.cloudEnabled = _chart["CLon"];
   if (_chart.containsKey("CLtoken"))
-    cloudConfig.token = _chart["CLtoken"].asString();
+    cloudConfig.cloudToken = _chart["CLtoken"].asString();
   if (_chart.containsKey("CLint"))
-    cloudConfig.interval = _chart["CLint"];
+    cloudConfig.cloudInterval = _chart["CLint"];
+  
+  if (_chart.containsKey("CCLon"))
+    cloudConfig.customEnabled = _chart["CCLon"];
+  if (_chart.containsKey("CCLurl"))
+    cloudConfig.customUrl = _chart["CCLurl"].asString();
+  if (_chart.containsKey("CCLint"))
+    cloudConfig.customInterval = _chart["CCLint"];
 
   gSystem->cloud.setConfig(cloudConfig);
 

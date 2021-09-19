@@ -215,10 +215,14 @@ void API::iotObj(JsonObject &jObj)
   jObj["PMQqos"] = mqttConfig.QoS;
   jObj["PMQon"] = mqttConfig.enabled;
   jObj["PMQint"] = mqttConfig.interval;
-  jObj["CLon"] = cloudConfig.enabled;
-  jObj["CLtoken"] = cloudConfig.token;
-  jObj["CLint"] = cloudConfig.interval;
+  jObj["CLon"] = cloudConfig.cloudEnabled;
+  jObj["CLtoken"] = cloudConfig.cloudToken;
+  jObj["CLint"] = cloudConfig.cloudInterval;
   jObj["CLurl"] = "cloud.wlanthermo.de/index.html";
+
+  jObj["CCLon"] = cloudConfig.customEnabled;
+  jObj["CCLint"] = cloudConfig.customInterval;
+  jObj["CCLurl"] = cloudConfig.customUrl;
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -441,13 +445,25 @@ void API::cloudObj(JsonObject &jObj)
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
 
   jObj["task"] = "save";
-  jObj["api_token"] = cloudConfig.token;
+  jObj["api_token"] = cloudConfig.cloudToken;
 
   JsonArray &data = jObj.createNestedArray("data");
   // aktuelle Werte
   JsonObject &_obj = data.createNestedObject();
   dataObj(_obj, true);
 }
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// CUSTOM JSON Object - Level 1
+void API::customObj(JsonObject &jObj)
+{
+  jObj["version"] = 1;
+
+  // CHANNEL
+  JsonArray &_channel = jObj.createNestedArray("channel");
+  channelAry(_channel, gSystem->temperatures.count());
+}
+
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Hauptprogramm API - JSON Generator
@@ -457,9 +473,10 @@ String API::apiData(int typ)
   DynamicJsonBuffer jsonBuffer;
   JsonObject &root = jsonBuffer.createObject();
 
-  if (typ == APIDATA)
+  if ((APIDATA == typ) || (APICUSTOM == typ))
   { //  || typ == APISETTINGS
     // interne Kommunikation mit dem Webinterface
+    // oder custom cloud
   }
   else
   {
@@ -489,6 +506,13 @@ String API::apiData(int typ)
   {
     JsonObject &cloud = root.createNestedObject("cloud");
     cloudObj(cloud);
+    break;
+  }
+
+  case APICUSTOM:
+  {
+    JsonObject &custom = root.createNestedObject("custom");
+    customObj(custom);
     break;
   }
 

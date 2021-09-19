@@ -207,7 +207,10 @@ export const Data = {
             "CLon": false,
             "CLtoken": "c82b96995b705ec91d87bb",
             "CLint": 30,
-            "CLurl": "cloud.wlanthermo.de/index.html"
+            "CLurl": "cloud.wlanthermo.de/index.html",
+            "CCLon": false,
+            "CCLint": 30,
+            "CCLurl": ""
         }
     },
     data: {
