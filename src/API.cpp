@@ -511,8 +511,7 @@ String API::apiData(int typ)
 
   case APICUSTOM:
   {
-    JsonObject &custom = root.createNestedObject("custom");
-    customObj(custom);
+    customObj(root);
     break;
   }
 
