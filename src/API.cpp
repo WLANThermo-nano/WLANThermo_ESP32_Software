@@ -458,6 +458,7 @@ void API::cloudObj(JsonObject &jObj)
 void API::customObj(JsonObject &jObj)
 {
   jObj["version"] = 1;
+  jObj["unit"] = String((char)gSystem->temperatures.getUnit());
 
   // CHANNEL
   JsonArray &_channel = jObj.createNestedArray("channel");
