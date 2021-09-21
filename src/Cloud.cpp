@@ -406,6 +406,7 @@ void Cloud::handleQueue()
     apiClient.open("POST", url.c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
+    apiClient.setReqHeader("Content-Type", "application/json");
 
     if(cloudRequest.urlIndex != CUSTOMLINK)
       apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
