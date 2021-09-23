@@ -457,12 +457,26 @@ void API::cloudObj(JsonObject &jObj)
 // CUSTOM JSON Object - Level 1
 void API::customObj(JsonObject &jObj)
 {
+  CloudConfig cloudConfig = gSystem->cloud.getConfig();
+
   jObj["version"] = 1;
-  jObj["unit"] = String((char)gSystem->temperatures.getUnit());
+  jObj["interval"] = cloudConfig.customInterval;
 
   // CHANNEL
   JsonArray &_channel = jObj.createNestedArray("channel");
   channelAry(_channel, gSystem->temperatures.count());
+
+  for (JsonArray::iterator it = _channel.begin(); it != _channel.end(); ++it)
+  {
+    JsonObject &_currentChannel = it->asObject();
+
+    _currentChannel["unit"] = String((char)gSystem->temperatures.getUnit());
+    
+    if(INACTIVEVALUE == _currentChannel["temp"])
+    {
+      _currentChannel["temp"] = (char*)0;
+    }
+  }
 }
 
 
