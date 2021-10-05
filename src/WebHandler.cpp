@@ -33,6 +33,7 @@
 #include "Version.h"
 #include "RecoveryMode.h"
 #include "LogRingBuffer.h"
+#include "DeviceId.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 #include "webui/restart.html.gz.h"
@@ -89,6 +90,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/getbluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
+    {"/getdeviceid", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleDeviceId, NULL},
     {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
     {"/getpush", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleGetPush, NULL},
     // Body handler
@@ -478,6 +480,11 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
 
   response->setLength();
   request->send(response);
+}
+
+void NanoWebHandler::handleDeviceId(AsyncWebServerRequest *request)
+{
+  request->send(200, TEXTPLAIN, DeviceId::get());
 }
 
 void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
