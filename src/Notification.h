@@ -55,7 +55,7 @@ typedef struct
 {
   boolean enabled;
   char token[100];
-  int chatId;
+  char chatId[32];
 } PushTelegramType;
 
 typedef struct

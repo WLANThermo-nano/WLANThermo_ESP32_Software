@@ -20,6 +20,9 @@
           class="icon-question_sign icon-question"
         ></span>
       </div>
+      <div class="form-section-name">
+        WLANThermo
+      </div>
       <div class="config-form">
         <form>
           <div class="form-checkbox">
@@ -49,6 +52,35 @@
           <button class="pure-button pure-button-primary" type="button" @click.stop="generateToken">
             {{ $t('cloudBtnToken') }}
           </button>
+        </form>
+      </div>
+      <div class="form-section-name">
+        {{ $t('customCloudTitle') }}
+      </div>
+      <div class="config-form">
+        <form>
+          <div class="form-checkbox">
+            <label for="customCloudActivate" class="pure-checkbox checkbox">
+              <input v-model="iot.CCLon" :true-value="'true'" :false-value="'false'" type="checkbox" id="customCloudActivate" />
+              {{$t("customCloudActivate")}}
+            </label>
+          </div>
+          <div class="form-group">
+            <select v-model="iot.CCLint">
+              <option
+                v-for="option in intervalOptions"
+                :key="option.value"
+                :value="option.value"
+              >{{$t(option.translationKey)}}</option>
+            </select>
+            <label class="control-label" for="select">{{$t("sendInterval")}}</label>
+            <i class="bar"></i>
+          </div>
+          <div class="form-group cloud-link">
+            <input type="text" v-model="iot.CCLurl" required />
+            <label class="control-label">{{$t("customCloudUrl")}}</label>
+            <i class="bar"></i>
+          </div>
         </form>
       </div>
       <div class="name mt10">
@@ -228,7 +260,12 @@ export default {
 
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
-
+.form-section-name {
+  color: #fff;
+  padding: 0.3em;
+  margin-top: 0.3em;
+  font-size: 1.1em;
+}
 .cloud-link {
   .control-label {
     font-size: 0.8rem;

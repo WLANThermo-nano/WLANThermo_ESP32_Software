@@ -61,6 +61,7 @@ public:
   void handleAdmin(AsyncWebServerRequest *request);
   void handleUpdate(AsyncWebServerRequest *request);
   void handleBluetooth(AsyncWebServerRequest *request);
+  void handleDeviceId(AsyncWebServerRequest *request);
   void handleLog(AsyncWebServerRequest *request);
   void handleGetPush(AsyncWebServerRequest *request);
 

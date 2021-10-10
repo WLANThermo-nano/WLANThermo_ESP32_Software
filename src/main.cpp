@@ -27,6 +27,7 @@
 #include "ArduinoLog.h"
 #include "LogRingBuffer.h"
 #include "TaskConfig.h"
+#include "DeviceId.h"
 
 // Forward declaration
 void createTasks();
@@ -41,6 +42,7 @@ void loggingPrefix(Print *p)
 void setup()
 {
   RecoveryMode::run();
+  DeviceId::init();
 
   // Initialize Serial
   Serial.begin(115200);

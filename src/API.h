@@ -42,6 +42,7 @@ public:
   static void dataObj(JsonObject &jObj, bool cloud);
   static void settingsObj(JsonObject &jObj);
   static void cloudObj(JsonObject &jObj);
+  static void customObj(JsonObject &jObj);
   static void notificationObj(JsonObject &jObj);
   static void crashObj(JsonObject &jObj);
   static String apiData(int typ);

@@ -21,6 +21,7 @@
 #include "API.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
+#include "DeviceId.h"
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
@@ -215,10 +216,14 @@ void API::iotObj(JsonObject &jObj)
   jObj["PMQqos"] = mqttConfig.QoS;
   jObj["PMQon"] = mqttConfig.enabled;
   jObj["PMQint"] = mqttConfig.interval;
-  jObj["CLon"] = cloudConfig.enabled;
-  jObj["CLtoken"] = cloudConfig.token;
-  jObj["CLint"] = cloudConfig.interval;
+  jObj["CLon"] = cloudConfig.cloudEnabled;
+  jObj["CLtoken"] = cloudConfig.cloudToken;
+  jObj["CLint"] = cloudConfig.cloudInterval;
   jObj["CLurl"] = "cloud.wlanthermo.de/index.html";
+
+  jObj["CCLon"] = cloudConfig.customEnabled;
+  jObj["CCLint"] = cloudConfig.customInterval;
+  jObj["CCLurl"] = cloudConfig.customUrl;
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -280,7 +285,7 @@ void API::notificationObj(JsonObject &jObj)
     JsonObject &_telegram = _services.createNestedObject();
     _telegram["service"] = "telegram";
     _telegram["token"] = String(pushTelegram.token);
-    _telegram["chat_id"] = pushTelegram.chatId;
+    _telegram["chat_id"] = String(pushTelegram.chatId);
   }
 
   if (pushPushover.enabled)
@@ -303,6 +308,7 @@ void API::notificationObj(JsonObject &jObj)
         JsonObject &_app = _services.createNestedObject();
         _app["service"] = "app";
         _app["token"] = String(pushApp.devices[i].token);
+        _app["device_id"] = DeviceId::get();
         _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
       }
     }
@@ -441,13 +447,40 @@ void API::cloudObj(JsonObject &jObj)
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
 
   jObj["task"] = "save";
-  jObj["api_token"] = cloudConfig.token;
+  jObj["api_token"] = cloudConfig.cloudToken;
 
   JsonArray &data = jObj.createNestedArray("data");
   // aktuelle Werte
   JsonObject &_obj = data.createNestedObject();
   dataObj(_obj, true);
 }
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// CUSTOM JSON Object - Level 1
+void API::customObj(JsonObject &jObj)
+{
+  CloudConfig cloudConfig = gSystem->cloud.getConfig();
+
+  jObj["version"] = 1;
+  jObj["interval"] = cloudConfig.customInterval;
+
+  // CHANNEL
+  JsonArray &_channel = jObj.createNestedArray("channel");
+  channelAry(_channel, gSystem->temperatures.count());
+
+  for (JsonArray::iterator it = _channel.begin(); it != _channel.end(); ++it)
+  {
+    JsonObject &_currentChannel = it->asObject();
+
+    _currentChannel["unit"] = String((char)gSystem->temperatures.getUnit());
+    
+    if(INACTIVEVALUE == _currentChannel["temp"])
+    {
+      _currentChannel["temp"] = (char*)0;
+    }
+  }
+}
+
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Hauptprogramm API - JSON Generator
@@ -457,9 +490,10 @@ String API::apiData(int typ)
   DynamicJsonBuffer jsonBuffer;
   JsonObject &root = jsonBuffer.createObject();
 
-  if (typ == APIDATA)
+  if ((APIDATA == typ) || (APICUSTOM == typ))
   { //  || typ == APISETTINGS
     // interne Kommunikation mit dem Webinterface
+    // oder custom cloud
   }
   else
   {
@@ -489,6 +523,12 @@ String API::apiData(int typ)
   {
     JsonObject &cloud = root.createNestedObject("cloud");
     cloudObj(cloud);
+    break;
+  }
+
+  case APICUSTOM:
+  {
+    customObj(root);
     break;
   }
 

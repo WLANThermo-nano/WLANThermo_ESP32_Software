@@ -33,6 +33,7 @@
 #include "Version.h"
 #include "RecoveryMode.h"
 #include "LogRingBuffer.h"
+#include "DeviceId.h"
 #include <SPIFFS.h>
 #include <AsyncJson.h>
 #include "webui/restart.html.gz.h"
@@ -89,6 +90,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
     {"/getbluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
+    {"/getdeviceid", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleDeviceId, NULL},
     {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
     {"/getpush", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleGetPush, NULL},
     // Body handler
@@ -480,6 +482,11 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
   request->send(response);
 }
 
+void NanoWebHandler::handleDeviceId(AsyncWebServerRequest *request)
+{
+  request->send(200, TEXTPLAIN, DeviceId::get());
+}
+
 void NanoWebHandler::handleLog(AsyncWebServerRequest *request)
 {
   request->send(200, TEXTPLAIN, gLogRingBuffer.get());
@@ -500,7 +507,7 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
 
   telegram["enabled"] = pushTelegram.enabled;
   telegram["token"] = pushTelegram.token;
-  telegram["chat_id"] = (pushTelegram.chatId > 0) ? String(pushTelegram.chatId) : String("");
+  telegram["chat_id"] = pushTelegram.chatId;
 
   JsonObject &pushover = json.createNestedObject("pushover");
 
@@ -728,7 +735,7 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 
   MqttConfig mqttConfig = gSystem->mqtt.getConfig();
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
-  bool refresh = cloudConfig.enabled;
+  bool refresh = cloudConfig.cloudEnabled;
 
   if (_chart.containsKey("PMQhost"))
     strcpy(mqttConfig.host, _chart["PMQhost"].asString());
@@ -748,11 +755,18 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   gSystem->mqtt.setConfig(mqttConfig);
 
   if (_chart.containsKey("CLon"))
-    cloudConfig.enabled = _chart["CLon"];
+    cloudConfig.cloudEnabled = _chart["CLon"];
   if (_chart.containsKey("CLtoken"))
-    cloudConfig.token = _chart["CLtoken"].asString();
+    cloudConfig.cloudToken = _chart["CLtoken"].asString();
   if (_chart.containsKey("CLint"))
-    cloudConfig.interval = _chart["CLint"];
+    cloudConfig.cloudInterval = _chart["CLint"];
+  
+  if (_chart.containsKey("CCLon"))
+    cloudConfig.customEnabled = _chart["CCLon"];
+  if (_chart.containsKey("CCLurl"))
+    cloudConfig.customUrl = _chart["CCLurl"].asString();
+  if (_chart.containsKey("CCLint"))
+    cloudConfig.customInterval = _chart["CCLint"];
 
   gSystem->cloud.setConfig(cloudConfig);
 
@@ -787,18 +801,14 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
         _telegram.containsKey("chat_id"))
     {
-      // check length of token
-      if (strlen(_telegram["token"].asString()) < sizeof(PushTelegramType::token))
-      {
-        // set telegram
-        PushTelegramType telegram;
-        memset(&telegram, 0, sizeof(telegram));
+      // set telegram
+      PushTelegramType telegram;
+      memset(&telegram, 0, sizeof(telegram));
 
-        telegram.enabled = _telegram["enabled"];
-        strcpy(telegram.token, _telegram["token"].asString());
-        telegram.chatId = _telegram["chat_id"].as<int>();
-        gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
-      }
+      telegram.enabled = _telegram["enabled"];
+      strncpy(telegram.token, _telegram["token"].asString(), sizeof(telegram.token));
+      strncpy(telegram.chatId, _telegram["chat_id"].asString(), sizeof(telegram.chatId));
+      gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
     }
   }
 
@@ -809,26 +819,21 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
         _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
     {
-      // check length of token and user_key
-      if ((strlen(_pushover["token"].asString()) < sizeof(PushPushoverType::token)) &&
-          (strlen(_pushover["user_key"].asString()) < sizeof(PushPushoverType::userKey)))
+      // set pushover
+      PushPushoverType pushover;
+      memset(&pushover, 0, sizeof(pushover));
+      pushover.enabled = _pushover["enabled"];
+      strncpy(pushover.token, _pushover["token"].asString(), sizeof(pushover.token));
+      strncpy(pushover.userKey, _pushover["user_key"].asString(), sizeof(pushover.userKey));
+      pushover.priority = _pushover["priority"];
+
+      if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
       {
-        // set pushover
-        PushPushoverType pushover;
-        memset(&pushover, 0, sizeof(pushover));
-        pushover.enabled = _pushover["enabled"];
-        strcpy(pushover.token, _pushover["token"].asString());
-        strcpy(pushover.userKey, _pushover["user_key"].asString());
-        pushover.priority = _pushover["priority"];
-
-        if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
-        {
-          pushover.retry = _pushover["retry"];
-          pushover.expire = _pushover["expire"];
-        }
-
-        gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
+        pushover.retry = _pushover["retry"];
+        pushover.expire = _pushover["expire"];
       }
+
+      gSystem->notification.setPushoverConfig(pushover, sendTestMessage);
     }
   }
 

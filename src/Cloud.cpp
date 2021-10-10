@@ -94,16 +94,20 @@ String digitalClockDisplay(time_t t)
 
 Cloud::Cloud()
 {
-  config.enabled = false;
-  config.token = createToken();
-  config.interval = DEFAULT_INTERVAL;
-  intervalCounter = 0u;
-  state = 0;
+  config.cloudEnabled = false;
+  config.cloudToken = createToken();
+  config.cloudInterval = DEFAULT_INTERVAL;
+  config.customEnabled = false;
+  config.customInterval = DEFAULT_INTERVAL;
+  config.customUrl = "";
+  cloudCounter = 0u;
+  customCounter = 0u;
+  state = 0u;
 }
 
 void Cloud::update()
 {
-  if (config.enabled)
+  if (config.cloudEnabled)
   {
     // First get time from server before sending data
     // Also send crash report if enabled
@@ -116,9 +120,9 @@ void Cloud::update()
         Log.error("Crash report sent!" CR);
       }
     }
-    else if (0u == intervalCounter)
+    else if (0u == cloudCounter)
     {
-      intervalCounter = config.interval;
+      cloudCounter = config.cloudInterval;
       Cloud::sendAPI(APICLOUD, CLOUDLINK);
     }
   }
@@ -127,16 +131,28 @@ void Cloud::update()
     gSystem->cloud.state = 0;
   }
 
+  if (config.customEnabled)
+  {
+    if (0u == customCounter)
+    {
+      customCounter = config.customInterval;
+      Cloud::sendAPI(APICUSTOM, CUSTOMLINK);
+    }
+  }
+
   handleQueue();
 
-  if (intervalCounter)
-    intervalCounter--;
+  if (cloudCounter)
+    cloudCounter--;
+
+  if (customCounter)
+    customCounter--;
 }
 
 String Cloud::newToken()
 {
-  config.token = createToken();
-  return config.token;
+  config.cloudToken = createToken();
+  return config.cloudToken;
 }
 
 String Cloud::createToken()
@@ -160,13 +176,17 @@ void Cloud::saveConfig()
 {
   DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
   JsonObject &json = jsonBuffer.createObject();
-  json["enabled"] = config.enabled;
-  json["token"] = config.token;
-  json["interval"] = config.interval;
+  json["enabled"] = config.cloudEnabled;
+  json["token"] = config.cloudToken;
+  json["interval"] = config.cloudInterval;
+
+  json["customEnabled"] = config.customEnabled;
+  json["customUrl"] = config.customUrl;
+  json["customInterval"] = config.customInterval;
   Settings::write(kCloud, json);
 
   // trigger send after config update
-  intervalCounter = 0u;
+  cloudCounter = 0u;
 }
 
 void Cloud::saveUrl()
@@ -199,11 +219,18 @@ void Cloud::loadConfig()
   if (json.success())
   {
     if (json.containsKey("enabled"))
-      config.enabled = json["enabled"];
+      config.cloudEnabled = json["enabled"];
     if (json.containsKey("token"))
-      config.token = json["token"].asString();
+      config.cloudToken = json["token"].asString();
     if (json.containsKey("interval"))
-      config.interval = json["interval"];
+      config.cloudInterval = json["interval"];
+
+    if (json.containsKey("customEnabled"))
+      config.customEnabled = json["customEnabled"];
+    if (json.containsKey("customUrl"))
+      config.customUrl = json["customUrl"].asString();
+    if (json.containsKey("customInterval"))
+      config.customInterval = json["customInterval"];
   }
 
   File file = SPIFFS.open(URL_FILE, "r");
@@ -245,7 +272,7 @@ void Cloud::setConfig(CloudConfig newConfig)
   config = newConfig;
 
   // trigger send after config update
-  intervalCounter = 0u;
+  cloudCounter = 0u;
 
   // save to NvM
   saveConfig();
@@ -373,11 +400,17 @@ void Cloud::handleQueue()
     if (clientlog)
       apiClient.setDebug(true);
 
+    String url = (cloudRequest.urlIndex != CUSTOMLINK) ? String("http://" + serverurl[cloudRequest.urlIndex].host + "/") : config.customUrl;
+
     apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
-    apiClient.open("POST", String("http://" + serverurl[cloudRequest.urlIndex].host + "/").c_str());
+    apiClient.open("POST", url.c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
-    apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
+    apiClient.setReqHeader("Content-Type", "application/json");
+
+    if(cloudRequest.urlIndex != CUSTOMLINK)
+      apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
+    
     apiClient.send(cloudRequest.requestData);
     delete cloudRequest.requestData;
   }
