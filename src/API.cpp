@@ -21,6 +21,7 @@
 #include "API.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
+#include "DeviceId.h"
 #include "Version.h"
 #include "WebHandler.h"
 #include "DbgPrint.h"
@@ -307,6 +308,7 @@ void API::notificationObj(JsonObject &jObj)
         JsonObject &_app = _services.createNestedObject();
         _app["service"] = "app";
         _app["token"] = String(pushApp.devices[i].token);
+        _app["device_id"] = DeviceId::get();
         _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
       }
     }
