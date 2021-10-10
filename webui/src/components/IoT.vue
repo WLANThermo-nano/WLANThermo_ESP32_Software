@@ -20,6 +20,9 @@
           class="icon-question_sign icon-question"
         ></span>
       </div>
+      <div class="form-section-name">
+        WLANThermo
+      </div>
       <div class="config-form">
         <form>
           <div class="form-checkbox">
@@ -51,12 +54,8 @@
           </button>
         </form>
       </div>
-      <div class="name">
+      <div class="form-section-name">
         {{ $t('customCloudTitle') }}
-        <span
-          @click="showHelpText"
-          class="icon-question_sign icon-question"
-        ></span>
       </div>
       <div class="config-form">
         <form>
@@ -261,7 +260,12 @@ export default {
 
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
-
+.form-section-name {
+  color: #fff;
+  padding: 0.3em;
+  margin-top: 0.3em;
+  font-size: 1.1em;
+}
 .cloud-link {
   .control-label {
     font-size: 0.8rem;

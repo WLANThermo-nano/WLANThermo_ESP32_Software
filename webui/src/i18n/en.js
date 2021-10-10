@@ -116,8 +116,8 @@ export default {
 	fiveMinutes: "5 minutes",			//   (wollen wir hier nur Zahlen machen und alles in Sekunden und dann Einheit zum Textfeld?)
 	sendInterval: "Send interval",
 	cloudBtnToken: "Generate token",
-	customCloudTitle: "Custom Cloud",
-	customCloudActivate: "Aktivieren",
+	customCloudTitle: "Custom",
+	customCloudActivate: "Activate Custom Cloud Service",
 	customCloudUrl: "Url",
 	mqttTitle: "Private MQTT Client",
 	mqttActivate: "Activate MQTT Client",
