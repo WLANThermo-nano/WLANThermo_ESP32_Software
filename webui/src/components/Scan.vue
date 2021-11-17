@@ -83,7 +83,7 @@ const Netmask = require("netmask").Netmask;
 const MY_DEVICES_KEY = '_WLANTHERMO_MY_DEVICES';
 const DEVICE_SCHEMA_VERSION = 'v1'
 const DEVICE_SCHEMA_VERSION_KEY = '_WLANTHERMO_MY_DEVICES_VERSION'
-const DEVICE_TYPES = ['nanov1','nanov2','nanov3','miniv1','miniv2','miniv3','linkv1']
+const DEVICE_TYPES = ['nanov1','nanov2','nanov3','miniv1','miniv2','miniv3','linkv1','boneV1']
 
 function toDeviceType(respData) {
   const type = `${respData.device?.device?.toLocaleLowerCase()}${respData.device?.hw_version.toLocaleLowerCase()}`
@@ -126,6 +126,7 @@ export default {
         miniv2: require(`@/assets/images/miniv2.svg`),
         miniv3: require(`@/assets/images/miniv3.svg`),
         linkv1: require(`@/assets/images/linkv1.svg`),
+        bonev1: require(`@/assets/images/bonev1.svg`),
         demo: require(`@/assets/images/demo.svg`)
       },
       refreshing: false,

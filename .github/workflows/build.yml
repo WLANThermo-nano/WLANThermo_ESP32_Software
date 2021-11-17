@@ -23,13 +23,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U platformio
       - name: Build
-        run: platformio run -e miniV1 -e miniV2 -e miniV3 -e nanoV3 -e linkV1 -e connectV1
+        run: platformio run -e miniV1 -e miniV2 -e miniV3 -e nanoV3 -e linkV1 -e boneV1 -e connectV1
       - run: mkdir -p ./artifacts
       - run: cp ./.pio/build/miniV1/firmware.bin ./artifacts/miniV1_firmware.bin
       - run: cp ./.pio/build/miniV2/firmware.bin ./artifacts/miniV2_firmware.bin
       - run: cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3_firmware.bin
       - run: cp ./.pio/build/nanoV3/firmware.bin ./artifacts/nanoV3_firmware.bin
       - run: cp ./.pio/build/linkV1/firmware.bin ./artifacts/linkV1_firmware.bin
+      - run: cp ./.pio/build/boneV1/firmware.bin ./artifacts/boneV1_firmware.bin
       - run: cp ./.pio/build/connectV1/firmware.bin ./artifacts/connectV1_firmware.bin
       - uses: actions/upload-artifact@v1
         with:
