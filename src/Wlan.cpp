@@ -24,6 +24,7 @@
 #include "Constants.h"
 #include "Version.h"
 #include "system/SystemBase.h"
+#include "ArduinoLog.h"
 
 #define APPASSWORD "12345678"
 
@@ -339,6 +340,8 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
   WiFi.mode(WIFI_STA);
 
+  Log.notice("Connected to Wifi: %s (%s, %s)" CR, WiFi.SSID().c_str(), WiFi.BSSIDstr().c_str(), WiFi.localIP().toString().c_str());
+
   if (WiFi.SSID() == newWlanCredentials.ssid)
   {
     saveConfig();
@@ -350,6 +353,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
 void Wlan::onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   Serial.println("wifi: disconnect");
+  Log.notice("Disconnected from Wifi" CR);
 }
 
 void Wlan::onsoftAPDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)

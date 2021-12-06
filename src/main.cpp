@@ -34,7 +34,12 @@ void createTasks();
 
 void loggingPrefix(Print *p)
 {
-  p->printf("%08dms:", millis());
+  time_t t = now();
+
+  if (year(t) > 2000)
+  {
+    p->printf("%02d:%02d:%02d: ", hour(t), minute(t), second(t));
+  }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -48,7 +53,7 @@ void setup()
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Log.begin(LOG_LEVEL_TRACE, &gLogRingBuffer);
-  //Log.setPrefix(loggingPrefix);
+  Log.setPrefix(loggingPrefix);
   Log.notice("Start logging" CR);
 
   gSystem->hwInit();
