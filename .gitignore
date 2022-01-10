@@ -10,5 +10,4 @@
 data/
 
 *.map
-webui/dist/*
 .DS_Store

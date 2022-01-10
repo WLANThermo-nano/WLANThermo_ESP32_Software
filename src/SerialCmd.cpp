@@ -165,7 +165,7 @@ void read_serial(char *buffer)
       gSystem->resetConfig();
       return;
     }
-#if defined HW_MINI_V2 || defined HW_MINI_V3
+#if defined HW_MINI_V1 || defined HW_MINI_V2 || defined HW_MINI_V3
     else if (str == "enabledisplay")
     {
       gDisplay->disable(false);

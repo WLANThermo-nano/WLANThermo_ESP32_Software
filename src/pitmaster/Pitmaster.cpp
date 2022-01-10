@@ -589,9 +589,9 @@ boolean Pitmaster::checkOpenLid()
         }
         else if (openLid.fall_c == 2)
         {
-            Log.notice("OPL 0: %F" CR, (float)(openLid.ref));
-            Log.notice("OPL 1: %F" CR, (float)(this->temperature->getPreValue()));
-            Log.notice("OPL 2: %F" CR, (float)(this->temperature->getValue()));
+            //Log.notice("OPL 0: %F" CR, (float)(openLid.ref));
+            //Log.notice("OPL 1: %F" CR, (float)(this->temperature->getPreValue()));
+            //Log.notice("OPL 2: %F" CR, (float)(this->temperature->getValue()));
         }
         else if (openLid.fall_c > 10) {
             openLid.fall_c = 0;  // Zurücksetzen wenn über max. Count

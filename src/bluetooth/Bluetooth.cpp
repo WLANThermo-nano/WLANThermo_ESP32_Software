@@ -176,8 +176,10 @@ void Bluetooth::enableChip(boolean enable)
         }
         else
         {
-            pinMode(resetPin, OUTPUT);
-            digitalWrite(resetPin, LOW);
+            // Causes Recovery Mode after Reset for Mini V3 -->
+            // Needs to be implemented at NRF52 firmware
+            /*pinMode(resetPin, OUTPUT);
+            digitalWrite(resetPin, LOW);*/
         }
     }
 }

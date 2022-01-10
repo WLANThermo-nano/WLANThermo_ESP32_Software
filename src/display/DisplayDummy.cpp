@@ -1,5 +1,6 @@
 /*************************************************** 
-    Copyright (C) 2020  Martin Koerner
+    Copyright (C) 2016  Steffen Ochs
+    Copyright (C) 2021  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,22 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     HISTORY: Please refer Github History
+    
+****************************************************/
+#include "DisplayDummy.h"
 
- ****************************************************/
+DisplayDummy::DisplayDummy()
+{
+}
 
-#ifndef C_CONSTANTS_H_
-#define C_CONSTANTS_H_
 
-#define DEFAULT_APNAME "WLANTHERMO-AP"
+void DisplayDummy::saveConfig()
+{
+}
 
-#ifdef HW_NANO_V3
-#define DEFAULT_HOSTNAME "NANO-"
-#elif HW_LINK_V1
-#define DEFAULT_HOSTNAME "LINK-"
-#elif HW_BONE_V1
-#define DEFAULT_HOSTNAME "BONE-"
-#else
-#define DEFAULT_HOSTNAME "MINI-"
-#endif
-
-#endif /* C_CONSTANTS_H_ */
+void DisplayDummy::loadConfig()
+{
+}

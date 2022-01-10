@@ -1,5 +1,5 @@
 /*************************************************** 
-    Copyright (C) 2020  Martin Koerner
+    Copyright (C) 2021  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,22 +15,43 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     HISTORY: Please refer Github History
+    
+****************************************************/
 
- ****************************************************/
+#include "SystemBoneV1.h"
+#include "Constants.h"
 
-#ifndef C_CONSTANTS_H_
-#define C_CONSTANTS_H_
+// SD CARD
+#define CS_SD_CARD 5u
 
-#define DEFAULT_APNAME "WLANTHERMO-AP"
+// BLUETOOTH
+#define BLE_UART_TX 12
+#define BLE_UART_RX 14
+#define BLE_RESET_PIN 4u
 
-#ifdef HW_NANO_V3
-#define DEFAULT_HOSTNAME "NANO-"
-#elif HW_LINK_V1
-#define DEFAULT_HOSTNAME "LINK-"
-#elif HW_BONE_V1
-#define DEFAULT_HOSTNAME "BONE-"
-#else
-#define DEFAULT_HOSTNAME "MINI-"
-#endif
+SystemBoneV1::SystemBoneV1() : SystemBase()
+{
+}
 
-#endif /* C_CONSTANTS_H_ */
+void SystemBoneV1::hwInit()
+{
+}
+
+void SystemBoneV1::init()
+{
+  deviceName = "bone";
+  hardwareVersion = 1u;
+  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+
+  // add blutetooth feature
+  bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);
+  bluetooth->loadConfig(&temperatures);
+  bluetooth->init();
+
+  // load config
+  temperatures.loadConfig();
+
+  sdCard = new SdCard(CS_SD_CARD);
+
+  initDone = true;
+}

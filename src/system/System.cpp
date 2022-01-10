@@ -48,4 +48,9 @@ DisplayBase *gDisplay = new DisplayOled();
 #include "display/DisplayOledLink.h"
 SystemBase *gSystem = new SystemLinkV1();
 DisplayBase *gDisplay = new DisplayOledLink();
+#elif HW_BONE_V1
+#include "system/SystemBoneV1.h"
+#include "display/DisplayDummy.h"
+SystemBase *gSystem = new SystemBoneV1();
+DisplayBase *gDisplay = new DisplayDummy();
 #endif

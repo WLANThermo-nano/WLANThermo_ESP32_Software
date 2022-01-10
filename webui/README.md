@@ -25,6 +25,7 @@ yarn build
 yarn build-nano
 yarn build-mini
 yarn build-link
+yarn build-bone
 yarn build-cloud
 ```
 

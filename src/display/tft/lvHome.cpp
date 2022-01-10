@@ -540,7 +540,7 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
     cloudState = gSystem->cloud.state;
   }
 
-  if (delayApSymbol && (millis() > 10000u))
+  if (delayApSymbol && (millis() > 30000u))
   {
     forceUpdate = true;
     delayApSymbol = false;
@@ -556,7 +556,7 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
       newWifiSymbolText = lvHome_WifiSymbolText[(uint8_t)newWifiStrength];
       break;
     }
-    if ((millis() - debounceWifiSymbol) >= 1000u)
+    if (((millis() - debounceWifiSymbol) >= 1000u) && (false == delayApSymbol))
     {
       wifiStrength = newWifiStrength;
       forceUpdate = true;

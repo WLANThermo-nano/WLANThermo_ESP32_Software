@@ -42,6 +42,8 @@
 #define WEB_SUBFOLDER "nano"
 #elif HW_LINK_V1
 #define WEB_SUBFOLDER "link"
+#elif HW_BONE_V1
+#define WEB_SUBFOLDER "bone"
 #endif
 
 extern const uint8_t index_html_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_index_html_gz_start");
