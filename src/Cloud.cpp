@@ -131,7 +131,7 @@ void Cloud::update()
     gSystem->cloud.state = 0;
   }
 
-  if (config.customEnabled)
+  if (config.customEnabled && config.customUrl.length() > 0u)
   {
     if (0u == customCounter)
     {
