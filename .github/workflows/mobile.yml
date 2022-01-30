@@ -49,9 +49,9 @@ jobs:
         working-directory: ./mobile
         run: cordova platform add android@latest
 
-      - name: Add IOS platform
-        working-directory: ./mobile
-        run: cordova platform add ios@latest
+#      - name: Add IOS platform
+#        working-directory: ./mobile
+#        run: cordova platform add ios@latest
 
       - name: npm install UI project
         working-directory: ./webui
@@ -73,19 +73,19 @@ jobs:
         working-directory: ./mobile
         run: npm run build-android
 
-      - name: Prepare iOS provisioning
-        working-directory: ./.github/secrets
-        run: |
-          security create-keychain -p "" build.keychain >/dev/null 2>&1
-          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
-          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
-          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
-          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+#      - name: Prepare iOS provisioning
+#        working-directory: ./.github/secrets
+#        run: |
+#          security create-keychain -p "" build.keychain >/dev/null 2>&1
+#          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
+#          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+#          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+#          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+#          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
 
-      - name: Build iOS app
-        working-directory: ./mobile
-        run: cordova build ios --device
+#      - name: Build iOS app
+#        working-directory: ./mobile
+#        run: cordova build ios --device
 
       - name: Upload dev APK and IPA
         uses: actions/upload-artifact@v2
@@ -93,4 +93,4 @@ jobs:
           name: app-dev
           path: |
             ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-            ./mobile/platforms/ios/build/device/WLANThermo.ipa
+#            ./mobile/platforms/ios/build/device/WLANThermo.ipa
