@@ -28,6 +28,7 @@
 #include "LogRingBuffer.h"
 #include "TaskConfig.h"
 #include "DeviceId.h"
+#include <AsyncHTTPRequest_Generic.h>
 
 // Forward declaration
 void createTasks();

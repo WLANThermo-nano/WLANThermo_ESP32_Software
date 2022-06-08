@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2016  Steffen Ochs
     Copyright (C) 2019  Martin Koerner
 
@@ -14,9 +14,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "Cloud.h"
 #include "system/SystemBase.h"
@@ -59,7 +59,7 @@ ServerData Cloud::serverurl[3] = {
     {APISERVER, CHECKAPI, "note"},
     {APISERVER, CHECKAPI, "cloud"}};
 
-asyncHTTPrequest Cloud::apiClient = asyncHTTPrequest();
+AsyncHTTPRequest Cloud::apiClient = AsyncHTTPRequest();
 QueueHandle_t Cloud::apiQueue = xQueueCreate(API_QUEUE_SIZE, sizeof(CloudRequest));
 bool Cloud::clientlog = false;
 
@@ -114,7 +114,7 @@ void Cloud::update()
     if (now() < 31536000)
     {
       Cloud::sendAPI(NOAPI, APILINK);
-      if(gSystem->getCrashReport() && (RecoveryMode::getResetCounter() > 0u))
+      if (gSystem->getCrashReport() && (RecoveryMode::getResetCounter() > 0u))
       {
         Cloud::sendAPI(APICRASHREPORT, APILINK);
         Log.error("Crash report sent!" CR);
@@ -164,9 +164,9 @@ String Cloud::createToken()
   esp_fill_random(random, TOKEN_BYTE_LENGTH);
 
   // copy byte array to hex string
-  for(uint8_t index = 0u; index < TOKEN_BYTE_LENGTH; index++)
+  for (uint8_t index = 0u; index < TOKEN_BYTE_LENGTH; index++)
   {
-    sprintf(&token[index*2u], "%02x", random[index]);
+    sprintf(&token[index * 2u], "%02x", random[index]);
   }
 
   return String(token);
@@ -282,19 +282,19 @@ void Cloud::setConfig(CloudConfig newConfig)
 // Read time stamp from HTTP Header
 void Cloud::readUTCfromHeader(String payload)
 {
-    tmElements_t tmx;
-    time_t seconds;
-    time_t delta;
+  tmElements_t tmx;
+  time_t seconds;
+  time_t delta;
 
-    string_to_tm(&tmx, (char *)payload.c_str());
-    seconds = makeTime(tmx);
-    delta = abs(seconds - now());
+  string_to_tm(&tmx, (char *)payload.c_str());
+  seconds = makeTime(tmx);
+  delta = abs(seconds - now());
 
-    if(delta > 1u)
-    {
-      setTime(seconds);
-      Log.notice("Updated time from http header. New UTC time: %s" CR, digitalClockDisplay(now()).c_str());
-    }
+  if (delta > 1u)
+  {
+    setTime(seconds);
+    Log.notice("Updated time from http header. New UTC time: %s" CR, digitalClockDisplay(now()).c_str());
+  }
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -338,13 +338,14 @@ tmElements_t *Cloud::string_to_tm(tmElements_t *tme, char *str)
   return tme;
 }
 
-void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
+void Cloud::onReadyStateChange(void *optParm, AsyncHTTPRequest *request, int readyState)
 {
   boolean *requestDone = (boolean *)optParm;
   int responseCode;
 
   if (READY_STATE_DONE == readyState)
   {
+    Serial.println("READY_STATE_DONE");
     if (request->respHeaderExists("Date"))
       readUTCfromHeader(request->respHeaderValue("Date"));
 
@@ -352,13 +353,15 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
 
     if (HTTP_STATUS_OK == responseCode)
     {
+      Serial.println("HTTP_STATUS_OK");
       nanoWebHandler.setServerAPI(NULL, (uint8_t *)request->responseText().c_str());
     }
     else
     {
+      Serial.printf("API response HTTP code: %d\n", responseCode);
       Log.warning("API response HTTP code: %d" CR, responseCode);
     }
-    
+
     *requestDone = true;
   }
 }
@@ -369,12 +372,12 @@ void Cloud::sendAPI(int apiIndex, int urlIndex)
 {
   String requestDataString = API::apiData(apiIndex);
   char *requestDataPointer = new char[requestDataString.length() + 1u];
-  
-  if(requestDataPointer != NULL)
+
+  if (requestDataPointer != NULL)
   {
     strcpy(requestDataPointer, requestDataString.c_str());
     CloudRequest cloudRequest = {urlIndex, requestDataPointer};
-    if(xQueueSend(apiQueue, &cloudRequest, 0u) != pdTRUE)
+    if (xQueueSend(apiQueue, &cloudRequest, 0u) != pdTRUE)
     {
       delete cloudRequest.requestData;
       Log.warning("Cloud request queue full!" CR);
@@ -395,23 +398,27 @@ void Cloud::handleQueue()
     if (xQueueReceive(apiQueue, &cloudRequest, 0u) == pdFALSE)
       return;
 
-    requestDone = false;
-
     if (clientlog)
       apiClient.setDebug(true);
 
     String url = (cloudRequest.urlIndex != CUSTOMLINK) ? String("http://" + serverurl[cloudRequest.urlIndex].host + "/") : config.customUrl;
 
     apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
-    apiClient.open("POST", url.c_str());
-    apiClient.setReqHeader("Connection", "close");
-    apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
-    apiClient.setReqHeader("Content-Type", "application/json");
+    if(apiClient.open("POST", url.c_str()) == true)
+    {
+      apiClient.setReqHeader("Connection", "close");
+      apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
+      apiClient.setReqHeader("Content-Type", "application/json");
 
-    if(cloudRequest.urlIndex != CUSTOMLINK)
-      apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
-    
-    apiClient.send(cloudRequest.requestData);
+      if (cloudRequest.urlIndex != CUSTOMLINK)
+        apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
+
+      if(apiClient.send(cloudRequest.requestData))
+      {
+        requestDone = false;
+      }
+    }
+
     delete cloudRequest.requestData;
   }
 }

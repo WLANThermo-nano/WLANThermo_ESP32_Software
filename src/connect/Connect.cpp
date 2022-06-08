@@ -38,7 +38,7 @@
 std::vector<ConnectDeviceType *> Connect::connectDevices;
 boolean Connect::enabled = true;
 
-asyncHTTPrequest deviceClient = asyncHTTPrequest();
+AsyncHTTPRequest deviceClient = AsyncHTTPRequest();
 
 Connect::Connect()
 {
@@ -162,7 +162,7 @@ void Connect::getDevices()
     }
 }
 
-void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
+void Connect::onReadyStateChange(void *optParm, AsyncHTTPRequest *request, int readyState)
 {
     if (READY_STATE_DONE == readyState)
     {

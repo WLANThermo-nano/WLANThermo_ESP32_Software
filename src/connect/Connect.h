@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 #include <ArduinoJson.h>
-#include <asyncHTTPrequest.h>
+#include <AsyncHTTPRequest_Generic.hpp>
 #include "temperature/TemperatureGrp.h"
 
 #define CONNECT_ADDRESS_STRING_MAX_SIZE 18u
@@ -56,7 +56,7 @@ public:
 private:
     void getDevices();
     static void task(void *parameter);
-    static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
+    static void onReadyStateChange(void *optParm, AsyncHTTPRequest *request, int readyState);
     static boolean enabled;
     static std::vector<ConnectDeviceType *> connectDevices;
 };

@@ -22,7 +22,7 @@
 
 #include <Arduino.h>
 #include <TimeLib.h>
-#include <asyncHTTPrequest.h>
+#include <AsyncHTTPRequest_Generic.hpp>
 
 typedef struct
 {
@@ -89,12 +89,12 @@ public:
 
 private:
   String createToken();
-  static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
+  static void onReadyStateChange(void *optParm, AsyncHTTPRequest *request, int readyState);
   static void readUTCfromHeader(String payload);
   static tmElements_t *string_to_tm(tmElements_t *tme, char *str);
   void handleQueue();
   CloudConfig config;
-  static asyncHTTPrequest apiClient;
+  static AsyncHTTPRequest apiClient;
   static QueueHandle_t apiQueue;
   uint16_t cloudCounter;
   uint16_t customCounter;
