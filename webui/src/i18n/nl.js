@@ -31,6 +31,7 @@ export default {
     system_settings: "Systeeminstellingen",
     unit: "Eenheid",
     german: "Duits",
+    dutch: "Nederlands",
     english: "Engels",
     fahrenheit: "Fahrenheit",
     celsius: "Celsius",
