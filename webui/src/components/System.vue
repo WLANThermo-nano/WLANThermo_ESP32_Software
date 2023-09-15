@@ -125,6 +125,7 @@ export default {
       languages: [
         { value: "en", translationKey: "english" },
         { value: "de", translationKey: "german" },
+        { value: "nl", translationKey: "dutch" },
       ],
       temperatureUnits: [
         { value: "C", translationKey: "celsius" },
