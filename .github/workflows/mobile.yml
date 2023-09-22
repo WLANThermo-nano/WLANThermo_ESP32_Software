@@ -45,5 +45,5 @@ jobs:
         with:
           name: android-dev
           path: |
-            ./mobile_flutter/mobile_flutter/wlanthermo_flutter_app/build/app/outputs/flutter-apk/app-release.apk
-            ./mobile_flutter/mobile_flutter/wlanthermo_flutter_app/build/app/outputs/bundle/release/app-release.aab
+            ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/flutter-apk/app-release.apk
+            ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/bundle/release/app-release.aab
