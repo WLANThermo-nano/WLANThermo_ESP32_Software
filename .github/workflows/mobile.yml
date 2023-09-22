@@ -11,6 +11,19 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: npm install UI project
+        working-directory: ./webui
+        run: npm install
+
+      - name: Build App HTML file from UI project
+        working-directory: ./webui
+        run: npm run build-mobile
+
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
