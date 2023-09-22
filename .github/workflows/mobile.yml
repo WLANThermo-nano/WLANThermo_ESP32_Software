@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 16
+          cache: 'npm'
 
       - name: npm install UI project
         working-directory: ./webui
@@ -38,7 +39,7 @@ jobs:
         working-directory: ./mobile_flutter/wlanthermo_flutter_app
         run: |
           flutter pub get
-          flutter build apk
+          flutter build apk --debug
           flutter build appbundle
 
       - uses: actions/upload-artifact@v3
