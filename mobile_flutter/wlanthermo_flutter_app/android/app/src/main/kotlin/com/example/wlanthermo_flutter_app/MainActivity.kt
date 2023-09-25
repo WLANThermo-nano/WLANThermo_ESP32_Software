@@ -1,4 +1,4 @@
-package com.example.wlanthermo_flutter_app
+package com.wlanthermo.flutter_app
 
 import io.flutter.embedding.android.FlutterActivity
 

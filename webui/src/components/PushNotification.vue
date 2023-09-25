@@ -174,7 +174,7 @@ export default {
     EventBus.$emit("loading", true)
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
     if (this.isMobile) {
-      document.addEventListener('deviceready', this.initMobileInfo.bind(this), false)
+      this.initMobileInfo.bind(this)
     }
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
@@ -202,29 +202,27 @@ export default {
         })
       }
     },
-    configuredCurrentPhone: function() {
+    configuredCurrentPhone: async function() {
       EventBus.$emit("loading", true)
-      // eslint-disable-next-line
-      const messaging = cordova.plugins.firebase.messaging
-      messaging.requestPermission({forceShow: true}).then(function() {
-        console.log("Push messaging is allowed");
-      });
-      messaging.getToken().then((token) => {
-        EventBus.$emit("loading", false)
-        console.log(`got token ${token}`)
-        // eslint-disable-next-line
-        const model = device.model
-        this.app.devices.push({
-          id: this.currentPhoneUUID,
-          name: model,
-          token: token,
-          sound: 0
-        })
-      }).catch((error) => {
-        console.log(`don't get got token`)
-        console.log(error)
-        EventBus.$emit("loading", false)
-      });
+
+      const {model} = await window.flutter_inappwebview.callHandler('getDeviceModel')
+
+      // todo: get firebase token from flutter
+      window.flutter_inappwebview
+        .callHandler('getFCMToken')
+        .then(async (tokenResponse) => {
+          EventBus.$emit("loading", false)
+          this.app.devices.push({
+            id: this.currentPhoneUUID,
+            name: model,
+            token: tokenResponse.token,
+            sound: 0
+          })
+        }).catch((error) => {
+          console.log(`don't get got token`)
+          console.log(error)
+          EventBus.$emit("loading", false)
+        });
     },
     backToHome: function () {
       EventBus.$emit("back-to-home");
@@ -243,6 +241,9 @@ export default {
       this.axios.post('/setpush', requestObj).then(() => {
         EventBus.$emit("loading", false)
         this.backToHome()
+      }).catch(async (error) => {
+        await window.flutter_inappwebview.callHandler('debug', error)
+        EventBus.$emit("loading", false)
       });
     },
     sendTestMessage: function(serviceName, serviceData) {

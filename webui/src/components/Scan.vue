@@ -155,7 +155,6 @@ export default {
       try {
         window.flutter_inappwebview.callHandler('getIpAddress')
           .then((rs) => {
-            this.addToDebug(`in then`)
             this.addToDebug(JSON.stringify(rs))
 
             this.ipAddress = rs.localIp
@@ -273,7 +272,6 @@ export default {
         .then()
     },
     getStoredData: async function () {
-      await window.flutter_inappwebview.callHandler('handlerFooWithArgs', 1, true, ['bar', 5], {foo: 'baz'});
       const deviceListData = await window.flutter_inappwebview
         .callHandler('getData', MY_DEVICES_KEY)
       const versionData = await window.flutter_inappwebview

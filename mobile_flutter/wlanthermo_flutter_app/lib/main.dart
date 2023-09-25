@@ -4,86 +4,64 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'notification-service.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
+
+late FirebaseMessaging messaging;
 
 main() async {
   WidgetsFlutterBinding.ensureInitialized();
   String htmlString = await rootBundle.loadString('assets/html/index.html');
- 
-  String localIp = '';
-  final List<String> privateNetworkMasks = ['10', '172.16', '192.168'];
-  for (var interface in await NetworkInterface.list()) {
-      for (var addr in interface.addresses) {
-        for (final possibleMask in privateNetworkMasks) {
-          if (addr.address.startsWith(possibleMask)) {
-            localIp = addr.address;
-            break;
-          }
-        }
-      }
-    }
+  
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  runApp(MyApp(htmlString, localIp));
+  messaging = FirebaseMessaging.instance;
+
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+
+  FirebaseMessaging.instance.onTokenRefresh
+    .listen((fcmToken) {
+      // TODO: If necessary send token to application server.
+
+      // Note: This callback is fired at each app startup and whenever a new
+      // token is generated.
+    })
+    .onError((err) {
+      // Error getting token.
+    });
+
+  runApp(MyApp(htmlString));
 }
 
 class MyApp extends StatelessWidget {
   final String htmlString;
-  final String localIp;
 
-  const MyApp(this.htmlString, this.localIp, {super.key});
+  const MyApp(this.htmlString, {super.key});
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {    
     return MaterialApp(
-        title: 'Flutter Demo',
-        home: Scaffold(
-          // appBar: AppBar(
-          //   title: Text("web view")
-          // ),
-          body: InAppWebView(
-            initialUrlRequest: URLRequest(
-                url: Uri.dataFromString(htmlString,
-                    mimeType: 'text/html',
-                    encoding: Encoding.getByName('utf-8'))),
-            onLoadStop: (controller, url) {
-              controller.addJavaScriptHandler(
-                  handlerName: 'getIpAddress',
-                  callback: (args) {
-                    // return data to the JavaScript side!
-                    return {'localIp': localIp};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'saveData',
-                  // args: ['key', 'value']
-                  callback: (args) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setString(args[0], args[1]);
-
-                    return {'message': 'ok'};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'getData',
-                  // args: ['key']
-                  callback: (args) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    var value = await prefs.getString(args[0]);
-
-                    return {'value': value};
-                  });
-              controller.addJavaScriptHandler(handlerName: 'handlerFooWithArgs', callback: (args) {
-                    print(args);
-                    // it will print: [1, true, [bar, 5], {foo: baz}, {bar: bar_value, baz: baz_value}]
-                  });
-            },
-            
-          ),
-        ));
+        home: MyHomePage(title: 'Wlanthermo', htmlString: htmlString)
+        );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.title, required this.htmlString});
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -95,23 +73,18 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
 
   final String title;
+  final String htmlString;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    NotificationService.initialize(flutterLocalNotificationsPlugin);
   }
 
   @override
@@ -132,40 +105,78 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: InAppWebView(
+            initialUrlRequest: URLRequest(
+                url: Uri.dataFromString(widget.htmlString,
+                    mimeType: 'text/html',
+                    encoding: Encoding.getByName('utf-8'))),
+            onLoadStop: (controller, url) {
+              controller.addJavaScriptHandler(
+                  handlerName: 'debug',
+                  callback: (args) async {
+
+                    return {'value': 'ok'};
+                  });
+              controller.addJavaScriptHandler(
+                  handlerName: 'getIpAddress',
+                  callback: (args) async {
+                    // Getting local ip which matches the private network pattern.
+                    String localIp = '';
+                    final List<String> privateNetworkMasks = ['10', '172.16', '192.168'];
+                    for (var interface in await NetworkInterface.list()) {
+                      for (var addr in interface.addresses) {
+                        for (final possibleMask in privateNetworkMasks) {
+                          if (addr.address.startsWith(possibleMask)) {
+                            localIp = addr.address;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                    return {'localIp': localIp};
+                  });
+              controller.addJavaScriptHandler(
+                  handlerName: 'saveData',
+                  // args: ['key', 'value']
+                  callback: (args) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString(args[0], args[1]);
+
+                    return {'message': 'ok'};
+                  });
+              controller.addJavaScriptHandler(
+                  handlerName: 'getData',
+                  // args: ['key']
+                  callback: (args) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    var value = await prefs.getString(args[0]);
+
+                    return {'value': value};
+                  });
+              controller.addJavaScriptHandler(
+                  handlerName: 'getFCMToken',
+                  callback: (args) async {
+                    final fcmToken = await FirebaseMessaging.instance.getToken();
+                    print(fcmToken);
+                    return {'token': fcmToken};
+                  });
+              controller.addJavaScriptHandler(
+                  handlerName: 'getDeviceModel',
+                  callback: (args) async {
+                    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+                    String model = '';
+                    if (Platform.isAndroid) {
+                      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+                      model = androidInfo.model;
+                    } else if (Platform.isIOS) {
+                      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+                      model = iosInfo.model;
+                    }
+                    return {'model': model};
+                  });
+            },
+            
+          ),
     );
   }
 }
