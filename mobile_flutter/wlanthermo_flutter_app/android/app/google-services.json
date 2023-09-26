@@ -8,7 +8,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:554853523379:android:c1c445d2a901af8b44b5c6",
+        "mobilesdk_app_id": "1:554853523379:android:00bde213275c7cf444b5c6",
         "android_client_info": {
           "package_name": "com.wlanthermo.flutter_app"
         }
@@ -21,73 +21,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDtXg6V3yRbtJBAhmAtuEKJvPGxmMKRVMg"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "554853523379-vmrgpntfppeq5f6qstjj3kctmbuk5r1h.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:554853523379:android:1c823a24a904a25e44b5c6",
-        "android_client_info": {
-          "package_name": "com.wlanthermo.flutter_app"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "554853523379-vmrgpntfppeq5f6qstjj3kctmbuk5r1h.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDtXg6V3yRbtJBAhmAtuEKJvPGxmMKRVMg"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "554853523379-vmrgpntfppeq5f6qstjj3kctmbuk5r1h.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:554853523379:android:436f779f16330169",
-        "android_client_info": {
-          "package_name": "com.wlanthermo.wlanthermo"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "554853523379-g4399t5o5mi2od5vht7ub6e8br420vqb.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.wlanthermo.wlanthermo",
-            "certificate_hash": "c695af6019417092981520fa1b1a99b01d4983da"
-          }
-        },
-        {
-          "client_id": "554853523379-vmrgpntfppeq5f6qstjj3kctmbuk5r1h.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDtXg6V3yRbtJBAhmAtuEKJvPGxmMKRVMg"
+          "current_key": "AIzaSyDF3a5Uxhkon5tYBR_GqjjfNKun6OXk934"
         }
       ],
       "services": {

@@ -50,8 +50,8 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDtXg6V3yRbtJBAhmAtuEKJvPGxmMKRVMg',
-    appId: '1:554853523379:android:1c823a24a904a25e44b5c6',
+    apiKey: 'AIzaSyDF3a5Uxhkon5tYBR_GqjjfNKun6OXk934',
+    appId: '1:554853523379:android:00bde213275c7cf444b5c6',
     messagingSenderId: '554853523379',
     projectId: 'wlanthermo-nano',
     databaseURL: 'https://wlanthermo-nano.firebaseio.com',
@@ -59,8 +59,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAROqTL61ejMsoBrxCJiWDdH-6qupmA-VM',
-    appId: '1:554853523379:ios:f2c957e8bcf5abc344b5c6',
+    apiKey: 'AIzaSyB-YmlSw2MHN-aTujjrcEnvKxAIEAU6xN4',
+    appId: '1:554853523379:ios:260d3614918bd56e44b5c6',
     messagingSenderId: '554853523379',
     projectId: 'wlanthermo-nano',
     databaseURL: 'https://wlanthermo-nano.firebaseio.com',

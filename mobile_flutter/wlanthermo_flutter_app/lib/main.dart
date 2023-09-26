@@ -14,13 +14,15 @@ import 'notification-service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-}
-
 late FirebaseMessaging messaging;
 
 main() async {
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.black,
+    ),
+  );
+
   WidgetsFlutterBinding.ensureInitialized();
   String htmlString = await rootBundle.loadString('assets/html/index.html');
   
@@ -29,8 +31,6 @@ main() async {
   );
 
   messaging = FirebaseMessaging.instance;
-
-  final fcmToken = await FirebaseMessaging.instance.getToken();
 
   FirebaseMessaging.instance.onTokenRefresh
     .listen((fcmToken) {
@@ -96,34 +96,27 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: InAppWebView(
-            initialUrlRequest: URLRequest(
-                url: Uri.dataFromString(widget.htmlString,
-                    mimeType: 'text/html',
-                    encoding: Encoding.getByName('utf-8'))),
-            onLoadStop: (controller, url) {
-              controller.addJavaScriptHandler(
-                  handlerName: 'debug',
-                  callback: (args) async {
+      body: SafeArea(
+        child:         InAppWebView(
+          initialUrlRequest: URLRequest(
+              url: Uri.dataFromString(widget.htmlString,
+                  mimeType: 'text/html',
+                  encoding: Encoding.getByName('utf-8'))),
+          onLoadStop: (controller, url) {
+            controller.addJavaScriptHandler(
+                handlerName: 'debug',
+                callback: (args) async {
 
-                    return {'value': 'ok'};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'getIpAddress',
-                  callback: (args) async {
-                    // Getting local ip which matches the private network pattern.
-                    String localIp = '';
-                    final List<String> privateNetworkMasks = ['10', '172.16', '192.168'];
-                    for (var interface in await NetworkInterface.list()) {
+                  return {'value': 'ok'};
+                });
+            controller.addJavaScriptHandler(
+                handlerName: 'getIpAddress',
+                callback: (args) async {
+                  // Getting local ip which matches the private network pattern.
+                  String localIp = '';
+                  final List<String> privateNetworkMasks = ['192.168', '10', '172.16'];
+                  for (var interface in await NetworkInterface.list()) {
+                    if (interface.name.startsWith("wlan")) {
                       for (var addr in interface.addresses) {
                         for (final possibleMask in privateNetworkMasks) {
                           if (addr.address.startsWith(possibleMask)) {
@@ -133,50 +126,52 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       }
                     }
-                    return {'localIp': localIp};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'saveData',
-                  // args: ['key', 'value']
-                  callback: (args) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setString(args[0], args[1]);
+                  }
+                  return {'localIp': localIp};
+                });
+            controller.addJavaScriptHandler(
+                handlerName: 'saveData',
+                // args: ['key', 'value']
+                callback: (args) async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString(args[0], args[1]);
 
-                    return {'message': 'ok'};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'getData',
-                  // args: ['key']
-                  callback: (args) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    var value = await prefs.getString(args[0]);
+                  return {'message': 'ok'};
+                });
+            controller.addJavaScriptHandler(
+                handlerName: 'getData',
+                // args: ['key']
+                callback: (args) async {
+                  final prefs = await SharedPreferences.getInstance();
+                  var value = await prefs.getString(args[0]);
 
-                    return {'value': value};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'getFCMToken',
-                  callback: (args) async {
-                    final fcmToken = await FirebaseMessaging.instance.getToken();
-                    print(fcmToken);
-                    return {'token': fcmToken};
-                  });
-              controller.addJavaScriptHandler(
-                  handlerName: 'getDeviceModel',
-                  callback: (args) async {
-                    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-                    String model = '';
-                    if (Platform.isAndroid) {
-                      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-                      model = androidInfo.model;
-                    } else if (Platform.isIOS) {
-                      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-                      model = iosInfo.model;
-                    }
-                    return {'model': model};
-                  });
-            },
-            
-          ),
+                  return {'value': value};
+                });
+            controller.addJavaScriptHandler(
+                handlerName: 'getFCMToken',
+                callback: (args) async {
+                  final fcmToken = await FirebaseMessaging.instance.getToken();
+                  print(fcmToken);
+                  return {'token': fcmToken};
+                });
+            controller.addJavaScriptHandler(
+                handlerName: 'getDeviceModel',
+                callback: (args) async {
+                  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+                  String model = '';
+                  if (Platform.isAndroid) {
+                    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+                    model = androidInfo.model;
+                  } else if (Platform.isIOS) {
+                    IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+                    model = iosInfo.model;
+                  }
+                  return {'model': model};
+                });
+          },
+        ),
+      ),
+
     );
   }
 }
