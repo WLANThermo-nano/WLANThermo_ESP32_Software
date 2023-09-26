@@ -48,7 +48,7 @@
         <div style="color: #fff">
           debug message:
         </div>
-        <div style="max-height: 50vh; overflow-y:scroll;color:#fff;border: grey solid 1px; padding: 2px">
+        <div style="max-height: 50vh; max-width: 90vw; overflow-y:scroll;color:#fff;border: grey solid 1px; padding: 2px">
           <div v-for="msg in debugMessages" :key="msg">
             {{ msg }}
           </div>
