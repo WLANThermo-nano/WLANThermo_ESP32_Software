@@ -110,13 +110,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   return {'value': 'ok'};
                 });
             controller.addJavaScriptHandler(
+                handlerName: 'getNW',
+                callback: (args) async {
+                  var rs = "";
+                  for (var interface in await NetworkInterface.list()) {
+                    // wlan means wifi in android.
+                    rs += "${interface.name}: ";
+
+                    for (var addr in interface.addresses) {
+                      rs += interface.addresses.join(", ");
+                    }
+                  }
+
+                  return {'value': rs};
+                });
+            controller.addJavaScriptHandler(
                 handlerName: 'getIpAddress',
                 callback: (args) async {
                   // Getting local ip which matches the private network pattern.
                   String localIp = '';
                   final List<String> privateNetworkMasks = ['192.168', '10', '172.16'];
                   for (var interface in await NetworkInterface.list()) {
-                    if (interface.name.startsWith("wlan")) {
+                    // wlan means wifi in android.
+                    if (interface.name.startsWith("wlan") || Platform.isIOS) {
                       for (var addr in interface.addresses) {
                         for (final possibleMask in privateNetworkMasks) {
                           if (addr.address.startsWith(possibleMask)) {

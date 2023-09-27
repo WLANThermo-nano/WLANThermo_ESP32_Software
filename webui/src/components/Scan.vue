@@ -153,6 +153,10 @@ export default {
     // const self = this
     setTimeout(() => {
       try {
+        window.flutter_inappwebview.callHandler('getNW')
+          .then((rs) => {
+            this.addToDebug(`nw: ${JSON.stringify(rs)}`)
+          })
         window.flutter_inappwebview.callHandler('getIpAddress')
           .then((rs) => {
             this.addToDebug(JSON.stringify(rs))
