@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
@@ -7,6 +8,14 @@ class NotificationService {
     var initializationSettings = new InitializationSettings(android: androidInitialize, iOS: iosInitialize);
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    FirebaseMessaging.onMessage.listen((message) {
+      NotificationService.showBigTextNotification(
+          title: message.notification?.title ?? "",
+          body: message.notification?.body ?? "",
+          flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin
+      );
+    });
   }
 
   static Future showBigTextNotification({
@@ -23,7 +32,9 @@ class NotificationService {
             priority: Priority.high);
 
     // TODO: ios
-    var notification = NotificationDetails(android: androidNotificationDetails);
+    var notification = NotificationDetails(
+        android: androidNotificationDetails,
+        iOS: const DarwinNotificationDetails());
     await flutterLocalNotificationsPlugin.show(0, title, body, notification);
   }
 }

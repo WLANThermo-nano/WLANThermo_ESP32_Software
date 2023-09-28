@@ -11,6 +11,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'notification-service.dart';
+import 'package:bonsoir/bonsoir.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -125,6 +126,42 @@ class _MyHomePageState extends State<MyHomePage> {
                   return {'value': rs};
                 });
             controller.addJavaScriptHandler(
+                handlerName: 'scanByZeroConfig',
+                callback: (args) async {
+                  // This is the type of service we're looking for :
+                  String type = '_wlanthermo._tcp';
+                  // Once defined, we can start the discovery :
+                  BonsoirDiscovery discovery = BonsoirDiscovery(type: type);
+                  await discovery.ready;
+
+                  // If you want to listen to the discovery :
+                  discovery.eventStream!.listen((event) async { // `eventStream` is not null as the discovery instance is "ready" !
+                    if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
+                      print('Service found : ${event.service?.toJson()}');
+                      event.service!.resolve(discovery.serviceResolver); // Should be called when the user wants to connect to this service.
+                    } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
+                      var service = event.service as ResolvedBonsoirService;
+                      // dispatch event to the web app
+                      await controller.evaluateJavascript(source: """
+                        const event = new CustomEvent("serviceResolved", {
+                          detail: {
+                            name: "${service.name}",
+                            ip: "${service.ip}"
+                          }
+                        });
+                        window.dispatchEvent(event);
+                      """);
+                    } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceLost) {
+                      print('Service lost : ${event.service?.toJson()}');
+                    }
+                  });
+
+                  // Start discovery **after** having listened to discovery events
+                  await discovery.start();
+
+                  return {'value': 'ok'};
+                });
+            controller.addJavaScriptHandler(
                 handlerName: 'getIpAddress',
                 callback: (args) async {
                   // Getting local ip which matches the private network pattern.
@@ -167,22 +204,25 @@ class _MyHomePageState extends State<MyHomePage> {
                 handlerName: 'getFCMToken',
                 callback: (args) async {
                   final fcmToken = await FirebaseMessaging.instance.getToken();
-                  print(fcmToken);
+                  print("token: $fcmToken");
                   return {'token': fcmToken};
                 });
             controller.addJavaScriptHandler(
-                handlerName: 'getDeviceModel',
+                handlerName: 'getDeviceInfo',
                 callback: (args) async {
                   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
                   String model = '';
+                  String id = '';
                   if (Platform.isAndroid) {
                     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
                     model = androidInfo.model;
+                    id = androidInfo.id;
                   } else if (Platform.isIOS) {
                     IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
                     model = iosInfo.model;
+                    id = iosInfo.identifierForVendor!;
                   }
-                  return {'model': model};
+                  return {'model': model, 'id': id};
                 });
           },
         ),

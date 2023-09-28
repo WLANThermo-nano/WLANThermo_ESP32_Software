@@ -147,29 +147,27 @@ export default {
       }, 3000)
     }
 
-    // Ask flutter to provide ip address
-    this.addToDebug(`before calling get`)
-
-    // const self = this
-    setTimeout(() => {
-      try {
-        window.flutter_inappwebview.callHandler('getNW')
-          .then((rs) => {
-            this.addToDebug(`nw: ${JSON.stringify(rs)}`)
-          })
-        window.flutter_inappwebview.callHandler('getIpAddress')
-          .then((rs) => {
-            this.addToDebug(JSON.stringify(rs))
-
-            this.ipAddress = rs.localIp
-            this.initAndScan()
-          })
-      } catch (e) {
-        this.addToDebug(e)
-      }
-    }, 1500)
+    this.initAndScan();
   },
   methods: {
+    initZeroConfigScanListener: function() {
+      window.addEventListener("serviceResolved", (event) => {
+                /**
+         * Example of detail
+         * {
+         *  name: "LINK-98f4ab756fcc",
+         *  ip: "192.168.x.x"
+         * }
+         */
+        const detail = event.detail
+
+        console.log(`receive service: ${JSON.stringify(detail)}`)
+
+        this.checkAndAddDevice(detail.ip)
+      }, { once: false });
+
+      this.addToDebug("registered listener serviceResolved")
+    },
     checkScanCompleted: function () {
       if (this.requestCompletedCount >= this.blockSize) {
         this.refreshing = false
@@ -313,16 +311,15 @@ export default {
           this.refreshing = false
         });
       })
-      // eslint-disable-next-line
-      var zeroconf = cordova.plugins.zeroconf;
-      zeroconf.reInit()
       this.scanBySubnet()
     },
     initAndScan: async function () {
-      this.addToDebug(`load stored data`)
-      await this.getStoredData()
-      this.addToDebug(`scan with subnet`)
-      this.scanBySubnet()
+      this.initZeroConfigScanListener()
+      // trigger scan
+      setTimeout(async () => {
+        await this.getStoredData()
+        window.flutter_inappwebview.callHandler('scanByZeroConfig').then(()=>{})
+      }, 1000)
     },
     toInfoText: function (respData) {
       var info = `${respData.device?.device} ${respData.device?.hw_version} || ${respData.device?.sw_version}`

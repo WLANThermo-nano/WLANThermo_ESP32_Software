@@ -173,9 +173,6 @@ export default {
   mounted: function () {
     EventBus.$emit("loading", true)
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
-    if (this.isMobile) {
-      this.initMobileInfo.bind(this)
-    }
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
       this.telegram = response.data.telegram
@@ -187,10 +184,6 @@ export default {
   methods: {
     removeDevice: function(deviceId) {
       this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
-    },
-    initMobileInfo: function() {
-      // eslint-disable-next-line
-      this.currentPhoneUUID = device.uuid;
     },
     getNewToken: function() {
       const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneUUID));
@@ -205,15 +198,14 @@ export default {
     configuredCurrentPhone: async function() {
       EventBus.$emit("loading", true)
 
-      const {model} = await window.flutter_inappwebview.callHandler('getDeviceModel')
+      const {id,model} = await window.flutter_inappwebview.callHandler('getDeviceInfo')
 
-      // todo: get firebase token from flutter
       window.flutter_inappwebview
         .callHandler('getFCMToken')
         .then(async (tokenResponse) => {
           EventBus.$emit("loading", false)
           this.app.devices.push({
-            id: this.currentPhoneUUID,
+            id: id,
             name: model,
             token: tokenResponse.token,
             sound: 0
