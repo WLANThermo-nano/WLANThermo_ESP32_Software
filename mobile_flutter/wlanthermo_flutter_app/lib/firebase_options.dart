@@ -50,22 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDF3a5Uxhkon5tYBR_GqjjfNKun6OXk934',
-    appId: '1:554853523379:android:00bde213275c7cf444b5c6',
-    messagingSenderId: '554853523379',
-    projectId: 'wlanthermo-nano',
-    databaseURL: 'https://wlanthermo-nano.firebaseio.com',
-    storageBucket: 'wlanthermo-nano.appspot.com',
+    apiKey: 'AIzaSyD_pNM086YPFHoHRucZrO427-Jq87wuK4I',
+    appId: '1:953994846814:android:ade64c904501924e7c4acf',
+    messagingSenderId: '953994846814',
+    projectId: 'wlanthermo-app',
+    storageBucket: 'wlanthermo-app.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB-YmlSw2MHN-aTujjrcEnvKxAIEAU6xN4',
-    appId: '1:554853523379:ios:701a496c8bd2af2744b5c6',
-    messagingSenderId: '554853523379',
-    projectId: 'wlanthermo-nano',
-    databaseURL: 'https://wlanthermo-nano.firebaseio.com',
-    storageBucket: 'wlanthermo-nano.appspot.com',
-    androidClientId: '554853523379-g4399t5o5mi2od5vht7ub6e8br420vqb.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCjk354tFhlLqpdOLef9wJ4-gVeReECrVQ',
+    appId: '1:953994846814:ios:fe3884b06ee4c6f17c4acf',
+    messagingSenderId: '953994846814',
+    projectId: 'wlanthermo-app',
+    storageBucket: 'wlanthermo-app.appspot.com',
+    iosClientId: '953994846814-7qftk9fed228fpg49uoj54icou29mirp.apps.googleusercontent.com',
     iosBundleId: 'de.wlanthermo.app',
   );
 }
