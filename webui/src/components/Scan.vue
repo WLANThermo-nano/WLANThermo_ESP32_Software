@@ -186,8 +186,9 @@ export default {
         EventBus.$emit('device-selected')
       } else if (device.incompatible) {
         var url = "http://" + device.ip
-        // eslint-disable-next-line
-        cordova.InAppBrowser.open(url, '_system')
+        // TODO:
+        // ask flutter to open it with browser
+        // cordova.InAppBrowser.open(url, '_system')
       } else if (device.connected) {
         EventBus.$emit("loading", true)
         setTimeout(() => {
