@@ -152,7 +152,7 @@ export default {
   methods: {
     initZeroConfigScanListener: function() {
       window.addEventListener("serviceResolved", (event) => {
-                /**
+        /**
          * Example of detail
          * {
          *  name: "LINK-98f4ab756fcc",
@@ -160,11 +160,9 @@ export default {
          * }
          */
         const detail = event.detail
-
-        console.log(`receive service: ${JSON.stringify(detail)}`)
-
-        this.checkAndAddDevice(detail.ip)
-      }, { once: false });
+        this.addToDebug(`receive service: ${JSON.stringify(detail)}`)
+        this.checkAndAddDevice(detail.name, detail.ip)
+      });
 
       this.addToDebug("registered listener serviceResolved")
     },
@@ -185,7 +183,6 @@ export default {
         EventBus.$emit("loading", false)
         EventBus.$emit('device-selected')
       } else if (device.incompatible) {
-        var url = "http://" + device.ip
         // TODO:
         // ask flutter to open it with browser
         // cordova.InAppBrowser.open(url, '_system')
@@ -216,7 +213,7 @@ export default {
           if (addr !== address) {
             this.blockSize++;
 
-            this.checkAndAddDevice(addr);
+            this.checkAndAddDevice('', addr);
           }
         });
       } else {
@@ -229,11 +226,10 @@ export default {
       var n = d.toLocaleTimeString();
       this.debugMessages.push(`${n}: ${msg}`)
     },
-    checkAndAddDevice: function (ip) {
+    checkAndAddDevice: function (name, ip) {
       this.axios.get(`http://${ip}/settings`).then(resp => {
         const data = resp.data
         const sn = data.device?.serial
-        const name = resp.data.device?.name
 
         const deviceInListAndHasDifferentIp = this.devices.some(d => d.sn === sn && d.ip !== ip)
         const deviceInList = this.devices.some(d => d.sn === sn)

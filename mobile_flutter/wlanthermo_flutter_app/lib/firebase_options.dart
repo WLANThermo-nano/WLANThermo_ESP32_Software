@@ -60,12 +60,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB-YmlSw2MHN-aTujjrcEnvKxAIEAU6xN4',
-    appId: '1:554853523379:ios:260d3614918bd56e44b5c6',
+    appId: '1:554853523379:ios:701a496c8bd2af2744b5c6',
     messagingSenderId: '554853523379',
     projectId: 'wlanthermo-nano',
     databaseURL: 'https://wlanthermo-nano.firebaseio.com',
     storageBucket: 'wlanthermo-nano.appspot.com',
     androidClientId: '554853523379-g4399t5o5mi2od5vht7ub6e8br420vqb.apps.googleusercontent.com',
-    iosBundleId: 'com.example.wlanthermoFlutterApp',
+    iosBundleId: 'de.wlanthermo.app',
   );
 }

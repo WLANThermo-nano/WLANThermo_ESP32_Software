@@ -161,17 +161,21 @@ export default {
         devices: [],
       },
       isMobile: false,
-      currentPhoneUUID: null,
+      currentPhoneId: null,
     };
   },
   watch: {},
   computed: {
     currentPhoneIsConfigured: function() {
-      return this.app.devices.some(d => d.id === this.currentPhoneUUID)
+      return this.app.devices.some(d => d.id === this.currentPhoneId)
     }
   },
   mounted: function () {
     EventBus.$emit("loading", true)
+    window.flutter_inappwebview.callHandler('getDeviceInfo').then(({id}) => {
+      this.currentPhoneId = id;
+    })
+
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
@@ -186,7 +190,7 @@ export default {
       this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
     },
     getNewToken: function() {
-      const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneUUID));
+      const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneId));
       if (currentPhoneIndex !== -1) {
         // eslint-disable-next-line
         const messaging = cordova.plugins.firebase.messaging

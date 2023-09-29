@@ -153,16 +153,16 @@ class _MyHomePageState extends State<MyHomePage> {
                           event.service!.resolve(discovery.serviceResolver); // Should be called when the user wants to connect to this service.
                         } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
                           var service = event.service as ResolvedBonsoirService;
+
                           // dispatch event to the web app
                           await controller.evaluateJavascript(source: """
-                        const event = new CustomEvent("serviceResolved", {
-                          detail: {
-                            name: "${service.name}",
-                            ip: "${service.ip}"
-                          }
-                        });
-                        window.dispatchEvent(event);
-                      """);
+                            window.dispatchEvent(new CustomEvent("serviceResolved", {
+                              detail: {
+                                name: "${service.name}",
+                                ip: "${service.ip}"
+                              }
+                            }));
+                          """);
                         } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceLost) {
                           print('Service lost : ${event.service?.toJson()}');
                         }
