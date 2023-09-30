@@ -4,7 +4,7 @@
         android:label="wlanthermo_flutter_app"
         android:name="${applicationName}"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

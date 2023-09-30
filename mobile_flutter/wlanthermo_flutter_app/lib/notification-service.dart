@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   static Future initialize(FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
-    var androidInitialize = new AndroidInitializationSettings('mipmap/ic_launcher');
+    var androidInitialize = new AndroidInitializationSettings('mipmap/launcher_icon');
     var iosInitialize = new DarwinInitializationSettings();
     var initializationSettings = new InitializationSettings(android: androidInitialize, iOS: iosInitialize);
 
