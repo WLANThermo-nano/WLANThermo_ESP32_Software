@@ -38,7 +38,6 @@ jobs:
         working-directory: ./mobile_flutter/wlanthermo_flutter_app
         run: |
           flutter pub get
-          flutter build apk --debug
           flutter build apk --release
           flutter build appbundle
 
@@ -46,6 +45,10 @@ jobs:
         with:
           name: android-dev
           path: |
-            ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/flutter-apk/app-debug.apk
             ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/flutter-apk/app-release.apk
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-appbundle
+          path: |
             ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/bundle/release/app-release.aab
