@@ -28,7 +28,7 @@
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
-      <img @click="toPage('home')" class="logo" :src="logoImg" style="width: 85%" />
+      <img @click="toPage('/')" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
@@ -111,7 +111,7 @@ import Icon from './components/Icon.vue'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
-const menuItem = [
+const menuItems = [
         { icon: 'search', translationKey: 'menuScan', id: 'scan' },
         { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
@@ -152,7 +152,7 @@ export default {
       requestToRetry: null,
 
       // menu
-      menuItems: menuItem,
+      menuItems: menuItems,
 
       settings: {
         system: {
@@ -256,8 +256,8 @@ export default {
         var url = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken
 
         if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-          // eslint-disable-next-line
-          cordova.InAppBrowser.open(url, '_system')
+          window.flutter_inappwebview
+            .callHandler('openExternalLink', url).then(() => {})
         } else {
           window.location = url
         }
@@ -348,7 +348,7 @@ export default {
     EventBus.$on('device-selected', () => {
       this.clearGetDataInteval()
       this.toPage('/')
-      this.menuItems = menuItem
+      this.menuItems = menuItems
       this.getSettings()
       this.initGetDataPeriodically()
     })
