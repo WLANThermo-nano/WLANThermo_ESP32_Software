@@ -12,6 +12,8 @@ import 'firebase_options.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'notification-service.dart';
 import 'package:bonsoir/bonsoir.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -218,6 +220,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       final fcmToken = await FirebaseMessaging.instance.getToken();
                       print("token: $fcmToken");
                       return {'token': fcmToken};
+                    });
+                controller.addJavaScriptHandler(
+                    handlerName: 'openExternalLink',
+                    callback: (args) async {
+                      final Uri url = Uri.parse(args[0]);
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                      return {'value': 'ok'};
                     });
                 controller.addJavaScriptHandler(
                     handlerName: 'requestNotificationPermission',

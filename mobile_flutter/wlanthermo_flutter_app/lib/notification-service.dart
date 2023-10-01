@@ -9,10 +9,17 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true, // Required to display a heads up notification
+      badge: true,
+      sound: true,
+    );
+
     FirebaseMessaging.onMessage.listen((message) {
       NotificationService.showBigTextNotification(
           title: message.notification?.title ?? "",
           body: message.notification?.body ?? "",
+          sound: message.data['sound'] ?? "default",
           flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin
       );
     });
@@ -22,19 +29,26 @@ class NotificationService {
     var id = 0,
     required String title,
     required String body,
+    required String sound,
     var payload, required FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin}) async {
     AndroidNotificationDetails androidNotificationDetails =
-      const AndroidNotificationDetails(
+      AndroidNotificationDetails(
           'wlanthermoChannel_id',
           'wlanthermoChannel_name',
            playSound: true,
-            importance: Importance.high,
-            priority: Priority.high);
+           sound: sound == "bell.mp3" ? const RawResourceAndroidNotificationSound("bell") : null,
+           importance: Importance.high,
+           priority: Priority.high);
+
+    var iosNotificationDetails = DarwinNotificationDetails(
+      presentSound: true,
+      sound: sound == "bell.mp3" ? "bell.aiff" : null,
+    );
 
     // TODO: ios
     var notification = NotificationDetails(
         android: androidNotificationDetails,
-        iOS: const DarwinNotificationDetails());
+        iOS: iosNotificationDetails);
     await flutterLocalNotificationsPlugin.show(0, title, body, notification);
   }
 }

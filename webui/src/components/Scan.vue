@@ -147,6 +147,7 @@ export default {
       }, 3000)
     }
 
+    this.initZeroConfigScanListener()
     this.initAndScan();
   },
   methods: {
@@ -183,9 +184,8 @@ export default {
         EventBus.$emit("loading", false)
         EventBus.$emit('device-selected')
       } else if (device.incompatible) {
-        // TODO:
-        // ask flutter to open it with browser
-        // cordova.InAppBrowser.open(url, '_system')
+        window.flutter_inappwebview
+            .callHandler('openExternalLink', `http://${device.ip}`).then(() => {})
       } else if (device.connected) {
         EventBus.$emit("loading", true)
         setTimeout(() => {
@@ -308,10 +308,8 @@ export default {
           this.refreshing = false
         });
       })
-      this.scanBySubnet()
     },
     initAndScan: async function () {
-      this.initZeroConfigScanListener()
       // trigger scan
       setTimeout(async () => {
         await this.getStoredData()

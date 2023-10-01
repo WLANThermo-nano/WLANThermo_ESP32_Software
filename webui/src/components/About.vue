@@ -20,7 +20,7 @@
       </div>
       <div class="config-form">
         <div class="link">
-          <a href="https://forum.wlanthermo.de" target="_blank">{{$t('forumUrl')}}</a>
+          <a @click="gotoForum">{{$t('forumUrl')}}</a>
         </div>
       </div>
     </div>
@@ -29,6 +29,8 @@
 
 <script>
 import EventBus from "../event-bus";
+
+const forumUrl = 'https://forum.wlanthermo.de'
 
 export default {
   name: "About",
@@ -45,15 +47,25 @@ export default {
         {name: 'Martin Körner'},
         {name: 'Steffen Ochs'},
         {name: 'Yu-Hsuan Tsai'}
-      ]
+      ],
+      isMobile: false
     };
   },
   watch: {},
   mounted: function () {
+    this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
   },
   methods: {
     backToHome: function () {
       EventBus.$emit("back-to-home")
+    },
+    gotoForum: function() {
+      if (this.isMobile) {
+        window.flutter_inappwebview
+        .callHandler('openExternalLink', forumUrl).then(() => {})
+      } else {
+        window.open(forumUrl, '_blank');
+      }
     }
   },
   components: {},
@@ -72,6 +84,7 @@ export default {
 .link a {
   color: #fff;
   text-decoration-line: none;
+  cursor: pointer;
   &:hover {
     color: $input_highlight_color;
   }

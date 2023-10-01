@@ -1,5 +1,5 @@
 name: wlanthermo_flutter_app
-description: A new Flutter project.
+description: App to discover all you WLANthermo devices.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -46,6 +46,8 @@ dependencies:
   device_info_plus: ^9.0.3
   flutter_local_notifications: ^15.1.1
   bonsoir: ^3.0.0+1
+  flutter_native_splash: ^2.3.2
+  url_launcher: ^6.1.14
 
 dev_dependencies:
   flutter_test:
@@ -107,3 +109,7 @@ flutter_launcher_icons:
   image_path: "assets/images/icon.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#333333"
+  branding: assets/images/splash.png

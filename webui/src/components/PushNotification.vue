@@ -172,11 +172,14 @@ export default {
   },
   mounted: function () {
     EventBus.$emit("loading", true)
-    window.flutter_inappwebview.callHandler('getDeviceInfo').then(({id}) => {
-      this.currentPhoneId = id;
-    })
-
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
+
+    if (this.isMobile) {
+      window.flutter_inappwebview.callHandler('getDeviceInfo').then(({id}) => {
+        this.currentPhoneId = id;
+      })
+    }
+
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
       this.telegram = response.data.telegram
@@ -188,16 +191,6 @@ export default {
   methods: {
     removeDevice: function(deviceId) {
       this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
-    },
-    getNewToken: function() {
-      const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneId));
-      if (currentPhoneIndex !== -1) {
-        // eslint-disable-next-line
-        const messaging = cordova.plugins.firebase.messaging
-        messaging.getToken().then((token) => {
-          this.app.devices[currentPhoneIndex].token_sha256 = token
-        })
-      }
     },
     configuredCurrentPhone: async function() {
       EventBus.$emit("loading", true)

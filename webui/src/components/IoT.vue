@@ -213,8 +213,8 @@ export default {
     },
     openCloudUrl: function() {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-        // eslint-disable-next-line
-        cordova.InAppBrowser.open(this.cloudUrl, '_system');
+        window.flutter_inappwebview
+            .callHandler('openExternalLink', this.cloudUrl).then(() => {})
       } else {
         window.open(this.cloudUrl, '_blank')
       }
