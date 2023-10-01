@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'notification-service.dart';
 import 'package:bonsoir/bonsoir.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -24,7 +25,9 @@ main() async {
     ),
   );
 
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   String htmlString = await rootBundle.loadString('assets/html/index.html');
   
   await Firebase.initializeApp(
@@ -116,6 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 webViewController = controller;
               },
               onLoadStop: (controller, url) {
+                FlutterNativeSplash.remove();
                 controller.addJavaScriptHandler(
                     handlerName: 'debug',
                     callback: (args) async {
