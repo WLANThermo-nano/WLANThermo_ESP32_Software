@@ -224,6 +224,18 @@ class _MyHomePageState extends State<MyHomePage> {
                       return {'token': fcmToken};
                     });
                 controller.addJavaScriptHandler(
+                    handlerName: 'requestNotificationPermission',
+                    callback: (args) async {
+                      // it's required by android version 13
+                      if (Platform.isAndroid) {
+                        FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+                          FlutterLocalNotificationsPlugin();
+                        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+                            AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
+                      }
+                      return {'value': 'ok'};
+                    });
+                controller.addJavaScriptHandler(
                     handlerName: 'getDeviceInfo',
                     callback: (args) async {
                       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();

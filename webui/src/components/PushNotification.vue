@@ -205,6 +205,9 @@ export default {
       const {id,model} = await window.flutter_inappwebview.callHandler('getDeviceInfo')
 
       window.flutter_inappwebview
+        .callHandler('requestNotificationPermission').then(() => {})
+
+      window.flutter_inappwebview
         .callHandler('getFCMToken')
         .then(async (tokenResponse) => {
           EventBus.$emit("loading", false)
