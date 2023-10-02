@@ -28,7 +28,7 @@
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
-      <img @click="toPage('/')" class="logo" :src="logoImg" style="width: 85%" />
+      <img @click="toHome()" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
@@ -203,6 +203,17 @@ export default {
       this.page = pageName
       this.navActive = false
     },
+    toHome: function() {
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
+          this.toPage('/')
+        } else {
+          this.toPage('scan')
+        }
+      } else {
+        this.toPage('/')
+      }
+    },
     getData: function() {
       if (this.isUpdating) {
         return;
@@ -335,15 +346,7 @@ export default {
       this.dialogActive = true
     })
     EventBus.$on('back-to-home', () => {
-      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
-          this.toPage('/')
-        } else {
-          this.toPage('scan')
-        }
-      } else {
-        this.toPage('/')
-      }
+      this.toHome();
     })
     EventBus.$on('device-selected', () => {
       this.clearGetDataInteval()
