@@ -28,10 +28,10 @@
 #define PUSHOVER_RETRY_DEFAULT 30u
 #define PUSHOVER_EXPIRE_DEFAULT 300u
 
-#define APP_MAX_NOTIFICATION_SOUNDS 3u
+#define APP_MAX_NOTIFICATION_SOUNDS 2u
 #define APP_DEFAULT_NOTIFICATION_SOUND "default"
 
-static const char *appNotificationSounds[APP_MAX_NOTIFICATION_SOUNDS] = {APP_DEFAULT_NOTIFICATION_SOUND, "bell.mp3" , "bell.caf"};
+static const char *appNotificationSounds[APP_MAX_NOTIFICATION_SOUNDS] = {APP_DEFAULT_NOTIFICATION_SOUND, "bell.mp3"};
 
 Notification::Notification()
 {
