@@ -35,9 +35,11 @@ class NotificationService {
       AndroidNotificationDetails(
           'wlanthermoChannel_id',
           'wlanthermoChannel_name',
-           playSound: true,
+           //playSound: true,
            sound: sound == "bell.mp3" ? const RawResourceAndroidNotificationSound("bell") : null,
+           //sound: RawResourceAndroidNotificationSound("bell"),
            importance: Importance.high,
+           //importance: Importance.max);
            priority: Priority.high);
 
     var iosNotificationDetails = DarwinNotificationDetails(
