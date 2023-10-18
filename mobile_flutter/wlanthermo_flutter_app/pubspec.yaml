@@ -103,13 +103,21 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
 # see https://pub.dev/packages/flutter_launcher_icons
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/icon.png"
-  min_sdk_android: 21 # android min sdk min:16, default 21
-  remove_alpha_ios: true
+#flutter_launcher_icons:
+  #android: "launcher_icon"
+  #ios: true
+  #image_path: "assets/images/icon.png"
+  #min_sdk_android: 21 # android min sdk min:16, default 21
+  #remove_alpha_ios: true
 
 flutter_native_splash:
   color: "#333333"
-  branding: assets/images/WLANThermo.png
+  #branding: assets/images/WLANThermo.png
+  image: assets/images/WLANThermo.png
+  android_12:
+    icon_background_color: "#333333"
+    image: assets/images/WLANThermo.png
+    color: "#333333"
+    image_dark: assets/images/WLANThermo.png
+    color_dark: "#333333"
+    icon_background_color_dark: "#333333"
