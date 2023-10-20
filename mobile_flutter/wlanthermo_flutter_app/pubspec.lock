@@ -265,12 +265,11 @@ packages:
   flutter_inappwebview:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "heads/v5.7.2+3_fix_xcode_17"
-      resolved-ref: "2d6c123b8065cdd98593b783a811e79d433e7244"
-      url: "https://github.com/nesquikm/flutter_inappwebview"
-    source: git
-    version: "5.7.2+3"
+      name: flutter_inappwebview
+      sha256: d198297060d116b94048301ee6749cd2e7d03c1f2689783f52d210a6b7aba350
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.8.0"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:

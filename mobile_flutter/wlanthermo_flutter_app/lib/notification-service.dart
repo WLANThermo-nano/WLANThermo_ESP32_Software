@@ -38,7 +38,7 @@ class NotificationService {
           flutterLocalNotificationsPlugin}) async {
     AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
-            'wlanthermoChannel_id5', 'wlanthermoChannel_name',
+            'wlanthermoChannel_id7', 'wlanthermoChannel_name',
             playSound: true,
             sound: sound == "bell.mp3"
                 ? const RawResourceAndroidNotificationSound("bell")
