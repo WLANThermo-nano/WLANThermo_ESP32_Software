@@ -103,7 +103,10 @@ export default {
   props: {},
   computed: {
     displayedDevices: function () {
-      return [...this.devices, ...this.demoDevices]
+      if (!this.initialized) return []
+
+      if (this.devices.length > 0) return [...this.devices]
+      return [...this.demoDevices]
     }
   },
   data: () => {
@@ -121,6 +124,7 @@ export default {
       },
       ipAddress: '',
       refreshing: false,
+      initialized: false,
       demoDevices: [
         {
           name: 'DEMO',
@@ -288,8 +292,10 @@ export default {
             d.connected = false
             return d
           })
+
           this.checkConnection()
         }
+        this.initialized = true
         resolve()
       })
     },
