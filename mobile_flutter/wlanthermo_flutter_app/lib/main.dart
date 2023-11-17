@@ -56,6 +56,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final GlobalKey webViewKey = GlobalKey();
 
+  List<String> logs = [];
+
   late InAppWebViewController webViewController;
   InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
       crossPlatform: InAppWebViewOptions(
@@ -71,6 +73,14 @@ class _MyAppState extends State<MyApp> {
 
   late PullToRefreshController pullToRefreshController;
   final urlController = TextEditingController();
+
+  void addToLogs(String logMessage) {
+    var now = DateTime.now();
+    logs.add("${now.hour.toString()}:${now.minute.toString()}:${now.second.toString()} $logMessage" );
+    if (logs.length > 50) {
+      logs.skip(logs.length - 50);
+    }
+  }
 
   @override
   void initState() {
@@ -138,10 +148,17 @@ class _MyAppState extends State<MyApp> {
                         onLoadStop: (controller, url) {
                           FlutterNativeSplash.remove();
                           controller.addJavaScriptHandler(
-                              handlerName: 'debug',
+                              handlerName: 'log',
+                              // args: ['log']
                               callback: (args) async {
-
+                                addToLogs(args[0]);
+                                print(args[0]);
                                 return {'value': 'ok'};
+                              });
+                          controller.addJavaScriptHandler(
+                              handlerName: 'getLogs',
+                              callback: (args) async {
+                                return {'value': jsonEncode(logs)};
                               });
                           controller.addJavaScriptHandler(
                               handlerName: 'getNW',

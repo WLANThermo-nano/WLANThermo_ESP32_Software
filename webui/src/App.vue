@@ -121,7 +121,9 @@ const menuItems = [
         { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
         { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
         { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
+        { icon: 'info_sign', translationKey: 'menuDiagnosis', id: 'diagnosis' },
 ];
+const DEBUG_MODE_KEY = '_WLAN_DEBUG_MODE'
 
 export default {
   name: "App",
@@ -181,6 +183,7 @@ export default {
       isUpdating: false,
       getDataInteval: null,
       appReady: false, // for mobile app
+      debugEnabled: false, 
     };
   },
   components: {
@@ -326,15 +329,33 @@ export default {
       setTimeout(() => {
         this.showBatteryPercentage = false;
       }, 5000)
-    }
+    },
+    fetchDebugModeAndUpdateMenu: async function() {
+      const debugModeData = await window.flutter_inappwebview
+        .callHandler('getData', DEBUG_MODE_KEY)
+      
+      this.debugEnabled = debugModeData.value === 'true'
+
+      // Adds diagnosis to menu
+      if (this.debugEnabled && !this.menuItems.some(it => it.id === 'diagnosis')) {
+        this.menuItems.push(
+          menuItems.find(it => it.id === 'diagnosis')
+        )
+      }
+    },
   },
   mounted: function() {
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+      EventBus.$emit('log', 'is mobile')
       this.$router.push('/scan')
       this.settings.system.host = this.$t('mobileAppHeader')
-      this.menuItems = this.menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
+      this.menuItems = menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
+
+      setTimeout(() => {
+        this.fetchDebugModeAndUpdateMenu()
+      }, 1000)
     } else {
-      this.menuItems = this.menuItems.filter(i => i.id !== 'scan')
+      this.menuItems = menuItems.filter(i => i.id !== 'scan' && i.id !== 'diagnosis')
       this.getSettings()
       this.initGetDataPeriodically()
     }
@@ -347,6 +368,9 @@ export default {
     })
     EventBus.$on('back-to-home', () => {
       this.toHome();
+    })
+    EventBus.$on('debug-enabled', () => {
+      this.fetchDebugModeAndUpdateMenu()
     })
     EventBus.$on('device-selected', () => {
       this.clearGetDataInteval()
@@ -370,6 +394,9 @@ export default {
     })
     EventBus.$on('loading', (value) => {
       this.showSpinner = value
+    })
+    EventBus.$on('log', (logMessage) => {
+      window.flutter_inappwebview.callHandler('log', logMessage)
     })
     EventBus.$on('getData', () => {
       this.getData()

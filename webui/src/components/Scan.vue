@@ -44,16 +44,6 @@
             </template>
           </swipe-list>
         </form>
-
-        <div style="color: #fff">
-          debug message:
-        </div>
-        <div style="max-height: 50vh; max-width: 90vw; overflow-y:scroll;color:#fff;border: grey solid 1px; padding: 2px">
-          <div v-for="msg in debugMessages" :key="msg">
-            {{ msg }}
-          </div>
-        </div>
-
       </div>
     </div>
     <div class="connection-lost-toast" v-if="showConnectionLost">
@@ -134,7 +124,6 @@ export default {
         }
       ],
       devices: [],
-      debugMessages: [],
       requestCompletedCount: 0,
       blockSize: 0,
       requestCancelTokenSource: '',
@@ -226,9 +215,7 @@ export default {
       }
     },
     addToDebug: function (msg) {
-      var d = new Date();
-      var n = d.toLocaleTimeString();
-      this.debugMessages.push(`${n}: ${msg}`)
+      EventBus.$emit('log', msg)
     },
     checkAndAddDevice: function (name, ip) {
       this.axios.get(`http://${ip}/settings`).then(resp => {
@@ -280,7 +267,7 @@ export default {
       const versionData = await window.flutter_inappwebview
         .callHandler('getData', DEVICE_SCHEMA_VERSION_KEY)
 
-      this.addToDebug(`device list from storage ${deviceListData}`)
+      this.addToDebug(`device list from storage ${deviceListData.value}`)
       return new Promise((resolve) => {
         const devicesAsString = deviceListData.value ?? []
         const version = versionData.value
