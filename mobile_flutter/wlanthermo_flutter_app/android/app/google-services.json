@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:953994846814:android:ade64c904501924e7c4acf",
         "android_client_info": {
-          "package_name": "com.wlanthermo.flutter_app"
+          "package_name": "de.wlanthermo.app"
         }
       },
       "oauth_client": [
