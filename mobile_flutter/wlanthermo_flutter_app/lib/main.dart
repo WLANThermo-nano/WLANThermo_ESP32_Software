@@ -12,6 +12,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wlanthermo_flutter_app/notification-service.dart';
 
 import 'firebase_options.dart';
 
@@ -38,6 +39,8 @@ Future main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await NotificationService.initialize(flutterLocalNotificationsPlugin);
 
   runApp(MaterialApp(
       home: MyApp(htmlString: htmlString)

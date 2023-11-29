@@ -1,6 +1,12 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+const bellSoundChannelId = "wlanthermo_channel_bell_id";
+const defaultSoundChannelId = "wlanthermo_channel_default_id";
+
+const bellSoundChannelName = "bell sound notification channel";
+const defaultSoundChannelName = "default sound notification channel";
+
 class NotificationService {
   static Future initialize(
       FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
@@ -19,6 +25,29 @@ class NotificationService {
       sound: true,
     );
 
+    // create channel for bell sound
+    await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.
+            createNotificationChannel(
+        const AndroidNotificationChannel(
+          bellSoundChannelId,
+          bellSoundChannelName,
+          sound: RawResourceAndroidNotificationSound("bell"),
+          importance: Importance.high,
+          playSound: true
+    ));
+
+    // create channel for default sound
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.
+    createNotificationChannel(
+        const AndroidNotificationChannel(
+            defaultSoundChannelId,
+            defaultSoundChannelName,
+            importance: Importance.high,
+            playSound: true
+        ));
+
     FirebaseMessaging.onMessage.listen((message) {
       NotificationService.showBigTextNotification(
           title: message.notification?.title ?? "",
@@ -26,6 +55,7 @@ class NotificationService {
           sound: message.data['sound'] ?? "default",
           flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin);
     });
+
   }
 
   static Future showBigTextNotification(
@@ -36,15 +66,24 @@ class NotificationService {
       var payload,
       required FlutterLocalNotificationsPlugin
           flutterLocalNotificationsPlugin}) async {
-    AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-            'wlanthermoChannel_id7', 'wlanthermoChannel_name',
-            playSound: true,
-            sound: sound == "bell.mp3"
-                ? const RawResourceAndroidNotificationSound("bell")
-                : null,
-            importance: Importance.high,
-            priority: Priority.high);
+
+    AndroidNotificationDetails androidNotificationDetails;
+    if (sound == "bell.mp3") {
+      androidNotificationDetails =
+          const AndroidNotificationDetails(
+              bellSoundChannelId, bellSoundChannelName,
+              playSound: true,
+              sound: RawResourceAndroidNotificationSound("bell"),
+              importance: Importance.high,
+              priority: Priority.high);
+    } else {
+      androidNotificationDetails =
+          const AndroidNotificationDetails(
+              defaultSoundChannelId, defaultSoundChannelName,
+              playSound: true,
+              importance: Importance.high,
+              priority: Priority.high);
+    }
 
     var iosNotificationDetails = DarwinNotificationDetails(
       presentSound: true,
