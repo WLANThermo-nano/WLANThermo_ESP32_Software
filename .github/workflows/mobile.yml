@@ -30,6 +30,8 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/google-services.json google-services.json.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/ios/bell.mp3 bell.mp3.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/key.properties key.properties.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/keystore.jks keystore.jks.gpg
 
       - uses: actions/setup-java@v2
         with:
