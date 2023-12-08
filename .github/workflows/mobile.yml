@@ -50,6 +50,7 @@ jobs:
           flutter pub get
           flutter build apk --release --no-shrink
           flutter build appbundle --release --no-shrink --build-number 10010
+          flutter build ipa
 
       - uses: actions/upload-artifact@v3
         with:
