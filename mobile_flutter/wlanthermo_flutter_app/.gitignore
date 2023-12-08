@@ -45,3 +45,6 @@ app.*.map.json
 
 keystore.jks
 
+/android/app/src/main/res/raw/bell.mp3
+/ios/bell.mp3
+/android/app/google-services.json
