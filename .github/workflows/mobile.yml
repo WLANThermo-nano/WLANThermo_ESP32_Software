@@ -32,6 +32,8 @@ jobs:
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/ios/bell.mp3 bell.mp3.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/key.properties key.properties.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/app/keystore.jks keystore.jks.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovis
 
       - uses: actions/setup-java@v2
         with:
@@ -43,7 +45,26 @@ jobs:
           flutter-version: '3.13.4'
           cache: true
           architecture: x64
-      
+
+      - name: Flutter pug get
+        working-directory: ./mobile_flutter/wlanthermo_flutter_app
+        run: |
+          flutter pub get
+
+      - name: Prepare iOS provisioning
+        working-directory: ./.github/secrets
+        run: |
+          security create-keychain -p "" build.keychain >/dev/null 2>&1
+          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
+          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+
+      - name: Build iOS app
+        working-directory: ./mobile_flutter/wlanthermo_flutter_app
+        run: flutter build ipa
+
       - name: Build android
         working-directory: ./mobile_flutter/wlanthermo_flutter_app
         run: |
