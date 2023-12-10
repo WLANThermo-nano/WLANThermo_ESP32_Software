@@ -64,7 +64,7 @@ jobs:
 
       - name: Build iOS app
         working-directory: ./mobile_flutter/wlanthermo_flutter_app
-        run: flutter build ipa --release --export-options-plist=GoogleService-Info.plist.plist
+        run: flutter build ipa --release --export-options-plist=GoogleService-Info.plist
 
       - name: Build android
         working-directory: ./mobile_flutter/wlanthermo_flutter_app
