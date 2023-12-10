@@ -33,7 +33,7 @@ jobs:
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/key.properties key.properties.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/app/keystore.jks keystore.jks.gpg
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovis
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovision.gpg
 
       - uses: actions/setup-java@v2
         with:
