@@ -221,6 +221,7 @@ void Notification::saveConfig()
       device["id"] = pushApp.devices[i].id;
       device["token"] = pushApp.devices[i].token;
       device["sound"] = pushApp.devices[i].sound;
+      device["androidchannelid"] = pushApp.devices[i].androidchannelid;
     }
   }
 
@@ -315,6 +316,11 @@ void Notification::loadConfig()
               if (_device.containsKey("sound"))
               {
                 pushApp.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+              }
+
+              if (_device.containsKey("androidchannelid"))
+              {
+                 strcpy(pushApp.devices[deviceIndex].androidchannelid, _device["androidchannelid"].asString());
               }
 
               deviceIndex++;
