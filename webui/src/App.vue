@@ -27,15 +27,17 @@
         </template>
       </div>
     </div>
-    <div id="nav" :class="{ active: navActive }">
+    <div id="nav" 
+      class="w-44 h-screen bg-secondary"
+      :class="{ active: navActive }">
       <img @click="toHome()" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
-          <li class="pure-menu-item" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
-            <a @click="toPage(item.id)" class="pure-menu-link cursor-pointer">
+          <li class="pl-3 my-5 text-primarytext hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
+            <a @click="toPage(item.id)" class="cursor-pointer">
               <span class="menu-icon" :class="'icon-' + item.icon"></span>
               {{ $t(item.translationKey) }}
             </a>
@@ -416,11 +418,11 @@ export default {
   align-items: stretch;
 }
 
-#nav {
-  flex: 0 0 $nav_width;
-  min-height: 100vh;
-  background-color: $medium;
-}
+// #nav {
+//   flex: 0 0 $nav_width;
+//   min-height: 100vh;
+//   background-color: $medium;
+// }
 
 #main {
   flex: 1 1 auto;
@@ -551,17 +553,17 @@ export default {
   }
 }
 
-.pure-menu-item {
-  &:hover {
-    background-color: $medium_dark;
-  }
-  &.active {
-    background-color: #fff;
-    .pure-menu-link {
-      background-color: #fff;
-    }
-  }
-}
+// .pure-menu-item {
+//   &:hover {
+//     background-color: $medium_dark;
+//   }
+//   &.active {
+//     background-color: #fff;
+//     .pure-menu-link {
+//       background-color: #fff;
+//     }
+//   }
+// }
 
 .auth-dialog-body {
   padding: 1em;
@@ -573,18 +575,18 @@ export default {
 }
 
 @media screen and (max-width: 48em) {
-  #nav {
-    flex-basis: 200px;
-    z-index: 500;
-    width: 12.5em;
-    left: -12.5em;
-    position: fixed;
-    transition: left .4s ease;
-    &.active {
-      display: block;
-      left: 0;
-    }
-  }
+  // #nav {
+  //   flex-basis: 200px;
+  //   z-index: 500;
+  //   width: 12.5em;
+  //   left: -12.5em;
+  //   position: fixed;
+  //   transition: left .4s ease;
+  //   &.active {
+  //     display: block;
+  //     left: 0;
+  //   }
+  // }
   .nav-mask {
     display: block;
   }
