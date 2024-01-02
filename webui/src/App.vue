@@ -28,7 +28,7 @@
       </div>
     </div>
     <div id="nav" 
-      class="w-44 h-screen bg-secondary"
+      class="w-48 h-screen bg-secondary"
       :class="{ active: navActive }">
       <img @click="toHome()" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version" v-if="settings.device">
@@ -36,9 +36,9 @@
       </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
-          <li class="pl-3 my-5 text-primarytext hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
+          <li class="pl-4 my-5 text-primarytext hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
             <a @click="toPage(item.id)" class="cursor-pointer">
-              <span class="menu-icon" :class="'icon-' + item.icon"></span>
+              <span class="menu-icon" :class="'wlan-icons-' + item.icon"></span>
               {{ $t(item.translationKey) }}
             </a>
           </li>
@@ -116,7 +116,7 @@ import IconsHelper from './helpers/icons-helper'
 const menuItems = [
         { icon: 'search', translationKey: 'menuScan', id: 'scan' },
         { icon: 'home', translationKey: 'menuHome', id: '/' },
-        { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
+        { icon: 'wifi', translationKey: 'menuWlan', id: 'wlan' },
         { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
         { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
         { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },

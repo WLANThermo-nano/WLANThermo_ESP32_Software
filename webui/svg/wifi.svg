@@ -1,0 +1,24 @@
+<svg id="wifi-w" xmlns="http://www.w3.org/2000/svg" width="32.392" height="26.635" viewBox="0 0 32.392 26.635">
+  <g id="wifi" opacity="0.6">
+    <g id="组_204" data-name="组 204" transform="translate(14.045 22.459)">
+      <g id="组_203" data-name="组 203">
+        <circle id="椭圆_203" data-name="椭圆 203" cx="2.088" cy="2.088" r="2.088" fill="#fff"/>
+      </g>
+    </g>
+    <g id="组_206" data-name="组 206">
+      <g id="组_205" data-name="组 205" transform="translate(0 0)">
+        <path id="路径_290" data-name="路径 290" d="M32.052,52.419a21.628,21.628,0,0,0-31.712,0,1.265,1.265,0,0,0,1.851,1.725,19.1,19.1,0,0,1,28.01,0,1.265,1.265,0,0,0,1.851-1.725Z" transform="translate(0 -45.5)" fill="#fff"/>
+      </g>
+    </g>
+    <g id="组_208" data-name="组 208" transform="translate(4.618 7.342)">
+      <g id="组_207" data-name="组 207" transform="translate(0 0)">
+        <path id="路径_291" data-name="路径 291" d="M95.786,166.349a15.485,15.485,0,0,0-22.421,0,1.265,1.265,0,0,0,1.8,1.782,12.956,12.956,0,0,1,18.828,0,1.265,1.265,0,0,0,1.8-1.783Z" transform="translate(-72.998 -161.547)" fill="#fff"/>
+      </g>
+    </g>
+    <g id="组_210" data-name="组 210" transform="translate(9.558 14.741)">
+      <g id="组_209" data-name="组 209" transform="translate(0 0)">
+        <path id="路径_292" data-name="路径 292" d="M163.86,281.144A9.13,9.13,0,0,0,157.7,278.5h-.093a9.131,9.131,0,0,0-6.158,2.644,1.265,1.265,0,1,0,1.781,1.8,6.607,6.607,0,0,1,4.377-1.911h.093a6.607,6.607,0,0,1,4.377,1.911,1.265,1.265,0,0,0,1.781-1.8Z" transform="translate(-151.076 -278.5)" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+</svg>

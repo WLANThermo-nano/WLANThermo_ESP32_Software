@@ -1,0 +1,17 @@
+@font-face {font-family: "wlan-icons";
+  src: url('~@/assets/icons/wlan-icons/wlan-icons.ttf?t=1704149845979') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+}
+
+[class^="wlan-icons-"], [class*=" wlan-icons-"] {
+  font-family: 'wlan-icons' !important;
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.wlan-icons-home:before { content: "\ea01"; }
+.wlan-icons-wifi:before { content: "\ea02"; }
+
+$wlan-icons-home: "\ea01";
+$wlan-icons-wifi: "\ea02";
+
