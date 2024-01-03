@@ -1,6 +1,6 @@
 <template>
   <div id="layout">
-    <div class="headmenu">
+    <div class="headmenu bg-darkblue-600">
       <span id="menuLink" class="menu-link" @click="navActive = !navActive">
         <!-- Hamburger icon -->
         <span></span>
@@ -28,18 +28,21 @@
       </div>
     </div>
     <div id="nav" 
-      class="w-48 h-screen bg-secondary"
+      class="w-52 h-screen bg-darkblue-900"
       :class="{ active: navActive }">
-      <img @click="toHome()" class="logo" :src="logoImg" style="width: 85%" />
-      <div class="version" v-if="settings.device">
+      <img @click="toHome()" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" :src="logoImg"/>
+      <div class="text-white text-right text-sm mb-11" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
       <div class="pure-menu">
         <ul class="pure-menu-list">
-          <li class="pl-4 my-5 text-primarytext hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
-            <a @click="toPage(item.id)" class="cursor-pointer">
-              <span class="menu-icon" :class="'wlan-icons-' + item.icon"></span>
-              {{ $t(item.translationKey) }}
+          <li class="pl-4 my-5 text-grey hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
+            <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
+              <span
+                :class="'wlan-icons-' + item.icon"
+                class="text-2xl inline-block w-8 text-center">
+              </span>
+              <span class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
             </a>
           </li>
         </ul>
@@ -117,13 +120,13 @@ const menuItems = [
         { icon: 'search', translationKey: 'menuScan', id: 'scan' },
         { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'wifi', translationKey: 'menuWlan', id: 'wlan' },
-        { icon: 'bluetooth_1', translationKey: 'menuBluetooth', id: 'bluetooth' },
-        { icon: 'cog', translationKey: 'menuSystem', id: 'system' },
-        { icon: 'fire', translationKey: 'menuPitmaster', id: 'pitmaster' },
+        { icon: 'bluetooth', translationKey: 'menuBluetooth', id: 'bluetooth' },
+        { icon: 'settings', translationKey: 'menuSystem', id: 'system' },
+        { icon: 'pitmaster', translationKey: 'menuPitmaster', id: 'pitmaster' },
         { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
         { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
-        { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
-        { icon: 'info_sign', translationKey: 'menuDiagnosis', id: 'diagnosis' },
+        { icon: 'info', translationKey: 'menuAbout', id: 'about' },
+        { icon: 'info', translationKey: 'menuDiagnosis', id: 'diagnosis' },
 ];
 const DEBUG_MODE_KEY = '_WLAN_DEBUG_MODE'
 
@@ -434,7 +437,6 @@ export default {
   display: flex;
   width: calc(100% - #{$nav_width});
   left: $nav_width;
-  background-color: $medium;
   color: #ccc;
   height: 44px;
   .title {
@@ -448,19 +450,6 @@ export default {
     flex: 0 0 auto;
     padding-right: 0.5em;
   }
-}
-
-.version {
-  color: #fff;
-  text-align: right;
-  font-size: 0.9em;
-  padding-right: 8.3%;
-}
-
-.logo {
-  margin: 15px auto 10px auto;
-  display: block;
-  cursor: pointer;
 }
 
 .page-content {
@@ -619,13 +608,6 @@ export default {
   text-align: center;
   padding: 14px 5px;
   float: right;
-}
-
-.menu-icon {
-  display: inline-block;
-  width: 21px;
-  margin-right: 0.2em;
-  text-align: center;
 }
 
 </style>
