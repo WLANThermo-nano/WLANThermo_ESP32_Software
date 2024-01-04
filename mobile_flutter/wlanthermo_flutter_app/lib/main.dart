@@ -13,6 +13,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wlanthermo_flutter_app/notification-service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'firebase_options.dart';
 
@@ -33,6 +34,8 @@ Future main() async {
   if (Platform.isAndroid) {
     await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
   }
+
+  await Permission.notification.isDenied.then((value) => Permission.notification.request());
 
   String htmlString = await rootBundle.loadString('assets/html/index.html');
 
@@ -95,10 +98,10 @@ class _MyAppState extends State<MyApp> {
       ),
       onRefresh: () async {
         if (Platform.isAndroid) {
-          webViewController?.reload();
+          webViewController.reload();
         } else if (Platform.isIOS) {
-          webViewController?.loadUrl(
-              urlRequest: URLRequest(url: await webViewController?.getUrl()));
+          webViewController.loadUrl(
+              urlRequest: URLRequest(url: await webViewController.getUrl()));
         }
       },
     );
@@ -119,7 +122,7 @@ class _MyAppState extends State<MyApp> {
             if (webHistory?.currentIndex != null && webHistory!.currentIndex! <= 1) {
               return true;
             }
-            webViewController?.goBack();
+            webViewController.goBack();
           }
           return false;
         }

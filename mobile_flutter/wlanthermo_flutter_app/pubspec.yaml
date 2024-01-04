@@ -48,6 +48,7 @@ dependencies:
   bonsoir: ^3.0.0+1
   flutter_native_splash: ^2.3.2
   url_launcher: ^6.1.14
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:
