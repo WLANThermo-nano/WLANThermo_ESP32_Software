@@ -24,9 +24,9 @@ select {
 }
 
 .form-help {
+    @apply text-grey-800;
     margin-top: 0.125rem;
     margin-left: 0.125rem;
-    color: #b3b3b3;
     font-size: 0.8rem;
 }
 
@@ -73,12 +73,12 @@ select {
 }
 
 .form-group .control-label {
+    @apply text-grey-800;
     position: absolute;
     top: 0.25rem;
     pointer-events: none;
     padding-left: 0.125rem;
     z-index: 1;
-    color: #b3b3b3;
     font-size: 1rem;
     font-weight: normal;
     -webkit-transition: all 0.28s ease;
@@ -86,19 +86,21 @@ select {
 }
 
 .form-group .bar {
+    @apply border-grey-800;
     position: relative;
-    border-bottom: 0.0625rem solid #999;
+    border-bottom-width: 0.0625rem;
+    border-bottom-style: solid;
     display: block;
 }
 
 .form-group .bar::before {
+    @apply bg-primary-400;
     content: "";
     height: 0.125rem;
     width: 0;
     left: 50%;
     bottom: -0.0625rem;
     position: absolute;
-    background: $input_highlight_color;
     -webkit-transition: left 0.28s ease, width 0.28s ease;
     transition: left 0.28s ease, width 0.28s ease;
     z-index: 2;
@@ -108,7 +110,7 @@ select {
 .form-group textarea {
     display: block;
     background: none;
-    padding: 0.375rem 0.125rem 0.0625rem;
+    padding: 0.375rem 0.125rem 0.2625rem;
     font-size: 1rem;
     border-width: 0;
     border-color: transparent;
@@ -155,8 +157,8 @@ select {
 .form-group textarea.form-file ~ .control-label,
 .form-group textarea.has-value ~ .control-label {
     font-size: 0.8rem;
-    color: gray;
-    top: -.5rem;
+    @apply text-grey-800;
+    top: -.9rem;
     left: 0;
 }
 
@@ -169,7 +171,7 @@ select {
 .form-group select:focus ~ .control-label,
 .form-group input:focus ~ .control-label,
 .form-group textarea:focus ~ .control-label {
-    color: $input_highlight_color;
+    @apply text-primary-400;
 }
 
 .form-group select:focus ~ .bar::before,

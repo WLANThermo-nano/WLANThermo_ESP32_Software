@@ -279,7 +279,7 @@ export default {
       margin-left: 0.2em;
       color: #fff;
       &:hover {
-        color: $input_highlight_color;
+        @apply text-primary-400;
       }
     }
   }

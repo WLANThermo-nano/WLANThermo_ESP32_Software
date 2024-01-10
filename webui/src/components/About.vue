@@ -126,7 +126,7 @@ export default {
   text-decoration-line: none;
   cursor: pointer;
   &:hover {
-    color: $input_highlight_color;
+    @apply text-primary-400;
   }
 }
 

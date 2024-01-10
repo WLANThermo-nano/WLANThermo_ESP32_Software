@@ -1,75 +1,75 @@
 <template>
   <div id="layout">
-    <div class="headmenu bg-darkblue-600">
-      <span id="menuLink" class="menu-link" @click="navActive = !navActive">
-        <!-- Hamburger icon -->
-        <span></span>
-      </span>
-      <div class="title">
-        {{ settings.system.host }}
+    <div class="flex w-screen">
+      <div id="side-bar" class="h-screen bg-darkblue-800">
+        <img @click="toHome()" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" :src="logoImg" />
+        <div class="text-white text-right text-sm mb-11" v-if="settings.device">
+          {{ settings.device.sw_version }}
+        </div>
+        <div class="pure-menu">
+          <ul class="pure-menu-list">
+            <li class="pl-4 my-5 text-grey-500 hover:text-primary-400" v-for="item in menuItems" :key="item.id"
+              :class="{ 'active': page === item.id }">
+              <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
+                <span :class="'wlan-icons-' + item.icon" class="text-2xl inline-block w-8 text-center">
+                </span>
+                <span class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="status" v-if="system">
-        <!-- to do update notice -->
-        <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="update" iconClass="info_sign icon-yellow" />
-        
-        <Icon v-if="cloudIconClass !== null" class="cursor-pointer" @click="handleCloudIconClick" :iconClass="cloudIconClass" />
-        <!-- charging -->
-        <Icon v-if="system.charge" iconClass="power-cord" />
-        <!-- battery -->
-        <template v-if="system && system.soc >= 0">
-          <div class="mr5" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
-          <Icon class="cursor-pointer" @click="switchToBatteryText" v-else :iconClass="batteryIconClass" />
-        </template>
-        <!-- wifi -->
-        <template v-if="system && system.rssi">
-          <div class="mr5" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
-          <Icon class="cursor-pointer" @click="switchToWifiStrength" v-else :iconClass="wifiIconClass" />
-        </template>
-      </div>
-    </div>
-    <div id="nav" 
-      class="w-52 h-screen bg-darkblue-900"
-      :class="{ active: navActive }">
-      <img @click="toHome()" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" :src="logoImg"/>
-      <div class="text-white text-right text-sm mb-11" v-if="settings.device">
-        {{ settings.device.sw_version }}
-      </div>
-      <div class="pure-menu">
-        <ul class="pure-menu-list">
-          <li class="pl-4 my-5 text-grey hover:text-primary" v-for="item in menuItems" :key="item.id" :class="{ 'active':  page === item.id}">
-            <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
-              <span
-                :class="'wlan-icons-' + item.icon"
-                class="text-2xl inline-block w-8 text-center">
-              </span>
-              <span class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div class="nav-mask" v-if="navActive" @click="navActive = false"></div>
-    <div id="main">
-      <div class="page-content">
-        <div class="content-body">
+      <div id="content" class="flex flex-col flex-grow">
+        <div id="navbar" class="bg-darkblue-600 h-12 flex items-end flex-col flex-grow-0">
+          <div id="status" class="flex mt-3 align-middle" v-if="system">
+            <!-- to do update notice -->
+            <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="update"
+              iconClass="info_sign icon-yellow" />
+            
+            <span v-if="cloudIconClass !== null" 
+              class="wlan-icons-remote-cloud text-xl inline-block text-center font-bold cursor-pointer mr-3"
+              :class="cloudIconClass"
+              @click="handleCloudIconClick">
+            </span>
+            <!-- battery -->
+            <template v-if="system && system.soc >= 0">
+              <div class="mr5 text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
+              <img v-if="cloudIconClass !== null" 
+                class="inline-block cursor-pointer text-center  w-6 h-3.5 mr-3 mt-1.5"
+                :src="batteryIcon"
+                @click="switchToBatteryText" />
+            </template>
+            <!-- wifi -->
+            <template v-if="system && system.rssi">
+              <div class="mr5 text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
+              <img v-if="wifiIcon !== null" 
+                class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
+                :src="wifiIcon"
+                @click="switchToWifiStrength" />
+            </template>
+          </div>
+        </div>
+        <div id="page-content" class="bg-darkblue-900 flex-grow">
+        <div id="content-body" class="m-2">
           <router-view :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" />
         </div>
       </div>
+      </div>
     </div>
-    
+
     <!-- modal -->
     <div class="dialog-mask" v-if="dialogActive" @click="dialogActive = false"></div>
-    <div class="dialog" v-if="dialogActive">
-      <div class="title">
+    <div class="dialog shadow-md" v-if="dialogActive">
+      <div class="title bg-darkblue-600 border-b border-grey-500 rounded-t-lg p-2 font-semibold text-lg">
         {{ dialogTitle }}
         <span @click="dialogActive = false" class="close-btn">×</span>
       </div>
-      <div class="body">
-        <p><span>{{dialogBodyText}}</span></p>
+      <div class="body bg-darkblue-600 text-white p-2 rounded-b-lg">
+        <p><span>{{ dialogBodyText }}</span></p>
         <div class="link" v-if="wikiLink">
           <p>
             {{ $t('see_also') }}
-            <a :href="wikiLink" target="_blank"><span style="color:#3366ff">Wiki - {{ linkText }}</span></a>
+            <a :href="wikiLink" target="_blank"><span class="text-primary-400">Wiki - {{ linkText }}</span></a>
           </p>
         </div>
       </div>
@@ -84,23 +84,23 @@
         <span @click="authDialogActive = false" class="close-btn">×</span>
       </div>
       <div class="auth-dialog-body">
-         <form>
-            <div class="form-group">
-              <input type="text" v-model="authUsername" maxlength="30" required>
-              <label class="control-label" for="input">{{$t("username")}}</label>
-              <i class="bar"></i>
-            </div>
-            <div class="form-group">
-              <input type="password" v-model="authPass" maxlength="30" required>
-              <label class="control-label" for="input">{{$t("password")}}</label>
-              <i class="bar"></i>
-            </div>
-            <div style="text-aligh: end;">
-              <button class="pure-button pure-button-primary" @click.stop="onAuthConfirm">
-                  {{ $t('save') }}
-              </button>
-            </div>
-         </form>
+        <form>
+          <div class="form-group">
+            <input type="text" v-model="authUsername" maxlength="30" required>
+            <label class="control-label" for="input">{{ $t("username") }}</label>
+            <i class="bar"></i>
+          </div>
+          <div class="form-group">
+            <input type="password" v-model="authPass" maxlength="30" required>
+            <label class="control-label" for="input">{{ $t("password") }}</label>
+            <i class="bar"></i>
+          </div>
+          <div style="text-aligh: end;">
+            <button class="pure-button pure-button-primary-400" @click.stop="onAuthConfirm">
+              {{ $t('save') }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -117,16 +117,16 @@ import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
 const menuItems = [
-        { icon: 'search', translationKey: 'menuScan', id: 'scan' },
-        { icon: 'home', translationKey: 'menuHome', id: '/' },
-        { icon: 'wifi', translationKey: 'menuWlan', id: 'wlan' },
-        { icon: 'bluetooth', translationKey: 'menuBluetooth', id: 'bluetooth' },
-        { icon: 'settings', translationKey: 'menuSystem', id: 'system' },
-        { icon: 'pitmaster', translationKey: 'menuPitmaster', id: 'pitmaster' },
-        { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
-        { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
-        { icon: 'info', translationKey: 'menuAbout', id: 'about' },
-        { icon: 'info', translationKey: 'menuDiagnosis', id: 'diagnosis' },
+  { icon: 'search', translationKey: 'menuScan', id: 'scan' },
+  { icon: 'home', translationKey: 'menuHome', id: '/' },
+  { icon: 'wifi', translationKey: 'menuWlan', id: 'wlan' },
+  { icon: 'bluetooth', translationKey: 'menuBluetooth', id: 'bluetooth' },
+  { icon: 'settings', translationKey: 'menuSystem', id: 'system' },
+  { icon: 'pitmaster', translationKey: 'menuPitmaster', id: 'pitmaster' },
+  { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
+  { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
+  { icon: 'info', translationKey: 'menuAbout', id: 'about' },
+  { icon: 'info', translationKey: 'menuDiagnosis', id: 'diagnosis' },
 ];
 const DEBUG_MODE_KEY = '_WLAN_DEBUG_MODE'
 
@@ -134,14 +134,24 @@ export default {
   name: "App",
   data: () => {
     return {
+      wifiIcons: {
+        wifi10: require(`@/assets/icons/svg/wifi-10.svg`),
+        wifi50: require(`@/assets/icons/svg/wifi-50.svg`),
+        wifi100: require(`@/assets/icons/svg/wifi-100.svg`),
+      },
+
+      batteryIcons: {
+        chargeHigh: require(`@/assets/icons/svg/charge-high.svg`),
+      },
+
       logoImg: require(`@/assets/logo_${process.env.VUE_APP_PRODUCT_NAME}.svg`),
 
       // wifi icon
-      wifiIconClass: null,
+      wifiIcon: null,
       showWifiStrength: false,
       // Battery
       showBatteryPercentage: false,
-      batteryIconClass: null,
+      batteryIcon: null,
       // cloud
       cloudIconClass: null,
 
@@ -188,32 +198,32 @@ export default {
       isUpdating: false,
       getDataInteval: null,
       appReady: false, // for mobile app
-      debugEnabled: false, 
+      debugEnabled: false,
     };
   },
   components: {
     Icon
   },
   methods: {
-    initGetDataPeriodically: function() {
+    initGetDataPeriodically: function () {
       this.getData();
       this.getDataInteval = setInterval(() => {
         this.getData()
       }, 2000)
     },
-    clearGetDataInteval: function() {
+    clearGetDataInteval: function () {
       if (this.getDataInteval) {
         clearInterval(this.getDataInteval)
       }
     },
-    toPage: function(pageName, query) {
-      this.$router.push({ path: pageName, query: query})
+    toPage: function (pageName, query) {
+      this.$router.push({ path: pageName, query: query })
       this.page = pageName
       this.navActive = false
     },
-    toHome: function() {
+    toHome: function () {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
+        if (this.menuItems.filter(i => i.id === '/').length > 0) {
           this.toPage('/')
         } else {
           this.toPage('scan')
@@ -222,7 +232,7 @@ export default {
         this.toPage('/')
       }
     },
-    getData: function() {
+    getData: function () {
       if (this.isUpdating) {
         return;
       }
@@ -234,7 +244,7 @@ export default {
         this.prepareStatusIcons()
       })
     },
-    getSettings: function() {
+    getSettings: function () {
       this.axios.get('/settings').then((response) => {
         const data = response.data
         this.settings = data
@@ -247,7 +257,7 @@ export default {
         }
       })
     },
-    update: function() {
+    update: function () {
       const promptText = `${this.$t('update_prompt')}\n\n${this.$t('current_verision')}: ${this.settings.system.version}\n${this.$t('new_version')}: ${this.settings.system.getupdate}`
       if (confirm(promptText) == true) {
         this.showSpinner = true
@@ -257,7 +267,7 @@ export default {
         })
       }
     },
-    checkUpdateStatus: function() {
+    checkUpdateStatus: function () {
       this.axios.post('/updatestatus').then((response) => {
         if (response.data == true) {
           setTimeout(() => {
@@ -268,7 +278,7 @@ export default {
         }
       })
     },
-    handleCloudIconClick: function() {
+    handleCloudIconClick: function () {
       this.axios.get('/settings').then((response) => {
         const data = response.data
         this.settings = data
@@ -276,13 +286,13 @@ export default {
 
         if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
           window.flutter_inappwebview
-            .callHandler('openExternalLink', url).then(() => {})
+            .callHandler('openExternalLink', url).then(() => { })
         } else {
           window.location = url
         }
       })
     },
-    onAuthConfirm: function() {
+    onAuthConfirm: function () {
       const base64Secret = btoa(`${this.authUsername}:${this.authPass}`)
       this.axios.defaults.headers.common['Authorization'] = `Basic ${base64Secret}`;
       this.authDialogActive = false
@@ -293,52 +303,41 @@ export default {
         this.showSpinner = false
       })
     },
-    prepareStatusIcons: function() {
+    prepareStatusIcons: function () {
       // wifi icon
       const dbm = this.system.rssi
-      this.wifiIconClass = IconsHelper.getWifiIcon(dbm)
+      this.wifiIcon = this.wifiIcons[IconsHelper.getWifiIcon(dbm)]
 
       // Battery
-      const percent = this.system.soc
-      if (percent >= '90') {
-        this.batteryIconClass = 'battery-100'
-      } else if (percent >= '75') {
-        this.batteryIconClass = 'battery-75'
-      } else if (percent >= '50') {
-        this.batteryIconClass = 'battery-50'
-      } else if (percent >= '15') {
-        this.batteryIconClass = 'battery-25'
-      } else if (percent >= '10') {
-        this.batteryIconClass = 'battery-0 icon-red'
-      } else {
-        this.batteryIconClass = 'battery-0 icon-red icon-blinker'
-      }
+      const level = this.system.soc
+      this.batteryIcon = this.batteryIcons[IconsHelper.getBatteryIcon(level, this.system.charge)]
+
       // cloud
       const online = this.system.online
       if (online == 1) {
-        this.cloudIconClass = 'cloud icon-red'
+        this.cloudIconClass = 'text-red'
       } else if (online == 2) {
-        this.cloudIconClass = 'cloud icon-green'
+        this.cloudIconClass = 'text-primary-400'
       } else {
         this.cloudIconClass = null
       }
     },
-    switchToWifiStrength: function() {
+    switchToWifiStrength: function () {
       this.showWifiStrength = true;
       setTimeout(() => {
         this.showWifiStrength = false;
       }, 5000)
     },
-    switchToBatteryText: function() {
+    switchToBatteryText: function () {
       this.showBatteryPercentage = true;
       setTimeout(() => {
         this.showBatteryPercentage = false;
       }, 5000)
     },
-    fetchDebugModeAndUpdateMenu: async function() {
+    fetchDebugModeAndUpdateMenu: async function () {
       const debugModeData = await window.flutter_inappwebview
         .callHandler('getData', DEBUG_MODE_KEY)
-      
+
       this.debugEnabled = debugModeData.value === 'true'
 
       // Adds diagnosis to menu
@@ -349,7 +348,7 @@ export default {
       }
     },
   },
-  mounted: function() {
+  mounted: function () {
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
       EventBus.$emit('log', 'is mobile')
       this.$router.push('/scan')
@@ -431,27 +430,6 @@ export default {
   flex: 1 1 auto;
 }
 
-.headmenu {
-  position: fixed;
-  z-index: 5;
-  display: flex;
-  width: calc(100% - #{$nav_width});
-  left: $nav_width;
-  color: #ccc;
-  height: 44px;
-  .title {
-    flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .status {
-    display: flex;
-    flex: 0 0 auto;
-    padding-right: 0.5em;
-  }
-}
-
 .page-content {
   padding: 44px 0px;
 }
@@ -476,13 +454,17 @@ export default {
   height: auto;
   padding: 2.1em 1.6em 2.1em 0.5em;
   float: left;
-  &:hover, &:focus {
+
+  &:hover,
+  &:focus {
     // background: $medium_dark;
   }
+
   span {
     position: relative;
     display: block;
   }
+
   span,
   span:before,
   span:after {
@@ -495,7 +477,7 @@ export default {
   span:after {
     position: absolute;
     margin-top: -0.6em;
-    content: " ";  
+    content: " ";
   }
 
   span:after {
@@ -503,13 +485,15 @@ export default {
   }
 }
 
-.nav-mask, .dialog-mask {
+.nav-mask,
+.dialog-mask {
   position: fixed;
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.3);
   display: none;
   z-index: 499;
+
   &.dialog-mask {
     display: block;
   }
@@ -520,50 +504,42 @@ export default {
   left: 50%;
   top: 15vh;
   transform: translateX(-50%);
-  background-color: #fff;
   z-index: 500;
+
   .title {
-    padding: 0.3em;
-    font-size: 1.5em;
-    background-color: $primary;
     color: #fff;
+
     .close-btn {
       font-size: 1.5em;
       line-height: 0.9em;
       cursor: pointer;
       float: right;
+
       &:hover {
         color: $medium;
       }
     }
   }
-  .body {
-    padding: 0.7em;
-  }
 }
 
-// .pure-menu-item {
-//   &:hover {
-//     background-color: $medium_dark;
-//   }
-//   &.active {
-//     background-color: #fff;
-//     .pure-menu-link {
-//       background-color: #fff;
-//     }
-//   }
-// }
+#side-bar {
+  width: 13rem;
+  min-width: 13rem;
+  max-width: 13rem;
+}
 
 .auth-dialog-body {
   padding: 1em;
   width: 40vw;
   text-align: end;
+
   input {
     color: $dark !important;
   }
 }
 
 @media screen and (max-width: 48em) {
+
   // #nav {
   //   flex-basis: 200px;
   //   z-index: 500;
@@ -579,16 +555,20 @@ export default {
   .nav-mask {
     display: block;
   }
+
   .headmenu {
     width: 100%;
     left: 0;
+
     .title {
       margin-left: 2.2em;
     }
   }
+
   .menu-link {
     display: block;
   }
+
   .auth-dialog-body {
     width: 80vw;
   }
@@ -609,5 +589,4 @@ export default {
   padding: 14px 5px;
   float: right;
 }
-
 </style>

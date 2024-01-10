@@ -1,58 +1,72 @@
 <template>
- <div class="pure-g">
+ <div class="pure-g m-4">
     <template v-if="!editing">
+      <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+        <div class="name">
+          {{ $t('channel_page_title') }}
+          <span
+            @click="showHelpText"
+            class="icon-question_sign icon-question"
+          ></span>
+        </div>
+      </div>
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
-        <div @click="editChannel(c)" class="info-box cursor-pointer" v-bind:style="{borderColor: c.color}">
-          <div class="title-row">
-            <div class="name">
-              <template v-if="c.pm && c.pm.typ == 'auto'">
-                <span class="icon icon-uniF2C7"></span>
-                {{c.pm.set}}° /
-                <!-- fan speed value is from 0 - 100 -->
-                <!-- based on the value shows different rotate speeds -->
-                <span class="icon icon-fan" :class="'icon-rotate-' + Math.ceil(c.pm.value/25)*25"></span>
-                {{c.pm.value}}%
-              </template>
-              <template v-else>
-                {{c.name}}
-              </template>
-            </div>
-            <div class="number">
-              <span v-if="c.typ === 16" :class="{'icon-disabled': !c.connected}" class="icon icon-bluetooth_1"></span>
-              <span v-if="c.typ === 17" :class="{'icon-disabled': !c.connected}" class="icon icon-radio"></span>
-              #{{c.number}}
-            </div>
+        <div @click="editChannel(c)" class="info-box bg-darkblue-800 text-white h-36 py-3 rounded-xl cursor-pointer">
+          <div class="title-row flex">
+            <span class="ml-2 flex-grow font-semibold">{{c.name}}</span>
+            <span class="flex-grow-0 mr-2">
+              <img v-if="c.typ === 16"
+                class="inline-block text-center w-5.5 h-5 mr-5"
+                :src="c.connected ? bluetoothIcon : bluetoothDisabledIcon"/>
+              <span class="text-sm font-normal	">#{{ c.number }}</span>
+              <!-- <span v-if="c.typ === 16" :class="{'icon-disabled': !c.connected}" class="wlan-icons-bluetooth-fill text-primary"></span> -->
+              <!-- <span v-if="c.typ === 17" :class="{'icon-disabled': !c.connected}" class="icon icon-radio"></span> -->
+            </span>
           </div>
-          <div class="body-row">
+          <div class="body-row mt-2">
             <div class="temperature-range">
-              <div class="max">
-                <span class="icon icon-temp_up"></span>
-                <span>{{c.max}}°</span>
-              </div>
-              <div class="min">
-                <span class="icon icon-temp_down"></span>
-                <span>{{c.min}}°</span>
-              </div>
-            </div>
-            <div class="temperature">
-              <template v-if="c.temp == '999'">
-                OFF
-              </template>
-              <template v-else>
-                <span :class="{
-                  'too-hot': c.temp > c.max,
-                  'too-cold': c.temp < c.min,
-                  }">
-                  {{c.temp.toFixed(1)}}°{{unit}}
+              <div class="max flex">
+                <img
+                  class="inline-block text-center ml-3 w-8 h-8"
+                  :src="tempUpIcon"/>
+                <span class="text-lg mt-1 ml-2 font-semibold flex-grow">{{c.max}}°</span>
+                <span class="mr-2 flex items-center">
+                  <template v-if="c.pm && c.pm.typ == 'auto'">
+                    <span class="text-2xl inline-block text-center wlan-icons-temperature mr-3"></span>
+                    <span class="font-semibold text-lg mr-3">{{c.pm.set}}°</span>
+                    <!-- fan speed value is from 0 - 100 -->
+                    <!-- based on the value shows different rotate speeds -->
+                    <span class="text-2xl inline-block text-center mr-3 wlan-icons-fan" :class="'icon-rotate-' + Math.ceil(c.pm.value/25)*25"></span>
+                    <span class="font-semibold text-lg ">{{c.pm.value}}%</span>
+                  </template>
                 </span>
-              </template>
+              </div>
+              <div class="min flex mt-3">
+                <img
+                  class="inline-block text-center ml-3 w-8 h-8"
+                  :src="tempDownIcon"/>
+                <span class="text-lg mt-1 ml-2 font-semibold flex-grow">{{c.min}}°</span>
+                <span class="temperature font-bold text-4xl mr-2 -mt-1">
+                  <template v-if="c.temp == '999'">
+                    OFF
+                  </template>
+                  <template v-else>
+                    <span :class="{
+                      'text-error': c.temp > c.max,
+                      'text-primary-400': c.temp < c.min,
+                      }">
+                      {{c.temp.toFixed(1)}}°{{unit}}
+                    </span>
+                  </template>
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </template>
     <template v-else>
-      <div class="pure-u-1-1 app-bar-wrapper">
+      <!-- <div class="pure-u-1-1 app-bar-wrapper">
         <div class="app-bar-actions">
           <div class="button-container" @click="editing = false">
             <span class="icon-arrow_left"></span>
@@ -63,13 +77,13 @@
             <span class="icon-arrow_right"></span>
           </div>
         </div>
-      </div>
+      </div> -->
       <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
         <div class="name">
-          {{ editingChanelName }}
+          <span class="border-l-8 pl-2" v-bind:style="{borderColor: editingChanelClone.color}">{{ editingChanelName }}</span>
           <span @click="showHelpText" class="icon-question_sign icon-question"></span>
         </div>
-        <div class="config-form" v-bind:style="{borderColor: editingChanelClone.color}">
+        <div class="config-form p-2">
           <form>
             <div class="form-group">
               <input type="text" v-model="editingChanelClone.name" maxlength="10" required>
@@ -108,14 +122,28 @@
               <div class="color-option" @click="setColor(c)" v-for="c in colors" :key="c" :style="{'backgroundColor': c}"></div>
             </div>
             <div class="form-checkbox">
-              <label for="alarm" class="pure-checkbox checkbox">
-                <input v-model="pushAlarmChecked" type="checkbox" id="alarm" /> {{$t("push_alarm")}}
+              <label for="alarm" class="checkbox">
+                <input v-model="pushAlarmChecked" type="checkbox" id="alarm" /> 
+                <span>{{$t("push_alarm")}}</span>
               </label>
             </div>
             <div class="form-checkbox">
-              <label for="bz-alarm" class="pure-checkbox checkbox">
-                <input v-model="buzzerAlarmChecked" type="checkbox" id="bz-alarm" /> {{$t("buzzer_alarm")}}
+              <label for="bz-alarm" class="checkbox">
+                <input v-model="buzzerAlarmChecked" type="checkbox" id="bz-alarm" />
+                <span>{{$t("buzzer_alarm")}}</span>
               </label>
+            </div>
+            <div class="flex justify-end">
+              <button 
+                @click="editing = false"
+                class=" text-white hover:text-grey-500 font-semibold py-1 pr-3 flex-start mr-auto">
+                {{$t('back')}}
+              </button>
+              <button 
+                @click="save"
+                class="bg-primary-400 hover:bg-primary-600 text-white font-semibold py-1 px-3 rounded-full">
+                {{$t('save')}}
+              </button>
             </div>
           </form>
         </div>
@@ -146,6 +174,10 @@ export default {
   },
   data: () => {
     return {
+      bluetoothIcon: require(`@/assets/icons/svg/bluetooth-fill.svg`),
+      bluetoothDisabledIcon: require(`@/assets/icons/svg/bluetooth-fill-disabled.svg`),
+      tempUpIcon: require(`@/assets/icons/svg/temp-up.svg`),
+      tempDownIcon: require(`@/assets/icons/svg/temp-down.svg`),
       navActive: false,
       editing: false,
       editingChanelName: '',
@@ -303,18 +335,12 @@ export default {
   display: flex;
   flex-direction: column;
   margin: 5px;
-  padding: 10px;
-  height: 70px;
-  color: #fff;
-  background-color: $medium_dark;
-  border-left: 10px solid;
   .title-row {
     display: flex;
-    padding-bottom: 0.5em;
     .name {
       flex: 1 1 auto;
     }
-    .number {
+    .icons {
       flex: 0 0 auto;
     }
   }
@@ -336,9 +362,6 @@ export default {
       }
     }
     .temperature {
-      flex: 0 0 auto;
-      font-size: 2.2em;
-      margin-top: 0.05em;
       .too-hot, .too-cold {
         font-weight: bold;
       }
@@ -371,7 +394,4 @@ export default {
   }
 }
 
-.config-form {
-  border-left: 10px solid;
-}
 </style>

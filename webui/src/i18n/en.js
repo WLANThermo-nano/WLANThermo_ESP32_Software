@@ -55,6 +55,7 @@ export default {
 	save: "Save",
 	cancel: "Cancel",
 	//Kanaleinstellungen
+	channel_page_title: "Temperature system",
 	channel_name: "Channel name",
 	temp_max: "Upper temperature limit",
 	temp_min: "Lower temperature limit",

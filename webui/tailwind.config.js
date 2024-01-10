@@ -4,13 +4,24 @@ module.exports = {
   theme: {
     extend: {},
     colors: {
-      primary: "#00D7FF",
+      primary: {
+        200: "#9ef7ff",
+        400: "#00D7FF", // base
+        600: "#0095c0"
+      },
       white: "#fff",
       darkblue: {
-        600: "##455060",
-        900: "#29313A"
+        600: "#455060",
+        700: "#333c4a",
+        800: "#29313A",
+        900: "#181D23"
       },
-      grey: "#a9adb0"
+      error: "#ff007c",
+      red: '#FF0000',
+      grey: {
+        500: "#a9adb0",
+        800: "#7c7c7c"
+      }
     }
   },
   variants: {

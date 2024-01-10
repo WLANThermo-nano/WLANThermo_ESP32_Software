@@ -35,8 +35,19 @@ body {
     margin-top: 10px !important;
 }
 
+.page-title-container {
+    .name {
+        padding: 0.1em;
+        margin-left: 0.2em;
+        margin-top: 0.2em;
+        color: $light;
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+}
 
 .config-form-container {
+    @apply rounded-xl bg-darkblue-700;
     .name {
         padding: 0.1em;
         margin-left: 0.2em;
@@ -52,15 +63,20 @@ body {
         }
     }
     .config-form {
-        background-color: $medium_dark;
-        padding: 0.25rem 0.5rem 0.75rem;
-        margin: 0.25rem;
     }
     .form-checkbox {
         margin-top: 1.25rem;
         margin-bottom: 1rem;
         .checkbox {
             color: #fff;
+            @apply cursor-pointer;
+            input {
+                @apply h-4 w-4 rounded text-primary-400 bg-primary-400 focus:ring-primary-400;
+                accent-color: #00D7FF;
+            }
+            span {
+                @apply ml-1 -mt-1;
+            }
         }  
     }
 }

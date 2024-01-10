@@ -1,0 +1,10 @@
+<svg id="temper-down" xmlns="http://www.w3.org/2000/svg" width="34.512" height="34.512" viewBox="0 0 34.512 34.512">
+  <g id="组_1252" data-name="组 1252" transform="translate(7690.241 4804)">
+    <circle id="椭圆_64" data-name="椭圆 64" cx="17.256" cy="17.256" r="17.256" transform="translate(-7690.241 -4804)" fill="#455060"/>
+    <g id="组_116" data-name="组 116" transform="translate(-7680.016 -4795.38)">
+      <line id="直线_26" data-name="直线 26" y2="17.959" transform="translate(7.401)" fill="none" stroke="#00d7ff" stroke-linecap="round" stroke-width="3"/>
+      <line id="直线_28" data-name="直线 28" x1="6.661" y2="7.184" transform="translate(7.401 10.775)" fill="none" stroke="#00d7ff" stroke-linecap="round" stroke-width="3"/>
+      <line id="直线_29" data-name="直线 29" x2="7.401" y2="7.184" transform="translate(0 10.775)" fill="none" stroke="#00d7ff" stroke-linecap="round" stroke-width="3"/>
+    </g>
+  </g>
+</svg>

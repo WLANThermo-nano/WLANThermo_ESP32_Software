@@ -221,7 +221,7 @@ export default {
   padding: 0.6em;
   border-radius: 0.4em;
   &.current {
-    background-color: $input_highlight_color;
+    @apply bg-primary-400;
   }
   &.other {
     cursor: pointer;

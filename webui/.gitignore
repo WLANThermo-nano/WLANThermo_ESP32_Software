@@ -5,6 +5,7 @@ node_modules
 /dist/*/*.html
 /dist/demo
 /dist/cloud
+optimized-svg
 
 # local env files
 .env.local
