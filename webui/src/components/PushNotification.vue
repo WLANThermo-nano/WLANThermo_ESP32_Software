@@ -229,6 +229,16 @@ export default {
     },
     save: function() {
       EventBus.$emit("loading", true)
+      // Sets android_channel_id before sending to BE
+      this.app.devices.forEach(device => {
+        // see [soundOptions]
+        if (device.sound == '0') {
+          device.android_channel_id = 'wlanthermo_channel_default_id'
+        } else if (device.sound == '1') {
+          device.android_channel_id = 'wlanthermo_channel_bell_id'
+        }
+      });
+
       const requestObj = Object.assign({}, { telegram: this.telegram, pushover: this.pushover, app: this.app })
       this.axios.post('/setpush', requestObj).then(() => {
         EventBus.$emit("loading", false)
