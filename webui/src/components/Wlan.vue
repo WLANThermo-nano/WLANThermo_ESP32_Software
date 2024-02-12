@@ -1,85 +1,122 @@
 <template>
-  <div class="pure-g">
-    <div class="pure-u-1-1 app-bar-wrapper">
-      <div class="app-bar-actions">
-        <div class="button-container" @click="backToHome">
+  <div class="pure-g m-4">
+    <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+      
+      <div class="name">
+        <span class="back-button cursor-pointer" @click="backToHome">
           <span class="icon-arrow_left"></span>
-          <span>{{$t('back')}}</span>
+        </span>
+        {{ $t('wlanTitle') }}
+        <span
+            @click="showHelpText"
+            class="icon-question_sign icon-question"
+          >
+        </span>
+      </div>
+    </div>
+    <div class="pure-u-1-1 mt-4 mb-1 tracking-normal">
+      <div class="flex ml-1">
+        <div class="text-white align-middle flex-grow">
+          <span class="align-middle font-semibold">{{ $t('wlanActivate') }}</span>
+        </div>
+        <div class="self-end">
+          <wlan-toggle-button v-model="activateWlanChecked" @input="handleWlanUncheck"></wlan-toggle-button>
         </div>
       </div>
     </div>
     <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
-      <div class="name">
-        {{ $t('wlanTitle') }}
-        <span
-          @click="showHelpText"
-          class="icon-question_sign icon-question"
-        ></span>
+      <div class="wifi-item" v-if="currentNetwork.connect">
+        <div class="info">
+          <div class="body">
+            <div>
+              <wlan-checkbox 
+                :value="true"
+                :readonly="true"
+                label="">
+              </wlan-checkbox>
+            </div>
+            <div class="name-address">
+              <div class="name">
+                {{ currentNetwork.SSID }}
+              </div>
+              <div class="address">
+                {{currentNetwork.BSSID}}
+              </div>
+            </div>
+            <div class="icons">
+              <img 
+                class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
+                :src="currentNetwork.wifiIcon"/>
+              <span class="lock-icon wlan-icons-lock"></span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="config-form">
-        <div class="form-checkbox">
-          <label for="activateWlan" class="pure-checkbox checkbox">
-            <input v-model="activateWlanChecked" type="checkbox" id="activateWlan" @input="handleWlanUncheck"/> {{$t("wlanActivate")}}
-          </label>
-          <div class="wifi-item current mt10" v-if="currentNetwork.connect">
-            <div class="info">
-              <div class="icon">
-                <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" :iconClass="currentNetwork.wifiIcon" />
+    </div>
+    <div class="pure-u-1-1 mt-12 mb-1 tracking-normal">
+      <div class="flex ml-1">
+        <div class="text-white align-middle flex-grow">
+          <span class="align-middle font-semibold">{{ $t('availableNetworks') }}</span>
+        </div>
+        <div class="self-end">
+          <span 
+            class="wlan-icons-refresh text-grey-800 text-base inline-block text-center mr-3 cursor-pointer"
+            :class="{'icon-rotate-100': scanning}"
+            @click="networkscan">
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1 mt-3 cursor-pointer"
+      v-for="(wifi, index) in wifiList" :key="index" 
+      @click="selectWifi(index)">
+      <div class="wifi-item" :class="{'expand': (index === expandingWifi)}">
+        <div class="info">
+          <div class="body">
+            <div class="border-l-4 border-primary-400 h-8 mt-4 mr-1 ml-4"></div>
+            <div class="name-address">
+              <div class="name">
+                {{ wifi.SSID }}
               </div>
-              <div class="body">
-                <div class="name-address">
-                  <div class="name">
-                    {{ currentNetwork.SSID }}
-                  </div>
-                  <div class="address">
-                    {{currentNetwork.BSSID}}
-                  </div>
-                </div>
-                <Icon v-if="currentNetwork.enc" class="lock ic_white" width="1em" height="1em" iconClass="lock" />
+              <div class="address">
+                {{wifi.BSSID}}
+              </div>
+            </div>
+            <div class="icons">
+              <img 
+                class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
+                :src="wifi.wifiIcon"/>
+              <span v-if="wifi.enc" class="lock-icon wlan-icons-lock"></span>
+            </div>
+          </div>
+        </div>
+        <transition name="fadeHeight">
+          <div class="password-panel px-4 mt-3" v-if="index === expandingWifi">
+            <div class="form-group mb-2" v-if="wifi.enc">
+              <input type="password" maxlength="63" required v-model="password" />
+              <label class="control-label" for="input">{{$t("wlanPwd")}}</label>
+              <i class="bar"></i>
+            </div>
+            <div class="grid">
+              <div class="justify-self-end">
+                <wlan-button 
+                  :label="$t('save')" 
+                  :disabled="password.length === 0 && wifi.enc"
+                  @click="save">
+                </wlan-button>
               </div>
             </div>
           </div>
-          <div class="available-networks">
-            <div class="text">
-              {{ $t('availableNetworks') }}
-            </div>
-            <span class="ic_white icon-refresh" :class="{'icon-rotate-100': scanning}" @click="networkscan"></span>
-          </div>
-          <div class="wifi-item other" :class="{'expand': (index === expandingWifi)}" v-for="(wifi, index) in wifiList" :key="index" @click="selectWifi(index)">
-            <div class="info">
-              <div class="icon">
-                <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" :iconClass="wifi.wifiIcon" />
-              </div>
-              <div class="body">
-                <div class="name-address">
-                  <div class="name">
-                    {{ wifi.SSID }}
-                  </div>
-                  <div class="address">
-                    {{wifi.BSSID}}
-                  </div>
-                </div>
-                <Icon v-if="wifi.enc" class="lock ic_white" width="1em" height="1em" iconClass="lock" />
-              </div>
-            </div>
-            <div class="password-panel" v-if="index === expandingWifi">
-              <div class="form-group" v-if="wifi.enc">
-                <input type="password" maxlength="63" required v-model="password" />
-                <label class="control-label" for="input">{{$t("wlanPwd")}}</label>
-                <i class="bar"></i>
-              </div>
-              <button class="pure-button mr5" @click.stop="cancel">
-                {{ $t('cancel') }}
-              </button>
-              <button class="pure-button pure-button-primary" :disabled="password.length === 0 && wifi.enc" @click.stop="save">
-                {{ $t('save') }}
-              </button>
-            </div>
-          </div>
-          <hr>
-          <button class="pure-button pure-button-primary" @click="deleteStoredWifi">
-            {{ $t('wlanClear') }}
-          </button>
+        </transition>
+      </div>
+    </div>
+    <div class="pure-u-1-1">
+      <div class="grid mt-2">
+        <div class="justify-self-end">
+          <wlan-button 
+            :label="$t('wlanClear')" 
+            @click="deleteStoredWifi">
+          </wlan-button>
         </div>
       </div>
     </div>
@@ -88,13 +125,20 @@
 
 <script>
 import EventBus from "../event-bus";
-import Icon from './Icon.vue'
 import IconHelper from '../helpers/icons-helper'
+import WlanToggleButton from './shared/ToggleButton.vue'
+import WlanCheckbox from './shared/Checkbox.vue'
+import WlanButton from './shared/Button.vue'
 
 export default {
   name: "Wlan",
   data: () => {
     return {
+      wifiIcons: {
+        wifi10: require(`@/assets/icons/svg/wifi-10.svg`),
+        wifi50: require(`@/assets/icons/svg/wifi-50.svg`),
+        wifi100: require(`@/assets/icons/svg/wifi-100.svg`),
+      },
       activateWlanChecked: true,
       currentNetwork: {
         connect: false,
@@ -150,6 +194,7 @@ export default {
       })
     },
     save: function() {
+      alert('save triggered')
       this.axios.post('/setnetwork', {
         password: this.password,
         ssid: this.selectedWifiSSID
@@ -157,9 +202,6 @@ export default {
         this.expandingWifi = -1
         this.networkscan()
       })
-    },
-    cancel: function() {
-      this.expandingWifi = -1
     },
     deleteStoredWifi: function() {
       if (confirm(this.$t('clearWifiPrompt')) === true) {
@@ -183,7 +225,7 @@ export default {
           gate: data.Gate,
           RSSI: data.RSSI,
           enc: data.Enc,
-          wifiIcon: IconHelper.getWifiIcon(data.RSSI)
+          wifiIcon: this.wifiIcons[IconHelper.getWifiIcon(data.RSSI)]
         }
         this.wifiList = data.Scan.map(wifi => {
           return {
@@ -191,7 +233,7 @@ export default {
             enc: wifi.Enc,
             RSSI: wifi.RSSI,
             SSID: wifi.SSID,
-            wifiIcon: IconHelper.getWifiIcon(wifi.RSSI)
+            wifiIcon: this.wifiIcons[IconHelper.getWifiIcon(wifi.RSSI)]
           }
         }).sort((a, b) => {
           return b.RSSI - a.RSSI
@@ -203,7 +245,7 @@ export default {
     },
   },
   components: {
-    Icon
+    WlanToggleButton, WlanCheckbox, WlanButton
   },
   mounted: function () {
     this.getNetworklist()
@@ -218,20 +260,7 @@ export default {
 .wifi-item {
   display: flex;
   flex-direction: column;
-  padding: 0.6em;
-  border-radius: 0.4em;
-  &.current {
-    @apply bg-primary-400;
-  }
-  &.other {
-    cursor: pointer;
-    &:hover {
-      background-color: $dark;
-    }
-  }
-  &.expand {
-    background-color: $dark;
-  }
+  @apply p-2 pl-4 rounded-sm;
   .info {
     display: flex;
     .icon {
@@ -249,36 +278,33 @@ export default {
         flex: 1 1 auto;
         color: #fff;
         .name {
-          line-height: 1.2em;
-          font-size: 1.0em;
+          @apply leading-6 text-xl mt-3;
         }
         .address {
+          @apply leading-4 text-sm text-grey-800 font-semibold;
           margin-left: 0.3em;
-          line-height: 0.8em;
-          font-size: 0.8em;
         }
       }
-      .lock {
-        flex: 0 0 1.5em;
+      .icons {
+        @apply flex items-center;
+        .lock-icon {
+          @apply text-grey-800 text-base inline-block text-center mr-3;
+        }
       }
     }
   }
 }
 
-.available-networks {
-  display: flex;
-  .text {
-    flex: 1 1 auto;
-    color: #fff;
-    font-size: 1.2em;
-    margin: 0.7em 0 0.7em;
-  }
-  .icon-refresh {
-    margin-top: 15px;
-    margin-right: 18px;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-  }
+.fadeHeight-enter-active,
+.fadeHeight-leave-active {
+  transition: all 0.2s;
+  max-height: 120px;
 }
+.fadeHeight-enter,
+.fadeHeight-leave-to
+{
+  opacity: 0;
+  max-height: 0px;
+}
+
 </style>

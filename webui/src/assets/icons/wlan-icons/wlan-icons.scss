@@ -1,5 +1,10 @@
 @font-face {font-family: "wlan-icons";
-  src: url('~@/assets/icons/wlan-icons/wlan-icons.ttf?t=1704149845979') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  src: url('wlan-icons.eot?t=1707774773552'); /* IE9*/
+  src: url('wlan-icons.eot?t=1707774773552#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("wlan-icons.woff2?t=1707774773552") format("woff2"),
+  url("wlan-icons.woff?t=1707774773552") format("woff"),
+  url('wlan-icons.ttf?t=1707774773552') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('wlan-icons.svg?t=1707774773552#wlan-icons') format('svg'); /* iOS 4.1- */
 }
 
 [class^="wlan-icons-"], [class*=" wlan-icons-"] {
@@ -21,19 +26,21 @@
 .wlan-icons-fan:before { content: "\ea0a"; }
 .wlan-icons-home:before { content: "\ea0b"; }
 .wlan-icons-info:before { content: "\ea0c"; }
-.wlan-icons-pitmaster:before { content: "\ea0d"; }
-.wlan-icons-remote-cloud:before { content: "\ea0e"; }
-.wlan-icons-settings:before { content: "\ea0f"; }
-.wlan-icons-temp-down:before { content: "\ea10"; }
-.wlan-icons-temp-up:before { content: "\ea11"; }
-.wlan-icons-temperature:before { content: "\ea12"; }
-.wlan-icons-wifi-1:before { content: "\ea13"; }
-.wlan-icons-wifi-10:before { content: "\ea14"; }
-.wlan-icons-wifi-100:before { content: "\ea15"; }
-.wlan-icons-wifi-3:before { content: "\ea16"; }
-.wlan-icons-wifi-5:before { content: "\ea17"; }
-.wlan-icons-wifi-50:before { content: "\ea18"; }
-.wlan-icons-wifi:before { content: "\ea19"; }
+.wlan-icons-lock:before { content: "\ea0d"; }
+.wlan-icons-pitmaster:before { content: "\ea0e"; }
+.wlan-icons-refresh:before { content: "\ea0f"; }
+.wlan-icons-remote-cloud:before { content: "\ea10"; }
+.wlan-icons-settings:before { content: "\ea11"; }
+.wlan-icons-temp-down:before { content: "\ea12"; }
+.wlan-icons-temp-up:before { content: "\ea13"; }
+.wlan-icons-temperature:before { content: "\ea14"; }
+.wlan-icons-wifi-1:before { content: "\ea15"; }
+.wlan-icons-wifi-10:before { content: "\ea16"; }
+.wlan-icons-wifi-100:before { content: "\ea17"; }
+.wlan-icons-wifi-3:before { content: "\ea18"; }
+.wlan-icons-wifi-5:before { content: "\ea19"; }
+.wlan-icons-wifi-50:before { content: "\ea1a"; }
+.wlan-icons-wifi:before { content: "\ea1b"; }
 
 $wlan-icons-battery-50: "\ea01";
 $wlan-icons-bell: "\ea02";
@@ -47,17 +54,19 @@ $wlan-icons-cloud: "\ea09";
 $wlan-icons-fan: "\ea0a";
 $wlan-icons-home: "\ea0b";
 $wlan-icons-info: "\ea0c";
-$wlan-icons-pitmaster: "\ea0d";
-$wlan-icons-remote-cloud: "\ea0e";
-$wlan-icons-settings: "\ea0f";
-$wlan-icons-temp-down: "\ea10";
-$wlan-icons-temp-up: "\ea11";
-$wlan-icons-temperature: "\ea12";
-$wlan-icons-wifi-1: "\ea13";
-$wlan-icons-wifi-10: "\ea14";
-$wlan-icons-wifi-100: "\ea15";
-$wlan-icons-wifi-3: "\ea16";
-$wlan-icons-wifi-5: "\ea17";
-$wlan-icons-wifi-50: "\ea18";
-$wlan-icons-wifi: "\ea19";
+$wlan-icons-lock: "\ea0d";
+$wlan-icons-pitmaster: "\ea0e";
+$wlan-icons-refresh: "\ea0f";
+$wlan-icons-remote-cloud: "\ea10";
+$wlan-icons-settings: "\ea11";
+$wlan-icons-temp-down: "\ea12";
+$wlan-icons-temp-up: "\ea13";
+$wlan-icons-temperature: "\ea14";
+$wlan-icons-wifi-1: "\ea15";
+$wlan-icons-wifi-10: "\ea16";
+$wlan-icons-wifi-100: "\ea17";
+$wlan-icons-wifi-3: "\ea18";
+$wlan-icons-wifi-5: "\ea19";
+$wlan-icons-wifi-50: "\ea1a";
+$wlan-icons-wifi: "\ea1b";
 

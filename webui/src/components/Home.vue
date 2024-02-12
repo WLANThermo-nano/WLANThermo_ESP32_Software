@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
-        <div @click="editChannel(c)" class="info-box bg-darkblue-800 text-white h-36 py-3 rounded-xl cursor-pointer">
+        <div @click="editChannel(c)" class="info-box m-1.5 bg-darkblue-800 text-white h-36 py-3 rounded-xl cursor-pointer">
           <div class="title-row flex">
             <span class="ml-2 flex-grow font-semibold">{{c.name}}</span>
             <span class="flex-grow-0 mr-2">
@@ -66,24 +66,12 @@
       </div>
     </template>
     <template v-else>
-      <!-- <div class="pure-u-1-1 app-bar-wrapper">
-        <div class="app-bar-actions">
-          <div class="button-container" @click="editing = false">
-            <span class="icon-arrow_left"></span>
-            <span>{{$t('back')}}</span>
-          </div>
-          <div class="button-container" @click="save">
-            <span>{{$t('save')}}</span>
-            <span class="icon-arrow_right"></span>
-          </div>
-        </div>
-      </div> -->
       <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
         <div class="name">
           <span class="border-l-8 pl-2" v-bind:style="{borderColor: editingChanelClone.color}">{{ editingChanelName }}</span>
           <span @click="showHelpText" class="icon-question_sign icon-question"></span>
         </div>
-        <div class="config-form p-2">
+        <div class="config-form">
           <form>
             <div class="form-group">
               <input type="text" v-model="editingChanelClone.name" maxlength="10" required>
@@ -121,18 +109,14 @@
             <div class="colors-container" v-if="showColorPicker">
               <div class="color-option" @click="setColor(c)" v-for="c in colors" :key="c" :style="{'backgroundColor': c}"></div>
             </div>
-            <div class="form-checkbox">
-              <label for="alarm" class="checkbox">
-                <input v-model="pushAlarmChecked" type="checkbox" id="alarm" /> 
-                <span>{{$t("push_alarm")}}</span>
-              </label>
-            </div>
-            <div class="form-checkbox">
-              <label for="bz-alarm" class="checkbox">
-                <input v-model="buzzerAlarmChecked" type="checkbox" id="bz-alarm" />
-                <span>{{$t("buzzer_alarm")}}</span>
-              </label>
-            </div>
+            <wlan-checkbox 
+              v-model="pushAlarmChecked"
+              label="push_alarm">
+            </wlan-checkbox>
+            <wlan-checkbox 
+              v-model="buzzerAlarmChecked"
+              label="buzzer_alarm">
+            </wlan-checkbox>
             <div class="flex justify-end">
               <button 
                 @click="editing = false"
@@ -155,6 +139,7 @@
 <script>
 import EventBus from '../event-bus'
 import { between } from 'vuelidate/lib/validators'
+import WlanCheckbox from './shared/Checkbox.vue'
 
 export default {
   name: "Home",
@@ -324,6 +309,7 @@ export default {
     }
   },
   components: {
+    WlanCheckbox
   },
 };
 </script>
@@ -334,7 +320,6 @@ export default {
 .info-box {
   display: flex;
   flex-direction: column;
-  margin: 5px;
   .title-row {
     display: flex;
     .name {

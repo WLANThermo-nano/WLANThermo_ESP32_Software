@@ -46,8 +46,15 @@ body {
     }
 }
 
+.icon-question {
+    @apply cursor-pointer;
+    padding: 0.2em;
+    font-size: 0.7em;
+    float: right;
+}
+
 .config-form-container {
-    @apply rounded-xl bg-darkblue-700;
+    @apply rounded-xl bg-darkblue-800;
     .name {
         padding: 0.1em;
         margin-left: 0.2em;
@@ -55,28 +62,19 @@ body {
         color: $light;
         font-size: 1.5em;
         font-weight: 600;
-        .icon-question {
-            padding: 0.2em;
-            font-size: 0.7em;
-            float: right;
-            cursor: pointer;
-        }
     }
     .config-form {
+        @apply p-2;
     }
     .form-checkbox {
         margin-top: 1.25rem;
         margin-bottom: 1rem;
-        .checkbox {
+        img {
+            @apply mr-2 align-middle inline-block text-center w-5 h-5;
+        }
+        span {
+            @apply align-middle;
             color: #fff;
-            @apply cursor-pointer;
-            input {
-                @apply h-4 w-4 rounded text-primary-400 bg-primary-400 focus:ring-primary-400;
-                accent-color: #00D7FF;
-            }
-            span {
-                @apply ml-1 -mt-1;
-            }
         }  
     }
 }

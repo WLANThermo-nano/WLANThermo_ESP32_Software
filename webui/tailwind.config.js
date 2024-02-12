@@ -2,7 +2,8 @@ module.exports = {
   purge: ["./src/**/*.{vue}"],
   darkMode: false, // or 'media' or 'class'
   theme: {
-    extend: {},
+    extend: {
+    },
     colors: {
       primary: {
         200: "#9ef7ff",
@@ -25,7 +26,11 @@ module.exports = {
     }
   },
   variants: {
-    extend: {},
+    extend: {
+      backgroundColor: ['active'],
+      opacity: ['disabled'],
+      cursor: ['disabled']
+    },
   },
   plugins: [],
 }
