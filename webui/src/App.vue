@@ -413,6 +413,7 @@ export default {
 </script>
 
 <style lang="scss">
+@import "./assets/index.css";
 @import "./assets/global.scss";
 
 #layout {

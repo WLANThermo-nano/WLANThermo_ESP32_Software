@@ -7,7 +7,6 @@ import Vuelidate from 'vuelidate'
 import en from './i18n/en'
 import de from './i18n/de'
 import router from './router'
-import './assets/index.css'
 
 require(process.env.VUE_APP_DEMO_FILE_PATH)
 
