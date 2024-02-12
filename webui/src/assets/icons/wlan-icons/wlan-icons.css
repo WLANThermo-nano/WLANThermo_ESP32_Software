@@ -1,5 +1,11 @@
-@font-face {font-family: "wlan-icons";
-  src: url('~@/assets/icons/wlan-icons/wlan-icons.ttf?t=1704149845979') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+@font-face {
+  font-family: "wlan-icons";
+  src: url('wlan-icons.eot?t=1707775235995'); /* IE9*/
+  src: url('wlan-icons.eot?t=1707775235995#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("wlan-icons.woff2?t=1707775235995") format("woff2"),
+  url("wlan-icons.woff?t=1707775235995") format("woff"),
+  url('wlan-icons.ttf?t=1707775235995') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('wlan-icons.svg?t=1707775235995#wlan-icons') format('svg'); /* iOS 4.1- */
 }
 
 [class^="wlan-icons-"], [class*=" wlan-icons-"] {
