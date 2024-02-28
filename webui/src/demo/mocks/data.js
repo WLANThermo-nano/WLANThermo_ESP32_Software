@@ -17,10 +17,9 @@ export const Data = {
             "host": "MINI-001",
             "language": "en",
             "version": "v0.9.9",
-            "getupdate": "false",
             "autoupd": true,
             "prerelease": false,
-            "crashreport": "true",
+            "crashreport": true,
             "hwversion": "V2"
         },
         "hardware": [

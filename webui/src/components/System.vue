@@ -107,12 +107,6 @@ import EventBus from "../event-bus";
 import WlanButton from './shared/Button.vue'
 import WlanCheckbox from './shared/Checkbox.vue'
 
-function stringTrueFalseToBool(value) {
-  if (value === 'true') return true
-  if (value === 'false') return false
-  return value
-}
-
 export default {
   name: "System",
   components: {
@@ -157,14 +151,7 @@ export default {
   mounted: function () {
     EventBus.$emit("loading", true)
     this.axios.get("/settings").then((response) => {
-      this.hardwareVersions = response.data.hardware    
-      // the BE is sending boolean value in string.
-      response.data.system.autoupd = stringTrueFalseToBool(response.data.system.autoupd)
-      response.data.system.prerelease = stringTrueFalseToBool(response.data.system.prerelease)
-      if (Object.prototype.hasOwnProperty.call(response.data.system, 'crashreport')) {
-        response.data.system.crashreport = stringTrueFalseToBool(response.data.system.crashreport)
-      }
-
+      this.hardwareVersions = response.data.hardware
       this.systemSettings = response.data.system
       EventBus.$emit("loading", false)
     });
@@ -183,11 +170,7 @@ export default {
     },
     save: function() {
       EventBus.$emit("loading", true)
-      
       const request = Object.assign({}, this.systemSettings)
-      request.autoupd = this.systemSettings.autoupd.toString()
-      request.prerelease = this.systemSettings.prerelease.toString()
-      request.crashreport = this.systemSettings.crashreport.toString()
 
       this.axios.post('/setsystem', request).then(() => {
         EventBus.$emit("loading", false)
