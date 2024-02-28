@@ -2,6 +2,7 @@
   <button
     @click.stop="$emit('click')"
     :disabled="disabled"
+    type="button"
     class="bg-primary-400 text-white font-semibold py-1 px-3 rounded-full"
     :class="{
         'hover:bg-primary-600': !disabled,
