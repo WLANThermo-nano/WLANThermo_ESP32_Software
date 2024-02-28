@@ -1,25 +1,19 @@
 <template>
-  <div class="pure-g">
-    <div class="pure-u-1-1 app-bar-wrapper">
-      <div class="app-bar-actions">
-        <div class="button-container" @click="backToHome">
-          <span class="icon-arrow_left"></span>
-          <span>{{$t('back')}}</span>
-        </div>
-        <div class="button-container" @click="save">
-          <span>{{$t('save')}}</span>
-          <span class="icon-arrow_right"></span>
-        </div>
-      </div>
-    </div>
-    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+  <div class="pure-g m-4">
+    <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
       <div class="name">
+        <span class="back-button cursor-pointer" @click="backToHome">
+          <span class="icon-arrow_left"></span>
+        </span>
         {{ $t('system_settings') }}
         <span
-          @click="showHelpText"
-          class="icon-question_sign icon-question"
-        ></span>
+            @click="showHelpText"
+            class="icon-question_sign icon-question"
+          >
+        </span>
       </div>
+    </div>
+    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1 mt-2">
       <div class="config-form">
         <form>
           <div class="form-group">
@@ -61,25 +55,30 @@
             <label class="control-label" for="select">{{$t("hw_version")}}</label>
             <i class="bar"></i>
           </div>
-          <div class="form-checkbox">
-            <label for="update_search" class="pure-checkbox checkbox">
-              <input v-model="systemSettings.autoupd" type="checkbox" id="update_search" />
-              {{$t("update_search")}}
-            </label>
-          </div>
-          <div class="form-checkbox">
-            <label for="prerelease" class="pure-checkbox checkbox">
-              <input v-model="systemSettings.prerelease" :true-value="'true'" :false-value="'false'" type="checkbox" id="prerelease" />
-              {{$t("prerelease")}}
-            </label>
-          </div>
-          <div class="form-checkbox" v-if="systemSettings.hasOwnProperty('crashreport')">
-            <label for="crashreport" class="pure-checkbox checkbox">
-              <input v-model="systemSettings.crashreport" :true-value="'true'" :false-value="'false'" type="checkbox" id="crashreport" />
-              {{$t("crashreport")}}
-            </label>
-          </div>
+          <wlan-checkbox 
+            v-model="systemSettings.autoupd"
+            :label="$t('update_search')">
+          </wlan-checkbox>
+          <wlan-checkbox 
+            v-model="systemSettings.prerelease"
+            :label="$t('prerelease')">
+          </wlan-checkbox>
+          <wlan-checkbox 
+            v-if="systemSettings.hasOwnProperty('crashreport')"
+            v-model="systemSettings.crashreport"
+            :label="$t('crashreport')">
+          </wlan-checkbox>
         </form>
+        <div class="pure-u-1-1">
+          <div class="grid mt-2">
+            <div class="justify-self-end">
+              <wlan-button 
+                :label="$t('save')" 
+                @click="save">
+              </wlan-button>
+            </div>
+          </div>
+        </div>
       </div>
       <template v-if="showDisplaySettings">
         <div class="name">
@@ -87,12 +86,15 @@
         </div>
         <div class="config-form">
           <div class="mt10">
-            <button class="pure-button pure-button-primary mr5" type="button" @click.stop="rotateDisplay">
-              {{ $t('rotate_display') }}
-            </button>
-            <button class="pure-button pure-button-primary" type="button" @click.stop="calibrateTouch">
-              {{ $t('calibrate_touch') }}
-            </button>
+            <wlan-button
+              class="mr-2"
+              :label="$t('rotate_display')" 
+              @click="rotateDisplay">
+            </wlan-button>
+            <wlan-button 
+              :label="$t('calibrate_touch')" 
+              @click="calibrateTouch">
+            </wlan-button>
           </div>
         </div>
       </template>
@@ -102,9 +104,21 @@
 
 <script>
 import EventBus from "../event-bus";
+import WlanButton from './shared/Button.vue'
+import WlanCheckbox from './shared/Checkbox.vue'
+
+function stringTrueFalseToBool(value) {
+  if (value === 'true') return true
+  if (value === 'false') return false
+  return value
+}
 
 export default {
   name: "System",
+  components: {
+    WlanButton,
+    WlanCheckbox
+  },
   props: {
     settings: {
       type: Object
@@ -112,7 +126,6 @@ export default {
   },
   data: () => {
     return {
-      copyOfSystem: null,
       systemSettings: {
         host: "",
         ap: "",
@@ -144,8 +157,14 @@ export default {
   mounted: function () {
     EventBus.$emit("loading", true)
     this.axios.get("/settings").then((response) => {
-      this.hardwareVersions = response.data.hardware
-      this.copyOfSystem = Object.assign({}, response.data) 
+      this.hardwareVersions = response.data.hardware    
+      // the BE is sending boolean value in string.
+      response.data.system.autoupd = stringTrueFalseToBool(response.data.system.autoupd)
+      response.data.system.prerelease = stringTrueFalseToBool(response.data.system.prerelease)
+      if (Object.prototype.hasOwnProperty.call(response.data.system, 'crashreport')) {
+        response.data.system.crashreport = stringTrueFalseToBool(response.data.system.crashreport)
+      }
+
       this.systemSettings = response.data.system
       EventBus.$emit("loading", false)
     });
@@ -164,7 +183,13 @@ export default {
     },
     save: function() {
       EventBus.$emit("loading", true)
-      this.axios.post('/setsystem', this.systemSettings).then(() => {
+      
+      const request = Object.assign({}, this.systemSettings)
+      request.autoupd = this.systemSettings.autoupd.toString()
+      request.prerelease = this.systemSettings.prerelease.toString()
+      request.crashreport = this.systemSettings.crashreport.toString()
+
+      this.axios.post('/setsystem', request).then(() => {
         EventBus.$emit("loading", false)
         EventBus.$emit("getSettings")
         this.backToHome()
@@ -191,8 +216,7 @@ export default {
         EventBus.$emit("loading", false)
       })
     }
-  },
-  components: {},
+  }
 };
 </script>
 
