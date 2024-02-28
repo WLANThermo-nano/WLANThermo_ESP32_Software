@@ -1,7 +1,6 @@
 <template>
   <div class="pure-g m-4">
     <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
-      
       <div class="name">
         <span class="back-button cursor-pointer" @click="backToHome">
           <span class="icon-arrow_left"></span>
@@ -15,7 +14,7 @@
       </div>
     </div>
     <div class="pure-u-1-1 mt-4 mb-1 tracking-normal">
-      <div class="flex ml-1">
+      <div class="flex ml-1 my-4">
         <div class="text-white align-middle flex-grow">
           <span class="align-middle font-semibold">{{ $t('wlanActivate') }}</span>
         </div>
@@ -54,7 +53,7 @@
       </div>
     </div>
     <div class="pure-u-1-1 mt-12 mb-1 tracking-normal">
-      <div class="flex ml-1">
+      <div class="flex ml-1 h-6">
         <div class="text-white align-middle flex-grow">
           <span class="align-middle font-semibold">{{ $t('availableNetworks') }}</span>
         </div>
@@ -293,18 +292,6 @@ export default {
       }
     }
   }
-}
-
-.fadeHeight-enter-active,
-.fadeHeight-leave-active {
-  transition: all 0.2s;
-  max-height: 120px;
-}
-.fadeHeight-enter,
-.fadeHeight-leave-to
-{
-  opacity: 0;
-  max-height: 0px;
 }
 
 </style>

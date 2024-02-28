@@ -421,12 +421,6 @@ export default {
   align-items: stretch;
 }
 
-// #nav {
-//   flex: 0 0 $nav_width;
-//   min-height: 100vh;
-//   background-color: $medium;
-// }
-
 #main {
   flex: 1 1 auto;
 }

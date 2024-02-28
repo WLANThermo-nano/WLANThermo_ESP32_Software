@@ -107,7 +107,6 @@ body {
     color: #fff;
 }
 
-
 .spinner {
     position: absolute;
     left: 50%;
@@ -126,4 +125,16 @@ body {
 @keyframes spinner_rotation {
     from {transform: rotate(0deg);}
     to {transform: rotate(359deg);}
+}
+
+.fadeHeight-enter-active,
+.fadeHeight-leave-active {
+  transition: all 0.2s;
+  max-height: 600px;
+}
+.fadeHeight-enter,
+.fadeHeight-leave-to
+{
+  opacity: 0;
+  max-height: 0px;
 }

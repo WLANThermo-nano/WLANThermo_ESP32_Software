@@ -1,66 +1,85 @@
 <template>
-  <div class="pure-g">
-    <div class="pure-u-1-1 app-bar-wrapper">
-      <div class="app-bar-actions">
-        <div class="button-container" @click="backToHome">
+  <div class="pure-g m-4">
+    <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+      <div class="name">
+        <span class="back-button cursor-pointer" @click="backToHome">
           <span class="icon-arrow_left"></span>
-          <span>{{$t('back')}}</span>
+        </span>
+        {{ $t('bluetoothTitle') }}
+        <span
+            @click="showHelpText"
+            class="icon-question_sign icon-question"
+          >
+        </span>
+      </div>
+    </div>
+    <div class="pure-u-1-1 mt-4 mb-1 tracking-normal">
+      <div class="flex ml-1 my-4">
+        <div class="text-white align-middle flex-grow">
+          <span class="align-middle font-semibold">{{ $t('bluetoothActivate') }}</span>
         </div>
-        <div class="button-container" @click="save">
-          <span>{{$t('save')}}</span>
-          <span class="icon-arrow_right"></span>
+        <div class="self-end">
+          <wlan-toggle-button v-model="bluetoothSettings.enabled"></wlan-toggle-button>
         </div>
       </div>
     </div>
-    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
-      <div class="name">
-        {{ $t('bluetoothTitle') }}
-        <span
-          @click="showHelpText"
-          class="icon-question_sign icon-question"
-        ></span>
+    <div class="pure-u-1-1 mt-2 mb-1 tracking-normal">
+      <div class="flex ml-1 h-6">
+        <div class="text-white align-middle flex-grow">
+          <span class="align-middle font-semibold">{{ $t('bluetoothChannels') }}</span>
+        </div>
+        <div class="self-end">
+          <span 
+            class="wlan-icons-refresh text-grey-800 text-base inline-block text-center mr-3 cursor-pointer"
+            :class="{'icon-rotate-100': refreshing}"
+            @click="refreshBluetooth">
+          </span>
+        </div>
       </div>
-      <div class="config-form">
-        <form>
-          <div class="form-checkbox">
-            <label for="bluetoothActivate" class="pure-checkbox checkbox">
-              <input v-model="bluetoothSettings.enabled" type="checkbox" id="bluetoothActivate" />
-              {{$t("bluetoothActivate")}}
-            </label>
-          </div>
-          <hr>
-          <div class="select-channel-text">
-            <span class="text">{{ $t('bluetoothChannels') }}</span>
-            <span class="ic_white icon-refresh" :class="{'icon-rotate-100': refreshing}" @click="refreshBluetooth"></span>
-          </div>
-          <div class="bluetooth-item" :class="{'expand': (deviceIndex === expandingDevice)}" v-for="(device, deviceIndex) in devices" :key="deviceIndex">
-            <div class="info" @click="selectDevice(deviceIndex)">
-              <div class="icon">
-                <Icon class="ic_white" width="1.5em" height="1.5em" fontSize="1.5em" iconClass="bluetooth_1" />
-              </div>
-              <div class="body">
-                <div class="name-address">
-                  <div class="name">
-                    {{ device.name }} <span class="space"></span> ({{device.selectedChannels}}/{{device.total}})
-                  </div>
-                  <div class="address">
-                    {{ device.address }}
-                  </div>
-                </div>
-              </div>
+    </div>
+    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1 mt-3 cursor-pointer"
+      v-for="(device, deviceIndex) in devices" :key="deviceIndex">
+      <div class="bluetooth-item" :class="{'expand': (deviceIndex === expandingDevice)}" >
+        <div class="info" @click="selectDevice(deviceIndex)">
+          <div class="body">
+            <div>
+              <img 
+                class="inline-block text-center w-5 h-4.5 mr-5 mt-3"
+                :src="bluetoothIcon"/>
             </div>
-            <div class="details-panel" v-if="deviceIndex === expandingDevice">
-              <div class="channels">
-                <div class="form-checkbox checkbox-row" v-for="(channel, channelIndex) in device.channels" :key="channelIndex">
-                  <label :for="channel.id" class="pure-checkbox checkbox block-label">
-                    <input v-model="channel.checked" type="checkbox" :id="channel.id" @change="handleChannelCheckChange(channel.checked, deviceIndex, channelIndex)" />
-                    {{channel.name}}
-                  </label>
-                </div>
+            <div class="name-address">
+              <div class="name">
+                {{ device.name }} 
+                <span class="mr-1"></span>
+                <span class="font-normal">({{device.selectedChannels}}/{{device.total}})</span>
+              </div>
+              <div class="address">
+                {{ device.address }}
               </div>
             </div>
           </div>
-        </form>
+        </div>
+        <transition name="fadeHeight">
+          <div v-if="deviceIndex === expandingDevice">
+            <div v-for="(channel, channelIndex) in device.channels" :key="channelIndex">
+              <wlan-checkbox 
+                  v-model="channel.checked"
+                  @change="handleChannelCheckChange(channel.checked, deviceIndex, channelIndex)"
+                  :label="channel.name">
+              </wlan-checkbox>
+            </div>
+          </div>
+        </transition>
+      </div>
+    </div>
+    <div class="pure-u-1-1">
+      <div class="grid mt-2">
+        <div class="justify-self-end">
+          <wlan-button 
+            :label="$t('save')" 
+            @click="save">
+          </wlan-button>
+        </div>
       </div>
     </div>
   </div>
@@ -68,13 +87,16 @@
 
 <script>
 import EventBus from "../event-bus";
-import Icon from "./Icon";
+import WlanToggleButton from './shared/ToggleButton.vue'
+import WlanCheckbox from './shared/Checkbox.vue'
+import WlanButton from './shared/Button.vue'
 
 export default {
   name: "Bluetooth",
   props: {},
   data: () => {
     return {
+      bluetoothIcon: require(`@/assets/icons/svg/bluetooth-fill.svg`),
       expandingDevice: -1,
       refreshing: false,
       bluetoothSettings: {
@@ -166,7 +188,9 @@ export default {
     }
   },
   components: {
-    Icon
+    WlanCheckbox,
+    WlanToggleButton,
+    WlanButton
   },
 };
 </script>
@@ -174,54 +198,10 @@ export default {
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
 
-.select-channel-text {
-  display: flex;
-  .text {
-    flex: 1 1 auto;
-    color: #fff;
-    font-size: 1.2em;
-    margin: 0.7em 0 0.7em;
-  }
-  .icon-refresh {
-    margin-top: 15px;
-    margin-right: 18px;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.channels {
-  padding-left: 3em;
-}
-
-.checkbox-row {
-  margin-top: 0.25rem !important;
-  margin-bottom: 0.25rem !important;
-}
-
-.block-label {
-  cursor: pointer;
-  display: block;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  &:hover {
-    background-color: $dark;
-  }
-}
-
 .bluetooth-item {
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  padding: 0.6em;
-  border-radius: 0.4em;
-  &:hover {
-    background-color: $dark;
-  }
-  &.expand {
-    background-color: $dark;
-  }
+  @apply p-2 pl-4 rounded-sm;
   .info {
     display: flex;
     .icon {
@@ -232,20 +212,24 @@ export default {
       flex: 1 1 auto;
       display: flex;
       justify-content: space-between;
+      line-height: 2.1em;
       .name-address {
         display: flex;
         flex-direction: column;
         flex: 1 1 auto;
         color: #fff;
         .name {
-          font-size: 1.0em;
-          .space {
-            margin-right: 0.5em;
-          }
+          @apply leading-6 text-xl;
         }
         .address {
-          font-size: 0.8em;
+          @apply leading-4 text-sm text-grey-800 font-semibold;
           margin-left: 0.3em;
+        }
+      }
+      .icons {
+        @apply flex items-center;
+        .lock-icon {
+          @apply text-grey-800 text-base inline-block text-center mr-3;
         }
       }
     }
