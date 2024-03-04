@@ -104,7 +104,8 @@ export default {
 	notificationSound: "Notification sound",
 	notificationSoundDefault: "Default",
 	notificationSoundBells: "Bells",
-	notificationConfigureThisPhone: "Add this phone to receive push message",
+	addThisDevice: "Add this device",
+	delete: "Delete",
 	deviceName: "Device name",
 	//Cloud
 	cloudTitle: "Cloud Service",
