@@ -6,6 +6,15 @@
   font-display: block;
 }
 
+@font-face {
+  font-family: "Montserrat";
+  src: url('~@/assets/Montserrat-VariableFont_wght.ttf?anupur') format('truetype');
+}
+
+body {
+  font-family: "Montserrat"
+}
+
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;

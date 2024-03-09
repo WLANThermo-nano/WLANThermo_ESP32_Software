@@ -6,6 +6,14 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
+      minWidth: {
+        120: '120px',
+        160: '160px',
+        180: '180px'
+      },
+      minHeight: {
+        400: '400px'
+      }
     },
     colors: {
       primary: {

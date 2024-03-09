@@ -1,35 +1,54 @@
 <template>
-  <div class="pure-g">
-    <div class="pure-u-1-1 app-bar-wrapper">
-      <div class="app-bar-actions">
-        <div class="button-container" @click="backToHome">
-          <span class="icon-arrow_left"></span>
-          <span>{{$t('back')}}</span>
-        </div>
-      </div>
-    </div>
-    <div class="config-form-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
+  <div class="pure-g m-4 ">
+    <div class="page-title-container pure-u-1-1 pure-u-md-1-1 pure-u-lg-1-1">
       <div class="name">
+        <span class="back-button cursor-pointer" @click="backToHome">
+          <span class="icon-arrow_left"></span>
+        </span>
         {{ $t('aboutTitle') }}
       </div>
-      <div class="config-form">
-        <div 
-          v-for="member in members"
-          :key="member.name"
-          class="member"
-          @click="handleNameClick(member.name)">✰ {{member.name}}</div>
-      </div>
-      <div class="name">
-        {{ $t('forumTitle') }}
-      </div>
-      <div class="config-form">
-        <div class="link">
-          <a @click="gotoForum">{{$t('forumUrl')}}</a>
+    </div>
+    <div class="flex lg:mb-28 xl:mb-32">
+      <div class="flex flex-col">
+        <div class="config-form-container mt-2 flex lg:mr-12">
+          <div class="config-form m-4">
+            <div class="text-lg tracking-normal text-white font-semibold">{{ $t('slogan') }}</div>
+            <div class="mt-2 text-white tracking-normal pr-8">
+              {{ $t('aboutDescription') }}
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-center lg:text-left">
+          <button 
+            @click="gotoForum"
+            class="border border-solid border-primary-400 text-primary-400 hover:border-primary-200 hover:text-primary-200 font-semibold py-1.5 px-4 rounded-full">
+            {{ $t('forumTitle') }}
+          </button>
+          <span class="tracking-normal ml-2 text-white"> {{ $t('forumUrl') }} </span>
         </div>
       </div>
-      <div class="you-are-dev-toast" v-if="showToast">
-        You are now a developer
+      <div class="hidden lg:block lg:min-w-180 xl:min-w-160 relative">
+        <img 
+          class="top-0 transform -translate-x-16 translate-y-8 skew-y-3 scale-150 absolute"
+          :src="ourTeamImage">
       </div>
+    </div>
+    <div class="w-full config-form-container p-2 tracking-normal mt-4">
+      <div class="text-white text-lg font-semibold border-l-4 border-primary-400 h-8 ml-2">
+        <span class="ml-2">
+          {{ $t('team') }}
+        </span>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 ml-12 mt-4 w-full">
+      <ul class="list-disc" 
+          v-for="member in members"
+          :key="member.name">
+        <li 
+          class="member tracking-normal"
+          @click="handleNameClick(member.name)"> {{member.name}}
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -43,8 +62,11 @@ const DEBUG_MODE_KEY = '_WLAN_DEBUG_MODE'
 export default {
   name: "About",
   props: {},
+  components: {
+  },
   data: () => {
     return {
+      ourTeamImage: require(`@/assets/images/our-team.png`),
       members: [
         {name: 'Armin Thinnes'},
         {name: 'Alexander Schäfer'},
@@ -107,8 +129,7 @@ export default {
         window.open(forumUrl, '_blank');
       }
     }
-  },
-  components: {},
+  }
 };
 </script>
 
@@ -119,15 +140,6 @@ export default {
   color: #fff;
   padding-top: 0.3em;
   padding-bottom: 0.3em;
-}
-
-.link a {
-  color: #fff;
-  text-decoration-line: none;
-  cursor: pointer;
-  &:hover {
-    @apply text-primary-400;
-  }
 }
 
 .you-are-dev-toast {

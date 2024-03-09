@@ -83,7 +83,10 @@ export default {
 	//Menü About
 	aboutTitle: "WLANThermo Team",
 	forumTitle: "WLANThermo Forum",
+	slogan: "The smartest way to have a Barbeque!",
+	aboutDescription: "WLANThermo is a self-build project by a grill-loving development team with an innovative goal: the creation of powerful “open source” alternatives to commercially available temperature measuring and control devices. With your WLANThermo you can digitize your grilling process in the simplest way and turn it into the networked premium grilling fun of tomorrow. Choose the WLANThermo model that suits your needs and become part of our WLANThermo family!",
 	forumUrl: "Visit us in our forum!",
+	team: "WLANThermo Team",
 	//Menü Notification
 	notificationTitle: "Notification service",
 	notificationActivate: "Activate push notification",

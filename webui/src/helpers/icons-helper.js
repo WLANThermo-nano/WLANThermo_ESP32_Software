@@ -11,10 +11,17 @@ export default class IconsHelper {
 
     static getBatteryIcon(level, isCharging) {
         if (isCharging) {
-            if (level >= '75') return 'chargeHigh'
+            if (level >= '95') return 'charge100'
+            if (level >= '75') return 'charge75'
+            if (level >= '50') return 'charge50'
+            if (level >= '25') return 'charge25'
+            else 'charge10'
         }
 
-        // default
-        return 'chargeHigh'
+        if (level >= '95') return 'battery100'
+        if (level >= '75') return 'battery75'
+        if (level >= '50') return 'battery50'
+        if (level >= '25') return 'battery25'
+        else 'battery10'
     }
 }

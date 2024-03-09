@@ -1,9 +1,11 @@
 <template>
   <div id="layout">
     <div class="flex w-screen">
-      <div id="side-bar" class="h-screen bg-darkblue-800">
-        <img @click="toHome()" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" :src="logoImg" />
-        <div class="text-white text-right text-sm mb-11" v-if="settings.device">
+      <div id="side-bar" class="h-screen bg-darkblue-800" :class="{'expanded': expanded}">
+        <img @click="toHome()" class="block cursor-pointer text-center mx-auto mb-1 w-10/12" 
+          :class="{'mt-11': expanded, 'mt-2': !expanded}"
+          :src="logoImg" />
+        <div class="text-white text-right text-sm mb-11 mr-2" v-if="settings.device">
           {{ settings.device.sw_version }}
         </div>
         <div class="pure-menu">
@@ -13,40 +15,50 @@
               <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
                 <span :class="'wlan-icons-' + item.icon" class="text-2xl inline-block w-8 text-center">
                 </span>
-                <span class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
+                <span 
+                  :class="{'hidden': !expanded}"
+                  class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
               </a>
             </li>
           </ul>
         </div>
       </div>
       <div id="content" class="flex flex-col flex-grow">
-        <div id="navbar" class="bg-darkblue-600 h-12 flex items-end flex-col flex-grow-0">
-          <div id="status" class="flex mt-3 align-middle" v-if="system">
-            <!-- to do update notice -->
-            <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer" @click="update"
-              iconClass="info_sign icon-yellow" />
-            
-            <span v-if="cloudIconClass !== null" 
-              class="wlan-icons-remote-cloud text-xl inline-block text-center font-bold cursor-pointer mr-3"
-              :class="cloudIconClass"
-              @click="handleCloudIconClick">
-            </span>
-            <!-- battery -->
-            <template v-if="system && system.soc >= 0">
-              <div class="mr5 text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
-              <img v-if="cloudIconClass !== null" 
-                class="inline-block cursor-pointer text-center  w-6 h-3.5 mr-3 mt-1.5"
-                :src="batteryIcon"
-                @click="switchToBatteryText" />
-            </template>
-            <!-- wifi -->
-            <template v-if="system && system.rssi">
-              <div class="mr5 text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
-              <img v-if="wifiIcon !== null" 
-                class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
-                :src="wifiIcon"
-                @click="switchToWifiStrength" />
-            </template>
+        <div id="navbar" class="bg-darkblue-600 h-12 flex flex-col flex-grow-0">
+          <div class="flex w-full">
+            <div class="flex align-middle flex-grow">
+              <span v-if="cloudIconClass !== null" 
+                class="icon-reorder text-white hover:text-primary-400 text-2xl inline-block align-middle text-center cursor-pointer mt-3 ml-3"
+                @click="expanded = !expanded">
+              </span>
+            </div>
+            <div id="status" class="flex mt-3 align-middle self-end" v-if="system">
+              <!-- to do update notice -->
+              <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer mt-1.5" @click="update"
+                iconClass="info_sign icon-yellow" />
+              
+              <span v-if="cloudIconClass !== null" 
+                class="wlan-icons-remote-cloud text-xl inline-block text-center font-bold cursor-pointer mr-3"
+                :class="cloudIconClass"
+                @click="handleCloudIconClick">
+              </span>
+              <!-- battery -->
+              <template v-if="system && system.soc >= 0">
+                <div class="mr5 text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
+                <img v-if="cloudIconClass !== null" 
+                  class="inline-block cursor-pointer text-center  w-6 h-3.5 mr-3 mt-1.5"
+                  :src="batteryIcon"
+                  @click="switchToBatteryText" />
+              </template>
+              <!-- wifi -->
+              <template v-if="system && system.rssi">
+                <div class="mr5 text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
+                <img v-if="wifiIcon !== null" 
+                  class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
+                  :src="wifiIcon"
+                  @click="switchToWifiStrength" />
+              </template>
+            </div>
           </div>
         </div>
         <div id="page-content" class="bg-darkblue-900 flex-grow">
@@ -141,7 +153,17 @@ export default {
       },
 
       batteryIcons: {
-        chargeHigh: require(`@/assets/icons/svg/charge-high.svg`),
+        charge10: require(`@/assets/icons/svg/charge-10.svg`),
+        charge25: require(`@/assets/icons/svg/charge-25.svg`),
+        charge50: require(`@/assets/icons/svg/charge-50.svg`),
+        charge75: require(`@/assets/icons/svg/charge-75.svg`),
+        charge100: require(`@/assets/icons/svg/charge-100.svg`),
+
+        battery10: require(`@/assets/icons/svg/battery-10.svg`),
+        battery25: require(`@/assets/icons/svg/battery-25.svg`),
+        battery50: require(`@/assets/icons/svg/battery-50.svg`),
+        battery75: require(`@/assets/icons/svg/battery-75.svg`),
+        battery100: require(`@/assets/icons/svg/battery-100.svg`),
       },
 
       logoImg: require(`@/assets/logo_${process.env.VUE_APP_PRODUCT_NAME}.svg`),
@@ -161,6 +183,7 @@ export default {
       dialogBodyText: '',
       wikiLink: '',
       linkText: '',
+      expanded: false,
 
       // auth
       authDialogActive: false,
@@ -425,6 +448,18 @@ export default {
   flex: 1 1 auto;
 }
 
+#side-bar {
+  @apply transition-all duration-100;
+  width: 4rem;
+  min-width: 4rem;
+  max-width: 4rem;
+  &.expanded {
+    width: 14rem;
+    min-width: 14rem;
+    max-width: 14rem;
+  }
+}
+
 .page-content {
   padding: 44px 0px;
 }
@@ -515,12 +550,6 @@ export default {
       }
     }
   }
-}
-
-#side-bar {
-  width: 13rem;
-  min-width: 13rem;
-  max-width: 13rem;
 }
 
 .auth-dialog-body {
