@@ -27,20 +27,16 @@ body {
     cursor: pointer;
 }
 
-.mr5 {
-    margin-right: 5px;
-}
-
 .mt10 {
     margin-top: 10px !important;
 }
 
 .page-title-container {
     .name {
+        @apply text-blue-800 dark:text-white;
         padding: 0.1em;
         margin-left: 0.2em;
         margin-top: 0.2em;
-        color: $light;
         font-size: 1.5em;
         font-weight: 600;
     }
@@ -54,12 +50,12 @@ body {
 }
 
 .config-form-container {
-    @apply rounded-xl bg-darkblue-800;
+    @apply rounded-xl shadow-xl bg-white dark:bg-darkblue-800;
     .name {
+        @apply text-blue-800 dark:text-white;
         padding: 0.1em;
         margin-left: 0.2em;
         margin-top: 0.2em;
-        color: $light;
         font-size: 1.5em;
         font-weight: 600;
     }
@@ -73,8 +69,7 @@ body {
             @apply mr-2 align-middle inline-block text-center w-5 h-5;
         }
         span {
-            @apply align-middle;
-            color: #fff;
+            @apply align-middle dark:text-white;
         }  
     }
 }

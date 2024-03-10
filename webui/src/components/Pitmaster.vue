@@ -415,7 +415,7 @@ export default {
 
 <style lang="scss" scoped>
 .form-section-name {
-  color: #fff;
+  @apply text-blue-800 dark:text-white;
   padding: 0.3em;
   margin-top: 0.3em;
   font-size: 1.1em;

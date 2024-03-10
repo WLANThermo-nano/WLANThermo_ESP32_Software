@@ -14,7 +14,7 @@
     <template v-if="isMobile">
       <div class="pure-u-1-1 tracking-normal mt-2">
         <div class="flex ml-1 my-2">
-          <div class="text-white align-middle flex-grow inline-block">
+          <div class="text-blue-800 dark:text-white align-middle flex-grow inline-block">
             <span class="align-middle font-semibold">{{ $t('notificationActivate') }}</span>
           </div>
           <div class="self-end">
@@ -66,7 +66,7 @@
 
     <div class="pure-u-1-1 tracking-normal mt-2">
       <div class="flex ml-1 my-2">
-        <div class="text-white align-middle flex-grow inline-block">
+        <div class="text-blue-800 dark:text-white align-middle flex-grow inline-block">
           <span class="align-middle font-semibold">Telegram</span>
         </div>
         <div class="self-end">
@@ -99,7 +99,7 @@
 
     <div class="pure-u-1-1 tracking-normal mt-2">
       <div class="flex ml-1 my-2">
-        <div class="text-white align-middle flex-grow inline-block">
+        <div class="text-blue-800 dark:text-white align-middle flex-grow inline-block">
           <span class="align-middle font-semibold">Pushover</span>
         </div>
         <div class="self-end">

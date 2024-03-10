@@ -217,7 +217,7 @@ export const Data = {
             "time": "1590008772",
             "unit": "C",
             "rssi": -32,
-            "soc": 70,
+            "soc": 73,
             "charge": true,
             "online": 2
         },

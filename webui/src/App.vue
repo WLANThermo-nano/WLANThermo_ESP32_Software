@@ -1,16 +1,17 @@
 <template>
   <div id="layout">
     <div class="flex w-screen">
-      <div id="side-bar" class="h-screen bg-darkblue-800" :class="{'expanded': expanded}">
+      <div id="side-bar" 
+        class="h-screen bg-lightblue-800 dark:bg-darkblue-800 flex flex-col" :class="{'expanded': expanded}">
         <img @click="toHome()" class="block cursor-pointer text-center mx-auto mb-1 w-10/12" 
           :class="{'mt-11': expanded, 'mt-2': !expanded}"
           :src="logoImg" />
         <div class="text-white text-right text-sm mb-11 mr-2" v-if="settings.device">
           {{ settings.device.sw_version }}
         </div>
-        <div class="pure-menu">
+        <div class="pure-menu flex-grow">
           <ul class="pure-menu-list">
-            <li class="pl-4 my-5 text-grey-500 hover:text-primary-400" v-for="item in menuItems" :key="item.id"
+            <li class="pl-4 my-5 text-white dark:text-grey-500 hover:text-primary-400 dark:hover:text-primary-400" v-for="item in menuItems" :key="item.id"
               :class="{ 'active': page === item.id }">
               <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
                 <span :class="'wlan-icons-' + item.icon" class="text-2xl inline-block w-8 text-center">
@@ -22,20 +23,30 @@
             </li>
           </ul>
         </div>
+        <!-- dark/light mode -->
+        <div class="text-center mb-4">
+          <span 
+            class="text-2xl text-white dark:text-grey-500 hover:text-primary-400 dark:hover:bg-darkblue-600 p-3 rounded-full cursor-pointer"
+            :class="{'icon-dark_mode': darkMode, 'icon-light_mode': !darkMode}"
+            @click="changeTheme">
+          </span>
+        </div>
       </div>
       <div id="content" class="flex flex-col flex-grow">
-        <div id="navbar" class="bg-darkblue-600 h-12 flex flex-col flex-grow-0">
+        <div id="navbar" class="bg-lightblue-700 dark:bg-darkblue-600 h-12 flex flex-col flex-grow-0 shadow-lg">
           <div class="flex w-full">
             <div class="flex align-middle flex-grow">
               <span v-if="cloudIconClass !== null" 
-                class="icon-reorder text-white hover:text-primary-400 text-2xl inline-block align-middle text-center cursor-pointer mt-3 ml-3"
+                class="icon-reorder text-blue-800 dark:text-white hover:text-primary-400 text-2xl inline-block align-middle text-center cursor-pointer mt-3 ml-3"
                 @click="expanded = !expanded">
               </span>
             </div>
             <div id="status" class="flex mt-3 align-middle self-end" v-if="system">
               <!-- to do update notice -->
-              <Icon v-if="settings.system.getupdate !== 'false'" class="cursor-pointer mt-1.5" @click="update"
-                iconClass="info_sign icon-yellow" />
+              <span v-if="settings.system.getupdate !== 'false'"
+                class="icon-info_sign cursor-pointer text-yellow-600 mt-1.5 mr-3"
+                @click="update">
+              </span>
               
               <span v-if="cloudIconClass !== null" 
                 class="wlan-icons-remote-cloud text-xl inline-block text-center font-bold cursor-pointer mr-3"
@@ -44,24 +55,24 @@
               </span>
               <!-- battery -->
               <template v-if="system && system.soc >= 0">
-                <div class="mr5 text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
-                <img v-if="cloudIconClass !== null" 
-                  class="inline-block cursor-pointer text-center  w-6 h-3.5 mr-3 mt-1.5"
-                  :src="batteryIcon"
-                  @click="switchToBatteryText" />
+                <div class="mr-1 mt-2 text-blue-800 dark:text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
+                <div 
+                  class="w-6 h-6 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
+                  :class="batteryIcon"
+                  @click="switchToBatteryText"></div>
               </template>
               <!-- wifi -->
               <template v-if="system && system.rssi">
-                <div class="mr5 text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
-                <img v-if="wifiIcon !== null" 
-                  class="inline-block cursor-pointer text-center mr-3 w-5.5 h-5 mt-0.5"
-                  :src="wifiIcon"
-                  @click="switchToWifiStrength" />
+                <div class="mr-1 text-blue-800 dark:text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
+                <div 
+                  class="w-6 h-6 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
+                  :class="wifiIcon"
+                  @click="switchToWifiStrength"></div>
               </template>
             </div>
           </div>
         </div>
-        <div id="page-content" class="bg-darkblue-900 flex-grow">
+        <div id="page-content" class="bg-lightblue-600 dark:bg-darkblue-900 flex-grow">
         <div id="content-body" class="m-2">
           <router-view :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" />
         </div>
@@ -124,7 +135,6 @@
 </template>
 
 <script>
-import Icon from './components/Icon.vue'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
@@ -146,26 +156,6 @@ export default {
   name: "App",
   data: () => {
     return {
-      wifiIcons: {
-        wifi10: require(`@/assets/icons/svg/wifi-10.svg`),
-        wifi50: require(`@/assets/icons/svg/wifi-50.svg`),
-        wifi100: require(`@/assets/icons/svg/wifi-100.svg`),
-      },
-
-      batteryIcons: {
-        charge10: require(`@/assets/icons/svg/charge-10.svg`),
-        charge25: require(`@/assets/icons/svg/charge-25.svg`),
-        charge50: require(`@/assets/icons/svg/charge-50.svg`),
-        charge75: require(`@/assets/icons/svg/charge-75.svg`),
-        charge100: require(`@/assets/icons/svg/charge-100.svg`),
-
-        battery10: require(`@/assets/icons/svg/battery-10.svg`),
-        battery25: require(`@/assets/icons/svg/battery-25.svg`),
-        battery50: require(`@/assets/icons/svg/battery-50.svg`),
-        battery75: require(`@/assets/icons/svg/battery-75.svg`),
-        battery100: require(`@/assets/icons/svg/battery-100.svg`),
-      },
-
       logoImg: require(`@/assets/logo_${process.env.VUE_APP_PRODUCT_NAME}.svg`),
 
       // wifi icon
@@ -183,7 +173,12 @@ export default {
       dialogBodyText: '',
       wikiLink: '',
       linkText: '',
+
+      // menu
       expanded: false,
+
+      // dark light
+      darkMode: true,
 
       // auth
       authDialogActive: false,
@@ -224,9 +219,7 @@ export default {
       debugEnabled: false,
     };
   },
-  components: {
-    Icon
-  },
+  components: {},
   methods: {
     initGetDataPeriodically: function () {
       this.getData();
@@ -253,6 +246,17 @@ export default {
         }
       } else {
         this.toPage('/')
+      }
+    },
+    changeTheme: function() {
+      this.darkMode = !this.darkMode
+
+      if (this.darkMode) {
+        localStorage.theme = 'dark'
+        document.documentElement.classList.add('dark')
+      } else {
+        localStorage.theme = 'light'
+        document.documentElement.classList.remove('dark')
       }
     },
     getData: function () {
@@ -329,11 +333,11 @@ export default {
     prepareStatusIcons: function () {
       // wifi icon
       const dbm = this.system.rssi
-      this.wifiIcon = this.wifiIcons[IconsHelper.getWifiIcon(dbm)]
+      this.wifiIcon = IconsHelper.getWifiIcon(dbm)
 
       // Battery
       const level = this.system.soc
-      this.batteryIcon = this.batteryIcons[IconsHelper.getBatteryIcon(level, this.system.charge)]
+      this.batteryIcon = IconsHelper.getBatteryIcon(level, this.system.charge)
 
       // cloud
       const online = this.system.online
@@ -372,6 +376,15 @@ export default {
     },
   },
   mounted: function () {
+    // get theme
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+      this.darkMode = true
+    } else {
+      document.documentElement.classList.remove('dark')
+      this.darkMode = false
+    }
+
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
       EventBus.$emit('log', 'is mobile')
       this.$router.push('/scan')
@@ -449,7 +462,7 @@ export default {
 }
 
 #side-bar {
-  @apply transition-all duration-100;
+  transition: all 0.2s ease-out, background-color 0ms;
   width: 4rem;
   min-width: 4rem;
   max-width: 4rem;
@@ -564,18 +577,6 @@ export default {
 
 @media screen and (max-width: 48em) {
 
-  // #nav {
-  //   flex-basis: 200px;
-  //   z-index: 500;
-  //   width: 12.5em;
-  //   left: -12.5em;
-  //   position: fixed;
-  //   transition: left .4s ease;
-  //   &.active {
-  //     display: block;
-  //     left: 0;
-  //   }
-  // }
   .nav-mask {
     display: block;
   }

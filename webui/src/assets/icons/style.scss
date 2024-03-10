@@ -6,14 +6,6 @@
   font-display: block;
 }
 
-@font-face {
-  font-family: "Montserrat";
-  src: url('~@/assets/Montserrat-VariableFont_wght.ttf?anupur') format('truetype');
-}
-
-body {
-  font-family: "Montserrat"
-}
 
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
@@ -30,6 +22,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-light_mode:before {
+  content: "\e909";
+}
+.icon-dark_mode:before {
+  content: "\e90a";
+}
 .icon-Wlan33:before {
   content: "\e906";
 }
@@ -126,6 +124,9 @@ body {
 .icon-uniF2CB:before {
   content: "\f2cb";
 }
+.icon-search:before {
+  content: "\e903";
+}
 .icon-stats-dots:before {
   content: "\e99b";
 }
@@ -143,7 +144,4 @@ body {
 }
 .icon-fire:before {
   content: "\e9a9";
-}
-.icon-search:before {
-  content: "\e903";
 }

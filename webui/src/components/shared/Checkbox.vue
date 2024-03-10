@@ -3,8 +3,9 @@
     class="form-checkbox" 
     :class="{ 'cursor-pointer': !readonly }"
     @click="$emit('input', !value)">
-    <img
-      :src="value ? checkboxBlueFill : checkboxBlue"/>
+    <img 
+      :class="{'border-2 border-solid border-grey-500 dark:border-0': !value}"
+      class="rounded-full" :src="value ? checkboxBlueFill : checkboxBlue"/>
     <span class="label">{{$t(label)}}</span>
   </div>
 </template>
@@ -30,4 +31,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+
 </style>

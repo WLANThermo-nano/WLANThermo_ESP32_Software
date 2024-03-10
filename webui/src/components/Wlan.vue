@@ -15,7 +15,7 @@
     </div>
     <div class="pure-u-1-1 mt-4 mb-1 tracking-normal">
       <div class="flex ml-1 my-4">
-        <div class="text-white align-middle flex-grow inline-block">
+        <div class="text-blue-800 dark:text-white align-middle flex-grow inline-block">
           <span class="align-middle font-semibold">{{ $t('wlanActivate') }}</span>
         </div>
         <div class="self-end">
@@ -54,7 +54,7 @@
     </div>
     <div class="pure-u-1-1 mt-12 mb-1 tracking-normal">
       <div class="flex ml-1 h-6">
-        <div class="text-white align-middle flex-grow">
+        <div class="text-blue-800 dark:text-white align-middle flex-grow">
           <span class="align-middle font-semibold">{{ $t('availableNetworks') }}</span>
         </div>
         <div class="self-end">

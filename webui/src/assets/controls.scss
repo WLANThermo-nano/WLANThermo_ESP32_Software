@@ -2,7 +2,7 @@
 
 select {
     option {
-        background-color: $medium_dark;
+        @apply dark:bg-darkblue-800;
     }
 }    
 
@@ -141,7 +141,7 @@ select {
 .form-group textarea:valid,
 .form-group textarea.form-file,
 .form-group textarea.has-value {
-    color: #fff;
+    @apply text-blue-800 dark:text-white;
 }
 
 .form-group input[readonly] ~ .control-label,

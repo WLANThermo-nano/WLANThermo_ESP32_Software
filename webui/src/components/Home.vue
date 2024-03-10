@@ -11,7 +11,8 @@
         </div>
       </div>
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
-        <div @click="editChannel(c)" class="info-box m-1.5 bg-darkblue-800 text-white h-36 py-3 rounded-xl cursor-pointer">
+        <div @click="editChannel(c)" 
+          class="info-box m-1.5 bg-white dark:bg-darkblue-800 shadow-lg dark:shadow-none text-blue-800 dark:text-white h-36 py-3 rounded-xl cursor-pointer">
           <div class="title-row flex">
             <span class="ml-2 flex-grow font-semibold">{{c.name}}</span>
             <span class="flex-grow-0 mr-2">
@@ -26,9 +27,7 @@
           <div class="body-row mt-2">
             <div class="temperature-range">
               <div class="max flex">
-                <img
-                  class="inline-block text-center ml-3 w-8 h-8"
-                  :src="tempUpIcon"/>
+                <div class="bg-contain bg-no-repeat bg-center ml-3 bg-light-temp-up dark:bg-temp-up bg w-8 h-8"></div>
                 <span class="text-lg mt-1 ml-2 font-semibold flex-grow">{{c.max}}°</span>
                 <span class="mr-2 flex items-center">
                   <template v-if="c.pm && c.pm.typ == 'auto'">
@@ -42,9 +41,7 @@
                 </span>
               </div>
               <div class="min flex mt-3">
-                <img
-                  class="inline-block text-center ml-3 w-8 h-8"
-                  :src="tempDownIcon"/>
+                <div class="bg-contain bg-no-repeat bg-center ml-3 bg-light-temp-down dark:bg-temp-down bg w-8 h-8"></div>
                 <span class="text-lg mt-1 ml-2 font-semibold flex-grow">{{c.min}}°</span>
                 <span class="temperature font-bold text-4xl mr-2 -mt-1">
                   <template v-if="c.temp == '999'">
@@ -120,7 +117,7 @@
             <div class="flex justify-end">
               <button 
                 @click="editing = false"
-                class=" text-white hover:text-grey-500 font-semibold py-1 pr-3 flex-start mr-auto">
+                class="text-blue-800 dark:text-white hover:text-grey-500 font-semibold py-1 pr-3 flex-start mr-auto">
                 {{$t('back')}}
               </button>
               <button 
@@ -161,8 +158,6 @@ export default {
     return {
       bluetoothIcon: require(`@/assets/icons/svg/bluetooth-fill.svg`),
       bluetoothDisabledIcon: require(`@/assets/icons/svg/bluetooth-fill-disabled.svg`),
-      tempUpIcon: require(`@/assets/icons/svg/temp-up.svg`),
-      tempDownIcon: require(`@/assets/icons/svg/temp-down.svg`),
       navActive: false,
       editing: false,
       editingChanelName: '',
