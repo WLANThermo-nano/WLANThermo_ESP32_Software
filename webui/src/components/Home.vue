@@ -13,8 +13,8 @@
       <div class="pure-u-1 pure-u-md-1-2 pure-u-xl-1-4" v-for="(c, i) in transformedChannels" :key="i">
         <div @click="editChannel(c)" 
           class="info-box m-1.5 bg-white dark:bg-darkblue-800 shadow-lg dark:shadow-none text-blue-800 dark:text-white h-36 py-3 rounded-xl cursor-pointer">
-          <div class="title-row flex">
-            <span class="ml-2 flex-grow font-semibold">{{c.name}}</span>
+          <div class="title-row flex border-solid border-l-8 pl-1" v-bind:style="{borderColor: c.color}">
+            <span class="ml-1 flex-grow font-semibold">{{c.name}}</span>
             <span class="flex-grow-0 mr-2">
               <img v-if="c.typ === 16"
                 class="inline-block text-center w-5.5 h-5 mr-5"
