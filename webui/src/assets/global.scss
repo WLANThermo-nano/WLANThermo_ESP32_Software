@@ -9,6 +9,15 @@
 
 $nav_width: 200px;
 
+@font-face {
+    font-family: Montserrat;
+    src: url("~@/assets/Montserrat-Medium.ttf");
+}
+
+body {
+    font-family: Montserrat;
+}
+
 /*
  * -- BASE STYLES --
  * Most of these are inherited from Base, but I want to change a few.

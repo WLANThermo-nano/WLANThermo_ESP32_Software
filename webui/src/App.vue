@@ -3,9 +3,10 @@
     <div class="flex w-screen">
       <div id="side-bar" 
         class="h-screen bg-lightblue-800 dark:bg-darkblue-800 flex flex-col" :class="{'expanded': expanded}">
-        <img @click="toHome()" class="block cursor-pointer text-center mx-auto mb-1 w-10/12" 
-          :class="{'mt-11': expanded, 'mt-2': !expanded}"
+        <img @click="toHome()" v-if="expanded" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" 
           :src="logoImg" />
+        <img @click="toHome()" v-if="!expanded" class="block cursor-pointer text-center mx-auto mt-2 mb-1 w-10/12" 
+          :src="smallLogoImg" />  
         <div class="text-white text-right text-sm mb-11 mr-2" v-if="settings.device">
           {{ settings.device.sw_version }}
         </div>
@@ -157,6 +158,7 @@ export default {
   data: () => {
     return {
       logoImg: require(`@/assets/logo_${process.env.VUE_APP_PRODUCT_NAME}.svg`),
+      smallLogoImg: require(`@/assets/images/small-logo.png`),
 
       // wifi icon
       wifiIcon: null,

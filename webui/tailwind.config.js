@@ -55,6 +55,7 @@ module.exports = {
       }
     },
     colors: {
+      transparent: 'transparent', 
       // light
       yellow: {
         600: '#FFD524'

@@ -104,7 +104,7 @@
               <i class="bar"></i>
             </div>
             <div class="colors-container" v-if="showColorPicker">
-              <div class="color-option" @click="setColor(c)" v-for="c in colors" :key="c" :style="{'backgroundColor': c}"></div>
+              <div class="color-option border border-solid border-grey-500" @click="setColor(c)" v-for="c in colors" :key="c" :style="{'backgroundColor': c}"></div>
             </div>
             <wlan-checkbox 
               v-model="pushAlarmChecked"
@@ -356,7 +356,7 @@ export default {
 }
 
 .color-input {
-  // font-size: 1.5em;
+  text-shadow: -1px 0 #a9adb0, 0 1px #a9adb0, 1px 0 #a9adb0, 0 -1px #a9adb0;
 }
 
 .colors-container {

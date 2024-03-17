@@ -13,7 +13,7 @@
         <div class="config-form-container mt-2 flex lg:mr-12">
           <div class="config-form m-4">
             <div class="text-lg tracking-normal text-blue-800 dark:text-white font-semibold">{{ $t('slogan') }}</div>
-            <div class="mt-2 text-blue-800 dark:text-white tracking-normal pr-8">
+            <div class="mt-2 text-blue-800 dark:text-white tracking-normal leading-6 pr-8">
               {{ $t('aboutDescription') }}
             </div>
           </div>
@@ -21,7 +21,7 @@
         <div class="mt-4 text-center lg:text-left">
           <button 
             @click="gotoForum"
-            class="border border-solid border-primary-400 text-primary-400 hover:border-primary-200 hover:text-primary-200 font-semibold py-1.5 px-4 rounded-full">
+            class="border border-solid border-primary-400 text-primary-400 hover:border-primary-600 hover:text-primary-600 font-semibold py-1.5 px-4 rounded-full">
             {{ $t('forumTitle') }}
           </button>
           <span class="tracking-normal ml-2 text-blue-800 dark:text-white"> {{ $t('forumUrl') }} </span>
@@ -29,7 +29,7 @@
       </div>
       <div class="hidden lg:block lg:min-w-180 xl:min-w-160 relative">
         <img 
-          class="top-0 transform -translate-x-16 translate-y-8 skew-y-3 scale-150 absolute"
+          class="top-0 transform -translate-x-16 translate-y-8 skew-y-3 scale-150 absolute bg-lightblue-800 dark:bg-transparent"
           :src="ourTeamImage">
       </div>
     </div>
