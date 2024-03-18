@@ -29,6 +29,7 @@
 #ifndef __FWU_H__
 #define __FWU_H__ 1
 
+#include "Arduino.h"
 #include <inttypes.h>
 
 struct SFwu;

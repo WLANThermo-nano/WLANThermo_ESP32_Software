@@ -196,12 +196,16 @@ void fwuDidReceiveData(TFwu *fwu, uint8_t *bytes, uint8_t len)
 {
     while (len > 0)
     {
+        Serial.print("FWU: ");
+        Serial.println(fwu->privateResponseLen);
         if (fwu->privateResponseLen == FWU_RESPONSE_BUF_SIZE)
         {
             fwu->privateCommandRequest = FWU_CR_RX_OVERFLOW;
             return;
         }
         uint8_t c = *bytes++;
+        Serial.print(c < 16 ? "0" : "");
+        Serial.println(c,HEX);
         if (c == FWU_EOM)
         {
             fwu->privateCommandRequest = FWU_CR_EOM_RECEIVED;
@@ -286,6 +290,7 @@ static void fwuYieldProcessFsm(TFwu *fwu, uint32_t elapsedMillisec)
                 // Send a SET_RECEIPT and switch to the corresponding state to wait for the response.
                 fwuPrepareSendBuffer(fwu, sFwversionRequest, sFwversionRequestLen);
                 fwu->privateProcessState = FWU_PS_FW_VERSION;
+                Serial.println("PING");
             }
             else
             {
@@ -316,6 +321,9 @@ static void fwuYieldProcessFsm(TFwu *fwu, uint32_t elapsedMillisec)
                 fwu->privateProcessState = FWU_PS_DONE;
                 fwu->processStatus = FWU_STATUS_COMPLETION;
                 fwu->responseStatus = FWU_RSP_OK_NO_UPDATE;
+                Serial.println(tmpFwVersionResponse->type);
+                Serial.println(fwu->dataObjectVer);
+                Serial.println(fwuLittleEndianToHost32((uint8_t *)&tmpFwVersionResponse->version));
             }
         }
         break;
@@ -707,9 +715,16 @@ static void fwuPrepareSendBuffer(TFwu *fwu, uint8_t *data, uint8_t len)
     fwu->privateResponseLen = 0;
 
     // Copy the data into our internal buffer.
-    for (i = 0; i < len; i++)
-    {
-        *p++ = *data++;
+    // Handle SLIP escaping.
+    for (i = 0; i < len; i++) {
+        // SLIP escape characters: C0->DBDC, DB->DBDD
+        if ((*data == 0xC0) || (*data == 0xDB))  {
+            *p++ = 0xDB;
+            *p++ = (*data++ == 0xC0) ? 0xDC : 0xDD;
+            fwu->privateRequestLen++;
+        } else {
+            *p++ = *data++;
+        }
     }
 
     // Add the end-of-message marker.

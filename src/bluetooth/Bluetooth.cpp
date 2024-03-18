@@ -496,6 +496,8 @@ boolean Bluetooth::doDfu()
     if (waitForBootloader(500u))
     {
         Serial.println("Hello from BLE bootloader");
+        Serial.print("isNRF52840: ");
+        Serial.println(this->isNrf52840);
         Serial.println("Start flashing of BLE application");
         uint32_t flashStart = millis();
 
