@@ -1,8 +1,8 @@
 <template>
-  <div id="layout">
+  <div id="layout relative overflow-hidden">
     <div class="flex w-screen">
       <div id="side-bar" 
-        class="h-screen bg-lightblue-800 dark:bg-darkblue-800 flex flex-col" :class="{'expanded': expanded}">
+        class="bg-lightblue-800 dark:bg-darkblue-800 flex flex-col" :class="{'expanded': expanded}">
         <img @click="toHome()" v-if="expanded" class="block cursor-pointer text-center mx-auto mt-11 mb-1 w-10/12" 
           :src="logoImg" />
         <img @click="toHome()" v-if="!expanded" class="block cursor-pointer text-center mx-auto mt-2 mb-1 w-10/12" 
@@ -56,17 +56,17 @@
               </span>
               <!-- battery -->
               <template v-if="system && system.soc >= 0">
-                <div class="mr-1 mt-2 text-blue-800 dark:text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
+                <div class="mr-1.5 mt-1 text-blue-800 dark:text-white font-semibold" v-if="showBatteryPercentage"> {{ system.soc }}%</div>
                 <div 
-                  class="w-6 h-6 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
+                  class="w-6 h-6 mt-0.5 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
                   :class="batteryIcon"
                   @click="switchToBatteryText"></div>
               </template>
               <!-- wifi -->
               <template v-if="system && system.rssi">
-                <div class="mr-1 text-blue-800 dark:text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
+                <div class="mr-1 mt-1 text-blue-800 dark:text-white font-semibold" v-if="showWifiStrength"> {{ system.rssi }}dBm</div>
                 <div 
-                  class="w-6 h-6 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
+                  class="w-6 h-6 mt-0.5 bg-contain bg-no-repeat bg-center mr-2 cursor-pointer"
                   :class="wifiIcon"
                   @click="switchToWifiStrength"></div>
               </template>
@@ -82,22 +82,24 @@
     </div>
 
     <!-- modal -->
-    <div class="dialog-mask" v-if="dialogActive" @click="dialogActive = false"></div>
-    <div class="dialog shadow-md" v-if="dialogActive">
-      <div class="title bg-darkblue-600 border-b border-grey-500 rounded-t-lg p-2 font-semibold text-lg">
-        {{ dialogTitle }}
-        <span @click="dialogActive = false" class="close-btn">×</span>
-      </div>
-      <div class="body bg-darkblue-600 text-white p-2 rounded-b-lg">
-        <p><span>{{ dialogBodyText }}</span></p>
-        <div class="link" v-if="wikiLink">
-          <p>
-            {{ $t('see_also') }}
-            <a :href="wikiLink" target="_blank"><span class="text-primary-400">Wiki - {{ linkText }}</span></a>
-          </p>
+    <div class="dialog-mask w-screen h-screen fixed top-0 left-0" v-if="dialogActive" @click="dialogActive = false"></div>
+    <transition name="slideRight">
+      <div class="dialog shadow-md fixed flex flex-col w-96 right-0 top-0" v-if="dialogActive">
+        <div class="title text-blue-800 dark:text-white bg-white dark:bg-darkblue-600 border-b border-grey-500 pl-4 p-2 font-semibold text-lg">
+          {{ dialogTitle }}
+          <span @click="dialogActive = false" class="close-btn">×</span>
+        </div>
+        <div class="body text-blue-800 dark:text-white bg-white dark:bg-darkblue-600 pl-4 p-2 text-base flex-grow">
+          <p><span>{{ dialogBodyText }}</span></p>
+          <div class="link mt-2" v-if="wikiLink">
+            <p>
+              {{ $t('see_also') }}
+              <a :href="wikiLink" target="_blank"><span class="text-primary-400">Wiki - {{ linkText }}</span></a>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
     <!-- modal end -->
 
     <!-- auth dialog -->
@@ -464,6 +466,7 @@ export default {
 }
 
 #side-bar {
+  height: 100dvh;
   transition: all 0.2s ease-out, background-color 0ms;
   width: 4rem;
   min-width: 4rem;
@@ -533,11 +536,11 @@ export default {
 .nav-mask,
 .dialog-mask {
   position: fixed;
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.3);
   display: none;
-  z-index: 499;
+  z-index: 400;
 
   &.dialog-mask {
     display: block;
@@ -545,15 +548,10 @@ export default {
 }
 
 .dialog {
-  position: fixed;
-  left: 50%;
-  top: 15vh;
-  transform: translateX(-50%);
+  height: 100dvh;
   z-index: 500;
 
   .title {
-    color: #fff;
-
     .close-btn {
       font-size: 1.5em;
       line-height: 0.9em;

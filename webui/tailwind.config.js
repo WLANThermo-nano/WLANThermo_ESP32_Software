@@ -7,7 +7,6 @@ module.exports = {
   darkMode: 'class', // or 'media' or 'class'
   theme: {
     extend: {
-      
       backgroundImage: {
         'light-temp-up': "url('./icons/svg/light-temp-up.svg')",
         'light-temp-down': "url('./icons/svg/light-temp-down.svg')",

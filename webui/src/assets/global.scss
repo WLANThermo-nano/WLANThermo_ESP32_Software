@@ -142,3 +142,16 @@ body {
   opacity: 0;
   max-height: 0px;
 }
+
+.slideRight-enter-active,
+.slideRight-leave-active {
+  transition: all 0.2s;
+  opacity: 100;
+  transform: translateX(0);
+}
+.slideRight-enter,
+.slideRight-leave-to
+{
+  opacity: 0;
+  transform: translateX(100%);
+}
