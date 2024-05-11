@@ -167,17 +167,12 @@ export default {
       })
     },
     handleWlanUncheck: function () {
-      if (confirm(this.$t('stopWifiPrompt')) === true) {
-        this.axios.post('/stopwifi').then((resp) => {
-          if (resp.data == true) {
-            self.location.href = 'about:blank'
-          }
-        });
-      } else {
-        setTimeout(() => {
-          this.activateWlanChecked = true
-        })
-      }
+      EventBus.$emit('show-confirm', {
+        title: this.$t('confirm'),
+        content: this.$t('stopWifiPrompt'),
+        onConfirmEventName: 'confirmRestart',
+        onCancelEventName: 'cancelRestart'
+      })
     },
     selectWifi: function(index) {
       this.expandingWifi = index
@@ -193,7 +188,6 @@ export default {
       })
     },
     save: function() {
-      alert('save triggered')
       this.axios.post('/setnetwork', {
         password: this.password,
         ssid: this.selectedWifiSSID
@@ -249,6 +243,18 @@ export default {
   mounted: function () {
     this.getNetworklist()
     this.networkscan()
+    EventBus.$on('confirmRestart', () => {
+      this.axios.post('/stopwifi').then((resp) => {
+        if (resp.data == true) {
+          self.location.href = 'about:blank'
+        }
+      });
+    })
+    EventBus.$on('cancelRestart', () => {
+      setTimeout(() => {
+        this.activateWlanChecked = true
+      })
+    })
   },
 };
 </script>

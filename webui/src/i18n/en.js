@@ -140,6 +140,7 @@ export default {
 	wlanConnect: "Connect network",
 	wlanSSID: "SSID",
 	wlanPwd: "Password",
+	confirm: "Confirm",
 	stopWifiPrompt: "Are you sure want to stop the WiFi connection until the system is restarted?",
 	clearWifiPrompt: "Are you sure you want to delete all network connection data? WLANThermo then restarts in AP mode.",
 	availableNetworks: "Available networks",

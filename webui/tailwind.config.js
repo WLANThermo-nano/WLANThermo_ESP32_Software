@@ -57,12 +57,14 @@ module.exports = {
       transparent: 'transparent', 
       // light
       yellow: {
-        600: '#FFD524'
+        600: '#FFD524',
+        800: '#ffce00'
       },
       pink: {
         600: '#FF007C'
       },
       lightblue: {
+        300: '#acc0f5',
         600: '#F7F9FF',
         700: '#e3eafc',
         800: '#2D62ED'
@@ -87,6 +89,7 @@ module.exports = {
       red: '#FF0000',
       grey: {
         100: '#F3F4F6',
+        400: '#00000029',
         500: "#a9adb0",
         800: "#7c7c7c"
       }

@@ -12,14 +12,17 @@
         </div>
         <div class="pure-menu flex-grow">
           <ul class="pure-menu-list">
-            <li class="pl-4 my-5 text-white dark:text-grey-500 hover:text-primary-400 dark:hover:text-primary-400" v-for="item in menuItems" :key="item.id"
-              :class="{ 'active': page === item.id }">
+            <li class="pl-4 my-5 hover:text-white dark:hover:text-primary-400" v-for="item in menuItems" :key="item.id"
+              :class="{ 
+                'active text-primary-400': page === item.id, 
+                'inactive text-lightblue-300 dark:text-grey-500 ': page !== item.id 
+              }">
               <a @click="toPage(item.id)" class="cursor-pointer flex items-center space-x-3">
                 <span :class="'wlan-icons-' + item.icon" class="text-2xl inline-block w-8 text-center">
                 </span>
                 <span 
                   :class="{'hidden': !expanded}"
-                  class="self-center text-base font-semibold whitespace-nowrap">{{ $t(item.translationKey) }}</span>
+                  class="self-center text-sm font whitespace-nowrap">{{ $t(item.translationKey) }}</span>
               </a>
             </li>
           </ul>
@@ -81,7 +84,7 @@
       </div>
     </div>
 
-    <!-- modal -->
+    <!-- sidebar -->
     <div class="dialog-mask w-screen h-screen fixed top-0 left-0" v-if="dialogActive" @click="dialogActive = false"></div>
     <transition name="slideRight">
       <div class="dialog shadow-md fixed flex flex-col w-96 right-0 top-0" v-if="dialogActive">
@@ -100,7 +103,7 @@
         </div>
       </div>
     </transition>
-    <!-- modal end -->
+    <!-- sidebar end -->
 
     <!-- auth dialog -->
     <div class="dialog-mask" v-if="authDialogActive"></div>
@@ -127,6 +130,45 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div class="dialog-mask" v-if="confirmDialogActive">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+      <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-start justify-center p-4 text-center sm:p-0">
+          <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+            <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+              <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red bg-opacity-10 sm:mx-0 sm:h-10 sm:w-10">
+                  <svg class="h-6 w-6 text-red" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                  <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">{{ confirmTitle  }}</h3>
+                  <div class="mt-2">
+                    <p class="text-sm text-gray-500">
+                      {{ confirmBodyText }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              <button 
+                @click="handleConfirmDialogConfirm"
+                type="button" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold bg-primary-400 hover:bg-primary-600 text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto">
+                {{ $t('confirm') }}
+              </button>
+              <button 
+                @click="handleConfirmDialogCancel"
+                type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-darkblue-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                {{ $t('cancel') }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -190,6 +232,13 @@ export default {
       authPass: '',
       requestToRetry: null,
 
+      // confirm
+      confirmDialogActive: false,
+      confirmTitle: '',
+      confirmBodyText: '',
+      confirmEventName: '',
+      cancelEventName: '',
+
       // menu
       menuItems: menuItems,
 
@@ -214,7 +263,7 @@ export default {
         pm: [],
         type: []
       },
-      page: 'home',
+      page: '/',
       navActive: false,
       showSpinner: false,
       isUpdating: false,
@@ -378,6 +427,14 @@ export default {
         )
       }
     },
+    handleConfirmDialogConfirm: function() {
+      EventBus.$emit(this.confirmEventName)
+      this.confirmDialogActive = false
+    },
+    handleConfirmDialogCancel: function() {
+      EventBus.$emit(this.cancelEventName)
+      this.confirmDialogActive = false
+    },
   },
   mounted: function () {
     // get theme
@@ -409,6 +466,13 @@ export default {
       this.wikiLink = dialogData.wikiLink
       this.linkText = dialogData.linkText
       this.dialogActive = true
+    })
+    EventBus.$on('show-confirm', (confirmDialogData) => {
+      this.confirmTitle = confirmDialogData.title
+      this.confirmBodyText = confirmDialogData.content
+      this.confirmEventName = confirmDialogData.onConfirmEventName
+      this.cancelEventName = confirmDialogData.onCancelEventName
+      this.confirmDialogActive = true
     })
     EventBus.$on('back-to-home', () => {
       this.toHome();
