@@ -34,10 +34,12 @@ static lvPitmasterType lvPitmaster = {NULL};
 
 static void lvPitmaster_CreateTarget(void);
 static void lvPitmaster_CreateChannel(void);
+static void lvPitmaster_CreateStop(void);
 
 static void lvPitmaster_BtnClose(lv_obj_t *obj, lv_event_t event);
 static void lvPitmaster_TabLimitInc(lv_obj_t *obj, lv_event_t event);
 static void lvPitmaster_TabLimitDec(lv_obj_t *obj, lv_event_t event);
+static void lvPitmaster_StopPitmaster(lv_obj_t *obj, lv_event_t event);
 
 static void lvPitmaster_saveTemperature(void);
 static void lvPitmaster_saveChannel(void);
@@ -69,6 +71,7 @@ void lvPitmaster_Create(void *userData)
 
   lvPitmaster_CreateTarget();
   lvPitmaster_CreateChannel();
+  lvPitmaster_CreateStop();
 
   lv_scr_load(lvPitmaster.screen);
 
@@ -151,6 +154,26 @@ static void lvPitmaster_CreateChannel(void)
 
 }
 
+void lvPitmaster_CreateStop(void)
+{
+  lv_obj_t *tab = lv_tabview_add_tab(lvPitmaster.tabview, "0");
+
+  lv_obj_t *cont = lv_cont_create(tab, NULL);
+  lv_cont_set_fit(cont, LV_FIT_PARENT);
+  lv_cont_set_layout(cont, LV_LAYOUT_PRETTY_MID);
+  lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+
+  lv_obj_t *btnStp = lv_btn_create(cont, NULL);
+  lv_obj_set_size(btnStp, 100, 50);
+  lv_obj_set_style_local_value_str(btnStp, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_STOP);
+  lv_obj_set_style_local_bg_color(btnStp,LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
+  lv_obj_set_style_local_border_color(btnStp, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
+  lv_obj_set_pos(btnStp, LV_DPX(0), LV_DPX(100));
+  lv_obj_set_event_cb(btnStp, lvPitmaster_StopPitmaster);
+
+}
+
 void lvPitmaster_Update(boolean forceUpdate)
 {
 }
@@ -182,6 +205,17 @@ void lvPitmaster_BtnClose(lv_obj_t *obj, lv_event_t event)
   {
     lvPitmaster_saveTemperature();
     lvPitmaster_saveChannel();
+    gSystem->pitmasters.saveConfig();
+    lvScreen_Open(lvScreenType::Home);
+  }
+}
+
+void lvPitmaster_StopPitmaster(lv_obj_t *obj, lv_event_t event)
+{
+  if (LV_EVENT_CLICKED == event)
+  {
+    lvScreen_Open(lvScreenType::Home);
+    lvPitmaster_pitmaster->setType(pm_off);
     gSystem->pitmasters.saveConfig();
     lvScreen_Open(lvScreenType::Home);
   }
