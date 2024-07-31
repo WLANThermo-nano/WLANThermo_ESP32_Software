@@ -263,6 +263,7 @@ void Battery::saveConfig()
   json["batmin"]  = this->min;
   json["batfull"] = this->setreference;
   json["batref"]  = this->refvoltage;
+  json["nobattery"]  = this->nobattery;
   Settings::write(kBattery, json);
 }
 
@@ -282,5 +283,7 @@ void Battery::loadConfig()
       this->setreference = json["batfull"];    
     if (json.containsKey("batref"))
       this->refvoltage = json["batref"];
+    if (json.containsKey("nobattery"))
+      this->nobattery = json["nobattery"];
   }
 }

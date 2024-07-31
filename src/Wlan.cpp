@@ -55,7 +55,11 @@ void Wlan::init()
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
   WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
   WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::SYSTEM_EVENT_AP_STADISCONNECTED);
-
+/*
+  WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+*/
   IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(this->accessPointName.c_str(), APPASSWORD, 5);

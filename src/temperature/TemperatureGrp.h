@@ -21,6 +21,7 @@
 
 #include "Arduino.h"
 #include "TemperatureBase.h"
+// #include <vector>
 
 typedef void (*TemperatureCallback_t)(uint8_t index, class TemperatureBase *, boolean, void *);
 

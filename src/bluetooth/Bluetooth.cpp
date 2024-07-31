@@ -490,7 +490,7 @@ boolean Bluetooth::doDfu()
     enableChip(true);
 
     // Give the bootloader some time to start
-    delay(200);
+    delay(300);
 
     // check for startup string of bootloader
     if (waitForBootloader(500u))
