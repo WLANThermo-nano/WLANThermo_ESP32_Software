@@ -1,5 +1,7 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
+                  2024  arnew
+                  2024  Steffen Ochs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,40 +15,25 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #pragma once
 
 #include "Arduino.h"
 #include <lvgl.h>
 
-typedef void (*lvMenu_Create_FuncPtr)(void *userData);
-typedef void (*lvMenu_Update_FuncPtr)(boolean forceUpdate);
-typedef void (*lvMenu_Delete_FuncPtr)(void);
-
-typedef enum class lvScreen
+typedef struct lvPitmaster
 {
-  None = 0,
-  Menu,
-  Home,
-  Wifi,
-  Display,
-  Temperature,
-  Update,
-  Pitmaster,
-  Max
-} lvScreenType;
 
-typedef struct
-{
-  lvScreenType screen;
-  lvMenu_Create_FuncPtr createFunc;
-  lvMenu_Update_FuncPtr updateFunc;
-  lvMenu_Delete_FuncPtr deleteFunc;
+  lv_obj_t *screen;
+  lv_obj_t *tabview;
+  lv_obj_t *spinboxtarget;
+  lv_obj_t *rollerType;
 
-} lvScreenFuncType;
+} lvPitmasterType;
 
-void lvScreen_Open(lvScreenType screen, void *userData = NULL);
-void lvScreen_Update(void);
+void lvPitmaster_Create(void *userData);
+void lvPitmaster_Update(boolean forceUpdate);
+void lvPitmaster_Delete(void);
