@@ -73,6 +73,7 @@ typedef struct
   char name[31];
   char id[65];
   char token[255];
+  char androidchannelid[255];
   uint8_t sound;
 } PushAppDeviceType;
 

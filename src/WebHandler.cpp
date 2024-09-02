@@ -863,6 +863,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
           boolean hasToken = _device.containsKey("token");
           boolean hasHashedToken = _device.containsKey("token_sha256");
           boolean hasSound = _device.containsKey("sound");
+          boolean hasAndroidChannelID = _device.containsKey("android_channel_id");
 
           // check length of name and id
           if ((strlen(_device["name"].asString()) >= sizeof(PushAppDeviceType::name)) &&
@@ -898,6 +899,11 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
           if(hasSound)
           {
             app.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+          }
+
+          if(hasAndroidChannelID)
+          {
+            strcpy(app.devices[deviceIndex].androidchannelid, _device["android_channel_id"].asString());
           }
 
           deviceIndex++;
