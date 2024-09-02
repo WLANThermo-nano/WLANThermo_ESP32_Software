@@ -36,6 +36,7 @@ export default {
 	unit: "Einheit",
 	german: "Deutsch",
 	english: "Englisch",
+	dutch: "Niederländisch",
 	fahrenheit: "Fahrenheit",
 	celsius: "Celsius",
 	language: "Sprache",
