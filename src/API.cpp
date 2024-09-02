@@ -307,6 +307,8 @@ void API::notificationObj(JsonObject &jObj)
       {
         JsonObject &_app = _services.createNestedObject();
         _app["service"] = "app";
+        _app["phone_id"] = String(pushApp.devices[i].id);
+        _app["name"] = String(pushApp.devices[i].name);
         _app["token"] = String(pushApp.devices[i].token);
         _app["device_id"] = DeviceId::get();
         _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
