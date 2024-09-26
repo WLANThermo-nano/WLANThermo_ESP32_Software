@@ -25,6 +25,7 @@
 #include "temperature/TemperatureMax11615.h"
 #include "display/DisplayOled.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // PITMASTER
 #define PITMASTER0IO1 25u   // Fan Pin
@@ -93,6 +94,7 @@ void SystemNanoVx::hwInit()
 void SystemNanoVx::init()
 {
   deviceName = "nano";
+  deviceID = DeviceId::get();
   hardwareVersion = 3u;
   wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 

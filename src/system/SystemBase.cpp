@@ -273,6 +273,11 @@ String SystemBase::getDeviceName()
   return this->deviceName;
 }
 
+String SystemBase::getDeviceID()
+{
+  return this->deviceID;
+}
+
 String SystemBase::getCpuName()
 {
   return this->cpuName;

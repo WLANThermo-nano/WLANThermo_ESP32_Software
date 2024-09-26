@@ -484,7 +484,8 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
 
 void NanoWebHandler::handleDeviceId(AsyncWebServerRequest *request)
 {
-  request->send(200, TEXTPLAIN, DeviceId::get());
+  //request->send(200, TEXTPLAIN, DeviceId::get());
+  request->send(200, TEXTPLAIN, gSystem->getDeviceID());
 }
 
 void NanoWebHandler::handleLog(AsyncWebServerRequest *request)

@@ -26,6 +26,7 @@
 #include "temperature/TemperatureMax31855.h"
 #include "display/tft/DisplayTft.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // BUZZER
 #define BUZZER_IO 2u
@@ -68,6 +69,7 @@ void SystemConnectV1::hwInit()
 void SystemConnectV1::init()
 {
   deviceName = "connect";
+  deviceID = DeviceId::get();
   hardwareVersion = 1u;
   wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 

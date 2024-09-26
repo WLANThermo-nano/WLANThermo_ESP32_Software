@@ -25,6 +25,7 @@
 #include "temperature/TemperatureMax11613.h"
 #include "display/DisplayOledLink.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // PITMASTER
 #define PITMASTER0IO1 25u   // Fan Pin
@@ -71,6 +72,7 @@ void SystemLinkV1::hwInit()
 void SystemLinkV1::init()
 {
   deviceName = "link";
+  deviceID = DeviceId::get();
   hardwareVersion = 1u;
   wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 

@@ -310,7 +310,8 @@ void API::notificationObj(JsonObject &jObj)
         _app["phone_id"] = String(pushApp.devices[i].id);
         _app["name"] = String(pushApp.devices[i].name);
         _app["token"] = String(pushApp.devices[i].token);
-        _app["device_id"] = DeviceId::get();
+        //_app["device_id"] = DeviceId::get();
+        _app["device_id"] = gSystem->getDeviceID();
         _app["sound"] = gSystem->notification.getNotificationSound(pushApp.devices[i].sound);
         _app["android_channel_id"] = String(pushApp.devices[i].androidchannelid);
       }

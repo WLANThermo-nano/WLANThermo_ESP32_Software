@@ -61,6 +61,7 @@ public:
   void run();
 
   String getDeviceName();
+  String getDeviceID();
   String getCpuName();
   size_t getFlashSize();
   static String getSerialNumber();
@@ -88,6 +89,7 @@ protected:
   PitmasterProfile *profile[MAX_PITMASTERPROFILES];
   uint8_t pitmasterProfileCount;
   String deviceName;
+  String deviceID;
   String cpuName;
   static char serialNumber[13];
   String language;
