@@ -48,7 +48,7 @@ dependencies:
   #firebase_messaging: ^14.6.8
   firebase_messaging: ^15.1.3
   device_info_plus: ^9.0.3
-  flutter_local_notifications: ^15.1.1
+  flutter_local_notifications: ^17.2.1
   bonsoir: ^3.0.0+1
   flutter_native_splash: ^2.3.2
   #url_launcher: ^6.1.14
