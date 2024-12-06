@@ -297,7 +297,7 @@ class _MyAppState extends State<MyApp> {
                           flutterLocalNotificationsPlugin
                               .resolvePlatformSpecificImplementation<
                                   AndroidFlutterLocalNotificationsPlugin>()
-                              ?.requestPermission();
+                              ?.requestNotificationsPermission();
                         }
                         return {'value': 'ok'};
                       });
