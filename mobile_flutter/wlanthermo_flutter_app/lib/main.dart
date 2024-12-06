@@ -137,9 +137,9 @@ class _MyAppState extends State<MyApp> {
               InAppWebView(
                 key: webViewKey,
                 initialUrlRequest: URLRequest(
-                    url: Uri.dataFromString(widget.htmlString,
+                    url: WebUri.uri(Uri.dataFromString(widget.htmlString,
                         mimeType: 'text/html',
-                        encoding: Encoding.getByName('utf-8'))),
+                        encoding: Encoding.getByName('utf-8')))),
                 initialOptions: options,
                 pullToRefreshController: pullToRefreshController,
                 onWebViewCreated: (controller) {
