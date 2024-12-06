@@ -8,62 +8,42 @@
         <form>
           <div class="select-channel-text">
             <span class="text">{{ $t("scanDevices") }}</span>
-            <span
-              class="ic_white icon-refresh"
-              :class="{ 'icon-rotate-100': refreshing }"
-              @click="checkConnection"
-            ></span>
+            <span class="ic_white icon-refresh" :class="{ 'icon-rotate-100': refreshing }"
+              @click="checkConnection"></span>
           </div>
-          <swipe-list
-            :items="displayedDevices"
-            :item-disabled="disableSwipe"
-            item-key="name"
-            >
-              <template v-slot="{ item }">
-                <div 
-                  @click="deviceSelected(item)"
-                  class="scan-device-item">
-                  <div class="info">
-                    <div class="body">
-                      <div class="image" style="width: 30px;">
-                        <div class="connection-state"
-                            v-if="item.type !== 'demo'"
-                            :class="{ connected: item.connected, lower: item.type === 'linkv1' }">
-                        </div>
-                        <img :src="images[item.type]" alt="">
+          <swipe-list :items="displayedDevices" :item-disabled="disableSwipe" item-key="name">
+            <template v-slot="{ item }">
+              <div @click="deviceSelected(item)" class="scan-device-item">
+                <div class="info">
+                  <div class="body">
+                    <div class="image" style="width: 30px;">
+                      <div class="connection-state" v-if="item.type !== 'demo'"
+                        :class="{ connected: item.connected, lower: item.type === 'linkv1' }">
                       </div>
-                      <div class="name-address">
-                        <div class="name">
-                          {{ item.name }}
-                        </div>
-                        <div class="address">
-                          {{ item.ip }}
-                        </div>
-                        <div class="info">
-                          {{ item.info }}
-                        </div>
+                      <img :src="images[item.type]" alt="">
+                    </div>
+                    <div class="name-address">
+                      <div class="name">
+                        {{ item.name }}
+                      </div>
+                      <div class="address">
+                        {{ item.ip }}
+                      </div>
+                      <div class="info">
+                        {{ item.info }}
                       </div>
                     </div>
                   </div>
                 </div>
-              </template>
-              <template v-slot:right="{ item }">
-                <div class="swipeout-action red" @click="removeDevice(item)">
-                  <span class="icon-trash icon"></span>
-                </div>
-              </template>
+              </div>
+            </template>
+            <template v-slot:right="{ item }">
+              <div class="swipeout-action red" @click="removeDevice(item)">
+                <span class="icon-trash icon"></span>
+              </div>
+            </template>
           </swipe-list>
         </form>
-        <!--
-        <div style="color: #fff">
-          debug message:
-        </div>
-        <div style="max-height: 50vh; overflow-y:scroll;color:#fff;border: grey solid 1px; padding: 2px">
-          <div v-for="msg in debugMessages" :key="msg">
-            {{msg}}
-          </div>
-        </div>
-        -->
       </div>
     </div>
     <div class="connection-lost-toast" v-if="showConnectionLost">
@@ -74,7 +54,7 @@
 
 <script>
 import EventBus from "../event-bus";
-import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile.models';
+import { SPECIAL_URL_FOR_DEMO_API } from '../demo/mock-apis-mobile.models';
 import { SwipeList } from 'vue-swipe-actions';
 
 
@@ -83,7 +63,7 @@ const Netmask = require("netmask").Netmask;
 const MY_DEVICES_KEY = '_WLANTHERMO_MY_DEVICES';
 const DEVICE_SCHEMA_VERSION = 'v1'
 const DEVICE_SCHEMA_VERSION_KEY = '_WLANTHERMO_MY_DEVICES_VERSION'
-const DEVICE_TYPES = ['nanov1','nanov2','nanov3','miniv1','miniv2','miniv3','linkv1','boneV1']
+const DEVICE_TYPES = ['nanov1', 'nanov2', 'nanov3', 'miniv1', 'miniv2', 'miniv3', 'linkv1', 'boneV1']
 
 function toDeviceType(respData) {
   const type = `${respData.device?.device?.toLocaleLowerCase()}${respData.device?.hw_version.toLocaleLowerCase()}`
@@ -112,8 +92,11 @@ export default {
   name: "Scan",
   props: {},
   computed: {
-    displayedDevices: function() {
-      return [...this.devices, ...this.demoDevices]
+    displayedDevices: function () {
+      if (!this.initialized) return []
+
+      if (this.devices.length > 0) return [...this.devices]
+      return [...this.demoDevices]
     }
   },
   data: () => {
@@ -129,7 +112,9 @@ export default {
         bonev1: require(`@/assets/images/bonev1.svg`),
         demo: require(`@/assets/images/demo.svg`)
       },
+      ipAddress: '',
       refreshing: false,
+      initialized: false,
       demoDevices: [
         {
           name: 'DEMO',
@@ -139,7 +124,6 @@ export default {
         }
       ],
       devices: [],
-      debugMessages: [],
       requestCompletedCount: 0,
       blockSize: 0,
       requestCancelTokenSource: '',
@@ -148,26 +132,44 @@ export default {
     };
   },
   watch: {},
-  mounted: function () {
+  mounted: async function () {
     if (this.$route.query.connectionLost) {
       this.showConnectionLost = true
       setTimeout(() => {
         this.showConnectionLost = false
       }, 3000)
     }
-    document.addEventListener('deviceready', this.initAndScan.bind(this), false)
+
+    this.initZeroConfigScanListener()
+    this.initAndScan();
   },
   methods: {
-    checkScanCompleted: function() {
+    initZeroConfigScanListener: function() {
+      window.addEventListener("serviceResolved", (event) => {
+        /**
+         * Example of detail
+         * {
+         *  name: "LINK-98f4ab756fcc",
+         *  ip: "192.168.x.x"
+         * }
+         */
+        const detail = event.detail
+        this.addToDebug(`receive service: ${JSON.stringify(detail)}`)
+        this.checkAndAddDevice(detail.name, detail.ip)
+      });
+
+      this.addToDebug("registered listener serviceResolved")
+    },
+    checkScanCompleted: function () {
       if (this.requestCompletedCount >= this.blockSize) {
         this.refreshing = false
       }
     },
-    removeDevice: function(device) {
+    removeDevice: function (device) {
       this.devices = this.devices.filter(d => d.sn !== device.sn)
       this.updateStoredData()
     },
-    deviceSelected: function(device) {
+    deviceSelected: function (device) {
       if (device.type === 'demo') {
         EventBus.$emit("loading", true)
         console.log(`should be SPECIAL_URL_FOR_DEMO_API ${SPECIAL_URL_FOR_DEMO_API}`)
@@ -175,9 +177,8 @@ export default {
         EventBus.$emit("loading", false)
         EventBus.$emit('device-selected')
       } else if (device.incompatible) {
-        var url = "http://" + device.ip
-        // eslint-disable-next-line
-        cordova.InAppBrowser.open(url, '_system')
+        window.flutter_inappwebview
+            .callHandler('openExternalLink', `http://${device.ip}`).then(() => {})
       } else if (device.connected) {
         EventBus.$emit("loading", true)
         setTimeout(() => {
@@ -187,158 +188,105 @@ export default {
         })
       }
     },
-    scanBySubnet: function() {
+    scanBySubnet: function () {
       this.refreshing = true
       this.requestCompletedCount = 0
       this.blockSize = 0
       this.requestCancelTokenSource = this.axios.CancelToken.source()
 
-      // eslint-disable-next-line
-      networkinterface.getWiFiIPAddress((address) => {
-        let maskNodes = address.subnet.match(/(\d+)/g);
-        let bitmask = 0;
-        for (var i in maskNodes) {
-          bitmask += ((maskNodes[i] >>> 0).toString(2).match(/1/g) || [])
-            .length;
-        }
-        const addressWithMask = `${address.ip}/${bitmask}`;
+      const address = this.ipAddress
+      const addressWithMask = `${address}/${24}`;
 
-        const block = new Netmask(addressWithMask);
+      const block = new Netmask(addressWithMask);
 
-        if (block.size <= 256) {
-          block.forEach((addr) => {
-            if (addr !== address.ip) {
-              this.blockSize++;
-              this.axios.get(`http://${addr}/settings`, {
-                  cancelToken: this.requestCancelTokenSource.token,
-                  headers: {scan: true},
-                  // timeout: 5000
-                  }).then((resp) => {
-                this.requestCompletedCount++;
-                if (resp?.data?.system?.host) {
-                  const deviceName = resp.data.system.host
-                  this.devices.push({
-                    ip: addr,
-                    name: deviceName,
-                  });
-                }
-                this.checkScanCompleted()
-              }).catch(() => {
-                this.requestCompletedCount++
-                this.checkScanCompleted()
-              });
-            }
-          });
-        } else {
-          console.log(`subnet is too large to scan`);
-        }
-      });
-    },
-    scanByZeroConf: function() {
-      // eslint-disable-next-line
-      var zeroconf = cordova.plugins.zeroconf;
-      zeroconf.registerAddressFamily = "ipv4";
-      zeroconf.watchAddressFamily = "ipv4";
+      this.addToDebug(`there are ${block.size} address in the subnet`)
 
-      this.addToDebug(`start watching _wlanthermo._tcp.`)
-      zeroconf.watch("_wlanthermo._tcp.", "local.", (result) => {
-        var action = result.action;
-        var service = result.service;
-        console.log(`action ${action}`)
-        console.log(service)
-        this.addToDebug(`action ${action}`)
-        if (action == "added") {
-          console.log(`service added`)
-          const ip = service.ipv4Addresses[0]
-          const name = service.name
-          this.addToDebug(`action added, ip: ${ip}, name: ${name}`)
-          if (ip && name) {
-            this.checkAndAddDevice(name, ip)
-          }
-        } else if (action == "resolved") {
-          const ip = service.ipv4Addresses[0]
-          const name = service.name
-          this.addToDebug(`action resolved, ip: ${ip}, name: ${name}`)
-          if (ip && name) {
-            this.checkAndAddDevice(name, ip)
-          }
-          // window.location.href = "device.html?ip=" + ipAddress;
-        } else {
-          console.log(`service removed`)
-          const ip = service.ipv4Addresses[0]
-          const name = service.txtRecord.device
-          this.devices = this.devices.filter(d => d.ip === ip && d.name === name)
-        }
-      });
-    },
-    addToDebug: function(msg) {
-      var d = new Date();
-      var n = d.toLocaleTimeString();
-      this.debugMessages.push(`${n}: ${msg}`)
-    },
-    checkAndAddDevice: function(name, ip) {
-      console.log(`checking device ${name} - ${ip}`)
-      this.addToDebug(`calling /settings API of ip: ${ip}, name: ${name}`)
-      this.axios.get(`http://${ip}/settings`).then(resp => {
-          const data = resp.data
-          console.log(`resp data`)
-          console.log(resp)
-          const sn = data.device?.serial
+      if (block.size <= 256) {
+        block.forEach((addr) => {
+          if (addr !== address) {
+            this.blockSize++;
 
-          const deviceInListAndHasDifferentIp = this.devices.some(d => d.sn === sn && d.ip !== ip)
-          const deviceInList = this.devices.some(d => d.sn === sn)
-          console.log(`deviceInListAndHasDifferentIp: ${deviceInListAndHasDifferentIp}`)
-          console.log(`deviceInList: ${deviceInList}`)
-
-          this.addToDebug(`got device settings device name: ${name}, ip: ${ip}, sn: ${sn}`)
-          this.addToDebug(`device name: ${name}, ip: ${ip} already in the list? => ${deviceInList}`)
-
-          if (!deviceInList || deviceInListAndHasDifferentIp) {
-            this.addToDebug(`adding device name: ${name}, ip: ${ip} to the list`)
-            if (deviceInListAndHasDifferentIp) {
-              this.devices = this.devices.filter(d => d.sn !== sn)
-            }
-            const info = this.toInfoText(data)
-            const type = toDeviceType(data)
-            const incompatible = toIncompatible(data)
-            this.devices.push({
-              ip: ip,
-              name: name,
-              sn: sn,
-              info: info,
-              type: type,
-              connected: true,
-              incompatible: incompatible
-            })
-            this.updateStoredData()
-          } else {
-            this.addToDebug(`device name: ${name}, ip: ${ip} already in the list... skipped`)
+            this.checkAndAddDevice('', addr);
           }
         });
+      } else {
+        this.addToDebug(`subnet is too large to scan`)
+        console.log(`subnet is too large to scan`);
+      }
     },
-    updateStoredData: function() {
-      const storage = window.localStorage
-      storage.setItem(DEVICE_SCHEMA_VERSION_KEY, DEVICE_SCHEMA_VERSION)
-      storage.setItem(MY_DEVICES_KEY, JSON.stringify(this.devices))
+    addToDebug: function (msg) {
+      EventBus.$emit('log', msg)
     },
-    getStoredData: function() {
-      return new Promise(resolve => {
-        const storage = window.localStorage
-        const value = storage.getItem(MY_DEVICES_KEY)
-        const version = storage.getItem(DEVICE_SCHEMA_VERSION_KEY)
-        this.addToDebug(`get data from local storage`)
-        if (value !== null && version === DEVICE_SCHEMA_VERSION) {
-          this.devices = JSON.parse(value)
+    checkAndAddDevice: function (name, ip) {
+      this.axios.get(`http://${ip}/settings`).then(resp => {
+        const data = resp.data
+        const sn = data.device?.serial
+
+        const deviceInListAndHasDifferentIp = this.devices.some(d => d.sn === sn && d.ip !== ip)
+        const deviceInList = this.devices.some(d => d.sn === sn)
+
+        if (!deviceInList || deviceInListAndHasDifferentIp) {
+          this.addToDebug(`adding device name: ${name}, ip: ${ip} to the list`)
+          if (deviceInListAndHasDifferentIp) {
+            this.devices = this.devices.filter(d => d.sn !== sn)
+          }
+          const info = this.toInfoText(data)
+          const type = toDeviceType(data)
+          const incompatible = toIncompatible(data)
+          this.devices.push({
+            ip: ip,
+            name: name,
+            sn: sn,
+            info: info,
+            type: type,
+            connected: true,
+            incompatible: incompatible
+          })
+          this.updateStoredData()
+        } else {
+          this.addToDebug(`device name: ${name}, ip: ${ip} already in the list... skipped`)
+        }
+        this.requestCompletedCount++
+        this.checkScanCompleted()
+      }).catch(() => {
+        this.requestCompletedCount++
+        this.checkScanCompleted()
+      });
+    },
+    updateStoredData: function () {
+      window.flutter_inappwebview
+        .callHandler('saveData', DEVICE_SCHEMA_VERSION_KEY, DEVICE_SCHEMA_VERSION)
+        .then()
+      window.flutter_inappwebview
+        .callHandler('saveData', MY_DEVICES_KEY, JSON.stringify(this.devices))
+        .then()
+    },
+    getStoredData: async function () {
+      const deviceListData = await window.flutter_inappwebview
+        .callHandler('getData', MY_DEVICES_KEY)
+      const versionData = await window.flutter_inappwebview
+        .callHandler('getData', DEVICE_SCHEMA_VERSION_KEY)
+
+      this.addToDebug(`device list from storage ${deviceListData.value}`)
+      return new Promise((resolve) => {
+        const devicesAsString = deviceListData.value ?? []
+        const version = versionData.value
+
+        this.addToDebug(`get data from local storage: ${devicesAsString}`)
+        if (devicesAsString !== null && version === DEVICE_SCHEMA_VERSION) {
+          this.devices = JSON.parse(devicesAsString)
           this.devices = this.devices.map(d => {
             d.connected = false
             return d
           })
+
           this.checkConnection()
         }
+        this.initialized = true
         resolve()
       })
     },
-    checkConnection: function() {
+    checkConnection: function () {
       if (this.devices.length === 0) return
       this.refreshing = true
       this.devices.forEach(d => {
@@ -353,45 +301,44 @@ export default {
           this.refreshing = false
         });
       })
-      // eslint-disable-next-line
-      var zeroconf = cordova.plugins.zeroconf;
-      zeroconf.reInit()
-      this.scanByZeroConf()
     },
-    initAndScan: function () {
-      this.addToDebug(`load stored data`)
-      this.getStoredData()
-      this.addToDebug(`scan with ZeroConf`)
-      this.scanByZeroConf()
+    initAndScan: async function () {
+      // trigger scan
+      setTimeout(async () => {
+        await this.getStoredData()
+        window.flutter_inappwebview.callHandler('scanByZeroConfig').then(()=>{})
+      }, 1000)
     },
     toInfoText: function (respData) {
       var info = `${respData.device?.device} ${respData.device?.hw_version} || ${respData.device?.sw_version}`
-      if(true === toIncompatible(respData)) {
+      if (true === toIncompatible(respData)) {
         info += ` || ${this.$t("scanDeviceIncompatible")}`
       }
       return info
     },
   },
   components: {
-    SwipeList, 
+    SwipeList,
   },
 };
 </script>
 
 <style src='vue-swipe-actions/dist/vue-swipe-actions.css'>
-    /* global styles */
+/* global styles */
 </style> 
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
 
 .select-channel-text {
   display: flex;
+
   .text {
     flex: 1 1 auto;
     color: #fff;
     font-size: 1.2em;
     margin: 0.7em 0 0.7em;
   }
+
   .icon-refresh {
     margin-top: 15px;
     margin-right: 18px;
@@ -415,6 +362,7 @@ export default {
   display: block;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+
   &:hover {
     background-color: $dark;
   }
@@ -429,23 +377,29 @@ export default {
   &:hover {
     background-color: $dark;
   }
+
   &.expand {
     background-color: $dark;
   }
+
   .info {
     display: flex;
+
     .icon {
       flex: 0 0 3em;
       margin-top: 0.3em;
     }
+
     .body {
       flex: 1 1 auto;
       display: flex;
       justify-content: space-between;
+
       .image {
         flex: 0 0 3em;
         margin-right: 0.5em;
         position: relative;
+
         .connection-state {
           position: absolute;
           height: 0.8em;
@@ -454,31 +408,39 @@ export default {
           right: -0.1em;
           background-color: red;
           border-radius: 0.8em;
+
           &.lower {
             top: 0.25em;
           }
+
           &.connected {
             background-color: lightgreen;
           }
         }
+
         img {
           height: 100%;
           width: 100%;
         }
       }
+
       .name-address {
         display: flex;
         flex-direction: column;
         flex: 1 1 auto;
         color: #fff;
+
         .name {
           margin-top: 0;
           font-size: 1em;
+
           .space {
             margin-right: 0.5em;
           }
         }
-        .address,.info {
+
+        .address,
+        .info {
           font-weight: 300;
           font-size: 0.75em;
           margin-left: 0.3em;
@@ -512,9 +474,11 @@ export default {
   justify-content: center;
   left: 0;
   width: 6em;
+
   &.red {
     background-color: $error_color;
   }
+
   .icon {
     font-size: 2em;
     color: #fff;

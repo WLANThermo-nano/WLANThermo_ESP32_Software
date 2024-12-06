@@ -11,3 +11,10 @@ data/
 
 *.map
 .DS_Store
+.github/secrets/bell.mp3
+.github/secrets/google-services.json
+.github/secrets/GoogleService-Info.plist
+.github/secrets/WLANThermo_Distribution_Certificate.p12
+.github/secrets/WLANThermo_Provisioning_Ad_Hoc.mobileprovision
+mobile_flutter/wlanthermo_flutter_app/prepare_app.sh
+.gitignore

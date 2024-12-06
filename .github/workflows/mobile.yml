@@ -2,6 +2,7 @@ name: Mobile build
 on:
   push:
     branches:
+      - android-build-test
       - develop
 
 jobs:
@@ -9,49 +10,11 @@ jobs:
     name: Mobile build
     runs-on: macos-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-
-      - name: Setup java
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-
+      - uses: actions/checkout@v3
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 13.x
-
-      - name: Install Cordova and Cordova Resource Generator
-        working-directory: ./mobile
-        run: npm install -g cordova cordova-res
-
-      - name: Decrypt files
-        working-directory: ./.github/secrets
-        run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/GoogleService-Info.plist GoogleService-Info.plist.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/google-services.json google-services.json.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile/resources/bell.mp3 bell.mp3.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovision.gpg
-
-      - name: Replaces tokens
-        uses: cschleiden/replace-tokens@v1
-        with:
-          tokenPrefix: '___'
-          tokenSuffix: '___'
-          files: '["**/build.json"]'
-        env:
-          DEV_TEAM: ${{ secrets.DEV_TEAM }}
-
-      - name: Add Android platform
-        working-directory: ./mobile
-        run: cordova platform add android@latest
-
-#      - name: Add IOS platform
-#        working-directory: ./mobile
-#        run: cordova platform add ios@latest
+          node-version: 16
 
       - name: npm install UI project
         working-directory: ./webui
@@ -61,36 +24,63 @@ jobs:
         working-directory: ./webui
         run: npm run build-mobile
 
-      - name: npm install mobile project
-        working-directory: ./mobile
-        run: npm install
+      - name: Decrypt files
+        working-directory: ./.github/secrets
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/google-services.json google-services.json.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/ios/bell.mp3 bell.mp3.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/key.properties key.properties.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/android/app/keystore.jks keystore.jks.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output WLANThermo_Distribution_Certificate.p12 WLANThermo_Distribution_Certificate.p12.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ~/Library/MobileDevice/Provisioning\ Profiles/WLANThermo_Provisioning_Ad_Hoc.mobileprovision WLANThermo_Provisioning_Ad_Hoc.mobileprovision.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.SECRET_KEY }}" --output ../../mobile_flutter/wlanthermo_flutter_app/GoogleService-Info.plist GoogleService-Info.plist.gpg
 
-      - name: Create icons
-        working-directory: ./mobile
-        run: cordova-res
-
-      - name: Build Android app
-        working-directory: ./mobile
-        run: npm run build-android
-
-#      - name: Prepare iOS provisioning
-#        working-directory: ./.github/secrets
-#        run: |
-#          security create-keychain -p "" build.keychain >/dev/null 2>&1
-#          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
-#          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
-#          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
-#          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
-#          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
-
-#      - name: Build iOS app
-#        working-directory: ./mobile
-#        run: cordova build ios --device
-
-      - name: Upload dev APK and IPA
-        uses: actions/upload-artifact@v2
+      - uses: actions/setup-java@v2
         with:
-          name: app-dev
+          distribution: 'zulu'
+          java-version: '11'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          cache: true
+          architecture: x64
+
+      - name: Flutter pug get
+        working-directory: ./mobile_flutter/wlanthermo_flutter_app
+        run: |
+          flutter pub get
+
+      - name: Prepare iOS provisioning
+        working-directory: ./.github/secrets
+        run: |
+          security create-keychain -p "" build.keychain >/dev/null 2>&1
+          security import WLANThermo_Distribution_Certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "" -A >/dev/null 2>&1
+          security list-keychains -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security default-keychain -s ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain >/dev/null 2>&1
+
+      # - name: Build iOS app
+      #   working-directory: ./mobile_flutter/wlanthermo_flutter_app
+      #   run: flutter build ipa --release --export-options-plist=GoogleService-Info.plist
+
+      - name: Build android
+        working-directory: ./mobile_flutter/wlanthermo_flutter_app
+        run: |
+          flutter pub get
+          flutter build apk --release --no-shrink
+          flutter build appbundle --release --no-shrink --build-number 10012
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-dev
           path: |
-            ./mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-#            ./mobile/platforms/ios/build/device/WLANThermo.ipa
+            ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/flutter-apk/app-release.apk
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-appbundle
+          path: |
+            ./mobile_flutter/wlanthermo_flutter_app/build/app/outputs/bundle/release/app-release.aab

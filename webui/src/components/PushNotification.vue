@@ -161,21 +161,25 @@ export default {
         devices: [],
       },
       isMobile: false,
-      currentPhoneUUID: null,
+      currentPhoneId: null,
     };
   },
   watch: {},
   computed: {
     currentPhoneIsConfigured: function() {
-      return this.app.devices.some(d => d.id === this.currentPhoneUUID)
+      return this.app.devices.some(d => d.id === this.currentPhoneId)
     }
   },
   mounted: function () {
     EventBus.$emit("loading", true)
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
+
     if (this.isMobile) {
-      document.addEventListener('deviceready', this.initMobileInfo.bind(this), false)
+      window.flutter_inappwebview.callHandler('getDeviceInfo').then(({id}) => {
+        this.currentPhoneId = id;
+      })
     }
+
     this.axios.get("/getpush").then((response) => {
       this.copyOfPush = Object.assign({}, response.data) 
       this.telegram = response.data.telegram
@@ -188,43 +192,29 @@ export default {
     removeDevice: function(deviceId) {
       this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
     },
-    initMobileInfo: function() {
-      // eslint-disable-next-line
-      this.currentPhoneUUID = device.uuid;
-    },
-    getNewToken: function() {
-      const currentPhoneIndex = this.app.devices.findIndex((d => d.id === this.currentPhoneUUID));
-      if (currentPhoneIndex !== -1) {
-        // eslint-disable-next-line
-        const messaging = cordova.plugins.firebase.messaging
-        messaging.getToken().then((token) => {
-          this.app.devices[currentPhoneIndex].token_sha256 = token
-        })
-      }
-    },
-    configuredCurrentPhone: function() {
+    configuredCurrentPhone: async function() {
       EventBus.$emit("loading", true)
-      // eslint-disable-next-line
-      const messaging = cordova.plugins.firebase.messaging
-      messaging.requestPermission({forceShow: true}).then(function() {
-        console.log("Push messaging is allowed");
-      });
-      messaging.getToken().then((token) => {
-        EventBus.$emit("loading", false)
-        console.log(`got token ${token}`)
-        // eslint-disable-next-line
-        const model = device.model
-        this.app.devices.push({
-          id: this.currentPhoneUUID,
-          name: model,
-          token: token,
-          sound: 0
-        })
-      }).catch((error) => {
-        console.log(`don't get got token`)
-        console.log(error)
-        EventBus.$emit("loading", false)
-      });
+
+      const {id,model} = await window.flutter_inappwebview.callHandler('getDeviceInfo')
+
+      window.flutter_inappwebview
+        .callHandler('requestNotificationPermission').then(() => {})
+
+      window.flutter_inappwebview
+        .callHandler('getFCMToken')
+        .then(async (tokenResponse) => {
+          EventBus.$emit("loading", false)
+          this.app.devices.push({
+            id: id,
+            name: model,
+            token: tokenResponse.token,
+            sound: 0
+          })
+        }).catch((error) => {
+          console.log(`don't get got token`)
+          console.log(error)
+          EventBus.$emit("loading", false)
+        });
     },
     backToHome: function () {
       EventBus.$emit("back-to-home");
@@ -239,10 +229,23 @@ export default {
     },
     save: function() {
       EventBus.$emit("loading", true)
+      // Sets android_channel_id before sending to BE
+      this.app.devices.forEach(device => {
+        // see [soundOptions]
+        if (device.sound == '0') {
+          device.android_channel_id = 'wlanthermo_channel_default_id'
+        } else if (device.sound == '1') {
+          device.android_channel_id = 'wlanthermo_channel_bell_id'
+        }
+      });
+
       const requestObj = Object.assign({}, { telegram: this.telegram, pushover: this.pushover, app: this.app })
       this.axios.post('/setpush', requestObj).then(() => {
         EventBus.$emit("loading", false)
         this.backToHome()
+      }).catch(async (error) => {
+        await window.flutter_inappwebview.callHandler('debug', error)
+        EventBus.$emit("loading", false)
       });
     },
     sendTestMessage: function(serviceName, serviceData) {

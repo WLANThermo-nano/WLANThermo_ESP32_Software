@@ -73,6 +73,7 @@ export default {
 	menuHistory: "History",
 	menuNotification: "Push Notification",
 	menuAbout: "About",
+	menuDiagnosis: "Diagnosis",
 	//History
 	btnSaveChart: "Save chart",
 	historyTitle: "History",
@@ -174,6 +175,8 @@ export default {
 	scanTitle: "My Devices",
 	scanDevices: "Devices",
 	scanDeviceIncompatible: "Incompatible (Please update)",
+	// Diagnosis
+	diagnosisTitle: "Diagnosis",
 	// auth dialog
 	authentication: 'Authentication',
 	username: 'Username',

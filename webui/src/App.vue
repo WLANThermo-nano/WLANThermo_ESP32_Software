@@ -28,7 +28,7 @@
       </div>
     </div>
     <div id="nav" :class="{ active: navActive }">
-      <img @click="toPage('home')" class="logo" :src="logoImg" style="width: 85%" />
+      <img @click="toHome()" class="logo" :src="logoImg" style="width: 85%" />
       <div class="version" v-if="settings.device">
         {{ settings.device.sw_version }}
       </div>
@@ -111,7 +111,7 @@ import Icon from './components/Icon.vue'
 import EventBus from './event-bus'
 import IconsHelper from './helpers/icons-helper'
 
-const menuItem = [
+const menuItems = [
         { icon: 'search', translationKey: 'menuScan', id: 'scan' },
         { icon: 'home', translationKey: 'menuHome', id: '/' },
         { icon: 'Wlan100', translationKey: 'menuWlan', id: 'wlan' },
@@ -121,7 +121,9 @@ const menuItem = [
         { icon: 'cloud', translationKey: 'menuIOT', id: 'iot' },
         { icon: 'bell', translationKey: 'menuNotification', id: 'notification' },
         { icon: 'info_sign', translationKey: 'menuAbout', id: 'about' },
+        { icon: 'info_sign', translationKey: 'menuDiagnosis', id: 'diagnosis' },
 ];
+const DEBUG_MODE_KEY = '_WLAN_DEBUG_MODE'
 
 export default {
   name: "App",
@@ -152,7 +154,7 @@ export default {
       requestToRetry: null,
 
       // menu
-      menuItems: menuItem,
+      menuItems: menuItems,
 
       settings: {
         system: {
@@ -181,6 +183,7 @@ export default {
       isUpdating: false,
       getDataInteval: null,
       appReady: false, // for mobile app
+      debugEnabled: false, 
     };
   },
   components: {
@@ -202,6 +205,17 @@ export default {
       this.$router.push({ path: pageName, query: query})
       this.page = pageName
       this.navActive = false
+    },
+    toHome: function() {
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
+          this.toPage('/')
+        } else {
+          this.toPage('scan')
+        }
+      } else {
+        this.toPage('/')
+      }
     },
     getData: function() {
       if (this.isUpdating) {
@@ -256,8 +270,8 @@ export default {
         var url = "https://" + data.iot.CLurl + "?api_token=" + data.iot.CLtoken
 
         if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-          // eslint-disable-next-line
-          cordova.InAppBrowser.open(url, '_system')
+          window.flutter_inappwebview
+            .callHandler('openExternalLink', url).then(() => {})
         } else {
           window.location = url
         }
@@ -315,15 +329,33 @@ export default {
       setTimeout(() => {
         this.showBatteryPercentage = false;
       }, 5000)
-    }
+    },
+    fetchDebugModeAndUpdateMenu: async function() {
+      const debugModeData = await window.flutter_inappwebview
+        .callHandler('getData', DEBUG_MODE_KEY)
+      
+      this.debugEnabled = debugModeData.value === 'true'
+
+      // Adds diagnosis to menu
+      if (this.debugEnabled && !this.menuItems.some(it => it.id === 'diagnosis')) {
+        this.menuItems.push(
+          menuItems.find(it => it.id === 'diagnosis')
+        )
+      }
+    },
   },
   mounted: function() {
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+      EventBus.$emit('log', 'is mobile')
       this.$router.push('/scan')
       this.settings.system.host = this.$t('mobileAppHeader')
-      this.menuItems = this.menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
+      this.menuItems = menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
+
+      setTimeout(() => {
+        this.fetchDebugModeAndUpdateMenu()
+      }, 1000)
     } else {
-      this.menuItems = this.menuItems.filter(i => i.id !== 'scan')
+      this.menuItems = menuItems.filter(i => i.id !== 'scan' && i.id !== 'diagnosis')
       this.getSettings()
       this.initGetDataPeriodically()
     }
@@ -335,20 +367,15 @@ export default {
       this.dialogActive = true
     })
     EventBus.$on('back-to-home', () => {
-      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
-          this.toPage('/')
-        } else {
-          this.toPage('scan')
-        }
-      } else {
-        this.toPage('/')
-      }
+      this.toHome();
+    })
+    EventBus.$on('debug-enabled', () => {
+      this.fetchDebugModeAndUpdateMenu()
     })
     EventBus.$on('device-selected', () => {
       this.clearGetDataInteval()
       this.toPage('/')
-      this.menuItems = menuItem
+      this.menuItems = menuItems
       this.getSettings()
       this.initGetDataPeriodically()
     })
@@ -367,6 +394,9 @@ export default {
     })
     EventBus.$on('loading', (value) => {
       this.showSpinner = value
+    })
+    EventBus.$on('log', (logMessage) => {
+      window.flutter_inappwebview.callHandler('log', logMessage)
     })
     EventBus.$on('getData', () => {
       this.getData()

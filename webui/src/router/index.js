@@ -9,6 +9,7 @@ import About from '../components/About'
 import IoT from '../components/IoT'
 import PushNotification from '../components/PushNotification'
 const Scan = require(process.env.VUE_APP_SCAN_COMPONENT).default;
+const Diagnosis = require(process.env.VUE_APP_DIAGNOSIS_COMPONENT).default;
 
 Vue.use(VueRouter)
 
@@ -42,6 +43,11 @@ const routes = [
     path: '/about',
     name: 'about',
     component: About
+  },
+  {
+    path: '/diagnosis',
+    name: 'diagnosis',
+    component: Diagnosis
   },
   {
     path: '/iot',
