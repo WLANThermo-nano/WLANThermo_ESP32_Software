@@ -300,8 +300,8 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
   if (updatePage)
   {
     NexVariable(DONT_CARE, DONT_CARE, "temp_main.Count").setValue(visibleCount);
-
-    if (getCurrentPageNumber() == PAGE_TEMP_LOAD_ID)
+    
+    // Abfrage über getCurrentPageNumber() erzeugt teilweise Fehler
       sendCommand("page temp_main");
   }
 

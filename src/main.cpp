@@ -162,7 +162,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       ConnectTask,                /* Task function. */
       "ConnectTask",              /* String with name of task. */
-      3000,                       /* Stack size in bytes. */
+      4000,                       /* Stack size in bytes. */
       NULL,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_CONNECT_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */
