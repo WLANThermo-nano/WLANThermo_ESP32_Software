@@ -32,7 +32,7 @@ jobs:
       - run: cp ./.pio/build/linkV1/firmware.bin ./artifacts/linkV1_firmware.bin
       - run: cp ./.pio/build/boneV1/firmware.bin ./artifacts/boneV1_firmware.bin
       - run: cp ./.pio/build/connectV1/firmware.bin ./artifacts/connectV1_firmware.bin
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: firmware_artifacts
           path: ./artifacts
