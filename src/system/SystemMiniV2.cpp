@@ -26,6 +26,7 @@
 #include "temperature/TemperatureMax31855.h"
 #include "temperature/TemperatureMavRadio.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // TEMPERATURES
 #define CS_MCP3208 0u
@@ -68,6 +69,7 @@ SystemMiniV2::SystemMiniV2() : SystemBase()
 void SystemMiniV2::init()
 {
   deviceName = "mini";
+  deviceID = DeviceId::get();
   hardwareVersion = 2u;
   wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
 

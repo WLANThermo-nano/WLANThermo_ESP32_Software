@@ -22,6 +22,7 @@
 #include "nvs.h"
 #include "Preferences.h"
 #include "ESPRandom.h"
+#include "system/SystemBase.h"
 #include <memory>
 
 class Prefs : public Preferences
@@ -86,5 +87,6 @@ void DeviceId::reset()
   prefs.clear();
   prefs.end();
 
-  DeviceId::init();
+  // Nach Neustart wird die ID neu vergeben
+  gSystem->restart();
 }
