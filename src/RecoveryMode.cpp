@@ -184,6 +184,12 @@ void RecoveryMode::run()
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
+  webServer->on("/cleanpush", HTTP_GET, [](AsyncWebServerRequest *request) {
+    RMPRINTLN("GET /cleanpush");
+    Settings::remove("kPush");
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  });
+
   webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request) {
     RMPRINTLN("GET /export");
     String exportSettings = Settings::exportFile();
