@@ -38,7 +38,7 @@ static const NvsKeyConfig_t NvsKeyConfig[] = {
     {STRINGIFY(kSystem), true, true},
     {STRINGIFY(kChannels), true, false},
     {STRINGIFY(kPitmasters), true, true},
-    {STRINGIFY(kPush), false, true},
+    {STRINGIFY(kPush), true, true},
     {STRINGIFY(kDisplay), true, true},
     {STRINGIFY(kBattery), true, true},
     {STRINGIFY(kOtaUpdate), true, true},
