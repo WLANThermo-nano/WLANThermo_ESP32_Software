@@ -33,7 +33,7 @@ jobs:
           cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3.bin
           cp ./.pio/build/nanoV3/firmware.bin ./artifacts/nanoV3.bin
           cp ./.pio/build/linkV1/firmware.bin ./artifacts/linkV1.bin
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v1
         with:
             name: firmware
             path: ./artifacts
@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           .\nextion\build.ps1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v1
         with:
             name: nextion
             path: ./nextion/artifacts
@@ -58,11 +58,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download firmware
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v1
         with:
           name: firmware
       - name: Download nextion
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v1
         with:
           name: nextion
       - name: Create Release
