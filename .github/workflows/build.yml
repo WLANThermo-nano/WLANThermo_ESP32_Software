@@ -36,3 +36,15 @@ jobs:
         with:
           name: firmware_artifacts
           path: ./artifacts
+          
+  download:
+    needs: main
+    runs-on: ubuntu-latest
+    steps:
+    - name: download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware_artifacts
+        path: ./firmware_artifacts
+        merge-multiple: true
+    - run: ls -R ./firmware_artifacts

@@ -20,7 +20,7 @@ jobs:
           pip install -U platformio
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+        run: echo version=$(echo $GITHUB_REF | cut -d / -f 3) >> $GITHUB_OUTPUT
       - name: Build firmware
         run: |
           sed -i -e 's/\/\*REL_VER\*\//#define FIRMWAREVERSION  "${{ steps.get_version.outputs.version }}"/g' ./src/Version.h
@@ -61,10 +61,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: firmware
+          path: ./firmware
+          merge-multiple: true
+      - run: ls -R ./firmware
       - name: Download nextion
         uses: actions/download-artifact@v4
         with:
           name: nextion
+          path: ./nextion
+          merge-multiple: true
+      - run: ls -R ./nextion
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -74,13 +80,12 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            Changes in this Release
+            Changes in this release:
           draft: true
           prerelease: true
-          allowUpdates: true
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+        run: echo version=$(echo $GITHUB_REF | cut -d / -f 3) >> $GITHUB_OUTPUT
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.2
         env:
