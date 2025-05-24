@@ -45,6 +45,5 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: firmware_artifacts
-        path: ./artifacts
         merge-multiple: true
-    - run: ls -R ./artifacts
+    - run: ls -R firmware_artifacts
