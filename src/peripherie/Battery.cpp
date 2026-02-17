@@ -94,13 +94,14 @@ void Battery::updatePowerPercentage()
   //Serial.println("Battery::updatePowerPercentage");
 
   // Calculate battery percentage
-  uint32_t percraw;
-  // linear
-  //percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
-  // polynom
-  float rVol = this->voltage/1000.0;
-  percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
 
+  // Linear-Ansatz: float percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
+ 
+  // Polynom-Ansatz zur Berechnung der rohen Prozentzahl
+  float rVol = this->voltage/1000.0;
+  float percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
+
+  // auf 0–100% begrenzen
   percraw = constrain(percraw, 0, 100);
 
   // Korrektur
@@ -127,7 +128,7 @@ void Battery::updatePowerPercentage()
 
   case PowerMode::Battery:
     // Nach vollständiger Ladung 
-    if (this->setreference > 0)
+    if (this->setreference > 0) // && this->voltage > 4000
     {
       this->percentage = 100;
       if ((millis() - this->correction) > CORRECTIONTIME)
@@ -146,8 +147,12 @@ void Battery::updatePowerPercentage()
       }
       else 
       {
+      // Gleitender Mittelwert / Filter
         int FF = 2;
-        this->percentage = ceil(((this->percentage * FF) + percraw) / (FF +1.0));
+        float newPerc = ((this->percentage * FF) + percraw) / (FF + 1.0);
+        
+        // Endwert wieder auf 0–100% begrenzen
+        this->percentage = constrain(newPerc, 0, 100);
       }
     }
     break;
