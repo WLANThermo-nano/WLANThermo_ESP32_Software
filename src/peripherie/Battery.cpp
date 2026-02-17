@@ -126,6 +126,7 @@ void Battery::updatePowerPercentage()
     this->percentage = 100;
     break;
 
+  case PowerMode::Protection:
   case PowerMode::Battery:
     // Nach vollständiger Ladung 
     if (this->setreference > 0) // && this->voltage > 4000
@@ -141,13 +142,14 @@ void Battery::updatePowerPercentage()
     }
     // Freier Betrieb
     else {
+      // Nach Systemstart ohne Filterung
       if (millis() < BATTERYSTARTUP)
       {
         this->percentage = percraw;
       }
       else 
       {
-      // Gleitender Mittelwert / Filter
+      // Gleitender Mittelwert / Filter zum Ausgleich von schwankenden Messwerten
         int FF = 2;
         float newPerc = ((this->percentage * FF) + percraw) / (FF + 1.0);
         
