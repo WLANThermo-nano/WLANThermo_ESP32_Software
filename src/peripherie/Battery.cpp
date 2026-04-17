@@ -99,7 +99,7 @@ void Battery::updatePowerPercentage()
  
   // Polynom-Ansatz zur Berechnung der rohen Prozentzahl
   float rVol = this->voltage/1000.0;
-  float percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
+  float percraw = (1688.8 - 200.0*rVol)*rVol - 3460.0;
 
   // auf 0–100% begrenzen
   percraw = constrain(percraw, 0, 100);
@@ -129,7 +129,7 @@ void Battery::updatePowerPercentage()
   case PowerMode::Protection:
   case PowerMode::Battery:
     // Nach vollständiger Ladung 
-    if (this->setreference > 0) // && this->voltage > 4000
+    if (this->setreference > 0 && this->voltage > 4000)
     {
       this->percentage = 100;
       if ((millis() - this->correction) > CORRECTIONTIME)
