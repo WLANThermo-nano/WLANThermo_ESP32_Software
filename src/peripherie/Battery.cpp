@@ -257,8 +257,8 @@ void Battery::setReference()
 
 void Battery::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["batmax"]  = this->max;
   json["batmin"]  = this->min;
   json["batfull"] = this->setreference;
@@ -269,10 +269,10 @@ void Battery::saveConfig()
 
 void Battery::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kBattery, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kBattery, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("batmax"))

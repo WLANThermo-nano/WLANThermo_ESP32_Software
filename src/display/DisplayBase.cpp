@@ -41,8 +41,8 @@ void DisplayBase::update()
 
 void DisplayBase::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["disabled"] = this->disabled;
   json["orientation"] = (uint16_t)this->orientation;
   json["timeout"] = this->timeout;
@@ -52,14 +52,14 @@ void DisplayBase::saveConfig()
 
 void DisplayBase::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kDisplay, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("disabled"))
-      this->disabled = json["disabled"].as<boolean>();
+      this->disabled = json["disabled"].as<bool>();
     if (json.containsKey("orientation"))
       this->orientation = (DisplayOrientation)json["orientation"].as<uint16_t>();
     if (json.containsKey("timeout"))

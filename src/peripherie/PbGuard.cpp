@@ -65,10 +65,10 @@ void PbGuard::disable()
 
 void PbGuard::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kPbGuard, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kPbGuard, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("low"))
@@ -82,8 +82,8 @@ void PbGuard::loadConfig()
 
 void PbGuard::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["low"]  = this->lowInterval;
   json["high"]  = this->highInterval;
   json["enabled"] = this->enabled;

@@ -33,7 +33,7 @@ API::API()
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Display JSON Object - Send everytime when connect to API
-void API::displayObj(JsonObject &jObj)
+void API::displayObj(JsonObject jObj)
 {
   jObj["updname"] = gDisplay->getUpdateName();
   jObj["orientation"] = (uint16_t)gDisplay->getOrientation();
@@ -41,7 +41,7 @@ void API::displayObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Device JSON Object - Send everytime when connect to API
-void API::deviceObj(JsonObject &jObj)
+void API::deviceObj(JsonObject jObj)
 {
 
   jObj["device"] = gSystem->getDeviceName();
@@ -61,7 +61,7 @@ void API::deviceObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // System JSON Object
-void API::systemObj(JsonObject &jObj, bool settings)
+void API::systemObj(JsonObject jObj, bool settings)
 {
 
   jObj["time"] = String(now());
@@ -93,7 +93,7 @@ void API::systemObj(JsonObject &jObj, bool settings)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Channel JSON Array
-void API::channelAry(JsonArray &jAry, int cc)
+void API::channelAry(JsonArray jAry, int cc)
 {
 
   int i = 0;
@@ -105,7 +105,7 @@ void API::channelAry(JsonArray &jAry, int cc)
     TemperatureBase *temperature = gSystem->temperatures[i];
     if (temperature != NULL)
     {
-      JsonObject &data = jAry.createNestedObject();
+      JsonObject data = jAry.add<JsonObject>();
       data["number"] = i + 1;
       data["name"] = temperature->getName();
       data["typ"] = temperature->getType();
@@ -122,10 +122,10 @@ void API::channelAry(JsonArray &jAry, int cc)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Pitmaster Types JSON Array
-void API::pitTyp(JsonObject &jObj)
+void API::pitTyp(JsonObject jObj)
 {
 
-  JsonArray &_typ = jObj.createNestedArray("type");
+  JsonArray _typ = jObj["type"].to<JsonArray>();
   _typ.add("off");
   _typ.add("manual");
   _typ.add("auto");
@@ -133,7 +133,7 @@ void API::pitTyp(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Pitmaster JSON Array
-void API::pitAry(JsonArray &jAry, int cc)
+void API::pitAry(JsonArray jAry, int cc)
 {
 
   String sc[2] = {"#ff0000", "#FE2EF7"};
@@ -144,7 +144,7 @@ void API::pitAry(JsonArray &jAry, int cc)
     Pitmaster *pm = gSystem->pitmasters[i];
     if (pm)
     {
-      JsonObject &ma = jAry.createNestedObject();
+      JsonObject ma= jAry.add<JsonObject>();
       ma["id"] = i;
       ma["channel"] = TemperatureGrp::getIndex(pm->getAssignedTemperature()) + 1u;
       ma["pid"] = pm->getAssignedProfile()->id;
@@ -179,13 +179,13 @@ void API::pitAry(JsonArray &jAry, int cc)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // PID JSON Array
-void API::pidAry(JsonArray &jAry, int cc)
+void API::pidAry(JsonArray jAry, int cc)
 {
   for (int i = 0; i < gSystem->getPitmasterProfileCount(); i++)
   { // pidsize
     PitmasterProfile *profile = gSystem->getPitmasterProfile(i);
 
-    JsonObject &_pid = jAry.createNestedObject();
+    JsonObject _pid = jAry.add<JsonObject>();
     _pid["name"] = profile->name;
     _pid["id"] = profile->id;
     _pid["aktor"] = profile->actuator;
@@ -205,7 +205,7 @@ void API::pidAry(JsonArray &jAry, int cc)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // IoT JSON Object
-void API::iotObj(JsonObject &jObj)
+void API::iotObj(JsonObject jObj)
 {
   MqttConfig mqttConfig = gSystem->mqtt.getConfig();
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
@@ -228,15 +228,15 @@ void API::iotObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Notification JSON Object
-void API::notificationObj(JsonObject &jObj)
+void API::notificationObj(JsonObject jObj)
 {
   PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
   PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
   PushAppType pushApp = gSystem->notification.getAppConfig();
   NotificationData notificationData = gSystem->notification.getNotificationData();
 
-  JsonObject &_message = jObj.createNestedObject("message");
-  JsonArray &_services = jObj.createNestedArray("services");
+  JsonObject _message = jObj["message"].to<JsonObject>();
+  JsonArray _services = jObj["services"].to<JsonArray>();
 
   _message["type"] = (uint32_t)notificationData.type;
 
@@ -282,7 +282,7 @@ void API::notificationObj(JsonObject &jObj)
 
   if (pushTelegram.enabled)
   {
-    JsonObject &_telegram = _services.createNestedObject();
+    JsonObject _telegram = _services.add<JsonObject>();
     _telegram["service"] = "telegram";
     _telegram["token"] = String(pushTelegram.token);
     _telegram["chat_id"] = String(pushTelegram.chatId);
@@ -290,7 +290,7 @@ void API::notificationObj(JsonObject &jObj)
 
   if (pushPushover.enabled)
   {
-    JsonObject &_pushover = _services.createNestedObject();
+    JsonObject _pushover = _services.add<JsonObject>();
     _pushover["service"] = "pushover";
     _pushover["token"] = String(pushPushover.token);
     _pushover["user_key"] = String(pushPushover.userKey);
@@ -305,7 +305,7 @@ void API::notificationObj(JsonObject &jObj)
     {
       if (strlen(pushApp.devices[i].token) > 0u)
       {
-        JsonObject &_app = _services.createNestedObject();
+        JsonObject _app = _services.add<JsonObject>();
         _app["service"] = "app";
         _app["phone_id"] = String(pushApp.devices[i].id);
         _app["name"] = String(pushApp.devices[i].name);
@@ -321,7 +321,7 @@ void API::notificationObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Crash JSON Object
-void API::crashObj(JsonObject &jObj)
+void API::crashObj(JsonObject jObj)
 {
   jObj["reset_reason"] = gSystem->getResetReason(0u) + String(";") + gSystem->getResetReason(1u);
   jObj["reset_counter"] = RecoveryMode::getResetCounter();
@@ -329,7 +329,7 @@ void API::crashObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Update JSON Object
-void API::updateObj(JsonObject &jObj)
+void API::updateObj(JsonObject jObj)
 {
   jObj["prerelease"] = gSystem->otaUpdate.getPrerelease();
 
@@ -350,13 +350,13 @@ void API::updateObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // URL JSON Object
-void API::urlObj(JsonObject &jObj)
+void API::urlObj(JsonObject jObj)
 {
 
   /*
   for (int i = 0; i < NUMITEMS(serverurl); i++) {
   
-    JsonObject& _obj = jObj.createNestedObject(serverurl[i].typ);
+    JsonObject _obj = jObj[serverurl[i].typ].to<JsonObject>();
     _obj["host"] =  serverurl[i].host;
     _obj["page"] =  serverurl[i].page;
   }
@@ -365,68 +365,68 @@ void API::urlObj(JsonObject &jObj)
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // DATA JSON Object
-void API::dataObj(JsonObject &jObj, bool cloud)
+void API::dataObj(JsonObject jObj, bool cloud)
 {
   // SYSTEM
-  JsonObject &_system = jObj.createNestedObject("system");
+  JsonObject _system = jObj["system"].to<JsonObject>();
   systemObj(_system);
 
   // CHANNEL
-  JsonArray &_channel = jObj.createNestedArray("channel");
+  JsonArray _channel = jObj["channel"].to<JsonArray>();
   channelAry(_channel, gSystem->temperatures.count());
 
-  //JsonObject& _master = jObj.createNestedObject("pitmaster");
+  //JsonObject& _master = jObj["pitmaster"].to<JsonObject>();
 
   // PITMASTER  (Cloud kann noch kein Array verarbeiten)
   if (cloud)
   {
-    JsonArray &_master = jObj.createNestedArray("pitmaster");
+    JsonArray _master = jObj["pitmaster"].to<JsonArray>();
     pitAry(_master, gSystem->pitmasters.count());
   }
   else
   {
-    JsonObject &_master = jObj.createNestedObject("pitmaster");
+    JsonObject _master = jObj["pitmaster"].to<JsonObject>();
     pitTyp(_master);
-    JsonArray &_pit = _master.createNestedArray("pm");
+    JsonArray _pit = _master["pm"].to<JsonArray>();
     pitAry(_pit, gSystem->pitmasters.count());
   }
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // SETTINGS JSON Object
-void API::settingsObj(JsonObject &jObj)
+void API::settingsObj(JsonObject jObj)
 {
   // SYSTEM
-  JsonObject &_system = jObj.createNestedObject("system");
+  JsonObject _system = jObj["system"].to<JsonObject>();
   systemObj(_system, true);
 
-  JsonArray &_hw = jObj.createNestedArray("hardware");
+  JsonArray _hw = jObj["hardware"].to<JsonArray>();
   _hw.add(String("V") + String(gSystem->getHardwareVersion()));
 
-  JsonObject &api = jObj.createNestedObject("api");
+  JsonObject api= jObj["api"].to<JsonObject>();
   api["version"] = GUIAPIVERSION;
 
   // SENSORS
-  JsonArray &_sensorsArray = jObj.createNestedArray("sensors");
+  JsonArray _sensorsArray = jObj["sensors"].to<JsonArray>();
   for (uint8_t i = 0; i < NUM_OF_TYPES; i++)
   {
-    JsonObject &_sensorObject = _sensorsArray.createNestedObject();
+    JsonObject _sensorObject = _sensorsArray.add<JsonObject>();
     _sensorObject["type"] = (uint8_t)sensorTypeInfo[i].type;
     _sensorObject["name"] = sensorTypeInfo[i].name;
     _sensorObject["fixed"] = sensorTypeInfo[i].fixed;
   }
 
   // FEATURES
-  JsonObject &_features = jObj.createNestedObject("features");
+  JsonObject _features = jObj["features"].to<JsonObject>();
   _features["bluetooth"] = (gSystem->bluetooth) ? (gSystem->bluetooth->isBuiltIn()) : false;
   _features["pitmaster"] = (boolean)(gSystem->pitmasters.count() > 0u);
 
   // PID-PROFILS
-  JsonArray &_pid = jObj.createNestedArray("pid");
+  JsonArray _pid = jObj["pid"].to<JsonArray>();
   pidAry(_pid, gSystem->pitmasters.count());
 
   // AKTORS
-  JsonArray &_aktor = jObj.createNestedArray("aktor");
+  JsonArray _aktor = jObj["aktor"].to<JsonArray>();
   _aktor.add("SSR");
   _aktor.add("FAN");
   _aktor.add("SERVO");
@@ -436,32 +436,32 @@ void API::settingsObj(JsonObject &jObj)
   }
 
   // DISPLAY
-  JsonObject &_display = jObj.createNestedObject("display");
+  JsonObject _display = jObj["display"].to<JsonObject>();
   displayObj(_display);
 
   // IOT
-  JsonObject &_iot = jObj.createNestedObject("iot");
+  JsonObject _iot = jObj["iot"].to<JsonObject>();
   iotObj(_iot);
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // CLOUD JSON Object - Level 1
-void API::cloudObj(JsonObject &jObj)
+void API::cloudObj(JsonObject jObj)
 {
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
 
   jObj["task"] = "save";
   jObj["api_token"] = cloudConfig.cloudToken;
 
-  JsonArray &data = jObj.createNestedArray("data");
+  JsonArray data = jObj["data"].to<JsonArray>();
   // aktuelle Werte
-  JsonObject &_obj = data.createNestedObject();
+  JsonObject _obj = data.add<JsonObject>();
   dataObj(_obj, true);
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // CUSTOM JSON Object - Level 1
-void API::customObj(JsonObject &jObj)
+void API::customObj(JsonObject jObj)
 {
   CloudConfig cloudConfig = gSystem->cloud.getConfig();
 
@@ -469,16 +469,14 @@ void API::customObj(JsonObject &jObj)
   jObj["interval"] = cloudConfig.customInterval;
 
   // CHANNEL
-  JsonArray &_channel = jObj.createNestedArray("channel");
+  JsonArray _channel = jObj["channel"].to<JsonArray>();
   channelAry(_channel, gSystem->temperatures.count());
 
-  for (JsonArray::iterator it = _channel.begin(); it != _channel.end(); ++it)
+  for (JsonObject _currentChannel : _channel)
   {
-    JsonObject &_currentChannel = it->asObject();
-
     _currentChannel["unit"] = String((char)gSystem->temperatures.getUnit());
-    
-    if(INACTIVEVALUE == _currentChannel["temp"])
+
+    if (INACTIVEVALUE == _currentChannel["temp"].as<float>())
     {
       _currentChannel["temp"] = (char*)0;
     }
@@ -491,8 +489,8 @@ void API::customObj(JsonObject &jObj)
 String API::apiData(int typ)
 {
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &root = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject root = doc.to<JsonObject>();
 
   if ((APIDATA == typ) || (APICUSTOM == typ))
   { //  || typ == APISETTINGS
@@ -501,7 +499,7 @@ String API::apiData(int typ)
   }
   else
   {
-    JsonObject &device = root.createNestedObject("device");
+    JsonObject device = root["device"].to<JsonObject>();
     deviceObj(device);
   }
 
@@ -515,17 +513,17 @@ String API::apiData(int typ)
 
   case APIUPDATE:
   {
-    JsonObject &update = root.createNestedObject("update");
+    JsonObject update = root["update"].to<JsonObject>();
     updateObj(update);
 
-    JsonObject &url = root.createNestedObject("url");
+    JsonObject url = root["url"].to<JsonObject>();
     urlObj(url);
     break;
   }
 
   case APICLOUD:
   {
-    JsonObject &cloud = root.createNestedObject("cloud");
+    JsonObject cloud = root["cloud"].to<JsonObject>();
     cloudObj(cloud);
     break;
   }
@@ -550,21 +548,21 @@ String API::apiData(int typ)
 
   case APINOTIFICATION:
   {
-    JsonObject &note = root.createNestedObject("notification_v2");
+    JsonObject note = root["notification_v2"].to<JsonObject>();
     notificationObj(note);
     break;
   }
 
   case APICRASHREPORT:
   {
-    JsonObject &crash = root.createNestedObject("crash_report");
+    JsonObject crash = root["crash_report"].to<JsonObject>();
     crashObj(crash);
     break;
   }
   }
 
   String jsonStr;
-  root.printTo(jsonStr);
+  serializeJson(doc, jsonStr);
 
   return jsonStr;
 }

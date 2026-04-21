@@ -27,24 +27,24 @@ class API
 {
 public:
   API();
-  static void displayObj(JsonObject &jObj);
-  static void deviceObj(JsonObject &jObj);
-  static void systemObj(JsonObject &jObj, bool settings = false);
-  static void channelAry(JsonArray &jAry, int cc);
-  static void pitTyp(JsonObject &jObj);
-  static void pitAry(JsonArray &jAry, int cc);
-  static void pidAry(JsonArray &jAry, int cc);
-  static void iotObj(JsonObject &jObj);
-  static void extObj(JsonObject &jObj);
-  static void updateObj(JsonObject &jObj);
-  static void alexaObj(JsonObject &jObj);
-  static void urlObj(JsonObject &jObj);
-  static void dataObj(JsonObject &jObj, bool cloud);
-  static void settingsObj(JsonObject &jObj);
-  static void cloudObj(JsonObject &jObj);
-  static void customObj(JsonObject &jObj);
-  static void notificationObj(JsonObject &jObj);
-  static void crashObj(JsonObject &jObj);
+  static void displayObj(JsonObject jObj);
+  static void deviceObj(JsonObject jObj);
+  static void systemObj(JsonObject jObj, bool settings = false);
+  static void channelAry(JsonArray jAry, int cc);
+  static void pitTyp(JsonObject jObj);
+  static void pitAry(JsonArray jAry, int cc);
+  static void pidAry(JsonArray jAry, int cc);
+  static void iotObj(JsonObject jObj);
+  static void extObj(JsonObject jObj);
+  static void updateObj(JsonObject jObj);
+  static void alexaObj(JsonObject jObj);
+  static void urlObj(JsonObject jObj);
+  static void dataObj(JsonObject jObj, bool cloud);
+  static void settingsObj(JsonObject jObj);
+  static void cloudObj(JsonObject jObj);
+  static void customObj(JsonObject jObj);
+  static void notificationObj(JsonObject jObj);
+  static void crashObj(JsonObject jObj);
   static String apiData(int typ);
   static float limit_float(float f, int i);
 

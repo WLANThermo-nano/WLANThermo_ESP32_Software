@@ -81,8 +81,8 @@ void Mqtt::update()
 
 void Mqtt::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["host"] = config.host;
   json["port"] = config.port;
   json["user"] = config.user;
@@ -95,20 +95,20 @@ void Mqtt::saveConfig()
 
 void Mqtt::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kMqtt, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kMqtt, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("host"))
-      strcpy(config.host, json["host"].asString());
+      strcpy(config.host, json["host"].as<const char*>());
     if (json.containsKey("port"))
       config.port = json["port"];
     if (json.containsKey("user"))
-      strcpy(config.user, json["user"].asString());
+      strcpy(config.user, json["user"].as<const char*>());
     if (json.containsKey("password"))
-      strcpy(config.password, json["password"].asString());
+      strcpy(config.password, json["password"].as<const char*>());
     if (json.containsKey("QoS"))
       config.QoS = json["QoS"];
     if (json.containsKey("enabled"))

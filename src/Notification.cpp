@@ -187,16 +187,16 @@ void Notification::update()
 
 void Notification::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
 
-  JsonObject &telegram = json.createNestedObject("telegram");
+  JsonObject telegram = json["telegram"].to<JsonObject>();
 
   telegram["enabled"] = pushTelegram.enabled;
   telegram["token"] = pushTelegram.token;
   telegram["chat_id"] = pushTelegram.chatId;
 
-  JsonObject &pushover = json.createNestedObject("pushover");
+  JsonObject pushover = json["pushover"].to<JsonObject>();
 
   pushover["enabled"] = pushPushover.enabled;
   pushover["token"] = pushPushover.token;
@@ -205,17 +205,17 @@ void Notification::saveConfig()
   pushover["retry"] = pushPushover.retry;
   pushover["expire"] = pushPushover.expire;
 
-  JsonObject &app = json.createNestedObject("app");
+  JsonObject app = json["app"].to<JsonObject>();
 
   app["enabled"] = pushApp.enabled;
 
-  JsonArray &devices = app.createNestedArray("devices");
+  JsonArray devices = app["devices"].to<JsonArray>();
 
   for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
   {
     if (strlen(pushApp.devices[i].token) > 0u)
     {
-      JsonObject &device = devices.createNestedObject();
+      JsonObject device = devices.add<JsonObject>();
 
       device["name"] = pushApp.devices[i].name;
       device["id"] = pushApp.devices[i].id;
@@ -230,10 +230,10 @@ void Notification::saveConfig()
 
 void Notification::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kPush, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kPush, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     // migrate from old structure
     if (json.containsKey("onP") && json.containsKey("tokP") &&
@@ -245,14 +245,14 @@ void Notification::loadConfig()
       // telegram
       case 0u:
         pushTelegram.enabled = json["onP"];
-        strncpy(pushTelegram.token, json["tokP"].asString(), sizeof(pushTelegram.token));
-        strncpy(pushTelegram.chatId, json["idP"].asString(), sizeof(pushTelegram.chatId));
+        strncpy(pushTelegram.token, json["tokP"].as<const char*>(), sizeof(pushTelegram.token));
+        strncpy(pushTelegram.chatId, json["idP"].as<const char*>(), sizeof(pushTelegram.chatId));
         break;
       // pushover
       case 1u:
         pushPushover.enabled = json["onP"];
-        strncpy(pushPushover.token, json["tokP"].asString(), sizeof(pushPushover.token));
-        strncpy(pushPushover.userKey, json["idP"].asString(), sizeof(pushPushover.userKey));
+        strncpy(pushPushover.token, json["tokP"].as<const char*>(), sizeof(pushPushover.token));
+        strncpy(pushPushover.userKey, json["idP"].as<const char*>(), sizeof(pushPushover.userKey));
       }
     }
     // load current structure
@@ -260,21 +260,21 @@ void Notification::loadConfig()
     {
       if (json.containsKey("telegram"))
       {
-        JsonObject &_telegram = json["telegram"];
+        JsonObject _telegram = json["telegram"].as<JsonObject>();
 
         if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
             _telegram.containsKey("chat_id"))
         {
           // load telegram
           pushTelegram.enabled = _telegram["enabled"];
-          strncpy(pushTelegram.token, _telegram["token"].asString(), sizeof(pushTelegram.token));
-          strncpy(pushTelegram.chatId, _telegram["chat_id"].asString(), sizeof(pushTelegram.chatId));
+          strncpy(pushTelegram.token, _telegram["token"].as<const char*>(), sizeof(pushTelegram.token));
+          strncpy(pushTelegram.chatId, _telegram["chat_id"].as<const char*>(), sizeof(pushTelegram.chatId));
         }
       }
 
       if (json.containsKey("pushover"))
       {
-        JsonObject &_pushover = json["pushover"];
+        JsonObject _pushover = json["pushover"].as<JsonObject>();
 
         if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
             _pushover.containsKey("user_key") && _pushover.containsKey("priority") &&
@@ -282,8 +282,8 @@ void Notification::loadConfig()
         {
           // load pushover
           pushPushover.enabled = _pushover["enabled"];
-          strncpy(pushPushover.token, _pushover["token"].asString(), sizeof(pushPushover.token));
-          strncpy(pushPushover.userKey, _pushover["user_key"].asString(), sizeof(pushPushover.userKey));
+          strncpy(pushPushover.token, _pushover["token"].as<const char*>(), sizeof(pushPushover.token));
+          strncpy(pushPushover.userKey, _pushover["user_key"].as<const char*>(), sizeof(pushPushover.userKey));
           pushPushover.priority = _pushover["priority"];
           pushPushover.retry = _pushover["retry"];
           pushPushover.expire = _pushover["expire"];
@@ -292,26 +292,27 @@ void Notification::loadConfig()
 
       if (json.containsKey("app"))
       {
-        JsonObject &_app = json["app"];
+        JsonObject _app = json["app"].as<JsonObject>();
 
         if (_app.containsKey("enabled") && _app.containsKey("devices"))
         {
           // load app
           pushApp.enabled = _app["enabled"];
 
-          JsonArray &_devices = _app["devices"];
+          JsonArray _devices = _app["devices"].as<JsonArray>();
           uint8_t deviceIndex = 0u;
 
-          for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
+          for (JsonObject _device : _devices)
           {
-            JsonObject &_device = it->asObject();
+            if (deviceIndex >= PUSH_APP_MAX_DEVICES)
+              break;
 
             if (_device.containsKey("name") && _device.containsKey("id") &&
                 _device.containsKey("token"))
             {
-              strcpy(pushApp.devices[deviceIndex].name, _device["name"].asString());
-              strcpy(pushApp.devices[deviceIndex].id, _device["id"].asString());
-              strcpy(pushApp.devices[deviceIndex].token, _device["token"].asString());
+              strcpy(pushApp.devices[deviceIndex].name, _device["name"].as<const char*>());
+              strcpy(pushApp.devices[deviceIndex].id, _device["id"].as<const char*>());
+              strcpy(pushApp.devices[deviceIndex].token, _device["token"].as<const char*>());
 
               if (_device.containsKey("sound"))
               {
@@ -320,7 +321,7 @@ void Notification::loadConfig()
 
               if (_device.containsKey("androidchannelid"))
               {
-                 strcpy(pushApp.devices[deviceIndex].androidchannelid, _device["androidchannelid"].asString());
+                 strcpy(pushApp.devices[deviceIndex].androidchannelid, _device["androidchannelid"].as<const char*>());
               }
 
               deviceIndex++;

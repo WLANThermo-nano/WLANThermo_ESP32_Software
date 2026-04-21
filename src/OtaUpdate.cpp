@@ -80,8 +80,8 @@ void OtaUpdate::task(void *parameter)
 
 void OtaUpdate::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["autoupd"] = autoUpdate;
   json["prerelease"] = prerelease;
   Settings::write(kOtaUpdate, json);
@@ -89,10 +89,10 @@ void OtaUpdate::saveConfig()
 
 void OtaUpdate::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kOtaUpdate, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kOtaUpdate, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("autoupd"))
       autoUpdate = json["autoupd"];
@@ -287,6 +287,8 @@ boolean OtaUpdate::setPrerelease(boolean prerelease)
 
   if (checkForUpdate)
     resetUpdateInfo();
+
+  return checkForUpdate;
 }
 
 uint8_t OtaUpdate::getUpdateProgress()

@@ -290,13 +290,13 @@ void TemperatureGrp::acknowledgeAlarm()
 
 void TemperatureGrp::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kChannels, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kChannels, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("temp_unit"))
-      this->currentUnit = (TemperatureUnit)json["temp_unit"].asString()[0u];
+      this->currentUnit = (TemperatureUnit)json["temp_unit"].as<const char*>()[0u];
 
     for (uint8_t i = 0u; i < temperatures.size(); i++)
     {
@@ -307,19 +307,19 @@ void TemperatureGrp::loadConfig()
 
 void TemperatureGrp::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
 
   json["temp_unit"] = String((char)currentUnit);
 
-  JsonArray &_name = json.createNestedArray("tname");
-  JsonArray &_typ = json.createNestedArray("ttyp");
-  JsonArray &_min = json.createNestedArray("tmin");
-  JsonArray &_max = json.createNestedArray("tmax");
-  JsonArray &_alarm = json.createNestedArray("talarm");
-  JsonArray &_color = json.createNestedArray("tcolor");
-  JsonArray &_address = json.createNestedArray("taddress");
-  JsonArray &_lindex = json.createNestedArray("tlindex");
+  JsonArray _name = json["tname"].to<JsonArray>();
+  JsonArray _typ = json["ttyp"].to<JsonArray>();
+  JsonArray _min = json["tmin"].to<JsonArray>();
+  JsonArray _max = json["tmax"].to<JsonArray>();
+  JsonArray _alarm = json["talarm"].to<JsonArray>();
+  JsonArray _color = json["tcolor"].to<JsonArray>();
+  JsonArray _address = json["taddress"].to<JsonArray>();
+  JsonArray _lindex = json["tlindex"].to<JsonArray>();
 
   for (int i = 0; i < count(); i++)
   {
@@ -328,8 +328,8 @@ void TemperatureGrp::saveConfig()
     {
       _name.add(temperature->getName());
       _typ.add(temperature->getType());
-      _min.add(temperature->getMinValue(), 1);
-      _max.add(temperature->getMaxValue(), 1);
+      _min.add(temperature->getMinValue());
+      _max.add(temperature->getMaxValue());
       _alarm.add((uint8_t)temperature->getAlarmSetting());
       _color.add(temperature->getColor());
       _address.add(temperature->getAddress());

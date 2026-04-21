@@ -21,6 +21,7 @@
 #include "DeviceId.h"
 #include "nvs.h"
 #include "Preferences.h"
+#include <vector>
 #include "ESPRandom.h"
 #include "system/SystemBase.h"
 #include <memory>

@@ -174,8 +174,8 @@ String Cloud::createToken()
 
 void Cloud::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["enabled"] = config.cloudEnabled;
   json["token"] = config.cloudToken;
   json["interval"] = config.cloudInterval;
@@ -191,13 +191,12 @@ void Cloud::saveConfig()
 
 void Cloud::saveUrl()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
 
   for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
   {
-
-    JsonObject &_obj = json.createNestedObject(serverurl[i].typ);
+    JsonObject _obj = json[serverurl[i].typ].to<JsonObject>();
     _obj["host"] = serverurl[i].host;
     _obj["page"] = serverurl[i].page;
   }
@@ -206,29 +205,29 @@ void Cloud::saveUrl()
 
   if (file)
   {
-    json.printTo(file);
+    serializeJson(doc, file);
     file.close();
   }
 }
 
 void Cloud::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kCloud, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kCloud, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("enabled"))
       config.cloudEnabled = json["enabled"];
     if (json.containsKey("token"))
-      config.cloudToken = json["token"].asString();
+      config.cloudToken = json["token"].as<const char*>();
     if (json.containsKey("interval"))
       config.cloudInterval = json["interval"];
 
     if (json.containsKey("customEnabled"))
       config.customEnabled = json["customEnabled"];
     if (json.containsKey("customUrl"))
-      config.customUrl = json["customUrl"].asString();
+      config.customUrl = json["customUrl"].as<const char*>();
     if (json.containsKey("customInterval"))
       config.customInterval = json["customInterval"];
   }
@@ -239,21 +238,23 @@ void Cloud::loadConfig()
   {
     String jsonString = file.readString();
     Serial.printf("url.json: %s\n", jsonString.c_str());
-    JsonObject &json = jsonBuffer.parseObject(file.readString().c_str());
+    JsonDocument urlDoc;
+    deserializeJson(urlDoc, jsonString);
+    JsonObject urlJson = urlDoc.as<JsonObject>();
 
-    if (json.success())
+    if (!urlJson.isNull())
     {
       for (int i = 0; i < Cloud::serverurlCount; i++)
       {
-        JsonObject &_link = json[Cloud::serverurl[i].typ];
+        JsonObject _link = urlJson[Cloud::serverurl[i].typ].as<JsonObject>();
 
         if (_link.containsKey("host"))
-          Cloud::serverurl[i].host = _link["host"].asString();
+          Cloud::serverurl[i].host = _link["host"].as<const char*>();
         else
           break;
 
         if (_link.containsKey("page"))
-          Cloud::serverurl[i].page = _link["page"].asString();
+          Cloud::serverurl[i].page = _link["page"].as<const char*>();
       }
     }
 

@@ -202,17 +202,17 @@ void DisplayOled::task(void *parameter)
 
 void DisplayOled::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   Settings::write(kDisplay, json);
 }
 
 void DisplayOled::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kDisplay, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
   }
 }
