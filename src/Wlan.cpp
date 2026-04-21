@@ -19,6 +19,7 @@
 ****************************************************/
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
+#include "esp_wifi.h"
 #include "Wlan.h"
 #include "Settings.h"
 #include "Constants.h"
@@ -32,6 +33,7 @@
 
 String Wlan::hostName = DEFAULT_HOSTNAME;
 String Wlan::accessPointName = DEFAULT_APNAME;
+bool Wlan::mdnsUpdatePending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;
@@ -52,14 +54,9 @@ void Wlan::init()
   WiFi.setHostname(this->hostName.c_str());
   WiFi.persistent(false);
 
-  WiFi.onEvent(onWifiConnect, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
-  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
-  WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::SYSTEM_EVENT_AP_STADISCONNECTED);
-/*
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
-*/
   IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(this->accessPointName.c_str(), APPASSWORD, 5);
@@ -72,29 +69,31 @@ void Wlan::init()
 
 void Wlan::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kWifi, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kWifi, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
-    uint8_t i = 0u;
-
     if (json.containsKey("host"))
-      hostName = json["host"].asString();
+      hostName = json["host"].as<const char*>();
     if (json.containsKey("ap"))
-      accessPointName = json["ap"].asString();
+      accessPointName = json["ap"].as<const char*>();
 
-    JsonArray &_wifi = json["wifi"];
-    for (JsonArray::iterator it = _wifi.begin(); (it != _wifi.end()) && (i < NUM_OF_WLAN_CREDENTIALS); ++it)
+    JsonArray _wifi = json["wifi"].as<JsonArray>();
+    uint8_t i = 0u;
+    for (JsonObject wifiEntry : _wifi)
     {
-      if ((strlen(_wifi[i]["SSID"].asString()) >= WLAN_SSID_MAX_LENGTH) || (strlen(_wifi[i]["PASS"].asString()) >= WLAN_PASS_MAX_LENGTH))
+      if (i >= NUM_OF_WLAN_CREDENTIALS)
+        break;
+
+      if ((strlen(wifiEntry["SSID"].as<const char*>()) >= WLAN_SSID_MAX_LENGTH) || (strlen(wifiEntry["PASS"].as<const char*>()) >= WLAN_PASS_MAX_LENGTH))
       {
         Serial.println("Wlan::loadConfig: credentials invalid");
       }
       else
       {
-        strcpy(wlanCredentials[i].ssid, _wifi[i]["SSID"].asString());
-        strcpy(wlanCredentials[i].password, _wifi[i]["PASS"].asString());
+        strcpy(wlanCredentials[i].ssid, wifiEntry["SSID"].as<const char*>());
+        strcpy(wlanCredentials[i].password, wifiEntry["PASS"].as<const char*>());
         Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
       }
       i++;
@@ -119,19 +118,19 @@ void Wlan::saveConfig()
     credentialIndex = 0u;
   }
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
 
   json["host"] = hostName;
   json["ap"] = accessPointName;
 
-  JsonArray &array = json.createNestedArray("wifi");
+  JsonArray array = json["wifi"].to<JsonArray>();
 
   for (uint8_t i = 0; i < NUM_OF_WLAN_CREDENTIALS; ++i)
   {
     if (wlanCredentials[i].ssid[0] != '\0')
     {
-      JsonObject &_wifi = array.createNestedObject();
+      JsonObject _wifi = array.add<JsonObject>();
       _wifi["SSID"] = wlanCredentials[i].ssid;
       _wifi["PASS"] = wlanCredentials[i].password;
       Serial.printf("Wlan::saveCredentials: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
@@ -195,6 +194,10 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 
     wifiState = WifiState::AddCredentials;
     WiFi.begin(ssid, password);
+    wifi_config_t wifi_cfg;
+    esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
+    wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+    esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
     connectTimeout = CONNECT_TIMEOUT;
   }
 }
@@ -232,6 +235,14 @@ WifiStrength Wlan::getSignalStrength()
 
 void Wlan::update()
 {
+  if (mdnsUpdatePending)
+  {
+    mdnsUpdatePending = false;
+    updateMdns();
+  }
+
+  gSystem->processPendingSave();
+
   //Serial.printf("Wlan::update: wifiState = %d\n", wifiState);
 
   switch (wifiState)
@@ -300,6 +311,10 @@ void Wlan::connectToKnownStations()
       connectTimeout = CONNECT_TIMEOUT;
       credentialIndex = stationIndex;
       WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
+      wifi_config_t wifi_cfg;
+      esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
+      wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+      esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
       Serial.printf("Wlan::connectToStations: SSID = %s, PW = %s\n", wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
     }
 
@@ -386,10 +401,10 @@ String Wlan::getHostName()
 
 void Wlan::setHostName(String hostName)
 {
-  if (hostName.length())
+  if (hostName.length() && hostName != this->hostName)
   {
     this->hostName = hostName;
-    this->updateMdns();
+    mdnsUpdatePending = true;
   }
 }
 

@@ -55,17 +55,23 @@ void DisplayTft::hwInit()
   this->setBrightness(100u);
 
   // configure dimming IC (old TFT, aktuell noch in gebrauch)
+  // arduino-esp32 2.x: ESP-IDF I2C driver has ~10ms overhead per failed transaction;
+  // probe first to avoid 17x failed calls (~170ms) when chip is absent.
   PCA9533 pca9533;
-  pca9533.init();
-  Serial.println("Setup LED Controller:");
-  Serial.println(pca9533.ping());
-  pca9533.setPSC(REG_PSC0, 0);
-  pca9533.setPSC(REG_PSC1, 29);
-  pca9533.setMODE(IO0, LED_MODE_PWM0);
-  pca9533.setMODE(IO1, LED_MODE_PWM0);
-  pca9533.setMODE(IO2, LED_MODE_PWM0);
-  pca9533.setMODE(IO3, LED_MODE_PWM0);
-  pca9533.setPWM(REG_PWM0, 255);
+  byte pingResult = pca9533.ping();
+  Serial.print("Setup LED Controller: ");
+  Serial.println(pingResult);
+  if (pingResult == 0)
+  {
+    pca9533.init();
+    pca9533.setPSC(REG_PSC0, 0);
+    pca9533.setPSC(REG_PSC1, 29);
+    pca9533.setMODE(IO0, LED_MODE_PWM0);
+    pca9533.setMODE(IO1, LED_MODE_PWM0);
+    pca9533.setMODE(IO2, LED_MODE_PWM0);
+    pca9533.setMODE(IO3, LED_MODE_PWM0);
+    pca9533.setPWM(REG_PWM0, 255);
+  }
 }
 
 void DisplayTft::init()

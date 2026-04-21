@@ -50,7 +50,14 @@ public:
   void update();
   void resetConfig();
   void saveConfig();
+  void processPendingSave();
   void loadConfig();
+  bool systemConfigSavePending = false;
+  bool otaConfigSavePending = false;
+  bool wlanConfigSavePending = false;
+  bool tempConfigSavePending = false;
+  bool notificationConfigSavePending = false;
+  bool pitmasterConfigSavePending = false;
   boolean isInitDone();
   Notification notification;
   Wlan wlan;

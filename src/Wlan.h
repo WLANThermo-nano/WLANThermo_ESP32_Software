@@ -86,6 +86,7 @@ private:
 
   static String hostName;
   static String accessPointName;
+  static bool mdnsUpdatePending;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
   static WlanCredentials newWlanCredentials;
   static uint8_t credentialIndex;

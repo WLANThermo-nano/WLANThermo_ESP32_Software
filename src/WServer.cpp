@@ -214,22 +214,22 @@ void WServer::init()
 
 void WServer::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["password"] = password;
   Settings::write(kServer, json);
 }
 
 void WServer::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kServer, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kServer, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("password"))
-      this->password = json["password"].asString();
+      this->password = json["password"].as<const char*>();
   }
 }
 

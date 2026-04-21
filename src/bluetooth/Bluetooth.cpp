@@ -76,20 +76,20 @@ void Bluetooth::init()
     if (this->doDfu())
     {
         builtIn = true;
-        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 3000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 6000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
     }
 }
 
 void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = Settings::read(kBluetooth, &jsonBuffer);
+    JsonDocument doc;
+    JsonObject json = Settings::read(kBluetooth, doc);
 
-    if (json.success())
+    if (!json.isNull())
     {
         if (json.containsKey("enabled"))
         {
-            enabled = json["enabled"].as<boolean>();
+            enabled = json["enabled"].as<bool>();
         }
 
         for (uint8_t i = 0u; i < json["tname"].size(); i++)
@@ -126,14 +126,14 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
 
 void Bluetooth::saveConfig()
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = jsonBuffer.createObject();
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
 
     json["enabled"] = enabled;
-    JsonArray &_name = json.createNestedArray("tname");
-    JsonArray &_address = json.createNestedArray("taddress");
-    JsonArray &_count = json.createNestedArray("tcount");
-    JsonArray &_selected = json.createNestedArray("tselected");
+    JsonArray _name = json["tname"].to<JsonArray>();
+    JsonArray _address = json["taddress"].to<JsonArray>();
+    JsonArray _count = json["tcount"].to<JsonArray>();
+    JsonArray _selected = json["tselected"].to<JsonArray>();
 
     for (uint8_t i = 0u; i < bleDevices.size(); i++)
     {
@@ -187,13 +187,28 @@ void Bluetooth::enableChip(boolean enable)
 void Bluetooth::getDevices()
 {
     uint32_t requestedDevices = 0u;
+    bool needsDiscovery = false;
 
     for (uint8_t devIndex = 0u; devIndex < bleDevices.size(); devIndex++)
     {
         if (bleDevices[devIndex]->selected > 0u)
         {
-            requestedDevices |= (1u << bleDevices[devIndex]->remoteIndex);
+            if (bleDevices[devIndex]->remoteIndex != BLE_DEVICE_REMOTE_INDEX_INIT)
+            {
+                requestedDevices |= (1u << bleDevices[devIndex]->remoteIndex);
+            }
+            else
+            {
+                needsDiscovery = true;
+            }
         }
+    }
+
+    // When selected devices have unknown NRF index, send getDevices=0 so NRF
+    // returns all nearby probes — address matching then assigns the correct index.
+    if (needsDiscovery)
+    {
+        requestedDevices = 0u;
     }
 
     gSystem->wireLock();
@@ -202,11 +217,11 @@ void Bluetooth::getDevices()
     gSystem->wireRelease();
     Serial.println(bleDeviceJson);
 
-    DynamicJsonBuffer jsonBuffer;
+    JsonDocument doc;
+    deserializeJson(doc, bleDeviceJson);
+    JsonObject json = doc.as<JsonObject>();
 
-    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
-
-    if (!json.success())
+    if (json.isNull())
     {
         Serial.println("Invalid JSON");
         return;
@@ -218,22 +233,20 @@ void Bluetooth::getDevices()
         return;
     }
 
-    JsonArray &_devices = json[BLE_JSON_DEVICE].asArray();
+    JsonArray _devices = json[BLE_JSON_DEVICE].as<JsonArray>();
     uint8_t deviceIndex = 0u;
 
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice, deviceIndex++)
+    for (JsonObject _device : _devices)
     {
-
-        JsonObject &_device = itDevice->asObject();
-
         if (_device.containsKey(BLE_JSON_ADDRESS) == false)
         {
             Serial.println("Invalid JSON: address missing");
+            deviceIndex++;
             continue;
         }
 
         // check if device is known
-        String deviceAddress = _device[BLE_JSON_ADDRESS];
+        String deviceAddress = _device[BLE_JSON_ADDRESS].as<const char*>();
         const auto isKnownDevice = [deviceAddress](BleDevice *d) {
             return (deviceAddress.equalsIgnoreCase(d->address));
         };
@@ -283,12 +296,12 @@ void Bluetooth::getDevices()
 
         if (_device.containsKey(BLE_JSON_SENSORS) == true)
         {
-            JsonArray &_sensors = _device[BLE_JSON_SENSORS].asArray();
+            JsonArray _sensors = _device[BLE_JSON_SENSORS].as<JsonArray>();
             uint8_t sensorIndex = 0u;
 
-            for (JsonArray::iterator itSensor = _sensors.begin(); (itSensor != _sensors.end()) && (sensorIndex < BLE_SENSORS_MAX_COUNT); ++itSensor, sensorIndex++)
+            for (JsonObject _sensor : _sensors)
             {
-                JsonObject &_sensor = itSensor->asObject();
+                if (sensorIndex >= BLE_SENSORS_MAX_COUNT) break;
 
                 if (_sensor.containsKey(BLE_JSON_SENSORS_VALUE) == true)
                 {
@@ -297,10 +310,14 @@ void Bluetooth::getDevices()
 
                 if (_sensor.containsKey(BLE_JSON_SENSORS_UNIT) == true)
                 {
-                    memcpy(bleDevice->units[sensorIndex], _sensor[BLE_JSON_SENSORS_UNIT].asString(), BLE_SENSOR_UNIT_MAX_SIZE - 1u);
+                    memcpy(bleDevice->units[sensorIndex], _sensor[BLE_JSON_SENSORS_UNIT].as<const char*>(), BLE_SENSOR_UNIT_MAX_SIZE - 1u);
                 }
+
+                sensorIndex++;
             }
         }
+
+        deviceIndex++;
     }
 }
 
@@ -405,7 +422,7 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
-        //Serial.printf("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        Serial.printf("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         if (gSystem->otaUpdate.isUpdateInProgress())
         {

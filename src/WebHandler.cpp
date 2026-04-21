@@ -160,7 +160,13 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
           }
         }
 
-        if ((this->*nanoWebHandlerList[i].bodyHandlerFunc)(request, data))
+        uint8_t *nullTerminated = new uint8_t[len + 1];
+        memcpy(nullTerminated, data, len);
+        nullTerminated[len] = '\0';
+        bool ok = (this->*nanoWebHandlerList[i].bodyHandlerFunc)(request, nullTerminated);
+        delete[] nullTerminated;
+
+        if (ok)
         {
           request->send(200, TEXTPLAIN, TEXTTRUE);
         }
@@ -179,7 +185,7 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
   }
 }
 
-bool NanoWebHandler::canHandle(AsyncWebServerRequest *request)
+bool NanoWebHandler::canHandle(AsyncWebServerRequest *request) const
 {
   boolean supported = false;
 
@@ -218,7 +224,7 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
   AsyncJsonResponse *response = new AsyncJsonResponse();
   response->addHeader("Server", "ESP Async Web Server");
 
-  JsonObject &json = response->getRoot();
+  JsonObject json = response->getRoot().to<JsonObject>();
 
   int n = WiFi.scanComplete();
 
@@ -242,14 +248,14 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     }
 
     String filterDuplicates;
-    JsonArray &_scan = json.createNestedArray("Scan");
+    JsonArray _scan = json["Scan"].to<JsonArray>();
     for (uint8_t i = 0; i < n; i++)
     {
       if (filterDuplicates.indexOf("||" + WiFi.SSID(i) + "||") >= 0)
         continue;
 
       filterDuplicates += "||" + WiFi.SSID(i) + "||";
-      JsonObject &_wifi = _scan.createNestedObject();
+      JsonObject _wifi = _scan.add<JsonObject>();
       _wifi["SSID"] = WiFi.SSID(i);
       _wifi["BSSID"] = WiFi.BSSIDstr(i);
       _wifi["RSSI"] = WiFi.RSSI(i);
@@ -268,7 +274,7 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     request->send(response);
   }
   else
-    json.printTo(Serial);
+    serializeJson(json, Serial);
 }
 
 void NanoWebHandler::handleWifiScan(AsyncWebServerRequest *request)
@@ -458,9 +464,9 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
   AsyncJsonResponse *response = new AsyncJsonResponse();
   response->addHeader("Server", "ESP Async Web Server");
 
-  JsonObject &json = response->getRoot();
+  JsonObject json = response->getRoot().to<JsonObject>();
   json["enabled"] = gSystem->bluetooth->isEnabled();
-  JsonArray &_devices = json.createNestedArray("devices");
+  JsonArray _devices = json["devices"].to<JsonArray>();
 
   for (uint8_t deviceIndex = 0u; deviceIndex < gSystem->bluetooth->getDeviceCount(); deviceIndex++)
   {
@@ -469,7 +475,7 @@ void NanoWebHandler::handleBluetooth(AsyncWebServerRequest *request)
     {
       if (bleDevice.count > 0u)
       {
-        JsonObject &_device = _devices.createNestedObject();
+        JsonObject _device = _devices.add<JsonObject>();
         _device["name"] = String(bleDevice.name);
         _device["address"] = String(bleDevice.address);
         _device["count"] = bleDevice.count;
@@ -498,37 +504,37 @@ void NanoWebHandler::handleGetPush(AsyncWebServerRequest *request)
   AsyncJsonResponse *response = new AsyncJsonResponse();
   response->addHeader("Server", "ESP Async Web Server");
 
-  JsonObject &json = response->getRoot();
+  JsonObject json = response->getRoot().to<JsonObject>();
 
   PushTelegramType pushTelegram = gSystem->notification.getTelegramConfig();
   PushPushoverType pushPushover = gSystem->notification.getPushoverConfig();
   PushAppType pushApp = gSystem->notification.getAppConfig();
 
-  JsonObject &telegram = json.createNestedObject("telegram");
+  JsonObject telegram = json["telegram"].to<JsonObject>();
 
   telegram["enabled"] = pushTelegram.enabled;
   telegram["token"] = pushTelegram.token;
   telegram["chat_id"] = pushTelegram.chatId;
 
-  JsonObject &pushover = json.createNestedObject("pushover");
+  JsonObject pushover = json["pushover"].to<JsonObject>();
 
   pushover["enabled"] = pushPushover.enabled;
   pushover["token"] = pushPushover.token;
   pushover["user_key"] = pushPushover.userKey;
   pushover["priority"] = pushPushover.priority;
 
-  JsonObject &app = json.createNestedObject("app");
+  JsonObject app = json["app"].to<JsonObject>();
 
   app["enabled"] = pushApp.enabled;
   app["max_devices"] = PUSH_APP_MAX_DEVICES;
 
-  JsonArray &devices = app.createNestedArray("devices");
+  JsonArray devices = app["devices"].to<JsonArray>();
 
   for (uint8_t i = 0u; i < PUSH_APP_MAX_DEVICES; i++)
   {
     if (strlen(pushApp.devices[i].token) > 0u)
     {
-      JsonObject &device = devices.createNestedObject();
+      JsonObject device = devices.add<JsonObject>();
 
       device["name"] = pushApp.devices[i].name;
       device["id"] = pushApp.devices[i].id;
@@ -565,47 +571,46 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &_system = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_system.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _system = doc.as<JsonObject>();
+  if (_system.isNull())
     return 0;
 
   String unit, _name;
 
   if (_system.containsKey("language"))
-    gSystem->setLanguage(_system["language"].asString());
+    gSystem->setLanguage(_system["language"].as<const char*>());
   if (_system.containsKey("crashreport"))
-    gSystem->setCrashReport((boolean)_system["crashreport"]);
-
-  gSystem->saveConfig();
+    gSystem->setCrashReport((bool)_system["crashreport"]);
 
   if (_system.containsKey("unit"))
-    unit = _system["unit"].asString();
+    unit = _system["unit"].as<const char*>();
   if (_system.containsKey("autoupd"))
-    gSystem->otaUpdate.setAutoUpdate((boolean)_system["autoupd"]);
+    gSystem->otaUpdate.setAutoUpdate((bool)_system["autoupd"]);
   if (_system.containsKey("prerelease"))
     gSystem->otaUpdate.setPrerelease(_system["prerelease"]);
 
-  gSystem->otaUpdate.saveConfig();
-
   if (_system.containsKey("host"))
   {
-    _name = _system["host"].asString();
+    _name = _system["host"].as<const char*>();
     if (checkStringLength(_name) < 14)
       gSystem->wlan.setHostName(_name);
   }
 
   if (_system.containsKey("ap"))
   {
-    _name = _system["ap"].asString();
+    _name = _system["ap"].as<const char*>();
     if (checkStringLength(_name) < 14)
       gSystem->wlan.setAccessPointName(_name);
   }
 
-  gSystem->wlan.saveConfig();
-
   gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0));
-  gSystem->temperatures.saveConfig();
+
+  gSystem->systemConfigSavePending = true;
+  gSystem->otaConfigSavePending = true;
+  gSystem->wlanConfigSavePending = true;
+  gSystem->tempConfigSavePending = true;
 
   return 1;
 }
@@ -617,9 +622,10 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &_cha = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_cha.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _cha = doc.as<JsonObject>();
+  if (_cha.isNull())
     return 0;
 
   int num = _cha["number"];
@@ -632,7 +638,7 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
     String _name;
     if (_cha.containsKey("name"))
     {
-      _name = _cha["name"].asString(); // KANALNAME
+      _name = _cha["name"].as<const char*>(); // KANALNAME
       if (checkStringLength(_name) < 11)
         temperature->setName(_name.c_str());
     }
@@ -661,12 +667,12 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
     if (_cha.containsKey("alarm"))
       temperature->setAlarmSetting((AlarmSetting)_cha["alarm"].as<uint8_t>()); // ALARM
     if (_cha.containsKey("color"))
-      temperature->setColor(_cha["color"].asString()); // COLOR
+      temperature->setColor(_cha["color"].as<const char*>()); // COLOR
   }
   else
     return 0;
 
-  gSystem->temperatures.saveConfig();
+  gSystem->tempConfigSavePending = true;
   return 1;
 }
 
@@ -675,19 +681,21 @@ bool NanoWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _network = doc.as<JsonObject>();
+  if (_network.isNull())
+    return 0;
+
   String ssid;
   String password;
-  JsonObject &_network = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_network.success())
-    return 0;
 
   if (_network.containsKey("ssid"))
   {
-    ssid = checkString(_network["ssid"].asString());
+    ssid = checkString(_network["ssid"].as<const char*>());
 
     if (_network.containsKey("password"))
-      password = _network["password"].asString();
+      password = _network["password"].as<const char*>();
 
     gSystem->wlan.addCredentials(ssid.c_str(), password.c_str());
 
@@ -702,19 +710,21 @@ bool NanoWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _network = doc.as<JsonObject>();
+  if (_network.isNull())
+    return 0;
+
   String ssid;
   String password;
-  JsonObject &_network = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_network.success())
-    return 0;
 
   if (_network.containsKey("ssid"))
   {
-    ssid = checkString(_network["ssid"].asString());
+    ssid = checkString(_network["ssid"].as<const char*>());
 
     if (_network.containsKey("password"))
-      password = _network["password"].asString();
+      password = _network["password"].as<const char*>();
 
     gSystem->wlan.addCredentials(ssid.c_str(), password.c_str(), true);
 
@@ -729,9 +739,10 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &_chart = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_chart.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _chart = doc.as<JsonObject>();
+  if (_chart.isNull())
     return 0;
 
   MqttConfig mqttConfig = gSystem->mqtt.getConfig();
@@ -739,13 +750,13 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   bool refresh = cloudConfig.cloudEnabled;
 
   if (_chart.containsKey("PMQhost"))
-    strcpy(mqttConfig.host, _chart["PMQhost"].asString());
+    strcpy(mqttConfig.host, _chart["PMQhost"].as<const char*>());
   if (_chart.containsKey("PMQport"))
     mqttConfig.port = _chart["PMQport"];
   if (_chart.containsKey("PMQuser"))
-    strcpy(mqttConfig.user, _chart["PMQuser"].asString());
+    strcpy(mqttConfig.user, _chart["PMQuser"].as<const char*>());
   if (_chart.containsKey("PMQpass"))
-    strcpy(mqttConfig.password, _chart["PMQpass"].asString());
+    strcpy(mqttConfig.password, _chart["PMQpass"].as<const char*>());
   if (_chart.containsKey("PMQqos"))
     mqttConfig.QoS = _chart["PMQqos"];
   if (_chart.containsKey("PMQon"))
@@ -758,14 +769,14 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   if (_chart.containsKey("CLon"))
     cloudConfig.cloudEnabled = _chart["CLon"];
   if (_chart.containsKey("CLtoken"))
-    cloudConfig.cloudToken = _chart["CLtoken"].asString();
+    cloudConfig.cloudToken = _chart["CLtoken"].as<const char*>();
   if (_chart.containsKey("CLint"))
     cloudConfig.cloudInterval = _chart["CLint"];
-  
+
   if (_chart.containsKey("CCLon"))
     cloudConfig.customEnabled = _chart["CCLon"];
   if (_chart.containsKey("CCLurl"))
-    cloudConfig.customUrl = _chart["CCLurl"].asString();
+    cloudConfig.customUrl = _chart["CCLurl"].as<const char*>();
   if (_chart.containsKey("CCLint"))
     cloudConfig.customInterval = _chart["CCLint"];
 
@@ -779,17 +790,18 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &_push = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!_push.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject _push = doc.as<JsonObject>();
+  if (_push.isNull())
     return 0;
 
-  boolean sendTestMessage = false;
+  bool sendTestMessage = false;
 
   // check if test message is requested
   if (_push.containsKey("test"))
   {
-    if (true == _push["test"].as<boolean>())
+    if (true == _push["test"].as<bool>())
     {
       sendTestMessage = true;
     }
@@ -797,7 +809,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (_push.containsKey("telegram"))
   {
-    JsonObject &_telegram = _push["telegram"];
+    JsonObject _telegram = _push["telegram"].as<JsonObject>();
 
     if (_telegram.containsKey("enabled") && _telegram.containsKey("token") &&
         _telegram.containsKey("chat_id"))
@@ -807,15 +819,15 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       memset(&telegram, 0, sizeof(telegram));
 
       telegram.enabled = _telegram["enabled"];
-      strncpy(telegram.token, _telegram["token"].asString(), sizeof(telegram.token));
-      strncpy(telegram.chatId, _telegram["chat_id"].asString(), sizeof(telegram.chatId));
+      strncpy(telegram.token, _telegram["token"].as<const char*>(), sizeof(telegram.token));
+      strncpy(telegram.chatId, _telegram["chat_id"].as<const char*>(), sizeof(telegram.chatId));
       gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
     }
   }
 
   if (_push.containsKey("pushover"))
   {
-    JsonObject &_pushover = _push["pushover"];
+    JsonObject _pushover = _push["pushover"].as<JsonObject>();
 
     if (_pushover.containsKey("enabled") && _pushover.containsKey("token") &&
         _pushover.containsKey("user_key") && _pushover.containsKey("priority"))
@@ -824,8 +836,8 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       PushPushoverType pushover;
       memset(&pushover, 0, sizeof(pushover));
       pushover.enabled = _pushover["enabled"];
-      strncpy(pushover.token, _pushover["token"].asString(), sizeof(pushover.token));
-      strncpy(pushover.userKey, _pushover["user_key"].asString(), sizeof(pushover.userKey));
+      strncpy(pushover.token, _pushover["token"].as<const char*>(), sizeof(pushover.token));
+      strncpy(pushover.userKey, _pushover["user_key"].as<const char*>(), sizeof(pushover.userKey));
       pushover.priority = _pushover["priority"];
 
       if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
@@ -840,7 +852,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (_push.containsKey("app"))
   {
-    JsonObject &_app = _push["app"];
+    JsonObject _app = _push["app"].as<JsonObject>();
 
     if (_app.containsKey("enabled") && _app.containsKey("devices"))
     {
@@ -850,25 +862,26 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
       app.enabled = _app["enabled"];
 
-      JsonArray &_devices = _app["devices"];
+      JsonArray _devices = _app["devices"].as<JsonArray>();
       uint8_t deviceIndex = 0u;
 
-      for (JsonArray::iterator it = _devices.begin(); (it != _devices.end()) && (deviceIndex < PUSH_APP_MAX_DEVICES); ++it)
+      for (JsonObject _device : _devices)
       {
-        JsonObject &_device = it->asObject();
+        if (deviceIndex >= PUSH_APP_MAX_DEVICES)
+          break;
 
         if (_device.containsKey("name") && _device.containsKey("id") &&
             (_device.containsKey("token") || _device.containsKey("token_sha256")))
         {
           String token;
-          boolean hasToken = _device.containsKey("token");
-          boolean hasHashedToken = _device.containsKey("token_sha256");
-          boolean hasSound = _device.containsKey("sound");
-          boolean hasAndroidChannelID = _device.containsKey("android_channel_id");
+          bool hasToken = _device.containsKey("token");
+          bool hasHashedToken = _device.containsKey("token_sha256");
+          bool hasSound = _device.containsKey("sound");
+          bool hasAndroidChannelID = _device.containsKey("android_channel_id");
 
           // check length of name and id
-          if ((strlen(_device["name"].asString()) >= sizeof(PushAppDeviceType::name)) &&
-              (strlen(_device["id"].asString()) >= sizeof(PushAppDeviceType::id)))
+          if ((strlen(_device["name"].as<const char*>()) >= sizeof(PushAppDeviceType::name)) &&
+              (strlen(_device["id"].as<const char*>()) >= sizeof(PushAppDeviceType::id)))
           {
             continue;
           }
@@ -876,23 +889,23 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
           // check length of token
           if(hasToken)
           {
-            if(strlen(_device["token"].asString()) >= sizeof(PushAppDeviceType::token))
+            if(strlen(_device["token"].as<const char*>()) >= sizeof(PushAppDeviceType::token))
             {
               continue;
             }
           }
 
-          strcpy(app.devices[deviceIndex].name, _device["name"].asString());
-          strcpy(app.devices[deviceIndex].id, _device["id"].asString());
+          strcpy(app.devices[deviceIndex].name, _device["name"].as<const char*>());
+          strcpy(app.devices[deviceIndex].id, _device["id"].as<const char*>());
 
           // user token or hash to get token
           if (hasToken)
           {
-            token = _device["token"].asString();
+            token = _device["token"].as<const char*>();
           }
           else if (hasHashedToken)
           {
-            token = gSystem->notification.getDeviceTokenFromHash(_device["token_sha256"].asString());
+            token = gSystem->notification.getDeviceTokenFromHash(_device["token_sha256"].as<const char*>());
           }
 
           strcpy(app.devices[deviceIndex].token, token.c_str());
@@ -904,7 +917,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
           if(hasAndroidChannelID)
           {
-            strcpy(app.devices[deviceIndex].androidchannelid, _device["android_channel_id"].asString());
+            strcpy(app.devices[deviceIndex].androidchannelid, _device["android_channel_id"].as<const char*>());
           }
 
           deviceIndex++;
@@ -917,7 +930,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 
   if (false == sendTestMessage)
   {
-    gSystem->notification.saveConfig();
+    gSystem->notificationConfigSavePending = true;
   }
 
   return 1;
@@ -928,22 +941,23 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonArray &json = jsonBuffer.parseArray((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!json.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonArray json = doc.as<JsonArray>();
+  if (json.isNull())
     return 0;
 
   byte id, ii = 0;
 
-  for (JsonArray::iterator it = json.begin(); it != json.end(); ++it)
+  for (JsonObject _pitmaster : json)
   {
-
-    JsonObject &_pitmaster = json[ii];
-
     Pitmaster *pm = gSystem->pitmasters[ii];
 
     if (NULL == pm)
+    {
+      ii++;
       continue;
+    }
 
     if (_pitmaster.containsKey("id"))
       id = _pitmaster["id"];
@@ -954,7 +968,7 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
 
     String typ;
     if (_pitmaster.containsKey("typ"))
-      typ = _pitmaster["typ"].asString();
+      typ = _pitmaster["typ"].as<const char*>();
     else
       return 0;
 
@@ -1014,7 +1028,7 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
     ii++;
   }
 
-  gSystem->pitmasters.saveConfig();
+  gSystem->pitmasterConfigSavePending = true;
 
   return 1;
 }
@@ -1024,17 +1038,17 @@ bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonArray &json = jsonBuffer.parseArray((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!json.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonArray json = doc.as<JsonArray>();
+  if (json.isNull())
     return 0;
 
   byte id = 0, ii = 0;
   float val;
 
-  for (JsonArray::iterator it = json.begin(); it != json.end(); ++it)
+  for (JsonObject _pid : json)
   {
-    JsonObject &_pid = json[ii];
     if (_pid.containsKey("id"))
       id = _pid["id"];
     else
@@ -1045,7 +1059,7 @@ bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     PitmasterProfile *profile = gSystem->getPitmasterProfile(id);
 
     if (_pid.containsKey("name"))
-      profile->name = _pid["name"].asString();
+      profile->name = _pid["name"].as<const char*>();
     if (_pid.containsKey("aktor"))
       profile->actuator = _pid["aktor"];
     if (_pid.containsKey("Kp"))
@@ -1069,7 +1083,7 @@ bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     if (_pid.containsKey("tune"))
       profile->autotune = _pid["tune"];
     if (_pid.containsKey("jp"))
-      profile->jumppw = constrain(_pid["jp"], 10, 100);
+      profile->jumppw = constrain(_pid["jp"].as<int>(), 10, 100);
     if (_pid.containsKey("SPmin"))
     {
       val = _pid["SPmin"];
@@ -1096,7 +1110,7 @@ bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
     ii++;
   }
 
-  gSystem->pitmasters.saveConfig();
+  gSystem->pitmasterConfigSavePending = true;
 
   return 1;
 }
@@ -1106,24 +1120,25 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
 
   //printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!json.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject json = doc.as<JsonObject>();
+  if (json.isNull())
     return 0;
 
   // URL
   if (json.containsKey("url"))
   {
     Serial.println("Server-URL");
-    JsonObject &_url = json["url"];
+    JsonObject _url = json["url"].as<JsonObject>();
 
     for (int i = 0; i < Cloud::serverurlCount; i++)
     { // nur bekannte auslesen
-      JsonObject &_link = _url[Cloud::serverurl[i].typ];
+      JsonObject _link = _url[Cloud::serverurl[i].typ].as<JsonObject>();
       if (_link.containsKey("host"))
-        Cloud::serverurl[i].host = _link["host"].asString();
+        Cloud::serverurl[i].host = _link["host"].as<const char*>();
       if (_link.containsKey("page"))
-        Cloud::serverurl[i].page = _link["page"].asString();
+        Cloud::serverurl[i].page = _link["page"].as<const char*>();
     }
 
     gSystem->cloud.saveUrl();
@@ -1134,7 +1149,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   if (json.containsKey("update"))
   {
     Serial.println("Update object");
-    JsonObject &_update = json["update"];
+    JsonObject _update = json["update"].as<JsonObject>();
     if (_update.containsKey("available"))
       available = _update["available"];
 
@@ -1144,7 +1159,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
       String version;
       if (_update.containsKey("version"))
       {
-        version = _update["version"].asString();
+        version = _update["version"].as<const char*>();
 
         if (!gSystem->otaUpdate.checkForUpdate(version))
         {
@@ -1155,18 +1170,18 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
 
       if (_update.containsKey(gDisplay->getUpdateName()))
       { // Firmware-Link
-        JsonObject &_fw = _update[gDisplay->getUpdateName()];
+        JsonObject _fw = _update[gDisplay->getUpdateName()].as<JsonObject>();
         if (_fw.containsKey("url"))
-          gSystem->otaUpdate.setDisplayUrl(_fw["url"].asString());
-        Serial.println(_fw["url"].asString());
+          gSystem->otaUpdate.setDisplayUrl(_fw["url"].as<const char*>());
+        Serial.println(_fw["url"].as<const char*>());
       }
 
       if (_update.containsKey("firmware"))
       { // Firmware-Link
-        JsonObject &_fw = _update["firmware"];
+        JsonObject _fw = _update["firmware"].as<JsonObject>();
         if (_fw.containsKey("url"))
-          gSystem->otaUpdate.setFirmwareUrl(_fw["url"].asString());
-        Serial.println(_fw["url"].asString());
+          gSystem->otaUpdate.setFirmwareUrl(_fw["url"].as<const char*>());
+        Serial.println(_fw["url"].as<const char*>());
       }
 
       if (_update.containsKey("force"))
@@ -1183,7 +1198,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   // CLOUD
   if (json.containsKey("cloud"))
   {
-    JsonObject &_cloud = json["cloud"];
+    JsonObject _cloud = json["cloud"].as<JsonObject>();
 
     if (_cloud.containsKey("task"))
     {
@@ -1199,14 +1214,14 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   // NOTE
   if (json.containsKey("notification"))
   {
-    JsonObject &_note = json["notification"];
+    JsonObject _note = json["notification"].as<JsonObject>();
 
     if (_note.containsKey("task"))
     {
       //if (_note["task"]) sys.online |= (1<<2);
       //else sys.online &= ~(1<<2);
       Serial.print("[NOTE]: ");
-      Serial.println(_note["task"].asString());
+      Serial.println(_note["task"].as<const char*>());
     }
   }
 
@@ -1218,9 +1233,10 @@ bool NanoWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
 
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!json.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject json = doc.as<JsonObject>();
+  if (json.isNull())
     return 0;
 
   byte aktor = json["aktor"];
@@ -1235,21 +1251,21 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
 {
   printRequest(datas);
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.parseObject((const char *)datas); //https://github.com/esp8266/Arduino/issues/1321
-  if (!json.success())
+  JsonDocument doc;
+  deserializeJson(doc, (const char *)datas);
+  JsonObject json = doc.as<JsonObject>();
+  if (json.isNull())
     return 0;
 
   if (json.containsKey("enabled"))
   {
-    gSystem->bluetooth->enable(json["enabled"].as<boolean>());
+    gSystem->bluetooth->enable(json["enabled"].as<bool>());
   }
 
-  JsonArray &_devices = json["devices"].asArray();
+  JsonArray _devices = json["devices"].as<JsonArray>();
 
-  for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice)
+  for (JsonObject _device : _devices)
   {
-    JsonObject &_device = itDevice->asObject();
 
     if (_device.containsKey("address") == false || _device.containsKey("count") == false || _device.containsKey("selected") == false)
     {
@@ -1277,4 +1293,5 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
 
   gSystem->temperatures.saveConfig();
   gSystem->bluetooth->saveConfig();
+  return 1;
 }

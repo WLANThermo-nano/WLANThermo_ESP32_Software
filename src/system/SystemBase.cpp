@@ -210,8 +210,8 @@ void SystemBase::resetConfig()
 
 void SystemBase::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["DisableTypeK"] = disableTypeK;
   json["DisableReceiver"] = disableReceiver;
   json["language"] = language;
@@ -219,21 +219,47 @@ void SystemBase::saveConfig()
   Settings::write(kSystem, json);
 }
 
+void SystemBase::processPendingSave()
+{
+  // One NVS write per call — ConnectTask calls this every 1s.
+  // Staggering prevents consecutive flash writes from blocking Core 1
+  // long enough to trigger the async_tcp task watchdog.
+  if (systemConfigSavePending) {
+    systemConfigSavePending = false;
+    saveConfig();
+  } else if (otaConfigSavePending) {
+    otaConfigSavePending = false;
+    otaUpdate.saveConfig();
+  } else if (wlanConfigSavePending) {
+    wlanConfigSavePending = false;
+    wlan.saveConfig();
+  } else if (tempConfigSavePending) {
+    tempConfigSavePending = false;
+    temperatures.saveConfig();
+  } else if (notificationConfigSavePending) {
+    notificationConfigSavePending = false;
+    notification.saveConfig();
+  } else if (pitmasterConfigSavePending) {
+    pitmasterConfigSavePending = false;
+    pitmasters.saveConfig();
+  }
+}
+
 void SystemBase::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kSystem, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kSystem, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("DisableTypeK"))
-      disableTypeK = json["DisableTypeK"].as<boolean>();
+      disableTypeK = json["DisableTypeK"].as<bool>();
     if (json.containsKey("DisableReceiver"))
-      disableReceiver = json["DisableReceiver"].as<boolean>();
+      disableReceiver = json["DisableReceiver"].as<bool>();
     if (json.containsKey("language"))
-      language = json["language"].asString();
+      language = json["language"].as<const char*>();
     if (json.containsKey("CrashReport"))
-      crashReport = json["CrashReport"].as<boolean>();
+      crashReport = json["CrashReport"].as<bool>();
   }
 
   SPIFFS.begin();
@@ -336,7 +362,9 @@ void SystemBase::setPowerSaveMode(boolean enable)
 
   if ((ret = esp_pm_configure(&pm_config)) != ESP_OK)
   {
-    Serial.printf("esp_pm_configure error %s\n", ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
+    if (ret == ESP_ERR_NOT_SUPPORTED)
+      powerSaveModeSupport = false;
+    Log.error("esp_pm_configure error %s" CR, ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
   }
   else
   {

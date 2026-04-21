@@ -86,7 +86,7 @@ void MainTask(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("MainTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("MainTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
@@ -121,7 +121,7 @@ void ConnectTask(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("ConnectTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("ConnectTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
@@ -153,7 +153,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       MainTask,                /* Task function. */
       "MainTask",              /* String with name of task. */
-      3000,                    /* Stack size in bytes. */
+      8000,                    /* Stack size in bytes. */
       NULL,                    /* Parameter passed as input of the task */
       TASK_PRIORITY_MAIN_TASK, /* Priority of the task. */
       NULL,                    /* Task handle. */
@@ -162,7 +162,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       ConnectTask,                /* Task function. */
       "ConnectTask",              /* String with name of task. */
-      4000,                       /* Stack size in bytes. */
+      12000,                      /* Stack size in bytes. */
       NULL,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_CONNECT_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */

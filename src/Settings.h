@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 #include "ArduinoJson.h"
-// #include <vector>
+#include <vector>
 
 enum SettingsNvsKeys
 {
@@ -47,16 +47,14 @@ class Settings
 {
 public:
   Settings();
-  static void write(SettingsNvsKeys key, JsonObject &json);
+  static void write(SettingsNvsKeys key, JsonObject json);
   static void write(String key, String value);
-  static JsonObject &read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer);
+  static JsonObject read(SettingsNvsKeys key, JsonDocument &doc);
   static String exportFile();
   static void remove(SettingsNvsKeys key);
   static void remove(String key);
   static void clear();
   static void onWrite(SettingsOnChangeCallback cb);
-
-  static const uint16_t jsonBufferSize;
 
 private:
   static const char *nvsNamespace;

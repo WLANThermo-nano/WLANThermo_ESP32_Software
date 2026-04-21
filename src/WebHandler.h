@@ -41,8 +41,8 @@ public:
   NanoWebHandler(void);
   void handleRequest(AsyncWebServerRequest *request);
   void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
-  boolean isRequestHandlerTrivial() { return false; };
-  bool canHandle(AsyncWebServerRequest *request);
+  bool isRequestHandlerTrivial() const override { return false; };
+  bool canHandle(AsyncWebServerRequest *request) const override;
 
   // Request handler
   void handleSettings(AsyncWebServerRequest *request);

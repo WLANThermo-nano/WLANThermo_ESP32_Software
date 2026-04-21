@@ -48,18 +48,17 @@ static const NvsKeyConfig_t NvsKeyConfig[] = {
     {STRINGIFY(kPbGuard), true, true}};
 
 const char *Settings::nvsNamespace = "wlanthermo";
-const uint16_t Settings::jsonBufferSize = 3072u;
 std::vector<SettingsOnChangeCallback> Settings::registeredCallbacks;
 
 Settings::Settings()
 {
 }
 
-void Settings::write(SettingsNvsKeys key, JsonObject &json)
+void Settings::write(SettingsNvsKeys key, JsonObject json)
 {
   Preferences prefs;
   String jsonString;
-  json.printTo(jsonString);
+  serializeJson(json, jsonString);
   prefs.begin(nvsNamespace, false);
   prefs.putString(NvsKeyConfig[key].keyName, jsonString);
   prefs.end();
@@ -73,13 +72,13 @@ void Settings::write(SettingsNvsKeys key, JsonObject &json)
     (*it)(key);
 }
 
-JsonObject &Settings::read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer)
+JsonObject Settings::read(SettingsNvsKeys key, JsonDocument &doc)
 {
   Preferences prefs;
   String jsonString;
   prefs.begin(nvsNamespace, true);
   jsonString = prefs.getString(NvsKeyConfig[key].keyName, "");
-  JsonObject &json = jsonBuffer->parseObject(jsonString);
+  deserializeJson(doc, jsonString);
   prefs.end();
 
   if (NvsKeyConfig[key].debugPrint)
@@ -87,7 +86,7 @@ JsonObject &Settings::read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer)
     Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyConfig[key].keyName, jsonString.length(), jsonString.c_str());
   }
 
-  return json;
+  return doc.as<JsonObject>();
 }
 
 String Settings::exportFile()
