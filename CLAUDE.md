@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository
+
+- **Upstream:** https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software.git (master)
+- **Local branch:** `master` — zwei eigene Commits auf Upstream-History:
+  - `225e87f` — Phase 1: Kernel Upgrade
+  - `a2fad1c` — Phase 4c: ArduinoJson v7 Migration
+- **Referenz-Backup:** `WLANThermo_ESP32_Software-master_old/` (ZIP-Extrakt ohne Git, kann gelöscht werden)
+
 ## Project Overview
 
 WLANThermo ESP32 is Arduino-framework firmware for a WiFi BBQ thermometer. It supports multiple hardware variants with different displays, sensors, and control outputs. The firmware embeds a gzip-compressed Vue.js web UI and exposes a REST/WebSocket API.
