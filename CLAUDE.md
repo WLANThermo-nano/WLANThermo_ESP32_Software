@@ -91,11 +91,13 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 - WiFi fix (`WIFI_ALL_CHANNEL_SCAN` — connect to strongest AP) is set at runtime in `src/Wlan.cpp` after each `WiFi.begin()` call via `esp_wifi_set_config()`.
 - `extra_script.py` patches `ESPRandom@1.4.1` (missing `#include <vector>`) at build time via `patch_esp_random()`. Idempotent.
 - WiFi event enums: `ARDUINO_EVENT_WIFI_STA_GOT_IP`, `ARDUINO_EVENT_WIFI_STA_DISCONNECTED`, `ARDUINO_EVENT_WIFI_AP_STADISCONNECTED` (see `src/Wlan.cpp`).
-- Async networking uses `mathieucarbou/AsyncTCP` + `mathieucarbou/ESPAsyncWebServer` (replaces old me-no-dev forks).
+- Async networking uses `ESP32Async/AsyncTCP@^3.4.10` + `ESP32Async/ESPAsyncWebServer@^3.10.3` (Nachfolger-Repos; `mathieucarbou/*` seit Januar 2025 archiviert). AsyncTCP läuft auf Core 1 (`-DCONFIG_ASYNC_TCP_RUNNING_CORE=1` in `[env]` build_flags) — gleicher Core wie MainTask/ConnectTask, verhindert Inter-Core-Synchronisationsoverhead.
 - Logging uses `ArduinoLog` macros (`Log.verbose`, `Log.notice`, `Log.error`) — not `Serial.print`.
 - Settings persistence: `src/Settings.cpp` uses **NVS** (`Preferences` API) — NOT SPIFFS. SPIFFS wird nur für Cloud-URL-Cache (`Cloud.cpp`) und Nextion-Display-Updates verwendet.
 - Power management: `esp_pm_config_esp32_t` + `esp_pm_configure()` in `src/system/SystemBase.cpp`. `CONFIG_PM_ENABLE` ist im vorkompilierten arduino-esp32 2.x SDK **nicht gesetzt** → Power-Save-Modus nicht verfügbar. `setPowerSaveMode()` deaktiviert sich nach erstem `ESP_ERR_NOT_SUPPORTED` selbst. Erst mit **Phase 4b** (arduino-esp32 3.x / ESP-IDF 5.x) nutzbar — `CONFIG_PM_ENABLE=y` soll dort Standard sein (vor Phase-4b-Start in `sdk/esp32/sdkconfig` der neuen SDK verifizieren).
-- **ESPAsyncWebServer 3.x Migrationshinweise:** `AsyncWebHandler::canHandle()` und `isRequestHandlerTrivial()` sind jetzt `const virtual` → alle Subklassen müssen `const override` verwenden, sonst wird die Basisklasse nicht überschrieben. Body-Daten in `handleBody()` sind **nicht null-terminiert** → null-terminierte Kopie (`new uint8_t[len+1]`) vor `deserializeJson()` erstellen. `AsyncJsonResponse::getRoot()` gibt `JsonVariant` zurück → `.to<JsonObject>()` aufrufen.
+- **ESPAsyncWebServer Migrationshinweise:**
+  - **3.x (mathieucarbou → ESP32Async):** `AsyncWebHandler::canHandle()` und `isRequestHandlerTrivial()` sind jetzt `const virtual` → alle Subklassen müssen `const override` verwenden. Body-Daten in `handleBody()` sind **nicht null-terminiert** → null-terminierte Kopie (`new uint8_t[len+1]`) vor `deserializeJson()` erstellen. `AsyncJsonResponse::getRoot()` gibt `JsonVariant` zurück → `.to<JsonObject>()` aufrufen.
+  - **3.10.x (ESP32Async):** `WebRequestMethodComposite` ist jetzt eine eigene Klasse (kein `int32_t` mehr). Struct-Felder für HTTP-Methoden müssen `WebRequestMethodComposite` statt `int32_t` sein. Literal `0` als Initialisierer → `HTTP_UNKNOWN`. Vergleich `(request->method() & field) > 0u` → `field & request->method()` (operator& gibt `bool` zurück; Operandenreihenfolge: Composite links, `WebRequestMethod` rechts).
 
 ## Project Roadmap
 
@@ -196,9 +198,9 @@ Flutter-App fertigstellen, Cordova ablösen.
 
 | Lib | Status | Bemerkung |
 |-----|--------|-----------|
-| `mathieucarbou/AsyncTCP@^3.0.0` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
-| `mathieucarbou/ESPAsyncWebServer@^3.0.0` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
-| `mathieucarbou/AsyncMqttClient` | ✅ OK (nach 4a) | explizit arduino-esp32 3.x unterstützt |
+| `ESP32Async/AsyncTCP@^3.4.10` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
+| `ESP32Async/ESPAsyncWebServer@^3.10.3` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
+| `ESP32Async/AsyncMqttClient` | ✅ OK (nach 4a) | explizit arduino-esp32 3.x unterstützt |
 | `ArduinoJson@^7.x` | ✅ OK | pure C++, kein IDF-Bezug; nach Phase 4c bereits auf 7.x |
 | `asyncHTTPrequest`, `ArduinoLog`, `ESPRandom`, `Time`, `MedianFilter` | ✅ OK | pure C++/Arduino |
 | `TFT_eSPI@^2.5.34` (nach 4a) | ✅ OK | 2.5.34+ explizit für neuere Board-Packages |
@@ -343,15 +345,15 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 
 ## Dependency Upgrade Guide
 
-Stand: 2026-04-21
+Stand: 2026-04-22
 
 ### Abgeschlossen ✅
 
 | Dep | Alt | Neu | Anmerkung |
 |-----|-----|-----|-----------|
 | **Arduino ESP32 Framework** | `tuniii/arduino-esp32#WifiFix` (1.x) | `espressif32@^6.0.0` (2.x / ESP-IDF 4.4.x) | WiFi-Patch via `extra_script.py`; Hardware-Test miniV3 weitgehend bestanden (Details siehe Phase 1) |
-| **AsyncTCP** | `me-no-dev@1.1.1` | `mathieucarbou/AsyncTCP@^3.0.0` | Drop-in kompatibel |
-| **ESPAsyncWebServer** | `me-no-dev#1dde9cf` | `mathieucarbou/ESPAsyncWebServer@^3.0.0` | Aktiv gepflegt, ESP-IDF 5.x kompatibel |
+| **AsyncTCP** | `me-no-dev@1.1.1` → `mathieucarbou@^3.0.0` | `ESP32Async/AsyncTCP@^3.4.10` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Nachfolger-Org `ESP32Async`; Drop-in kompatibel |
+| **ESPAsyncWebServer** | `me-no-dev#1dde9cf` → `mathieucarbou@^3.0.0` | `ESP32Async/ESPAsyncWebServer@^3.10.3` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Breaking: `WebRequestMethodComposite` kein `int32_t` mehr ab v3.10.x (siehe Migrationshinweise) |
 | **ArduinoJson** | 5.13.4 | 7.x (Phase 4c, 2026-04-21) | 20 Dateien, ~404 API-Aufrufe; `DynamicJsonBuffer` → `JsonDocument`, `JsonObject&` → Value-Typ, `parseObject` → `deserializeJson`; kein Heap-Wachstum mehr; `double_with_n_digits()` entfernt |
 
 ### Nicht upgraden – Breaking Changes (dedizierter Sprint nötig)
@@ -365,7 +367,7 @@ Stand: 2026-04-21
 
 | Dep | Aktuell | Ziel | Aufwand | Hinweis |
 |-----|---------|------|---------|---------|
-| **AsyncMqttClient** | 0.8.2 | `mathieucarbou/AsyncMqttClient` | Mittel | **Blocker für Phase 4b** — ohne diesen Wechsel kompiliert Kernel 3.x nicht |
+| **AsyncMqttClient** | 0.8.2 | `ESP32Async/AsyncMqttClient` | Mittel | **Blocker für Phase 4b** — ohne diesen Wechsel kompiliert Kernel 3.x nicht |
 | **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` | **Trivial – Einzeiler** | `<2.5.34`-Constraint war Workaround für arduino-esp32 1.x (`hal/gpio_ll.h`); mit ESP-IDF 4.4.x (Phase 1) obsolet |
 | **ESPRandom** | 1.4.1 | neueste | Trivial | Upgrade macht `patch_esp_random()` in `extra_script.py` überflüssig |
 | **asyncHTTPrequest** | 1.2.2 | neueste 1.x | Trivial | Kleine Fixes, abwärtskompatibel |

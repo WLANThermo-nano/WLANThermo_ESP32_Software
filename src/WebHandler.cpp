@@ -48,8 +48,8 @@ typedef bool (NanoWebHandler::*ArBodyHandlerFunc)(AsyncWebServerRequest *, uint8
 typedef struct NanoWebHandlerList
 {
   const char *requestUrl;
-  int32_t requestMethod;
-  int32_t authRequestMethod;
+  WebRequestMethodComposite requestMethod;
+  WebRequestMethodComposite authRequestMethod;
   ArRequestHandlerFunc requestHandlerFunc;
   ArBodyHandlerFunc bodyHandlerFunc;
 } NanoWebHandlerListType;
@@ -74,27 +74,27 @@ NanoWebHandler nanoWebHandler;
 
 static const NanoWebHandlerListType nanoWebHandlerList[] = {
     // Request handler
-    {"/settings", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleSettings, NULL},
-    {"/data", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleData, NULL},
-    {"/networkscan", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleWifiScan, NULL},
-    {"/networklist", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleWifiResult, NULL},
-    {"/configreset", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleConfigReset, NULL},
-    {"/stopwifi", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleStopWifi, NULL},
-    {"/checkupdate", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleCheckUpdate, NULL},
-    {"/updatestatus", HTTP_POST, 0, &NanoWebHandler::handleUpdateStatus, NULL},
-    {"/dcstatus", HTTP_POST, 0, &NanoWebHandler::handleDcStatus, NULL},
-    {"/clearwifi", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleClearWifi, NULL},
+    {"/settings", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleSettings, NULL},
+    {"/data", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleData, NULL},
+    {"/networkscan", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleWifiScan, NULL},
+    {"/networklist", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleWifiResult, NULL},
+    {"/configreset", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleConfigReset, NULL},
+    {"/stopwifi", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleStopWifi, NULL},
+    {"/checkupdate", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleCheckUpdate, NULL},
+    {"/updatestatus", HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleUpdateStatus, NULL},
+    {"/dcstatus", HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleDcStatus, NULL},
+    {"/clearwifi", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleClearWifi, NULL},
     {"/recovery", HTTP_GET, HTTP_GET, &NanoWebHandler::handleRecovery, NULL},
     {"/rotate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleRotate, NULL},
     {"/calibrate", HTTP_POST, HTTP_POST, &NanoWebHandler::handleCalibrate, NULL},
     {"/setadmin", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleAdmin, NULL},
     {"/update", HTTP_GET | HTTP_POST, HTTP_POST, &NanoWebHandler::handleUpdate, NULL},
-    {"/getbluetooth", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleBluetooth, NULL},
-    {"/getdeviceid", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleDeviceId, NULL},
+    {"/getbluetooth", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleBluetooth, NULL},
+    {"/getdeviceid", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleDeviceId, NULL},
     {"/log", HTTP_GET | HTTP_POST, HTTP_GET | HTTP_POST, &NanoWebHandler::handleLog, NULL},
-    {"/getpush", HTTP_GET | HTTP_POST, 0, &NanoWebHandler::handleGetPush, NULL},
+    {"/getpush", HTTP_GET | HTTP_POST, HTTP_UNKNOWN, &NanoWebHandler::handleGetPush, NULL},
     // Body handler
-    {"/setnetwork", HTTP_POST, 0, NULL, &NanoWebHandler::setNetwork},
+    {"/setnetwork", HTTP_POST, HTTP_UNKNOWN, NULL, &NanoWebHandler::setNetwork},
     {"/setchannels", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setChannels},
     {"/setsystem", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setSystem},
     {"/setpitmaster", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPitmaster},
@@ -102,7 +102,7 @@ static const NanoWebHandlerListType nanoWebHandlerList[] = {
     {"/setIoT", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setIoT},
     {"/setpush", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setPush},
     {"/setapi", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setServerAPI},
-    {"/setDC", HTTP_POST, 0, NULL, &NanoWebHandler::setDCTest},
+    {"/setDC", HTTP_POST, HTTP_UNKNOWN, NULL, &NanoWebHandler::setDCTest},
     {"/setbluetooth", HTTP_POST, HTTP_POST, NULL, &NanoWebHandler::setBluetooth}};
 
 NanoWebHandler::NanoWebHandler()
@@ -118,9 +118,9 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
 
     if (request->url().equals(nanoWebHandlerList[i].requestUrl))
     {
-      if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
+      if (nanoWebHandlerList[i].requestMethod & request->method())
       {
-        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::requireAuth()))
+        if ((nanoWebHandlerList[i].authRequestMethod & request->method()) && (true == WServer::requireAuth()))
         {
           if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
           {
@@ -149,9 +149,9 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
 
     if (request->url().equals(nanoWebHandlerList[i].requestUrl))
     {
-      if ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u)
+      if (nanoWebHandlerList[i].requestMethod & request->method())
       {
-        if (((request->method() & nanoWebHandlerList[i].authRequestMethod) > 0u) && (true == WServer::requireAuth()))
+        if ((nanoWebHandlerList[i].authRequestMethod & request->method()) && (true == WServer::requireAuth()))
         {
           if (!request->authenticate(WServer::getUsername().c_str(), WServer::getPassword().c_str(), WServer::getRealm()))
           {
@@ -191,7 +191,7 @@ bool NanoWebHandler::canHandle(AsyncWebServerRequest *request) const
 
   for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
   {
-    if ((request->url().equals(nanoWebHandlerList[i].requestUrl)) && ((request->method() & nanoWebHandlerList[i].requestMethod) > 0u))
+    if ((request->url().equals(nanoWebHandlerList[i].requestUrl)) && (nanoWebHandlerList[i].requestMethod & request->method()))
     {
       supported = true;
       break;
