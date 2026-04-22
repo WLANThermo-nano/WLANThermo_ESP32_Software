@@ -629,6 +629,8 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
     return 0;
 
   int num = _cha["number"];
+  if (num < 1)
+    return 0;
   num--; // Intern beginnt die Zählung bei 0
 
   TemperatureBase *temperature = gSystem->temperatures[num];
