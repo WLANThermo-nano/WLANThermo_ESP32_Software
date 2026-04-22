@@ -830,8 +830,10 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       memset(&telegram, 0, sizeof(telegram));
 
       telegram.enabled = _telegram["enabled"];
-      strncpy(telegram.token, _telegram["token"].as<const char*>(), sizeof(telegram.token));
-      strncpy(telegram.chatId, _telegram["chat_id"].as<const char*>(), sizeof(telegram.chatId));
+      strncpy(telegram.token, _telegram["token"].as<const char*>(), sizeof(telegram.token) - 1);
+      telegram.token[sizeof(telegram.token) - 1] = '\0';
+      strncpy(telegram.chatId, _telegram["chat_id"].as<const char*>(), sizeof(telegram.chatId) - 1);
+      telegram.chatId[sizeof(telegram.chatId) - 1] = '\0';
       gSystem->notification.setTelegramConfig(telegram, sendTestMessage);
     }
   }
@@ -847,8 +849,10 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
       PushPushoverType pushover;
       memset(&pushover, 0, sizeof(pushover));
       pushover.enabled = _pushover["enabled"];
-      strncpy(pushover.token, _pushover["token"].as<const char*>(), sizeof(pushover.token));
-      strncpy(pushover.userKey, _pushover["user_key"].as<const char*>(), sizeof(pushover.userKey));
+      strncpy(pushover.token, _pushover["token"].as<const char*>(), sizeof(pushover.token) - 1);
+      pushover.token[sizeof(pushover.token) - 1] = '\0';
+      strncpy(pushover.userKey, _pushover["user_key"].as<const char*>(), sizeof(pushover.userKey) - 1);
+      pushover.userKey[sizeof(pushover.userKey) - 1] = '\0';
       pushover.priority = _pushover["priority"];
 
       if (_pushover.containsKey("retry") && _pushover.containsKey("expire"))
