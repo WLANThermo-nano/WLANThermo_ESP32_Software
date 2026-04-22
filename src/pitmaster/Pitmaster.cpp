@@ -90,7 +90,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->channel1 = channel1;
     this->channel2 = channel2;
     this->initActuator = NOAR;
-    this->globalIndex = this->globalIndexTracker++;
+    this->globalIndex = __sync_fetch_and_add(&globalIndexTracker, 1u);
     this->registeredCb = NULL;
     this->settingsChanged = false;
     this->registeredCbUserData = NULL;
