@@ -1244,7 +1244,9 @@ bool NanoWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
   int val = json["val"];
   val /= 10;                                                      //TODO: why is value multiplied with 10 in frontend?
   byte id = 0;                                                    // Pitmaster0 // TODO: add id to frontend
-  return gSystem->pitmasters[id]->startDutyCycleTest(aktor, val); //TODO NULL pointer!!!
+  if (gSystem->pitmasters[id] == NULL)
+    return 0;
+  return gSystem->pitmasters[id]->startDutyCycleTest(aktor, val);
 }
 
 bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas)
