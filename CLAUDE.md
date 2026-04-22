@@ -269,7 +269,31 @@ Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
 | `constrain(_pid["jp"], 10, 100)` → `constrain(_pid["jp"].as<int>(), 10, 100)` | `src/WebHandler.cpp` | ArduinoJson v7 `MemberProxy` ist non-copyable — Arduino `constrain()`-Makro versucht Kopie → privater Copy-Konstruktor löst Compile-Fehler aus. Fix: `.as<int>()` vor dem `constrain()`-Aufruf. |
 | `double_with_n_digits(val, N)` entfernt (8×) | `src/pitmaster/PitmasterGrp.cpp` | `double_with_n_digits()` war ArduinoJson v5 internes Helper-Funktion zum Serialisieren von Floats mit begrenzter Dezimalstellenzahl. In v7 nicht mehr vorhanden. Ersatz: direktes Float-Assignment (`_pid["Kp"] = profile->kp`). v7 serialisiert Floats mit voller Präzision. |
 
-**Hardware-Test ausstehend** (gleicher Scope wie Phase-1-Test: Settings, BLE, WiFi-Stabilität).
+**Hardware-Test miniV3 (2026-04-22) — Ergebnis Phase 4c:**
+
+| Bereich | Status | Anmerkung |
+|---------|--------|-----------|
+| Pitmaster (Servo, Lüfter) | ✅ OK | |
+| Pitmaster SSR | ❌ Keine Reaktion | Ursache noch ungeklärt — separater Debug ausstehend |
+| System (Sprache, Einheit) | ✅ OK | |
+| IoT (Cloud) | ✅ OK | |
+| MQTT | ⏳ Ausstehend | Keine Gegenstelle verfügbar |
+| Benachrichtigungen (Telegram, Pushover, Alarmton) | ✅ OK | |
+| Bluetooth | ✅ OK | |
+| Temperaturmessung + Typ K | ✅ OK | |
+| Kanaleinstellungen + Temperaturschwellen | ✅ OK | |
+| Batterieerkennung | ✅ OK | Ladeendzustand noch nicht getestet |
+| Recovery-Mode starten | ✅ OK | Wird bei `/recovery` gestartet |
+| Recovery-Seite (Auto-Redirect) | ✅ OK (fix 2026-04-22) | `restart.html` JS fehlte `onerror`-Handler → Seite lud erst beim 2. Aufruf (B15 gefixt) |
+| Recovery-Export | ✅ OK (fix 2026-04-22) | `beginResponse_P` mit lokalem String-Pointer → HTTP-Header als Dateiinhalt (B14 gefixt) |
+| Recovery-Import | ⏳ Ausstehend | Noch nicht getestet |
+| Recovery-Update (Restart) | ✅ OK (fix 2026-04-22) | Kein automatischer Restart nach Firmware-Upload (B16 gefixt) |
+| REST-API (`/data`, `/settings`) | ✅ OK | |
+| Display-Funktionen | ✅ OK | |
+| Standby-Erkennung | ✅ OK | |
+| WiFi-Stabilität | ⏳ Langzeittest läuft | Gerät läuft über Nacht; Ergebnis ausstehend |
+
+**Gesamtergebnis:** Solide — alle Kernfunktionen OK. Drei Recovery-Bugs gefixt (B14–B16), SSR-Fehler offen.
 
 ---
 
@@ -299,6 +323,9 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 | ~~B12~~ | `src/temperature/TemperatureGrp.cpp` | `saveConfig()` | ~~Medium~~ **GEFIXT (2026-04-20)** | `DynamicJsonBuffer jsonBuffer;` ohne Größe → selbes M1-Problem wie B11. Fix: `DynamicJsonBuffer(Settings::jsonBufferSize)`. |
 | ~~B13~~ | `src/WebHandler.cpp` | `setSystem()` | ~~High~~ **GEFIXT (2026-04-20)** | 4 NVS-Writes hintereinander → Task-Watchdog (WDT) auf `async_tcp`. Root Cause: `MainTask`, `ConnectTask` und `async_tcp` laufen alle auf **Core 1** (siehe `main.cpp:160,169`). NVS-Writes sperren Core 1 für die Flash-Write-Dauer → async_tcp kann keinen WDT-Reset ausführen. Erster Fix (Auslagern zu ConnectTask) half nicht, da ConnectTask ebenfalls Core 1. Zweiter Fix: **Stückelung** — `processPendingSave()` schreibt genau **ein** NVS-Key pro Aufruf. ConnectTask ruft es jede Sekunde auf (`TASK_CYCLE_TIME_CONNECT_TASK=1000ms`). 4 Writes = 4 Sekunden verteilt, async_tcp kann dazwischen WDT zurücksetzen. Flags: `systemConfigSavePending`, `otaConfigSavePending`, `wlanConfigSavePending`, `tempConfigSavePending`. |
 | ~~B10~~ | `src/system/SystemBase.cpp` | `setPowerSaveMode()` | ~~Medium~~ **GEFIXT (2026-04-20)** | `CONFIG_PM_ENABLE` ist im vorkompilierten Arduino-ESP32-2.x-SDK nicht gesetzt (`# CONFIG_PM_ENABLE is not set` in `sdk/esp32/sdkconfig`). `sdkconfig.board` hat **keine Wirkung** beim Arduino-Framework (gilt nur für ESP-IDF-native Builds). Fix: bei `ESP_ERR_NOT_SUPPORTED` wird `powerSaveModeSupport = false` gesetzt → kein weiterer Aufruf. Power-Save ist auf arduino-esp32 2.x generell nicht nutzbar; erst mit Phase 4 (ESP-IDF 5.x / arduino-esp32 3.x) möglich, wo `CONFIG_PM_ENABLE=y` Standard ist. |
+| ~~B14~~ | `src/RecoveryMode.cpp` | `/export`-Handler | ~~High~~ **GEFIXT (2026-04-22)** | `beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), ...)` speichert nur Raw-Pointer auf lokale `String exportSettings`. Nach Lambda-Return wird String zerstört → dangling pointer. Async-Webserver liest beim Senden freien Speicher → Browser empfängt HTTP-Header als Dateiinhalt statt NVS-Keys. Fix: `beginResponse(200, "text/plain", exportSettings)` — kopiert String-Inhalt intern. |
+| ~~B15~~ | `webui/old/restart.html` | XHR-Polling-Loop | ~~Medium~~ **GEFIXT (2026-04-22)** | `xhr.onerror` nicht behandelt. Wenn ESP nach `/recovery`-Aufruf WLAN trennt (Recovery-Reboot), bekommt Browser Network Error (kein Timeout) → `onerror` feuert ohne Handler → Polling stoppt → Seite zeigt Spinner ewig. Benutzer musste `/recovery` manuell ein zweites Mal aufrufen. Fix: `xhr.onerror`-Handler ergänzt, der nach 1s Pause erneut `/ping` sendet. |
+| ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix: Im POST-Response-Handler nach `request->send()` wird geprüft ob `uploadFileType == Firmware || SPIFFS`; wenn ja: `WiFi.disconnect()` + 1s delay + `ESP.restart()`. |
 
 ### SRAM / Heap-Optimierungen
 
