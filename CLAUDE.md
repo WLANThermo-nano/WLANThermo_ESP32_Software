@@ -4,10 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository
 
-- **Upstream:** https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software.git (master)
-- **Local branch:** `master` — zwei eigene Commits auf Upstream-History:
-  - `225e87f` — Phase 1: Kernel Upgrade
-  - `a2fad1c` — Phase 4c: ArduinoJson v7 Migration
+- **Upstream/Remote:** `git@github.com:WLANThermo-nano/WLANThermo_ESP32_Software.git` (SSH)
+- **GitHub-User:** `Phantomias2006`
+- **Branches:**
+  - `master` — drei eigene Commits auf Upstream-History:
+    - `225e87f` — Phase 1: Kernel Upgrade
+    - `a2fad1c` — Phase 4c: ArduinoJson v7 Migration
+    - `dc130ee` — docs: CLAUDE.md Repo-Info
+  - `develop` — Integration für Hotfixes und schnelle Releases (immer releasable)
+  - `next` — Spielwiese für Phasen-Arbeit; alle `feature/*`-Branches landen hier zuerst, dann nach Test in `develop` → `master`
+- **Feature-Branch-Schema:** `feature/phase-0-stabilization`, `feature/phase-2-vue3`, `feature/phase-4a-lib-upgrade`, `feature/phase-4b-kernel-3x`, `feature/phase-5-lvgl9`
 - **Referenz-Backup:** `WLANThermo_ESP32_Software-master_old/` (ZIP-Extrakt ohne Git, kann gelöscht werden)
 
 ## Project Overview
@@ -18,10 +24,27 @@ WLANThermo ESP32 is Arduino-framework firmware for a WiFi BBQ thermometer. It su
 
 **Firmware (PlatformIO required):**
 ```bash
-pio run -e miniV3                    # Build for miniV3 hardware
-pio run -e miniV3 -t upload          # Build and flash via USB
-pio run -e miniV3 -t monitor         # Serial monitor (115200 baud)
+~/.platformio/penv/bin/pio run -e miniV3             # Build for miniV3 hardware
+~/.platformio/penv/bin/pio run -e miniV3 -t upload   # Build and flash via USB
+~/.platformio/penv/bin/pio run -e miniV3 -t monitor  # Serial monitor (115200 baud)
 ```
+
+> **macOS:** `pio` ist nicht im PATH — vollständigen Pfad `~/.platformio/penv/bin/pio` verwenden.
+
+> **Build-Fix (2026-04-21):** Falls `ModuleNotFoundError: No module named 'intelhex'` auftritt:
+> ```bash
+> ~/.platformio/penv/bin/pip install intelhex
+> ```
+> Das Paket fehlt nach Neuinstallation von PlatformIO im isolierten Python-Environment.
+
+> **Full-Flash-Fix (2026-04-22):** Das Hardware-Target miniV3 hat 16MB Flash. Ohne explizite Flash-Konfiguration in `platformio.ini` nutzt PlatformIO den Board-Default (4MB) → inkompatiblen Bootloader → Boot-Loop ohne serielle Ausgabe. Fix ist in `[env]` eingetragen:
+> ```ini
+> board_build.flash_mode = dio
+> board_build.flash_size = 16MB
+> board_upload.flash_size = 16MB
+> board_build.flash_freq = 40m
+> ```
+> Beim ersten Flash nach dieser Änderung empfohlen: `pio run -e miniV3 -t erase` vor `upload`, um alte NVS/OTA-Daten zu löschen.
 
 Hardware variants: `miniV1`, `miniV2`, `miniV3`, `connectV1`, `nanoV3`, `linkV1`, `boneV1`
 
