@@ -173,6 +173,9 @@ void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int r
         JsonArray _channels = json["channel"].as<JsonArray>();
         uint8_t channelIndex = 0u;
 
+        if (connectDevices.empty())
+            return;
+
         connectDevices[0]->status = 1u;
 
         for (JsonObject _channel : _channels)
