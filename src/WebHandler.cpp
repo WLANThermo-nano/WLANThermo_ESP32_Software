@@ -752,13 +752,22 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   bool refresh = cloudConfig.cloudEnabled;
 
   if (_chart.containsKey("PMQhost"))
-    strcpy(mqttConfig.host, _chart["PMQhost"].as<const char*>());
+  {
+    strncpy(mqttConfig.host, _chart["PMQhost"].as<const char*>(), sizeof(mqttConfig.host) - 1);
+    mqttConfig.host[sizeof(mqttConfig.host) - 1] = '\0';
+  }
   if (_chart.containsKey("PMQport"))
     mqttConfig.port = _chart["PMQport"];
   if (_chart.containsKey("PMQuser"))
-    strcpy(mqttConfig.user, _chart["PMQuser"].as<const char*>());
+  {
+    strncpy(mqttConfig.user, _chart["PMQuser"].as<const char*>(), sizeof(mqttConfig.user) - 1);
+    mqttConfig.user[sizeof(mqttConfig.user) - 1] = '\0';
+  }
   if (_chart.containsKey("PMQpass"))
-    strcpy(mqttConfig.password, _chart["PMQpass"].as<const char*>());
+  {
+    strncpy(mqttConfig.password, _chart["PMQpass"].as<const char*>(), sizeof(mqttConfig.password) - 1);
+    mqttConfig.password[sizeof(mqttConfig.password) - 1] = '\0';
+  }
   if (_chart.containsKey("PMQqos"))
     mqttConfig.QoS = _chart["PMQqos"];
   if (_chart.containsKey("PMQon"))
