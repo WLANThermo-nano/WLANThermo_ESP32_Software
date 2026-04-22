@@ -193,7 +193,7 @@ void RecoveryMode::run()
   webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request) {
     RMPRINTLN("GET /export");
     String exportSettings = Settings::exportFile();
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/text", (uint8_t *)exportSettings.c_str(), exportSettings.length());
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", exportSettings);
     response->addHeader("Content-Disposition", "attachment; filename=settings.txt");
     response->addHeader("Connection", "close");
     request->send(response);
