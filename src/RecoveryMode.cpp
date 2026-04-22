@@ -230,7 +230,13 @@ void RecoveryMode::run()
           nexUpload = NULL;
         }
 
-        request->send(200, TEXTPLAIN, TEXTTRUE); },
+        request->send(200, TEXTPLAIN, TEXTTRUE);
+        if (uploadFileType == UploadFileType::Firmware || uploadFileType == UploadFileType::SPIFFS)
+        {
+          WiFi.disconnect();
+          delay(1000);
+          ESP.restart();
+        } },
       [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
         if (!index)
           uploadFileType = getFileType(filename);
