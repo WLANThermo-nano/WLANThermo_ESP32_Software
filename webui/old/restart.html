@@ -91,6 +91,13 @@
 			xhr.send(null);
 		};
 
+		xhr.onerror = function (e) {
+			setTimeout(function () {
+				xhr.open("GET", "/ping");
+				xhr.send(null);
+			}, 1000);
+		};
+
 		xhr.send(null);
 	</script>
 </body>
