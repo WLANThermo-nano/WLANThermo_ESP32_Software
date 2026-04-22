@@ -895,7 +895,7 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
           bool hasAndroidChannelID = _device.containsKey("android_channel_id");
 
           // check length of name and id
-          if ((strlen(_device["name"].as<const char*>()) >= sizeof(PushAppDeviceType::name)) &&
+          if ((strlen(_device["name"].as<const char*>()) >= sizeof(PushAppDeviceType::name)) ||
               (strlen(_device["id"].as<const char*>()) >= sizeof(PushAppDeviceType::id)))
           {
             continue;
@@ -905,6 +905,15 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
           if(hasToken)
           {
             if(strlen(_device["token"].as<const char*>()) >= sizeof(PushAppDeviceType::token))
+            {
+              continue;
+            }
+          }
+
+          // check length of androidchannelid
+          if(hasAndroidChannelID)
+          {
+            if(strlen(_device["android_channel_id"].as<const char*>()) >= sizeof(PushAppDeviceType::androidchannelid))
             {
               continue;
             }
