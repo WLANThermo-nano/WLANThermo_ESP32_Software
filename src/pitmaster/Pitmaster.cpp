@@ -22,6 +22,7 @@
 #include "DbgPrint.h"
 #include "math.h"
 #include "ArduinoLog.h"
+#include <driver/dac.h>
 
 #define PIDKIMAX 95 // ANTI WINDUP LIMIT MAX
 #define PIDKIMIN 0  // ANTI WINDUP LIMIT MIN
@@ -744,7 +745,10 @@ void Pitmaster::initActuators()
     case SSR:
         if (initActuator != SSR)
         {
-            dacWrite(this->ioPin1, 0u);
+            // dacWrite() enables the DAC which has priority over LEDC on GPIO 25/26
+            // in ESP-IDF 4.x. ledcAttachPin() does not disable it automatically.
+            if (this->ioPin1 == 25u) dac_output_disable(DAC_CHANNEL_1);
+            else if (this->ioPin1 == 26u) dac_output_disable(DAC_CHANNEL_2);
             ledcDetachPin(this->ioPin1);
             ledcDetachPin(this->ioPin2);
             ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
@@ -873,7 +877,9 @@ void Pitmaster::disableActuators(boolean allowdelay)
         return;
     }
 
-    dacWrite(this->ioPin1, 0u);
+    // SSR uses LEDC, not DAC — calling dacWrite would re-enable the DAC
+    if (initActuator != SSR)
+        dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);
     digitalWrite(this->ioPin1, LOW);

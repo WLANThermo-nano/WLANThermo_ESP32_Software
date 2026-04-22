@@ -274,7 +274,7 @@ Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
 | Bereich | Status | Anmerkung |
 |---------|--------|-----------|
 | Pitmaster (Servo, Lüfter) | ✅ OK | |
-| Pitmaster SSR | ❌ Keine Reaktion | Ursache noch ungeklärt — separater Debug ausstehend |
+| Pitmaster SSR | ✅ OK (fix 2026-04-22) | DAC/LEDC-Konflikt auf GPIO 25 — `dacWrite()` aktivierte DAC (Priorität über GPIO-Matrix); `ledcAttachPin()` deaktiviert DAC in ESP-IDF 4.x nicht automatisch → LEDC-Signal blockiert (B17 gefixt) |
 | System (Sprache, Einheit) | ✅ OK | |
 | IoT (Cloud) | ✅ OK | |
 | MQTT | ⏳ Ausstehend | Keine Gegenstelle verfügbar |
@@ -293,7 +293,7 @@ Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
 | Standby-Erkennung | ✅ OK | |
 | WiFi-Stabilität | ⏳ Langzeittest läuft | Gerät läuft über Nacht; Ergebnis ausstehend |
 
-**Gesamtergebnis:** Solide — alle Kernfunktionen OK. Drei Recovery-Bugs gefixt (B14–B16), SSR-Fehler offen.
+**Gesamtergebnis:** Solide — alle Kernfunktionen OK. Drei Recovery-Bugs gefixt (B14–B16), SSR DAC/LEDC-Konflikt gefixt (B17).
 
 ---
 
@@ -326,6 +326,7 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 | ~~B14~~ | `src/RecoveryMode.cpp` | `/export`-Handler | ~~High~~ **GEFIXT (2026-04-22)** | `beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), ...)` speichert nur Raw-Pointer auf lokale `String exportSettings`. Nach Lambda-Return wird String zerstört → dangling pointer. Async-Webserver liest beim Senden freien Speicher → Browser empfängt HTTP-Header als Dateiinhalt statt NVS-Keys. Fix: `beginResponse(200, "text/plain", exportSettings)` — kopiert String-Inhalt intern. |
 | ~~B15~~ | `webui/old/restart.html` | XHR-Polling-Loop | ~~Medium~~ **GEFIXT (2026-04-22)** | `xhr.onerror` nicht behandelt. Wenn ESP nach `/recovery`-Aufruf WLAN trennt (Recovery-Reboot), bekommt Browser Network Error (kein Timeout) → `onerror` feuert ohne Handler → Polling stoppt → Seite zeigt Spinner ewig. Benutzer musste `/recovery` manuell ein zweites Mal aufrufen. Fix: `xhr.onerror`-Handler ergänzt, der nach 1s Pause erneut `/ping` sendet. |
 | ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix: Im POST-Response-Handler nach `request->send()` wird geprüft ob `uploadFileType == Firmware || SPIFFS`; wenn ja: `WiFi.disconnect()` + 1s delay + `ESP.restart()`. |
+| ~~B17~~ | `src/pitmaster/Pitmaster.cpp` | `initActuators()` SSR-Fall + `disableActuators()` | ~~High~~ **GEFIXT (2026-04-22)** | SSR keine Reaktion nach Phase 1 Migration. Root Cause: `dacWrite(ioPin1, 0)` aktiviert das DAC-Peripheral auf GPIO 25/26 (RTC-Pad). In ESP-IDF 4.4.x hat das DAC Vorrang über das GPIO-Matrix-Signal — LEDC läuft über die GPIO-Matrix und wird vom aktiven DAC blockiert. `ledcAttachPin()` deaktiviert das DAC in ESP-IDF 4.x nicht automatisch (in ESP-IDF 1.x funktionierte das noch). Fix: `dacWrite(ioPin1, 0)` im SSR-Init durch `dac_output_disable(DAC_CHANNEL_1/2)` ersetzt (`<driver/dac.h>`). Zusätzlich: `disableActuators()` überspringt `dacWrite` wenn `initActuator == SSR`, um Reaktivierung des DAC beim Abschalten zu verhindern. |
 
 ### SRAM / Heap-Optimierungen
 
