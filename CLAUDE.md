@@ -106,9 +106,9 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 **Mobile App:** Flutter-App in Branch `android-build-test` (PR #180, Repo: `WLANThermo-nano/WLANThermo_ESP32_Software`). Flutter WebView-Wrapper lädt `assets/html/index.html` (Vue.js Build) mit JS-Bridge für mDNS, Firebase FCM, Permissions. Cordova (`/mobile/`) wird dadurch abgelöst.
 
-### Phase 0 — Stabilisierung (ausstehend)
+### Phase 0 — Stabilisierung (teilweise abgeschlossen)
 
-Bug-Fixes und SRAM-Optimierungen — siehe Abschnitte unten.
+Bug-Fixes abgeschlossen (B1–B8 gefixt 2026-04-22, `next`-Branch). SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
 
 ### Phase 1 — Kernel Upgrade ✅ ABGESCHLOSSEN (2026-04-20)
 
@@ -312,14 +312,14 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 
 | ID | Datei | Zeile | Severity | Problem |
 |----|-------|-------|----------|---------|
-| B1 | `src/WebHandler.cpp` | 1231 | Critical | NULL-Pointer auf `pitmasters[id]` — vom Entwickler mit `//TODO NULL pointer!!!` markiert |
-| B2 | `src/WebHandler.cpp` | 625–628 | High | `num--` kann -1 ergeben wenn JSON `"number": 0` enthält → out-of-bounds |
-| B3 | `src/WebHandler.cpp` | 742, 746, 748 | High | `strcpy` in 30-Byte-Puffer (`MQTT_STRING_SIZE`) ohne Längencheck |
-| B4 | `src/WebHandler.cpp` | 810–811, 827–828 | High | `strncpy` mit `sizeof` statt `sizeof-1` → kein Null-Terminator bei voller Länge |
-| B5 | `src/WebHandler.cpp` | 885, 886, 898, 907 | High | `strcpy` in Notification-Device-Felder ohne Längencheck |
-| B6 | `src/pitmaster/Pitmaster.cpp` | Konstruktor | Medium | Race Condition: `globalIndexTracker++` nicht atomar (FreeRTOS) |
-| B7 | `src/pitmaster/Pitmaster.cpp` | pidCalc() | High | `this->temperature` kann NULL sein → Null-Pointer in PID-Berechnung |
-| B8 | `src/connect/Connect.cpp` | 175 | High | `connectDevices[0]` ohne Prüfung ob Vector leer ist |
+| ~~B1~~ | `src/WebHandler.cpp` | `setDCTest()` | ~~Critical~~ **GEFIXT (2026-04-22)** | NULL-Pointer auf `pitmasters[id]` — Entwickler-TODO. Fix: NULL-Check vor `startDutyCycleTest()`. Commit `c86f4f5`. |
+| ~~B2~~ | `src/WebHandler.cpp` | `setChannels()` | ~~High~~ **GEFIXT (2026-04-22)** | `num--` ergab -1 wenn JSON `"number": 0` → out-of-bounds auf `gSystem->temperatures[-1]`. Fix: Guard `if (num < 1) return 0` vor Dekrement. Commit `a0ecaad`. |
+| ~~B3~~ | `src/WebHandler.cpp` | `setIoT()` | ~~High~~ **GEFIXT (2026-04-22)** | `strcpy()` in 30-Byte-MqttConfig-Felder (host, user, password) ohne Längencheck → Stack-Korruption bei überlangem Input. Fix: `strncpy()` mit `sizeof-1` + explizitem Null-Terminator. Commit `aa9a067`. |
+| ~~B4~~ | `src/WebHandler.cpp` | `setPush()` | ~~High~~ **GEFIXT (2026-04-22)** | `strncpy()` mit `sizeof()` statt `sizeof()-1` → kein Null-Terminator wenn Puffer voll (telegram.token/chatId, pushover.token/userKey). Fix: `sizeof()-1` + expliziter Null-Terminator. Commit `b36fea1`. |
+| ~~B5~~ | `src/WebHandler.cpp` | `setPush()` | ~~High~~ **GEFIXT (2026-04-22)** | Zwei Fehler: (1) Längencheck für name/id nutzte `&&` statt `\|\|` → überlanger name passierte wenn id kurz genug war. (2) `androidchannelid` hatte keinen Längencheck vor `strcpy()`. Fix: `\|\|` + zusätzlicher Längencheck für androidchannelid. Commit `f29408b`. |
+| ~~B6~~ | `src/pitmaster/Pitmaster.cpp` | Konstruktor | ~~Medium~~ **GEFIXT (2026-04-22)** | `globalIndexTracker++` nicht atomar auf Xtensa-Dual-Core → beide Pitmaster-Objekte könnten denselben `globalIndex` bekommen. Fix: `__sync_fetch_and_add()` (GCC-Atomic-Built-in, lock-frei). Commit `ffde720`. |
+| ~~B7~~ | `src/pitmaster/Pitmaster.cpp` | `update()` | ~~High~~ **GEFIXT (2026-04-22)** | `this->temperature` ist im Konstruktor NULL und wird erst durch `setTemperature()` gesetzt. `checkOpenLid()` und `pidCalc()` greifen ohne Prüfung zu → Hard-Fault. Fix: Early-Return am Anfang von `update()` wenn `temperature == NULL`. Commit `255d3fa`. |
+| ~~B8~~ | `src/connect/Connect.cpp` | `onReadyStateChange()` | ~~High~~ **GEFIXT (2026-04-22)** | Zugriff auf `connectDevices[0]` ohne Leer-Check — wenn Callback vor Registrierung eines Geräts feuert, ist der Vector leer → UB. Fix: `if (connectDevices.empty()) return` vor dem ersten Zugriff. Commit `709ae42`. |
 | ~~B9~~ | `src/WebHandler.cpp` | `handleBody()` | ~~High~~ **GEFIXT (2026-04-20)** | Body-Daten von `mathieucarbou/ESPAsyncWebServer@^3.0.0` sind nicht null-terminiert → Crash in `setSystem` (`parseObject` las über Puffer hinaus). Fix: `handleBody()` erstellt jetzt null-terminierte Kopie (`new uint8_t[len+1]`) vor dem Handler-Aufruf. Gilt für alle Body-Handler. |
 | ~~B11~~ | `src/WebHandler.cpp` | `setBluetooth()` | ~~High~~ **GEFIXT (2026-04-20)** | (1) Fehlendes `return`-Statement → Undefined Behavior (UB) in GCC 8.x. (2) `DynamicJsonBuffer jsonBuffer;` ohne Größe → ArduinoJson 5 startet mit 256-Byte-Slab → Heap-Korruption unter Speicherdruck. Fix: `return 1;` ergänzt, `DynamicJsonBuffer(Settings::jsonBufferSize)` gesetzt. Symptom: `CORRUPT HEAP: Bad head ... Expected 0xabba1234`. |
 | ~~B12~~ | `src/temperature/TemperatureGrp.cpp` | `saveConfig()` | ~~Medium~~ **GEFIXT (2026-04-20)** | `DynamicJsonBuffer jsonBuffer;` ohne Größe → selbes M1-Problem wie B11. Fix: `DynamicJsonBuffer(Settings::jsonBufferSize)`. |
