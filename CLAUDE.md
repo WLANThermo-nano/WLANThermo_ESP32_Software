@@ -159,20 +159,20 @@ Vue 2 → Vue 3 (Neubau, Vue 2 seit 31.12.2023 EOL).
 
 Flutter-App fertigstellen, Cordova ablösen.
 
-### Phase 4a — Library Pre-Upgrade (ausstehend)
+### Phase 4a — Library Pre-Upgrade (teilweise abgeschlossen)
 
 **Voraussetzung für Phase 4b.** Alle Libs auf aktuelle Versionen heben, bevor der Kernel gewechselt wird — maximale Kompatibilität, und der Phase-4b-Blocker (`AsyncMqttClient`) wird hier beseitigt.
 
-| Lib | Jetzt | Ziel | Aufwand | Prio |
-|-----|-------|------|---------|------|
-| **`AsyncMqttClient@0.8.2`** | `me-no-dev` intern | `mathieucarbou/AsyncMqttClient` | Mittel (API-Diff prüfen) | **Blocker für 4b** |
-| `TFT_eSPI@^2.5.31,<2.5.34` | Constraint | `^2.5.34` | **Trivial — Einzeiler** | Hoch |
-| `protohaus/ESPRandom@1.4.1` | 1.4.1 | neueste | Trivial + Patch in `extra_script.py` entfernen | Mittel |
-| `asyncHTTPrequest@^1.2.1` | 1.2.x | neueste 1.x | Trivial | Niedrig |
-| `thijse/ArduinoLog@~1.0.3` | 1.0.4 | ~1.1.x | Trivial | Niedrig |
-| `ThingPulse/esp8266-oled-ssd1306@4.0.0` | 4.0.0 | neueste | Compile+Test | Niedrig |
-| `mathertel/OneButton@1.3.0` | 1.3.0 | 2.x | API-Check (v2 hat neue Multi-Click-API, alte Callbacks bleiben kompatibel) | Niedrig |
-| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | Manuellen upstream-Diff prüfen, kein regulärer Upgrade-Pfad | Vor 4b |
+| Lib | Jetzt | Ziel | Aufwand | Prio | Status |
+|-----|-------|------|---------|------|--------|
+| ~~**`AsyncMqttClient@0.8.2`**~~ | ~~`me-no-dev` intern~~ | ~~`mathieucarbou/AsyncMqttClient`~~ | ~~Mittel~~ | ~~**Blocker für 4b**~~ | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo; 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP`. Kein API-Umbau in `Mqtt.cpp` nötig. Compile-Test alle 7 Varianten OK. Commit `db83e5c`. |
+| `TFT_eSPI@^2.5.31,<2.5.34` | Constraint | `^2.5.34` | **Trivial — Einzeiler** | Hoch | ⏳ Ausstehend |
+| `protohaus/ESPRandom@1.4.1` | 1.4.1 | neueste | Trivial + Patch in `extra_script.py` entfernen | Mittel | ⏳ Ausstehend |
+| `asyncHTTPrequest@^1.2.1` | 1.2.x | neueste 1.x | Trivial | Niedrig | ⏳ Ausstehend |
+| `thijse/ArduinoLog@~1.0.3` | 1.0.4 | ~1.1.x | Trivial | Niedrig | ⏳ Ausstehend |
+| `ThingPulse/esp8266-oled-ssd1306@4.0.0` | 4.0.0 | neueste | Compile+Test | Niedrig | ⏳ Ausstehend |
+| `mathertel/OneButton@1.3.0` | 1.3.0 | 2.x | API-Check (v2 hat neue Multi-Click-API, alte Callbacks bleiben kompatibel) | Niedrig | ⏳ Ausstehend |
+| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | Manuellen upstream-Diff prüfen, kein regulärer Upgrade-Pfad | Vor 4b | ⏳ Ausstehend |
 
 **Nach Phase 4a:** Compile-Test aller 7 Varianten mit neuen Libs (noch auf Kernel 2.x).
 
@@ -183,7 +183,7 @@ Flutter-App fertigstellen, Cordova ablösen.
 **Hauptziel: Power Save wiederherstellen (Stromverbrauch senken)**  
 `CONFIG_PM_ENABLE=y` ist in arduino-esp32 3.x Standard — ungeprüft, vor Start in `sdk/esp32/sdkconfig` der neuen SDK verifizieren.
 
-**Voraussetzung:** Phase 4a abgeschlossen (AsyncMqttClient-Wechsel ist Blocker — ohne ihn kompiliert nichts).
+**Voraussetzung:** Phase 4a abgeschlossen. AsyncMqttClient-Blocker ist behoben (2026-04-23) — `marvinroger/AsyncMqttClient@0.9.0` nutzt `<AsyncTCP.h>` direkt und ist kompatibel mit `ESP32Async/AsyncTCP`. Restliche 4a-Libs (TFT_eSPI, ESPRandom, …) sind für 4b nicht kritisch.
 
 **Eigener Code — 2 Änderungen, beide trivial:**
 
@@ -345,7 +345,7 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 
 ## Dependency Upgrade Guide
 
-Stand: 2026-04-22
+Stand: 2026-04-23
 
 ### Abgeschlossen ✅
 
@@ -355,6 +355,7 @@ Stand: 2026-04-22
 | **AsyncTCP** | `me-no-dev@1.1.1` → `mathieucarbou@^3.0.0` | `ESP32Async/AsyncTCP@^3.4.10` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Nachfolger-Org `ESP32Async`; Drop-in kompatibel |
 | **ESPAsyncWebServer** | `me-no-dev#1dde9cf` → `mathieucarbou@^3.0.0` | `ESP32Async/ESPAsyncWebServer@^3.10.3` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Breaking: `WebRequestMethodComposite` kein `int32_t` mehr ab v3.10.x (siehe Migrationshinweise) |
 | **ArduinoJson** | 5.13.4 | 7.x (Phase 4c, 2026-04-21) | 20 Dateien, ~404 API-Aufrufe; `DynamicJsonBuffer` → `JsonDocument`, `JsonObject&` → Value-Typ, `parseObject` → `deserializeJson`; kein Heap-Wachstum mehr; `double_with_n_digits()` entfernt |
+| **AsyncMqttClient** | 0.8.2 (`me-no-dev`) | `marvinroger/AsyncMqttClient@0.9.0` (2026-04-23) | Phase-4b-Blocker behoben. `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo. 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP@^3.4.10`. Kein API-Umbau in `Mqtt.cpp`. Compile alle 7 Varianten OK. |
 
 ### Nicht upgraden – Breaking Changes (dedizierter Sprint nötig)
 
@@ -367,7 +368,7 @@ Stand: 2026-04-22
 
 | Dep | Aktuell | Ziel | Aufwand | Hinweis |
 |-----|---------|------|---------|---------|
-| **AsyncMqttClient** | 0.8.2 | `ESP32Async/AsyncMqttClient` | Mittel | **Blocker für Phase 4b** — ohne diesen Wechsel kompiliert Kernel 3.x nicht |
+| ~~**AsyncMqttClient**~~ | ~~0.8.2~~ | ~~`ESP32Async/AsyncMqttClient`~~ | ~~Mittel~~ | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; kein API-Umbau; Compile alle 7 Varianten OK |
 | **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` | **Trivial – Einzeiler** | `<2.5.34`-Constraint war Workaround für arduino-esp32 1.x (`hal/gpio_ll.h`); mit ESP-IDF 4.4.x (Phase 1) obsolet |
 | **ESPRandom** | 1.4.1 | neueste | Trivial | Upgrade macht `patch_esp_random()` in `extra_script.py` überflüssig |
 | **asyncHTTPrequest** | 1.2.2 | neueste 1.x | Trivial | Kleine Fixes, abwärtskompatibel |
