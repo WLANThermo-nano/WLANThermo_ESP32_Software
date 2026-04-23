@@ -1,0 +1,38 @@
+name: Compile Test
+
+on:
+  push:
+    branches:
+      - next
+      - 'feature/**'
+  pull_request:
+    branches:
+      - next
+
+jobs:
+  compile:
+    name: Compile all variants
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: .core
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U platformio
+
+      - name: Compile all variants
+        run: platformio run -e miniV1 -e miniV2 -e miniV3 -e nanoV3 -e linkV1 -e boneV1 -e connectV1
