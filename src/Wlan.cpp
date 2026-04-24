@@ -358,6 +358,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.printf("STA: %s\n", WiFi.SSID().c_str());
   Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
   WiFi.mode(WIFI_STA);
+  esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
 
   Log.notice("Connected to Wifi: %s (%s, %d, %s)" CR, WiFi.SSID().c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
 
