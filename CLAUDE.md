@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - `dc130ee` — docs: CLAUDE.md Repo-Info
   - `develop` — Integration für Hotfixes und schnelle Releases (immer releasable)
   - `next` — Spielwiese für Phasen-Arbeit; alle `feature/*`-Branches landen hier zuerst, dann nach Test in `develop` → `master`
-- **Feature-Branch-Schema:** `feature/phase-0-stabilization`, `feature/phase-2-vue3`, `feature/phase-4a-lib-upgrade`, `feature/phase-4b-kernel-3x`, `feature/phase-5-lvgl9`
+- **Feature-Branch-Schema:** `feature/phase-0-stabilization`, `feature/phase-2-vue3`, `feature/phase-4a-lib-upgrade`, `feature/phase-5-lvgl9`
 - **Referenz-Backup:** `WLANThermo_ESP32_Software-master_old/` (ZIP-Extrakt ohne Git, kann gelöscht werden)
 
 ## Project Overview
@@ -88,21 +88,22 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 - ArduinoJson **7.x** — `JsonDocument` statt `DynamicJsonBuffer`, Value-Typen (`JsonObject`, `JsonArray`) statt References, `deserializeJson()` statt `parseObject()`. v5 ist EOL.
 - Platform: **`espressif32@^6.0.0`** (official, arduino-esp32 2.x / ESP-IDF 4.4.x). The old `tuniii/platform-espressif32` WifiFix fork is no longer used.
+- **Custom Framework:** `platform_packages` in `[env]` zeigt auf `WLANThermo-nano/arduino-esp32@2.0.17-pm-enable` — ein Custom-Build von arduino-esp32 2.x mit `CONFIG_PM_ENABLE=y`. Zum Deaktivieren diese Zeile in `platformio.ini` auskommentieren.
 - WiFi fix (`WIFI_ALL_CHANNEL_SCAN` — connect to strongest AP) is set at runtime in `src/Wlan.cpp` after each `WiFi.begin()` call via `esp_wifi_set_config()`.
 - `extra_script.py` patches `ESPRandom@1.4.1` (missing `#include <vector>`) at build time via `patch_esp_random()`. Idempotent.
 - WiFi event enums: `ARDUINO_EVENT_WIFI_STA_GOT_IP`, `ARDUINO_EVENT_WIFI_STA_DISCONNECTED`, `ARDUINO_EVENT_WIFI_AP_STADISCONNECTED` (see `src/Wlan.cpp`).
 - Async networking uses `ESP32Async/AsyncTCP@^3.4.10` + `ESP32Async/ESPAsyncWebServer@^3.10.3` (Nachfolger-Repos; `mathieucarbou/*` seit Januar 2025 archiviert). AsyncTCP läuft auf Core 1 (`-DCONFIG_ASYNC_TCP_RUNNING_CORE=1` in `[env]` build_flags) — gleicher Core wie MainTask/ConnectTask, verhindert Inter-Core-Synchronisationsoverhead.
 - Logging uses `ArduinoLog` macros (`Log.verbose`, `Log.notice`, `Log.error`) — not `Serial.print`.
 - Settings persistence: `src/Settings.cpp` uses **NVS** (`Preferences` API) — NOT SPIFFS. SPIFFS wird nur für Cloud-URL-Cache (`Cloud.cpp`) und Nextion-Display-Updates verwendet.
-- Power management: `esp_pm_config_esp32_t` + `esp_pm_configure()` in `src/system/SystemBase.cpp`. `CONFIG_PM_ENABLE` ist im vorkompilierten arduino-esp32 2.x SDK **nicht gesetzt** → Power-Save-Modus nicht verfügbar. `setPowerSaveMode()` deaktiviert sich nach erstem `ESP_ERR_NOT_SUPPORTED` selbst. Erst mit **Phase 4b** (arduino-esp32 3.x / ESP-IDF 5.x) nutzbar — `CONFIG_PM_ENABLE=y` soll dort Standard sein (vor Phase-4b-Start in `sdk/esp32/sdkconfig` der neuen SDK verifizieren).
+- Power management: `esp_pm_config_esp32_t` + `esp_pm_configure()` in `src/system/SystemBase.cpp`. `CONFIG_PM_ENABLE=y` ist im Custom-Framework aktiv. `setPowerSaveMode()` konfiguriert Light Sleep mit `max_freq_mhz=240`, `min_freq_mhz=40` (XTAL-Frequenz — Pflicht für Light Sleep auf ESP32). Bei jedem Fehler (`ESP_ERR_NOT_SUPPORTED` oder `ESP_ERR_INVALID_ARG`) wird `powerSaveModeSupport=false` gesetzt → kein Retry. miniV3, connectV1, nanoV3 setzen `powerSaveModeSupport=true` in `hwInit()`.
 - **ESPAsyncWebServer Migrationshinweise:**
   - **3.x (mathieucarbou → ESP32Async):** `AsyncWebHandler::canHandle()` und `isRequestHandlerTrivial()` sind jetzt `const virtual` → alle Subklassen müssen `const override` verwenden. Body-Daten in `handleBody()` sind **nicht null-terminiert** → null-terminierte Kopie (`new uint8_t[len+1]`) vor `deserializeJson()` erstellen. `AsyncJsonResponse::getRoot()` gibt `JsonVariant` zurück → `.to<JsonObject>()` aufrufen.
   - **3.10.x (ESP32Async):** `WebRequestMethodComposite` ist jetzt eine eigene Klasse (kein `int32_t` mehr). Struct-Felder für HTTP-Methoden müssen `WebRequestMethodComposite` statt `int32_t` sein. Literal `0` als Initialisierer → `HTTP_UNKNOWN`. Vergleich `(request->method() & field) > 0u` → `field & request->method()` (operator& gibt `bool` zurück; Operandenreihenfolge: Composite links, `WebRequestMethod` rechts).
 
 ## Project Roadmap
 
-**Ziele:** UI-Redesign, App-Store-Publishing (Android + iOS), Arduino Kernel Upgrade auf 3.x (Power Save wiederherstellen), Heap-Stabilität  
-**Reihenfolge:** Phase 0 (Stabilisierung) → Phase 1+2 (parallel: Kernel 2.x / UI) → Phase 3 (App Store) → Phase 4a (Lib Pre-Upgrade) → Phase 4b (Kernel 3.x + Power Save) → Phase 4c (ArduinoJson 7) → Phase 5 (LVGL 9)
+**Ziele:** UI-Redesign, App-Store-Publishing (Android + iOS), Heap-Stabilität  
+**Reihenfolge:** Phase 0 (Stabilisierung) → Phase 1+2 (parallel: Kernel 2.x / UI) → Phase 3 (App Store) → Phase 4a (Lib Pre-Upgrade) → Phase 4c (ArduinoJson 7) → Phase 5 (LVGL 9)
 
 **Mobile App:** Flutter-App in Branch `android-build-test` (PR #180, Repo: `WLANThermo-nano/WLANThermo_ESP32_Software`). Flutter WebView-Wrapper lädt `assets/html/index.html` (Vue.js Build) mit JS-Bridge für mDNS, Firebase FCM, Permissions. Cordova (`/mobile/`) wird dadurch abgelöst.
 
@@ -124,7 +125,7 @@ Compile-Test bestanden: RAM 18–29%, Flash 24–31% je Variante.
 | REST-API `/data`, `/settings` | ✅ OK | Nach canHandle()-Fix |
 | Settings speichern | ✅ OK | WDT-Fix bestätigt (2026-04-20). Root Cause war Heap-Korruption durch 13× unsized `DynamicJsonBuffer` (nicht NVS-Blocking). Fix: alle auf `DynamicJsonBuffer(Settings::jsonBufferSize)` + NVS-Writes von setChannels/setPush/setPitmaster/setPID via Pending-Flags auf ConnectTask delegiert. |
 | WiFi-Stabilität | ⏳ Ausstehend | Langzeittest noch nicht durchgeführt |
-| Power Management | ❌ Nicht verfügbar | `CONFIG_PM_ENABLE` im vorkompilierten arduino-esp32 2.x SDK nicht gesetzt. `sdkconfig.board` hatte keine Wirkung (gilt nur für ESP-IDF-native Builds). Fix: `setPowerSaveMode()` deaktiviert sich nach erstem `ESP_ERR_NOT_SUPPORTED` selbst. Erst mit Phase 4b (arduino-esp32 3.x) nutzbar — ob dort `CONFIG_PM_ENABLE=y` Standard ist, vor Phase-4b-Start verifizieren. |
+| Power Management | ✅ OK (2026-04-24) | Custom-Framework `2.0.17-pm-enable` mit `CONFIG_PM_ENABLE=y` via `platform_packages`. `setPowerSaveMode()` fix: `min_freq_mhz` 240→40 (XTAL-Pflicht für Light Sleep). Erwartet: `PSM: enabled` im Serial-Monitor. |
 | BLE / NRF-Chip | ⏳ Fix implementiert, Test ausstehend | `remoteIndex`-Discovery-Fix in `Bluetooth.cpp`; kein Re-Pairing nötig; `{"d":[]}` = Probe noch nicht in Reichweite, löst sich von selbst |
 
 **Fixes die während des Hardware-Tests notwendig waren:**
@@ -143,7 +144,7 @@ Compile-Test bestanden: RAM 18–29%, Flash 24–31% je Variante.
 | `TemperatureGrp::saveConfig()` unsized `DynamicJsonBuffer` | `src/temperature/TemperatureGrp.cpp` | Gleiche Ursache wie vorheriger Fix. Fix: `DynamicJsonBuffer(Settings::jsonBufferSize)`. |
 | `setSystem()`: 4 NVS-Writes im `async_tcp`-Kontext | `src/WebHandler.cpp` | Alle saveConfig()-Calls direkt im Handler → blockiert `async_tcp` → Task-Watchdog. Fix: 4 `xxxSavePending`-Flags + `SystemBase::processPendingSave()` in `Wlan::update()` (ConnectTask). One write per second, staggered. |
 | Widespread unsized `DynamicJsonBuffer` → Heap-Korruption | `src/WebHandler.cpp` (9×), `API.cpp`, `Wlan.cpp`, `PitmasterGrp.cpp`, `Connect.cpp`, `Bluetooth.cpp` | `DynamicJsonBuffer jsonBuffer;` ohne Größe → mehrere 256-Byte-Slabs via `malloc()` → korrumpiert Heap-Metadaten über Zeit (40–80s Laufzeit) → `async_tcp` Task WDT mit `Backtrace: |<-CORRUPTED`. Fix: alle auf `DynamicJsonBuffer(Settings::jsonBufferSize)` gesetzt. Zusätzlich: NVS-Writes von `setChannels`, `setPush`, `setPitmaster`, `setPID` auf `tempConfigSavePending`/`notificationConfigSavePending`/`pitmasterConfigSavePending` Flags umgestellt. `OtaUpdate::setPrerelease()` fehlendes `return checkForUpdate` ergänzt. |
-| `setPowerSaveMode()` retryt endlos bei NOT_SUPPORTED | `src/system/SystemBase.cpp` | `CONFIG_PM_ENABLE` nicht im vorkompilierten SDK → `esp_pm_configure()` gibt immer `ESP_ERR_NOT_SUPPORTED`. `powerSaveModeEnabled` wird nie gesetzt → jeder Update-Zyklus ruft es erneut auf. Fix: bei `ESP_ERR_NOT_SUPPORTED` wird `powerSaveModeSupport = false` gesetzt. |
+| `setPowerSaveMode()` retryt endlos bei NOT_SUPPORTED | `src/system/SystemBase.cpp` | `CONFIG_PM_ENABLE` nicht im vorkompilierten SDK → `esp_pm_configure()` gibt immer `ESP_ERR_NOT_SUPPORTED`. `powerSaveModeEnabled` wird nie gesetzt → jeder Update-Zyklus ruft es erneut auf. Fix: bei jedem Fehler wird `powerSaveModeSupport = false` gesetzt. |
 | PCA9533-Startup-Pause (~170ms) | `src/display/tft/DisplayTft.cpp` | arduino-esp32 2.x ersetzt den alten Bit-Bang-I2C-Treiber durch den ESP-IDF Hardware-Treiber. Jede fehlgeschlagene I2C-Transaktion (NACK) hat ~10ms FreeRTOS/Treiber-Overhead statt < 1ms in 1.x. Wenn PCA9533 (Adresse `0x62`) nicht verbaut ist, liefen trotzdem 17 Transaktionen (5× `init()` + 1× `ping()` + 4× `setMODE()` mit `getReg`+`setReg` + 3× sonstige) → ~170ms Pause im Boot-Log bei „Setup LED Controller: 2". Fix: `ping()` als Guard voranstellen; `init()` und alle weiteren Calls nur wenn `ping() == 0`. |
 
 **Stack-Messwerte miniV3 (Frühphase, unter Grundlast):**
@@ -161,66 +162,30 @@ Flutter-App fertigstellen, Cordova ablösen.
 
 ### Phase 4a — Library Pre-Upgrade (teilweise abgeschlossen)
 
-**Voraussetzung für Phase 4b.** Alle Libs auf aktuelle Versionen heben, bevor der Kernel gewechselt wird — maximale Kompatibilität, und der Phase-4b-Blocker (`AsyncMqttClient`) wird hier beseitigt.
+Alle Libs auf aktuelle Versionen heben — maximale Kompatibilität und Sicherheit.
 
 | Lib | Jetzt | Ziel | Aufwand | Prio | Status |
 |-----|-------|------|---------|------|--------|
-| ~~**`AsyncMqttClient@0.8.2`**~~ | ~~`me-no-dev` intern~~ | ~~`mathieucarbou/AsyncMqttClient`~~ | ~~Mittel~~ | ~~**Blocker für 4b**~~ | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo; 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP`. Kein API-Umbau in `Mqtt.cpp` nötig. Compile-Test alle 7 Varianten OK. Commit `db83e5c`. |
+| ~~**`AsyncMqttClient@0.8.2`**~~ | ~~`me-no-dev` intern~~ | ~~`mathieucarbou/AsyncMqttClient`~~ | ~~Mittel~~ | — | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo; 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP`. Kein API-Umbau in `Mqtt.cpp` nötig. Compile-Test alle 7 Varianten OK. Commit `db83e5c`. |
 | `TFT_eSPI@^2.5.31,<2.5.34` | Constraint | `^2.5.34` | **Trivial — Einzeiler** | Hoch | ⏳ Ausstehend |
 | `protohaus/ESPRandom@1.4.1` | 1.4.1 | neueste | Trivial + Patch in `extra_script.py` entfernen | Mittel | ⏳ Ausstehend |
 | `asyncHTTPrequest@^1.2.1` | 1.2.x | neueste 1.x | Trivial | Niedrig | ⏳ Ausstehend |
 | `thijse/ArduinoLog@~1.0.3` | 1.0.4 | ~1.1.x | Trivial | Niedrig | ⏳ Ausstehend |
 | `ThingPulse/esp8266-oled-ssd1306@4.0.0` | 4.0.0 | neueste | Compile+Test | Niedrig | ⏳ Ausstehend |
 | `mathertel/OneButton@1.3.0` | 1.3.0 | 2.x | API-Check (v2 hat neue Multi-Click-API, alte Callbacks bleiben kompatibel) | Niedrig | ⏳ Ausstehend |
-| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | Manuellen upstream-Diff prüfen, kein regulärer Upgrade-Pfad | Vor 4b | ⏳ Ausstehend |
-
-**Nach Phase 4a:** Compile-Test aller 7 Varianten mit neuen Libs (noch auf Kernel 2.x).
+| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | Manuellen upstream-Diff prüfen, kein regulärer Upgrade-Pfad | Niedrig | ⏳ Ausstehend |
 
 ---
 
-### Phase 4b — Kernel 3.x / ESP-IDF 5.x (ausstehend)
+### ~~Phase 4b — Kernel 3.x / ESP-IDF 5.x~~ ENTFÄLLT
 
-**Hauptziel: Power Save wiederherstellen (Stromverbrauch senken)**  
-`CONFIG_PM_ENABLE=y` ist in arduino-esp32 3.x Standard — ungeprüft, vor Start in `sdk/esp32/sdkconfig` der neuen SDK verifizieren.
-
-**Voraussetzung:** Phase 4a abgeschlossen. AsyncMqttClient-Blocker ist behoben (2026-04-23) — `marvinroger/AsyncMqttClient@0.9.0` nutzt `<AsyncTCP.h>` direkt und ist kompatibel mit `ESP32Async/AsyncTCP`. Restliche 4a-Libs (TFT_eSPI, ESPRandom, …) sind für 4b nicht kritisch.
-
-**Eigener Code — 2 Änderungen, beide trivial:**
-
-| Datei | Zeile | Änderung |
-|-------|-------|----------|
-| `src/system/SystemBase.cpp` | 326 | `esp_pm_config_esp32_t` → `esp_pm_config_t` |
-| `platformio.ini` | `[env]` platform | `espressif32@^6.0.0` → `espressif32@^7.0.0` |
-
-`src/Wlan.cpp` (`ARDUINO_EVENT_*`, `esp_wifi_set_config`) bleibt unverändert — diese API ist in ESP-IDF 5.x stabil.
-
-**Library-Kompatibilität nach Phase 4a:**
-
-| Lib | Status | Bemerkung |
-|-----|--------|-----------|
-| `ESP32Async/AsyncTCP@^3.4.10` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
-| `ESP32Async/ESPAsyncWebServer@^3.10.3` | ✅ OK | explizit arduino-esp32 3.x unterstützt |
-| `ESP32Async/AsyncMqttClient` | ✅ OK (nach 4a) | explizit arduino-esp32 3.x unterstützt |
-| `ArduinoJson@^7.x` | ✅ OK | pure C++, kein IDF-Bezug; nach Phase 4c bereits auf 7.x |
-| `asyncHTTPrequest`, `ArduinoLog`, `ESPRandom`, `Time`, `MedianFilter` | ✅ OK | pure C++/Arduino |
-| `TFT_eSPI@^2.5.34` (nach 4a) | ✅ OK | 2.5.34+ explizit für neuere Board-Packages |
-| `esp8266-oled-ssd1306` | ✅ OK | kein IDF-spezifischer Code |
-| `lvgl@~7.11.0` | ⚠️ Kompiliert evtl. | Nicht für ESP-IDF 5.x entwickelt; wahrscheinlich keine Compile-Fehler, aber ungetestet |
-| `tuniii/ESPNexUpload` | ⚠️ Risiko | Nutzt ESP32-Flash/OTA-APIs die sich in 5.x geändert haben |
-| `tuniii/BBQduino` | ⚠️ Unbekannt | Custom Fork ohne Upstream — manuell prüfen |
-| `tuniii/ITEADLIB_Arduino_Nextion` | ⚠️ Risiko | Alte Library; serielle Kommunikation wahrscheinlich OK, aber ungeprüft |
-
-**Weitere Vorteile ESP-IDF 5.x:**
-- FreeRTOS SMP-Scheduler verbessert Task-Isolation (`xTaskCreatePinnedToCore` in `main.cpp`)
-- `spinlock_t`-API sauberer → B6-Fix (`globalIndexTracker++`) eleganter lösbar
-- Besseres `heap_caps`-Fragmentierungsverhalten
-- Stabilerer WiFi-Reconnect-Stack
+Kernel-Upgrade auf arduino-esp32 3.x wird nicht durchgeführt. Das ursprüngliche Hauptziel (Power Save) wurde auf Kernel 2.x gelöst: Custom-Framework `WLANThermo-nano/arduino-esp32@2.0.17-pm-enable` mit `CONFIG_PM_ENABLE=y` via `platform_packages` in `platformio.ini` (2026-04-24).
 
 ---
 
 ### Phase 4c — ArduinoJson 7 Migration ✅ ABGESCHLOSSEN (2026-04-21)
 
-Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
+Dedizierter Sprint.
 
 **Scope:** 20 Dateien, ~404 API-Aufrufe (alle v5-Patterns) — vollständig migriert.
 
@@ -256,9 +221,6 @@ Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
 - **Strukturiertes Error-Handling:** `DeserializationError err = deserializeJson(...)` statt `.success()` bool.
 - **Sicherheit:** Kein implizites Buffer-Überlaufen mehr; Dokumentgröße ist explizit begrenzt.
 - **Aktiver Support:** v5 ist seit 2023 offiziell EOL — keine Bugfixes oder Sicherheits-Updates mehr.
-- **Langfristig:** Voraussetzung für saubereres Code-Review und Phase-5-LVGL-Refactor.
-
-**Aufwand:** ~2–3 Tage dedizierter Sprint. Die API-Änderungen sind mechanisch (find-replace-ähnlich), aber jede Datei muss manuell verifiziert werden da v5-References (`JsonObject&`) zu Values werden.
 
 **Compile-Ergebnis miniV3 (2026-04-21):**
 - RAM: 28.5% (93.460 B / 327.680 B)
@@ -301,7 +263,7 @@ Dedizierter Sprint. Unabhängig von 4b — vor 4b durchgeführt.
 
 ### Phase 5 — LVGL 9 + TFT-UI Neubau (Long-term, ausstehend)
 
-Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere JSON-API im TFT-UI-Code).
+Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 
 - LVGL 7 → 9: Widgets umbenannt, Event-System geändert — gesamtes `src/display/tft/` muss neu geschrieben werden.
 - Sinnvoll zu koppeln mit Phase 2 (Vue 3 UI-Redesign), da beide das UI betreffen.
@@ -324,7 +286,7 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 | ~~B11~~ | `src/WebHandler.cpp` | `setBluetooth()` | ~~High~~ **GEFIXT (2026-04-20)** | (1) Fehlendes `return`-Statement → Undefined Behavior (UB) in GCC 8.x. (2) `DynamicJsonBuffer jsonBuffer;` ohne Größe → ArduinoJson 5 startet mit 256-Byte-Slab → Heap-Korruption unter Speicherdruck. Fix: `return 1;` ergänzt, `DynamicJsonBuffer(Settings::jsonBufferSize)` gesetzt. Symptom: `CORRUPT HEAP: Bad head ... Expected 0xabba1234`. |
 | ~~B12~~ | `src/temperature/TemperatureGrp.cpp` | `saveConfig()` | ~~Medium~~ **GEFIXT (2026-04-20)** | `DynamicJsonBuffer jsonBuffer;` ohne Größe → selbes M1-Problem wie B11. Fix: `DynamicJsonBuffer(Settings::jsonBufferSize)`. |
 | ~~B13~~ | `src/WebHandler.cpp` | `setSystem()` | ~~High~~ **GEFIXT (2026-04-20)** | 4 NVS-Writes hintereinander → Task-Watchdog (WDT) auf `async_tcp`. Root Cause: `MainTask`, `ConnectTask` und `async_tcp` laufen alle auf **Core 1** (siehe `main.cpp:160,169`). NVS-Writes sperren Core 1 für die Flash-Write-Dauer → async_tcp kann keinen WDT-Reset ausführen. Erster Fix (Auslagern zu ConnectTask) half nicht, da ConnectTask ebenfalls Core 1. Zweiter Fix: **Stückelung** — `processPendingSave()` schreibt genau **ein** NVS-Key pro Aufruf. ConnectTask ruft es jede Sekunde auf (`TASK_CYCLE_TIME_CONNECT_TASK=1000ms`). 4 Writes = 4 Sekunden verteilt, async_tcp kann dazwischen WDT zurücksetzen. Flags: `systemConfigSavePending`, `otaConfigSavePending`, `wlanConfigSavePending`, `tempConfigSavePending`. |
-| ~~B10~~ | `src/system/SystemBase.cpp` | `setPowerSaveMode()` | ~~Medium~~ **GEFIXT (2026-04-20)** | `CONFIG_PM_ENABLE` ist im vorkompilierten Arduino-ESP32-2.x-SDK nicht gesetzt (`# CONFIG_PM_ENABLE is not set` in `sdk/esp32/sdkconfig`). `sdkconfig.board` hat **keine Wirkung** beim Arduino-Framework (gilt nur für ESP-IDF-native Builds). Fix: bei `ESP_ERR_NOT_SUPPORTED` wird `powerSaveModeSupport = false` gesetzt → kein weiterer Aufruf. Power-Save ist auf arduino-esp32 2.x generell nicht nutzbar; erst mit Phase 4 (ESP-IDF 5.x / arduino-esp32 3.x) möglich, wo `CONFIG_PM_ENABLE=y` Standard ist. |
+| ~~B10~~ | `src/system/SystemBase.cpp` | `setPowerSaveMode()` | ~~Medium~~ **GEFIXT (2026-04-24)** | Mit Standard-SDK (CONFIG_PM_ENABLE=n) gab `esp_pm_configure()` immer `ESP_ERR_NOT_SUPPORTED` → Endlos-Retry. Zweites Problem: `min_freq_mhz=240` mit `light_sleep_enable=true` → `ESP_ERR_INVALID_ARG` (ESP-IDF verlangt XTAL-Frequenz 40 MHz). Fix: (1) `min_freq_mhz` 240→40, (2) bei jedem Fehler `powerSaveModeSupport=false`. Power Save aktiv via Custom-Framework `2.0.17-pm-enable`. |
 | ~~B14~~ | `src/RecoveryMode.cpp` | `/export`-Handler | ~~High~~ **GEFIXT (2026-04-22)** | `beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), ...)` speichert nur Raw-Pointer auf lokale `String exportSettings`. Nach Lambda-Return wird String zerstört → dangling pointer. Async-Webserver liest beim Senden freien Speicher → Browser empfängt HTTP-Header als Dateiinhalt statt NVS-Keys. Fix: `beginResponse(200, "text/plain", exportSettings)` — kopiert String-Inhalt intern. |
 | ~~B15~~ | `webui/old/restart.html` | XHR-Polling-Loop | ~~Medium~~ **GEFIXT (2026-04-22)** | `xhr.onerror` nicht behandelt. Wenn ESP nach `/recovery`-Aufruf WLAN trennt (Recovery-Reboot), bekommt Browser Network Error (kein Timeout) → `onerror` feuert ohne Handler → Polling stoppt → Seite zeigt Spinner ewig. Benutzer musste `/recovery` manuell ein zweites Mal aufrufen. Fix: `xhr.onerror`-Handler ergänzt, der nach 1s Pause erneut `/ping` sendet. |
 | ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix: Im POST-Response-Handler nach `request->send()` wird geprüft ob `uploadFileType == Firmware || SPIFFS`; wenn ja: `WiFi.disconnect()` + 1s delay + `ESP.restart()`. |
@@ -345,30 +307,30 @@ Voraussetzung: Phase 4b abgeschlossen (Kernel 3.x), Phase 4c empfohlen (saubere 
 
 ## Dependency Upgrade Guide
 
-Stand: 2026-04-23
+Stand: 2026-04-24
 
 ### Abgeschlossen ✅
 
 | Dep | Alt | Neu | Anmerkung |
 |-----|-----|-----|-----------|
 | **Arduino ESP32 Framework** | `tuniii/arduino-esp32#WifiFix` (1.x) | `espressif32@^6.0.0` (2.x / ESP-IDF 4.4.x) | WiFi-Patch via `extra_script.py`; Hardware-Test miniV3 weitgehend bestanden (Details siehe Phase 1) |
+| **arduino-esp32 Custom Build** | Standard SDK (CONFIG_PM_ENABLE=n) | `WLANThermo-nano/arduino-esp32@2.0.17-pm-enable` via `platform_packages` (2026-04-24) | `CONFIG_PM_ENABLE=y`; Power Save auf Kernel 2.x nutzbar; `setPowerSaveMode()` fix: `min_freq_mhz` 240→40 |
 | **AsyncTCP** | `me-no-dev@1.1.1` → `mathieucarbou@^3.0.0` | `ESP32Async/AsyncTCP@^3.4.10` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Nachfolger-Org `ESP32Async`; Drop-in kompatibel |
 | **ESPAsyncWebServer** | `me-no-dev#1dde9cf` → `mathieucarbou@^3.0.0` | `ESP32Async/ESPAsyncWebServer@^3.10.3` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Breaking: `WebRequestMethodComposite` kein `int32_t` mehr ab v3.10.x (siehe Migrationshinweise) |
 | **ArduinoJson** | 5.13.4 | 7.x (Phase 4c, 2026-04-21) | 20 Dateien, ~404 API-Aufrufe; `DynamicJsonBuffer` → `JsonDocument`, `JsonObject&` → Value-Typ, `parseObject` → `deserializeJson`; kein Heap-Wachstum mehr; `double_with_n_digits()` entfernt |
-| **AsyncMqttClient** | 0.8.2 (`me-no-dev`) | `marvinroger/AsyncMqttClient@0.9.0` (2026-04-23) | Phase-4b-Blocker behoben. `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo. 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP@^3.4.10`. Kein API-Umbau in `Mqtt.cpp`. Compile alle 7 Varianten OK. |
+| **AsyncMqttClient** | 0.8.2 (`me-no-dev`) | `marvinroger/AsyncMqttClient@0.9.0` (2026-04-23) | `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo. 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP@^3.4.10`. Kein API-Umbau in `Mqtt.cpp`. Compile alle 7 Varianten OK. |
 
 ### Nicht upgraden – Breaking Changes (dedizierter Sprint nötig)
 
 | Dep | Aktuell | Ziel | Phase | Grund |
 |-----|---------|------|-------|-------|
-| **LVGL** | 7.11.0 | 9.x | **5** | Widgets umbenannt, Event-System geändert; gesamtes `src/display/tft/` neu. Erst nach Phase 4b sinnvoll. |
+| **LVGL** | 7.11.0 | 9.x | **5** | Widgets umbenannt, Event-System geändert; gesamtes `src/display/tft/` neu. |
 | **Vue** | 2.6.11 | 3.x | **2** | Vue 2 EOL seit 31.12.2023; vollständiger Frontend-Neubau; eigenständiges Projekt. |
 
-### Upgrade empfohlen – Phase 4a (vor Kernel 3.x)
+### Upgrade empfohlen – Phase 4a
 
 | Dep | Aktuell | Ziel | Aufwand | Hinweis |
 |-----|---------|------|---------|---------|
-| ~~**AsyncMqttClient**~~ | ~~0.8.2~~ | ~~`ESP32Async/AsyncMqttClient`~~ | ~~Mittel~~ | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; kein API-Umbau; Compile alle 7 Varianten OK |
 | **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` | **Trivial – Einzeiler** | `<2.5.34`-Constraint war Workaround für arduino-esp32 1.x (`hal/gpio_ll.h`); mit ESP-IDF 4.4.x (Phase 1) obsolet |
 | **ESPRandom** | 1.4.1 | neueste | Trivial | Upgrade macht `patch_esp_random()` in `extra_script.py` überflüssig |
 | **asyncHTTPrequest** | 1.2.2 | neueste 1.x | Trivial | Kleine Fixes, abwärtskompatibel |

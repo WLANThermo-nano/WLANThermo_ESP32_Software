@@ -355,21 +355,19 @@ void SystemBase::setPowerSaveMode(boolean enable)
   if ((enable == powerSaveModeEnabled) || (false == powerSaveModeSupport))
     return;
 
-  // only enable PSM when every caller enables it
-  pm_config.light_sleep_enable = enable;
   pm_config.max_freq_mhz = 240;
-  pm_config.min_freq_mhz = 240;
+  pm_config.min_freq_mhz = 40; // XTAL freq — required for light sleep on ESP32
+  pm_config.light_sleep_enable = enable;
 
   if ((ret = esp_pm_configure(&pm_config)) != ESP_OK)
   {
-    if (ret == ESP_ERR_NOT_SUPPORTED)
-      powerSaveModeSupport = false;
+    powerSaveModeSupport = false;
     Log.error("esp_pm_configure error %s" CR, ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
   }
   else
   {
-      Log.notice("PSM: %s" CR, (enable == true) ? "enabled" : "disabled");
-      powerSaveModeEnabled = enable;
+    Log.notice("PSM: %s" CR, (enable == true) ? "enabled" : "disabled");
+    powerSaveModeEnabled = enable;
   }
 }
 
