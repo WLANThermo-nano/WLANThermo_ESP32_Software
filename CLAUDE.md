@@ -125,7 +125,7 @@ Compile-Test bestanden: RAM 18–29%, Flash 24–31% je Variante.
 | REST-API `/data`, `/settings` | ✅ OK | Nach canHandle()-Fix |
 | Settings speichern | ✅ OK | WDT-Fix bestätigt (2026-04-20). Root Cause war Heap-Korruption durch 13× unsized `DynamicJsonBuffer` (nicht NVS-Blocking). Fix: alle auf `DynamicJsonBuffer(Settings::jsonBufferSize)` + NVS-Writes von setChannels/setPush/setPitmaster/setPID via Pending-Flags auf ConnectTask delegiert. |
 | WiFi-Stabilität | ⏳ Ausstehend | Langzeittest noch nicht durchgeführt |
-| Power Management | ✅ OK (2026-04-24) | Custom-Framework `2.0.17-pm-enable` mit `CONFIG_PM_ENABLE=y` via `platform_packages`. `setPowerSaveMode()` fix: `min_freq_mhz` 240→40 (XTAL-Pflicht für Light Sleep). Erwartet: `PSM: enabled` im Serial-Monitor. |
+| Power Management | ✅ OK (2026-04-24) | Custom-Framework `2.0.17-pm-enable` mit `CONFIG_PM_ENABLE=y` via `platform_packages`. `setPowerSaveMode()` fix: `min_freq_mhz` 240→40. `PSM: enabled` im Serial-Monitor bestätigt. WiFi Modem Sleep (`WIFI_PS_MIN_MODEM`) aktiv. Strommessung ausstehend. |
 | BLE / NRF-Chip | ⏳ Fix implementiert, Test ausstehend | `remoteIndex`-Discovery-Fix in `Bluetooth.cpp`; kein Re-Pairing nötig; `{"d":[]}` = Probe noch nicht in Reichweite, löst sich von selbst |
 
 **Fixes die während des Hardware-Tests notwendig waren:**

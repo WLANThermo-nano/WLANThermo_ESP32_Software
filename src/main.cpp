@@ -32,7 +32,7 @@
 // Forward declaration
 void createTasks();
 
-void loggingPrefix(Print *p)
+void loggingPrefix(Print *p, int level)
 {
   time_t t = now();
 
