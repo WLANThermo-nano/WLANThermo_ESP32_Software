@@ -99,6 +99,8 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 - Settings persistence: `src/Settings.cpp` uses **NVS** (`Preferences` API) — NOT SPIFFS. SPIFFS wird nur für Cloud-URL-Cache (`Cloud.cpp`) und Nextion-Display-Updates verwendet.
 - Power management: `esp_pm_config_esp32_t` + `esp_pm_configure()` in `src/system/SystemBase.cpp`. `CONFIG_PM_ENABLE=y` ist im Custom-Framework aktiv. `setPowerSaveMode()` konfiguriert Light Sleep mit `max_freq_mhz=240`, `min_freq_mhz=40` (XTAL-Frequenz — Pflicht für Light Sleep auf ESP32). Bei jedem Fehler (`ESP_ERR_NOT_SUPPORTED` oder `ESP_ERR_INVALID_ARG`) wird `powerSaveModeSupport=false` gesetzt → kein Retry. miniV3, connectV1, nanoV3 setzen `powerSaveModeSupport=true` in `hwInit()`.
 - **I2C + DFS:** `wirePmHandle` in `SystemBase` verwendet `ESP_PM_APB_FREQ_MAX` (nicht `NO_LIGHT_SLEEP`). `ESP_PM_NO_LIGHT_SLEEP` verhindert nur Light Sleep, aber **nicht** APB-Taktfrequenz-Änderungen (DFS). `ESP_PM_APB_FREQ_MAX` verhindert beides — notwendig, da I2C-Takt APB-relativ ist (`Wire.setClock(700kHz)`): beim APB-Abfall 240→40 MHz würde der I2C-Takt auf ~116 kHz fallen und laufende Transaktionen korrumpieren. Betrifft NanoV3 (8× MAX11615 + OLED via I2C) und alle Varianten mit aktivem PSM auf Batterie.
+- **Recovery-Mode-Trigger aus async_tcp-Kontext:** `Wlan::setRecoveryPending()` (Flag) statt direktem `RecoveryMode::runFromApp()`-Aufruf. `runFromApp()` enthält `delay()` → würde async_tcp blockieren und Response-Flush verhindern. `Wlan::update()` (ConnectTask) verarbeitet das Flag sicher außerhalb von async_tcp. Gleiches Muster wie `mdnsUpdatePending` / `wlanSaveConfigPending`.
+- **Restart nach async_tcp-Response:** `esp_timer` (One-Shot, ≥2s) statt `delay() + ESP.restart()` im Handler-Kontext. `delay()` in async_tcp-Callback blockiert den Task; `WiFi.disconnect()` unmittelbar nach `request->send()` killt die TCP-Verbindung vor dem Flush. Der Timer feuert in einem separaten Kontext, async_tcp kann die Response in der Zwischenzeit senden.
 - **ESPAsyncWebServer Migrationshinweise:**
   - **3.x (mathieucarbou → ESP32Async):** `AsyncWebHandler::canHandle()` und `isRequestHandlerTrivial()` sind jetzt `const virtual` → alle Subklassen müssen `const override` verwenden. Body-Daten in `handleBody()` sind **nicht null-terminiert** → null-terminierte Kopie (`new uint8_t[len+1]`) vor `deserializeJson()` erstellen. `AsyncJsonResponse::getRoot()` gibt `JsonVariant` zurück → `.to<JsonObject>()` aufrufen.
   - **3.10.x (ESP32Async):** `WebRequestMethodComposite` ist jetzt eine eigene Klasse (kein `int32_t` mehr). Struct-Felder für HTTP-Methoden müssen `WebRequestMethodComposite` statt `int32_t` sein. Literal `0` als Initialisierer → `HTTP_UNKNOWN`. Vergleich `(request->method() & field) > 0u` → `field & request->method()` (operator& gibt `bool` zurück; Operandenreihenfolge: Composite links, `WebRequestMethod` rechts).
@@ -232,9 +234,13 @@ Dedizierter Sprint.
 - **Sicherheit:** Kein implizites Buffer-Überlaufen mehr; Dokumentgröße ist explizit begrenzt.
 - **Aktiver Support:** v5 ist seit 2023 offiziell EOL — keine Bugfixes oder Sicherheits-Updates mehr.
 
-**Compile-Ergebnis miniV3 (2026-04-21):**
+**Compile-Ergebnis miniV3 (2026-04-21, nach Phase 4c):**
 - RAM: 28.5% (93.460 B / 327.680 B)
 - Flash: 32.0% (2.011.261 B / 6.291.456 B)
+
+**Compile-Ergebnis miniV3 (2026-04-25, nach B33–B35):**
+- RAM: 27.4% (89.788 B / 327.680 B)
+- Flash: 30.2% (1.902.485 B / 6.291.456 B)
 
 **Zusätzliche Fixes beim Compile gefunden:**
 
@@ -257,17 +263,18 @@ Dedizierter Sprint.
 | Temperaturmessung + Typ K | ✅ OK | |
 | Kanaleinstellungen + Temperaturschwellen | ✅ OK | |
 | Batterieerkennung | ✅ OK | Ladeendzustand noch nicht getestet |
-| Recovery-Mode starten | ✅ OK | Wird bei `/recovery` gestartet |
-| Recovery-Seite (Auto-Redirect) | ✅ OK (fix 2026-04-22) | `restart.html` JS fehlte `onerror`-Handler → Seite lud erst beim 2. Aufruf (B15 gefixt) |
+| Recovery-Mode starten | ✅ OK (B33 gefixt 2026-04-25) | `handleRecovery()` rief `runFromApp()` im async_tcp-Kontext auf → `restart.html` nie ausgeliefert → 3–5 Versuche nötig. Fix: Pending-Flag → ConnectTask |
+| Recovery-Seite (Auto-Redirect) | ✅ OK (B15+B33 gefixt) | B15: `onerror`-Handler ergänzt. B33: Root Cause der Unzuverlässigkeit war async_tcp-Blockierung in `handleRecovery()` |
 | Recovery-Export | ✅ OK (fix 2026-04-22) | `beginResponse_P` mit lokalem String-Pointer → HTTP-Header als Dateiinhalt (B14 gefixt) |
 | Recovery-Import | ⏳ Ausstehend | Noch nicht getestet |
-| Recovery-Update (Restart) | ✅ OK (fix 2026-04-22) | Kein automatischer Restart nach Firmware-Upload (B16 gefixt) |
+| Recovery-Update (Restart) | ✅ OK (B16+B34 gefixt) | B16: `ESP.restart()` nach Upload ergänzt. B34: `WiFi.disconnect()` killt TCP vor Response-Flush → durch `esp_timer` (2s) ersetzt |
+| Recovery-Upload Fortschritt | ⏳ Ausstehend | Upload langsam + hängt unter Last: `Update.write()` im async_tcp-Kontext blockiert TCP-Empfangspuffer → TCP-Backpressure → Browser drosselt. B35 (silent failure) gefixt; strukturelles Problem (Flash-Writes in async_tcp) offen |
 | REST-API (`/data`, `/settings`) | ✅ OK | |
 | Display-Funktionen | ✅ OK | |
 | Standby-Erkennung | ✅ OK | |
 | WiFi-Stabilität | ⏳ Langzeittest läuft | Gerät läuft über Nacht; Ergebnis ausstehend |
 
-**Gesamtergebnis:** Solide — alle Kernfunktionen OK. Drei Recovery-Bugs gefixt (B14–B16), SSR DAC/LEDC-Konflikt gefixt (B17).
+**Gesamtergebnis:** Solide — alle Kernfunktionen OK. Drei Recovery-Bugs gefixt (B14–B16), SSR DAC/LEDC-Konflikt gefixt (B17). Recovery-Zuverlässigkeit nachträglich durch B33+B34 (2026-04-25) vollständig behoben.
 
 ---
 
@@ -299,7 +306,7 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | ~~B10~~ | `src/system/SystemBase.cpp` | `setPowerSaveMode()` | ~~Medium~~ **GEFIXT (2026-04-24)** | Mit Standard-SDK (CONFIG_PM_ENABLE=n) gab `esp_pm_configure()` immer `ESP_ERR_NOT_SUPPORTED` → Endlos-Retry. Zweites Problem: `min_freq_mhz=240` mit `light_sleep_enable=true` → `ESP_ERR_INVALID_ARG` (ESP-IDF verlangt XTAL-Frequenz 40 MHz). Fix: (1) `min_freq_mhz` 240→40, (2) bei jedem Fehler `powerSaveModeSupport=false`. Power Save aktiv via Custom-Framework `2.0.17-pm-enable`. |
 | ~~B14~~ | `src/RecoveryMode.cpp` | `/export`-Handler | ~~High~~ **GEFIXT (2026-04-22)** | `beginResponse_P(200, "text/text", (uint8_t*)exportSettings.c_str(), ...)` speichert nur Raw-Pointer auf lokale `String exportSettings`. Nach Lambda-Return wird String zerstört → dangling pointer. Async-Webserver liest beim Senden freien Speicher → Browser empfängt HTTP-Header als Dateiinhalt statt NVS-Keys. Fix: `beginResponse(200, "text/plain", exportSettings)` — kopiert String-Inhalt intern. |
 | ~~B15~~ | `webui/old/restart.html` | XHR-Polling-Loop | ~~Medium~~ **GEFIXT (2026-04-22)** | `xhr.onerror` nicht behandelt. Wenn ESP nach `/recovery`-Aufruf WLAN trennt (Recovery-Reboot), bekommt Browser Network Error (kein Timeout) → `onerror` feuert ohne Handler → Polling stoppt → Seite zeigt Spinner ewig. Benutzer musste `/recovery` manuell ein zweites Mal aufrufen. Fix: `xhr.onerror`-Handler ergänzt, der nach 1s Pause erneut `/ping` sendet. |
-| ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix: Im POST-Response-Handler nach `request->send()` wird geprüft ob `uploadFileType == Firmware || SPIFFS`; wenn ja: `WiFi.disconnect()` + 1s delay + `ESP.restart()`. |
+| ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22), verfeinert B34 (2026-04-25)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix (B16): `WiFi.disconnect()` + 1s delay + `ESP.restart()` im Response-Handler. Fix (B34): `WiFi.disconnect()` entfernt + `delay()` durch `esp_timer` (2s) ersetzt — sonst killt WiFi.disconnect() die TCP-Verbindung vor dem Response-Flush. |
 | ~~B17~~ | `src/pitmaster/Pitmaster.cpp` | `initActuators()` SSR-Fall + `disableActuators()` | ~~High~~ **GEFIXT (2026-04-22)** | SSR keine Reaktion nach Phase 1 Migration. Root Cause: `dacWrite(ioPin1, 0)` aktiviert das DAC-Peripheral auf GPIO 25/26 (RTC-Pad). In ESP-IDF 4.4.x hat das DAC Vorrang über das GPIO-Matrix-Signal — LEDC läuft über die GPIO-Matrix und wird vom aktiven DAC blockiert. `ledcAttachPin()` deaktiviert das DAC in ESP-IDF 4.x nicht automatisch (in ESP-IDF 1.x funktionierte das noch). Fix: `dacWrite(ioPin1, 0)` im SSR-Init durch `dac_output_disable(DAC_CHANNEL_1/2)` ersetzt (`<driver/dac.h>`). Zusätzlich: `disableActuators()` überspringt `dacWrite` wenn `initActuator == SSR`, um Reaktivierung des DAC beim Abschalten zu verhindern. |
 | ~~B18~~ | `src/system/SystemBase.cpp` | Konstruktor | ~~Critical~~ **GEFIXT (2026-04-25)** | NanoV3 `rst:0x8 (TG1WDT_SYS_RESET)` ~1–2s nach Task-Start beim Betrieb auf Batterie. Root Cause: `wirePmHandle` als `ESP_PM_NO_LIGHT_SLEEP` angelegt → verhindert Light Sleep, aber **nicht** APB-DFS-Frequenzänderungen. Wenn PSM erstmals aktiviert wird (erster `ONCE_PER_SECOND_CYCLE` ~600ms nach Tasks-Start), fällt APB von 240→40 MHz. I2C-Takt ist APB-relativ (`Wire.setClock(700kHz)`) → fällt auf ~116 kHz → korrumpiert laufende Transaktionen der 8 MAX11615-Sensoren / OLED → FreeRTOS-Tick-Interrupt blockiert >300ms → Interrupt-WDT. Fix: `ESP_PM_NO_LIGHT_SLEEP` → `ESP_PM_APB_FREQ_MAX` in Konstruktor. miniV3 unbetroffenen da beim Test per USB betrieben → PSM nie aktiviert. |
 | ~~B19~~ | `src/peripherie/Buzzer.cpp` | Konstruktor | ~~Low~~ **GEFIXT (2026-04-25)** | `ledcSetup(channel, 0, 8)` mit `frequency=0` → LEDC meldet "LEDC not initialized" + "LEDC not initialized" bei `ledcAttachPin()` im Boot-Log. Fix: Startfrequenz 0 → 4000 Hz. |
