@@ -112,7 +112,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (teilweise abgeschlossen)
 
-Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), B23–B28 gefixt 2026-04-25 (/wlanthermo-review WebHandler+API), B29–B32 gefixt 2026-04-25 (/wlanthermo-review Wlan.cpp+.h), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
+Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), B23–B28 gefixt 2026-04-25 (/wlanthermo-review WebHandler+API), B29–B32 gefixt 2026-04-25 (/wlanthermo-review Wlan.cpp+.h), B33–B35 gefixt 2026-04-25 (RecoveryMode Fixes), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
 
 ### Phase 1 — Kernel Upgrade ✅ ABGESCHLOSSEN (2026-04-20)
 
@@ -316,6 +316,9 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | ~~B30~~ | `src/Wlan.cpp` | `onWifiConnect()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `saveConfig()` direkt im WiFi-Event-Callback → `Settings::write()` → `prefs.putString()` → NVS-Write im Event-Task-Kontext. Inkonsistent mit dem Pending-Flag-Pattern; potenzieller Mutex-Konflikt mit `processPendingSave()`. Fix: `wlanSaveConfigPending = true`, Abarbeitung in `Wlan::update()` analog zu `mdnsUpdatePending`. |
 | ~~B31~~ | `src/Wlan.cpp` | `connectToKnownStations()` | ~~Low~~ **GEFIXT (2026-04-25)** | `connectTimeout--` (`uint16_t`) bedingungslos am Funktionsende. Wenn alle SSID-Slots leer sind, läuft For-Loop durch ohne `connectTimeout` zu setzen → bleibt 0 → Underflow auf 65535 → Gerät versucht ~18h lang nicht erneut zu verbinden. Fix: Guard `if (connectTimeout > 0u) connectTimeout--`. |
 | ~~B32~~ | `src/Wlan.h` + `src/Wlan.cpp` | `isConnected()`, `isAP()` | ~~Low~~ **GEFIXT (2026-04-25)** | `boolean` Rückgabetyp (Arduino-Typedef `uint8_t`) statt ISO-C++ `bool` — identisches Pattern wie B27. Fix: → `bool`. |
+| ~~B33~~ | `src/WebHandler.cpp` + `src/Wlan.cpp/.h` | `handleRecovery()` | ~~Critical~~ **GEFIXT (2026-04-25)** | `runFromApp()` direkt im async_tcp-Handler aufgerufen. `delay(500)` darin blockierte den async_tcp-Task vor dem Response-Flush; `WiFi.disconnect()` killte danach die TCP-Verbindung → Browser empfing nie `restart.html` → kein Spinner → 3–5 Versuche nötig. Fix: `Wlan::setRecoveryPending()`-Flag, Abarbeitung in `Wlan::update()` (ConnectTask). |
+| ~~B34~~ | `src/RecoveryMode.cpp` | `/uploadfile`-Completion-Handler | ~~High~~ **GEFIXT (2026-04-25)** | `WiFi.disconnect()` + `delay(1000)` + `ESP.restart()` im async_tcp-Kontext: `WiFi.disconnect()` killte TCP-Verbindung sofort nach `request->send()` → „200 OK" nie ausgeliefert → Browser empfing Network Error statt Erfolg. Fix: `esp_timer` (2s One-Shot, außerhalb async_tcp) ruft `ESP.restart()` auf; `WiFi.disconnect()` entfernt. |
+| ~~B35~~ | `src/RecoveryMode.cpp` | `/uploadfile`-Upload-Callback | ~~Medium~~ **GEFIXT (2026-04-25)** | `Update.begin/write/end()` Rückgabewerte nicht geprüft → Silent failure bei ungültiger Partitionsgröße oder Flash-Fehler. Fix: Fehlercheck mit `Update.abort()` + `RMPRINTF` bei jedem Schritt; `uploadFileType = UploadFileType::None` bricht weiteren Upload ab. |
 
 ### SRAM / Heap-Optimierungen
 
@@ -384,6 +387,7 @@ Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review 
 |-------|---------|---------|-------|
 | 2026-04-25 | `src/WebHandler.cpp`, `src/API.h`, `src/API.cpp` | B23 Critical, B24+B25 High, B26 Medium, B27+B28 Low | Alle gefixt (same session) |
 | 2026-04-25 | `src/Wlan.cpp`, `src/Wlan.h` | B29 High, B30 Medium, B31+B32 Low | Alle gefixt (same session) |
+| 2026-04-25 | `src/RecoveryMode.cpp`, `src/WebHandler.cpp` (handleRecovery) | B33 Critical, B34 High, B35 Medium | Alle gefixt (same session); Upload-Stall unter hoher Flash-Last noch nicht vollständig analysiert |
 
 ### Ausstehend — Priorisiert
 
@@ -394,7 +398,7 @@ Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review 
 | `src/Notification.cpp` + `.h` | String-Handling Push-Tokens (Telegram, Pushover, App), HTTP-Requests |
 | `src/Mqtt.cpp` + `.h` | MQTT-Publish (M2-Kandidat: Arduino `String` 1×/s), Callback-Kontext |
 | `src/Cloud.cpp` + `.h` | asyncHTTPrequest, SPIFFS-URL-Cache, String-Handling |
-| `src/RecoveryMode.cpp` + `.h` | Bereits B14–B16 repariert; Upload-Handler, Import-Pfad noch nicht gereviewed |
+| `src/RecoveryMode.cpp` + `.h` | B33–B35 gefixt (2026-04-25); Import-Pfad noch nicht gereviewed; Upload-Stall unter Flash-Last offen |
 | `src/OtaUpdate.cpp` + `.h` | M4-Kandidat (10kB Task-Stack), Update-Download-Handler |
 
 **Priorität 2 — Pitmaster / Sensor (Hardware-Safety)**
