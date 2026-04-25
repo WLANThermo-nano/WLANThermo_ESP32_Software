@@ -21,6 +21,7 @@
 #include <ArduinoJson.h>
 #include "esp_wifi.h"
 #include "Wlan.h"
+#include "RecoveryMode.h"
 #include "Settings.h"
 #include "Constants.h"
 #include "Version.h"
@@ -35,6 +36,7 @@ String Wlan::hostName = DEFAULT_HOSTNAME;
 String Wlan::accessPointName = DEFAULT_APNAME;
 bool Wlan::mdnsUpdatePending = false;
 bool Wlan::wlanSaveConfigPending = false;
+bool Wlan::recoveryPending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;
@@ -248,6 +250,14 @@ void Wlan::update()
   {
     wlanSaveConfigPending = false;
     saveConfig();
+  }
+
+  if (recoveryPending)
+  {
+    recoveryPending = false;
+    WlanCredentials credentials;
+    getCredentials(&credentials);
+    RecoveryMode::runFromApp(credentials.ssid, credentials.password);
   }
 
   gSystem->processPendingSave();

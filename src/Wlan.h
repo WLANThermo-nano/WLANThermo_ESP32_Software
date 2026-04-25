@@ -73,6 +73,7 @@ public:
   uint8_t numOfAPClients();
   static void saveConfig();
   void setStopRequest();
+  static void setRecoveryPending() { recoveryPending = true; }
 
 private:
   static void onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info);
@@ -88,6 +89,7 @@ private:
   static String accessPointName;
   static bool mdnsUpdatePending;
   static bool wlanSaveConfigPending;
+  static bool recoveryPending;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
   static WlanCredentials newWlanCredentials;
   static uint8_t credentialIndex;

@@ -373,10 +373,10 @@ void NanoWebHandler::handleRecovery(AsyncWebServerRequest *request)
   response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
   response->addHeader("Content-Encoding", "gzip");
   request->send(response);
-
-  WlanCredentials credentials;
-  gSystem->wlan.getCredentials(&credentials);
-  RecoveryMode::runFromApp(credentials.ssid, credentials.password);
+  // runFromApp() darf NICHT im async_tcp-Kontext aufgerufen werden: delay() darin
+  // würde den async_tcp-Task blockieren bevor er die Response flushen kann.
+  // Pending-Flag → ConnectTask (Wlan::update) ruft runFromApp() sicher auf.
+  Wlan::setRecoveryPending();
 }
 
 void NanoWebHandler::handleRotate(AsyncWebServerRequest *request)
