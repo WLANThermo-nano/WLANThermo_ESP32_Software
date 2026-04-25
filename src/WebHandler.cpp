@@ -187,7 +187,7 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
 
 bool NanoWebHandler::canHandle(AsyncWebServerRequest *request) const
 {
-  boolean supported = false;
+  bool supported = false;
 
   for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
   {
@@ -605,7 +605,8 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
       gSystem->wlan.setAccessPointName(_name);
   }
 
-  gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0));
+  if (!unit.isEmpty())
+    gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0));
 
   gSystem->systemConfigSavePending = true;
   gSystem->otaConfigSavePending = true;
@@ -999,6 +1000,8 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
     if (_pitmaster.containsKey("channel"))
     {
       byte cha = _pitmaster["channel"];
+      if (cha < 1 || cha > gSystem->temperatures.count())
+        return 0;
       pm->assignTemperature(gSystem->temperatures[cha - 1]);
 
       //open_lid_init(); // Speicher zurücksetzen
@@ -1010,7 +1013,10 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
     if (_pitmaster.containsKey("pid"))
     {
       byte temppid = _pitmaster["pid"];
-      if (temppid != pm->getAssignedProfile()->id)
+      if (temppid >= gSystem->getPitmasterProfileCount())
+        return 0;
+      PitmasterProfile *currentProfile = pm->getAssignedProfile();
+      if (currentProfile && temppid != currentProfile->id)
       {
         pm->disableActuators(false);
         //Serial.println("PID-Wechsel");

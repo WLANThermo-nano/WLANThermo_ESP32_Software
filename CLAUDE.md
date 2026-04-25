@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language
+Always respond in German (Deutsch), regardless of file contents or code comments.
+
 ## Repository
 
 - **Upstream/Remote:** `git@github.com:WLANThermo-nano/WLANThermo_ESP32_Software.git` (SSH)
@@ -14,7 +17,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `develop` — Integration für Hotfixes und schnelle Releases (immer releasable)
   - `next` — Spielwiese für Phasen-Arbeit; alle `feature/*`-Branches landen hier zuerst, dann nach Test in `develop` → `master`
 - **Feature-Branch-Schema:** `feature/phase-0-stabilization`, `feature/phase-2-vue3`, `feature/phase-4a-lib-upgrade`, `feature/phase-5-lvgl9`
-- **Referenz-Backup:** `WLANThermo_ESP32_Software-master_old/` (ZIP-Extrakt ohne Git, kann gelöscht werden)
 
 ## Project Overview
 
@@ -110,7 +112,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (teilweise abgeschlossen)
 
-Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
+Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), B23–B28 gefixt 2026-04-25 (/wlanthermo-review WebHandler+API), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
 
 ### Phase 1 — Kernel Upgrade ✅ ABGESCHLOSSEN (2026-04-20)
 
@@ -304,6 +306,12 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | ~~B20~~ | `src/pitmaster/Pitmaster.cpp` | `disableActuators()` | ~~Medium~~ **GEFIXT (2026-04-25)** | B17-Fix unvollständig: Guard deckte nur `initActuator == SSR` ab. Bei `initActuator == NOAR` (Initialzustand — kein Aktuator konfiguriert) wurde `dacWrite(ioPin1=25, 0)` trotzdem aufgerufen → aktiviert DAC auf GPIO 25 bei jedem Boot, bevor SSR-LEDC initialisiert wird. Fix: Guard um `initActuator != NOAR` erweitert. |
 | ~~B21~~ | `src/Wlan.cpp` | `onWifiConnect()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `updateMdns()` direkt im WiFi-Event-Callback — gleicher unfixter Code wie der ursprüngliche `setHostName()`-Bug (B, bereits gefixt in `setHostName`). `MDNS.begin()` blockiert mehrere Sekunden in arduino-esp32 2.x → kann WDT im Event-Task auslösen. Fix: `updateMdns()` → `mdnsUpdatePending = true`, Abarbeitung im ConnectTask via `Wlan::update()`. |
 | ~~B22~~ | `src/main.cpp` | `loop()` | ~~Low~~ **GEFIXT (2026-04-25)** | `vTaskDelete(NULL)` ohne vorheriges `esp_task_wdt_delete(NULL)` → Loop-Task war noch im WDT-Monitor registriert beim Löschen. Fix: `esp_task_wdt_delete(NULL)` vor `vTaskDelete(NULL)`. |
+| ~~B23~~ | `src/WebHandler.cpp` | `setPitmaster()` | ~~Critical~~ **GEFIXT (2026-04-25)** | `byte cha = _pitmaster["channel"]` — bei `cha=0` ergibt `cha-1` unsigned-Underflow auf 255 → `temperatures[255]` → NULL → `assignTemperature(NULL)` → `temperature->getType()` in `Pitmaster.cpp:163` ohne NULL-Check → Hard-Fault. Fix: Guard `if (cha < 1 \|\| cha > temperatures.count()) return 0;` vor `cha-1`. |
+| ~~B24~~ | `src/WebHandler.cpp` | `setPitmaster()` | ~~High~~ **GEFIXT (2026-04-25)** | `pm->getAssignedProfile()->id` — `this->profile` startet im Konstruktor als NULL (`Pitmaster.cpp:79`). Bei erstem Boot oder leerer NVS → NULL-Deref → Hard-Fault. Fix: `PitmasterProfile *currentProfile = pm->getAssignedProfile(); if (currentProfile && temppid != currentProfile->id)`. |
+| ~~B25~~ | `src/WebHandler.cpp` | `setPitmaster()` | ~~High~~ **GEFIXT (2026-04-25)** | `getPitmasterProfile(temppid)` gibt NULL zurück wenn `temppid >= pitmasterProfileCount` — kein Bounds-Check. `assignProfile(NULL)` schreibt `this->profile = NULL` → nächster PID-Regelungs-Zugriff crasht. Fix: `if (temppid >= getPitmasterProfileCount()) return 0;` vor `assignProfile()`. |
+| ~~B26~~ | `src/WebHandler.cpp` | `setSystem()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0))` wurde bedingungslos aufgerufen, auch wenn `"unit"` gar nicht im JSON war. `String unit` bleibt leer → `charAt(0)` = `'\0'` → `setUnit(0)` resettet Einheit unbeabsichtigt. Fix: Aufruf in `if (!unit.isEmpty())` gewrapped. |
+| ~~B27~~ | `src/WebHandler.cpp` | `canHandle()` | ~~Low~~ **GEFIXT (2026-04-25)** | `boolean supported = false;` — Arduino-Typedef `uint8_t`, nicht ISO-C++ `bool`. Fix: → `bool`. |
+| ~~B28~~ | `src/API.cpp` | `customObj()` | ~~Low~~ **GEFIXT (2026-04-25)** | `_currentChannel["temp"] = (char*)0;` — C-Cast auf Null-Pointer statt `nullptr`. Fix: → `nullptr`. |
 
 ### SRAM / Heap-Optimierungen
 
@@ -359,3 +367,69 @@ Stand: 2026-04-24 (Phase 4a abgeschlossen)
 Pflege nur durch manuellen Fork-Vergleich möglich; kein regulärer Upgrade-Pfad:
 
 - `tuniii/BBQduino`, `tuniii/ITEADLIB_Arduino_Nextion`, `tuniii/ESPNexUpload`, `tuniii/lv_lib_qrcode`, `tuniii/Arduino-MedianFilter`, `borisneubert/Time`
+
+---
+
+## /wlanthermo-review Tracking
+
+Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review nach Checkliste (Memory, FreeRTOS/Async, ArduinoJson v7, ESPAsyncWebServer 3.10.x, Input-Validation, ESP32-Fallstricke).
+
+### Bereits reviewed
+
+| Datum | Dateien | Befunde | Fixes |
+|-------|---------|---------|-------|
+| 2026-04-25 | `src/WebHandler.cpp`, `src/API.h`, `src/API.cpp` | B23 Critical, B24+B25 High, B26 Medium, B27+B28 Low | Alle gefixt (same session) |
+
+### Ausstehend — Priorisiert
+
+**Priorität 1 — Netzwerk-/Input-facing (höchstes Risiko)**
+
+| Datei(en) | Grund |
+|-----------|-------|
+| `src/Notification.cpp` + `.h` | String-Handling Push-Tokens (Telegram, Pushover, App), HTTP-Requests |
+| `src/Wlan.cpp` + `.h` | WiFi-Events, MQTT-Callbacks, mDNS — bereits B21 repariert, weitere Async-Muster möglich |
+| `src/Mqtt.cpp` + `.h` | MQTT-Publish (M2-Kandidat: Arduino `String` 1×/s), Callback-Kontext |
+| `src/Cloud.cpp` + `.h` | asyncHTTPrequest, SPIFFS-URL-Cache, String-Handling |
+| `src/RecoveryMode.cpp` + `.h` | Bereits B14–B16 repariert; Upload-Handler, Import-Pfad noch nicht gereviewed |
+| `src/OtaUpdate.cpp` + `.h` | M4-Kandidat (10kB Task-Stack), Update-Download-Handler |
+
+**Priorität 2 — Pitmaster / Sensor (Hardware-Safety)**
+
+| Datei(en) | Grund |
+|-----------|-------|
+| `src/pitmaster/Pitmaster.cpp` + `.h` | B6, B7, B17, B20 bereits gefixt; Autotune-Pfad und PID-Calc noch unreviewed |
+| `src/pitmaster/PitmasterGrp.cpp` + `.h` | loadConfig/saveConfig, ArduinoJson v7 Migration |
+| `src/temperature/TemperatureGrp.cpp` + `.h` | B12 bereits gefixt; loadConfig, Sensor-Registrierung |
+| `src/temperature/TemperatureBase.cpp` + `.h` | Basisklasse, getValue/getType Null-Safety |
+| `src/bluetooth/Bluetooth.cpp` + `.h` | B (remoteIndex), BLE-Callbacks, getDevicesJson() |
+| `src/connect/Connect.cpp` + `.h` | B8 bereits gefixt; asyncHTTPrequest, onReadyStateChange |
+
+**Priorität 3 — System / Settings**
+
+| Datei(en) | Grund |
+|-----------|-------|
+| `src/system/SystemBase.cpp` + `.h` | B18/B10 gefixt; processPendingSave, PSM-Logik |
+| `src/Settings.cpp` + `.h` | NVS-Lesen/Schreiben, Defaults |
+| `src/main.cpp` | Task-Stacks, WDT-Registrierung (B22 gefixt) |
+| `src/SerialCmd.cpp` + `.h` | Serial-Input-Parsing |
+| `src/Item.cpp` + `.h` | NVS-Key-Handling |
+
+**Priorität 4 — Display / Peripherie (geringes Netzwerk-Risiko)**
+
+| Datei(en) | Grund |
+|-----------|-------|
+| `src/display/tft/` (alle `lv*.cpp`) | LVGL 7 — wird in Phase 5 neu geschrieben; Review erst sinnvoll danach |
+| `src/display/DisplayNextion.cpp` + `.h` | Nextion-Protokoll, Serial-Parsing |
+| `src/display/DisplayOled.cpp` + `.h` | I2C, relativ einfach |
+| `src/peripherie/Battery.cpp`, `Buzzer.cpp`, `PbGuard.cpp`, `SdCard.cpp` | Einfache Hardware-Treiber |
+
+**Überspringen (kein Review nötig)**
+
+| Datei(en) | Grund |
+|-----------|-------|
+| `src/bluetooth/bleFirmware*.h` | Binärdaten (NRF52-Firmware-Blobs) |
+| `src/webui/*.gz.h` | Generierte gzip-Header, kein handgeschriebener Code |
+| `src/Constants.h`, `src/TaskConfig.h`, `src/Version.h`, `src/DbgPrint.h`, `src/MedianFilterFloat.h` | Reine Konstanten/Makros/Inline-Header ohne Logik |
+| `src/system/System[Variant].cpp` (7 Dateien) | Dünne `hwInit()`-Wrapper, kaum eigene Logik |
+| `src/temperature/Temperature[Sensor].cpp` (6 Sensor-Dateien) | Sensor-spezifische Lese-Logik, kein Netzwerk-Facing |
+| `src/API.h` | Reine Deklaration (bereits gereviewed als Teil des WebHandler-Reviews) |

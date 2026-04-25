@@ -478,7 +478,7 @@ void API::customObj(JsonObject jObj)
 
     if (INACTIVEVALUE == _currentChannel["temp"].as<float>())
     {
-      _currentChannel["temp"] = (char*)0;
+      _currentChannel["temp"] = nullptr;
     }
   }
 }
