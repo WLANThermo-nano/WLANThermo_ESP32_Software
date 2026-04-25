@@ -56,7 +56,7 @@ SystemBase::SystemBase()
   disableTypeK = false;
   disableReceiver = false;
   wireSemaHandle = xSemaphoreCreateMutex();
-  esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "NULL", &this->wirePmHandle);
+  esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, "NULL", &this->wirePmHandle);
 }
 
 void SystemBase::init()
@@ -69,7 +69,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 3000, this, TASK_PRIORITY_SYSTEM_TASK, NULL, 1);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 6000, this, TASK_PRIORITY_SYSTEM_TASK, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
@@ -79,7 +79,7 @@ void SystemBase::task(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("SystemBase::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("SystemBase::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     uint32_t time = esp_timer_get_time();
     system->update();

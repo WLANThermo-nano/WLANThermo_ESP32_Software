@@ -27,7 +27,7 @@ Buzzer::Buzzer(uint8_t ioPin, uint8_t channel) : enabled(false)
 {
   this->ioPin = ioPin;
   this->channel = channel;
-  this->frequency = 0;
+  this->frequency = 4000;
   this->testEnabled = false;
   ledcSetup(this->channel , this->frequency, 8u);
   ledcAttachPin(this->ioPin, this->channel);

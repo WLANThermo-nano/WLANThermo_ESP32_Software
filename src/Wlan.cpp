@@ -367,7 +367,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
     saveConfig();
   }
 
-  updateMdns();
+  mdnsUpdatePending = true;
 }
 
 void Wlan::onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)

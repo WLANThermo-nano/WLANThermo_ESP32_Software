@@ -881,7 +881,8 @@ void Pitmaster::disableActuators(boolean allowdelay)
     }
 
     // SSR uses LEDC, not DAC — calling dacWrite would re-enable the DAC
-    if (initActuator != SSR)
+    // NOAR is the initial state (never initialized) — no actuator to disable
+    if (initActuator != SSR && initActuator != NOAR)
         dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);

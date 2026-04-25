@@ -96,6 +96,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 - Logging uses `ArduinoLog` macros (`Log.verbose`, `Log.notice`, `Log.error`) — not `Serial.print`.
 - Settings persistence: `src/Settings.cpp` uses **NVS** (`Preferences` API) — NOT SPIFFS. SPIFFS wird nur für Cloud-URL-Cache (`Cloud.cpp`) und Nextion-Display-Updates verwendet.
 - Power management: `esp_pm_config_esp32_t` + `esp_pm_configure()` in `src/system/SystemBase.cpp`. `CONFIG_PM_ENABLE=y` ist im Custom-Framework aktiv. `setPowerSaveMode()` konfiguriert Light Sleep mit `max_freq_mhz=240`, `min_freq_mhz=40` (XTAL-Frequenz — Pflicht für Light Sleep auf ESP32). Bei jedem Fehler (`ESP_ERR_NOT_SUPPORTED` oder `ESP_ERR_INVALID_ARG`) wird `powerSaveModeSupport=false` gesetzt → kein Retry. miniV3, connectV1, nanoV3 setzen `powerSaveModeSupport=true` in `hwInit()`.
+- **I2C + DFS:** `wirePmHandle` in `SystemBase` verwendet `ESP_PM_APB_FREQ_MAX` (nicht `NO_LIGHT_SLEEP`). `ESP_PM_NO_LIGHT_SLEEP` verhindert nur Light Sleep, aber **nicht** APB-Taktfrequenz-Änderungen (DFS). `ESP_PM_APB_FREQ_MAX` verhindert beides — notwendig, da I2C-Takt APB-relativ ist (`Wire.setClock(700kHz)`): beim APB-Abfall 240→40 MHz würde der I2C-Takt auf ~116 kHz fallen und laufende Transaktionen korrumpieren. Betrifft NanoV3 (8× MAX11615 + OLED via I2C) und alle Varianten mit aktivem PSM auf Batterie.
 - **ESPAsyncWebServer Migrationshinweise:**
   - **3.x (mathieucarbou → ESP32Async):** `AsyncWebHandler::canHandle()` und `isRequestHandlerTrivial()` sind jetzt `const virtual` → alle Subklassen müssen `const override` verwenden. Body-Daten in `handleBody()` sind **nicht null-terminiert** → null-terminierte Kopie (`new uint8_t[len+1]`) vor `deserializeJson()` erstellen. `AsyncJsonResponse::getRoot()` gibt `JsonVariant` zurück → `.to<JsonObject>()` aufrufen.
   - **3.10.x (ESP32Async):** `WebRequestMethodComposite` ist jetzt eine eigene Klasse (kein `int32_t` mehr). Struct-Felder für HTTP-Methoden müssen `WebRequestMethodComposite` statt `int32_t` sein. Literal `0` als Initialisierer → `HTTP_UNKNOWN`. Vergleich `(request->method() & field) > 0u` → `field & request->method()` (operator& gibt `bool` zurück; Operandenreihenfolge: Composite links, `WebRequestMethod` rechts).
@@ -109,7 +110,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (teilweise abgeschlossen)
 
-Bug-Fixes abgeschlossen (B1–B8 gefixt 2026-04-22, `next`-Branch). SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
+Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
 
 ### Phase 1 — Kernel Upgrade ✅ ABGESCHLOSSEN (2026-04-20)
 
@@ -152,6 +153,13 @@ Compile-Test bestanden: RAM 18–29%, Flash 24–31% je Variante.
 - ConnectTask: ~1.788 B genutzt (von 12.000 B) → nach Langzeittest auf ~2.300 B reduzierbar
 - Bluetooth-Task: Messung ausstehend
 
+**Hardware-Test nanoV3 (2026-04-25) — Ergebnis:**
+
+| Bereich | Status | Anmerkung |
+|---------|--------|-----------|
+| Boot / Stabilität | ✅ Fix implementiert (B18–B22), Hardware-Test ausstehend | `TG1WDT_SYS_RESET` ~1–2s nach Task-Start; Root Cause: `ESP_PM_NO_LIGHT_SLEEP` verhinderte kein DFS → I2C korrupt bei APB-Abfall. Fix: `ESP_PM_APB_FREQ_MAX`. Zwei NanoV3-Geräte betroffen. |
+| Übrige Funktionen | ⏳ Ausstehend | Erst nach Stabilitätsbestätigung |
+
 ### Phase 2 — UI-Redesign (ausstehend)
 
 Vue 2 → Vue 3 (Neubau, Vue 2 seit 31.12.2023 EOL).
@@ -160,20 +168,20 @@ Vue 2 → Vue 3 (Neubau, Vue 2 seit 31.12.2023 EOL).
 
 Flutter-App fertigstellen, Cordova ablösen.
 
-### Phase 4a — Library Pre-Upgrade (teilweise abgeschlossen)
+### Phase 4a — Library Pre-Upgrade ✅ ABGESCHLOSSEN (2026-04-24)
 
-Alle Libs auf aktuelle Versionen heben — maximale Kompatibilität und Sicherheit.
+Alle regulären Libs auf aktuelle Versionen gehoben. Custom Forks ohne Upstream-Equivalent bleiben unverändert.
 
-| Lib | Jetzt | Ziel | Aufwand | Prio | Status |
-|-----|-------|------|---------|------|--------|
-| ~~**`AsyncMqttClient@0.8.2`**~~ | ~~`me-no-dev` intern~~ | ~~`mathieucarbou/AsyncMqttClient`~~ | ~~Mittel~~ | — | ✅ **GEFIXT (2026-04-23)** → `marvinroger/AsyncMqttClient@0.9.0`; `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo; 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP`. Kein API-Umbau in `Mqtt.cpp` nötig. Compile-Test alle 7 Varianten OK. Commit `db83e5c`. |
-| `TFT_eSPI@^2.5.31,<2.5.34` | Constraint | `^2.5.34` | **Trivial — Einzeiler** | Hoch | ⏳ Ausstehend |
-| `protohaus/ESPRandom@1.4.1` | 1.4.1 | neueste | Trivial + Patch in `extra_script.py` entfernen | Mittel | ⏳ Ausstehend |
-| `asyncHTTPrequest@^1.2.1` | 1.2.x | neueste 1.x | Trivial | Niedrig | ⏳ Ausstehend |
-| `thijse/ArduinoLog@~1.0.3` | 1.0.4 | ~1.1.x | Trivial | Niedrig | ⏳ Ausstehend |
-| `ThingPulse/esp8266-oled-ssd1306@4.0.0` | 4.0.0 | neueste | Compile+Test | Niedrig | ⏳ Ausstehend |
-| `mathertel/OneButton@1.3.0` | 1.3.0 | 2.x | API-Check (v2 hat neue Multi-Click-API, alte Callbacks bleiben kompatibel) | Niedrig | ⏳ Ausstehend |
-| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | Manuellen upstream-Diff prüfen, kein regulärer Upgrade-Pfad | Niedrig | ⏳ Ausstehend |
+| Lib | Alt | Neu | Status |
+|-----|-----|-----|--------|
+| ~~**`AsyncMqttClient@0.8.2`**~~ | ~~`me-no-dev`~~ | ~~`mathieucarbou`~~ | ✅ **2026-04-23** → `marvinroger/AsyncMqttClient@0.9.0`. Kein API-Umbau. Commit `db83e5c`. |
+| **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` | ✅ **2026-04-24** — Constraint für arduino-esp32 1.x war obsolet. Commit `901e744`. |
+| **ArduinoLog** | `~1.0.3` (1.0.4) | `^1.1.1` | ✅ **2026-04-24** — Breaking: `loggingPrefix`-Signatur in `main.cpp` um `int level` erweitert. Commit `901e744`. |
+| **esp8266-oled-ssd1306** | `#4.0.0` | `#4.6.2` | ✅ **2026-04-24** — Drop-in kompatibel. Commit `901e744`. |
+| **OneButton** | `#1.3.0` | `#2.6.2` | ✅ **2026-04-24** — v2 API abwärtskompatibel für bestehende Callbacks. Commit `901e744`. |
+| **asyncHTTPrequest** | `^1.2.1` | `^1.2.1` | ✅ Bereits auf 1.2.2 (neueste 1.x) — kein Constraint-Update nötig. |
+| **ESPRandom** | `1.4.1` | `1.4.1` | ⏳ Kein neueres Release im PlatformIO-Registry. Patch in `extra_script.py` bleibt. |
+| Custom Forks (`tuniii/*`, `borisneubert/Time`) | — | — | ⏳ Kein regulärer Upgrade-Pfad — manueller upstream-Diff bei Bedarf. |
 
 ---
 
@@ -291,6 +299,11 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | ~~B15~~ | `webui/old/restart.html` | XHR-Polling-Loop | ~~Medium~~ **GEFIXT (2026-04-22)** | `xhr.onerror` nicht behandelt. Wenn ESP nach `/recovery`-Aufruf WLAN trennt (Recovery-Reboot), bekommt Browser Network Error (kein Timeout) → `onerror` feuert ohne Handler → Polling stoppt → Seite zeigt Spinner ewig. Benutzer musste `/recovery` manuell ein zweites Mal aufrufen. Fix: `xhr.onerror`-Handler ergänzt, der nach 1s Pause erneut `/ping` sendet. |
 | ~~B16~~ | `src/RecoveryMode.cpp` | `/uploadfile`-POST-Handler | ~~High~~ **GEFIXT (2026-04-22)** | Nach `Update.end(true)` kein `ESP.restart()` → Firmware-Update im Recovery-Mode ohne automatischen Neustart. Fix: Im POST-Response-Handler nach `request->send()` wird geprüft ob `uploadFileType == Firmware || SPIFFS`; wenn ja: `WiFi.disconnect()` + 1s delay + `ESP.restart()`. |
 | ~~B17~~ | `src/pitmaster/Pitmaster.cpp` | `initActuators()` SSR-Fall + `disableActuators()` | ~~High~~ **GEFIXT (2026-04-22)** | SSR keine Reaktion nach Phase 1 Migration. Root Cause: `dacWrite(ioPin1, 0)` aktiviert das DAC-Peripheral auf GPIO 25/26 (RTC-Pad). In ESP-IDF 4.4.x hat das DAC Vorrang über das GPIO-Matrix-Signal — LEDC läuft über die GPIO-Matrix und wird vom aktiven DAC blockiert. `ledcAttachPin()` deaktiviert das DAC in ESP-IDF 4.x nicht automatisch (in ESP-IDF 1.x funktionierte das noch). Fix: `dacWrite(ioPin1, 0)` im SSR-Init durch `dac_output_disable(DAC_CHANNEL_1/2)` ersetzt (`<driver/dac.h>`). Zusätzlich: `disableActuators()` überspringt `dacWrite` wenn `initActuator == SSR`, um Reaktivierung des DAC beim Abschalten zu verhindern. |
+| ~~B18~~ | `src/system/SystemBase.cpp` | Konstruktor | ~~Critical~~ **GEFIXT (2026-04-25)** | NanoV3 `rst:0x8 (TG1WDT_SYS_RESET)` ~1–2s nach Task-Start beim Betrieb auf Batterie. Root Cause: `wirePmHandle` als `ESP_PM_NO_LIGHT_SLEEP` angelegt → verhindert Light Sleep, aber **nicht** APB-DFS-Frequenzänderungen. Wenn PSM erstmals aktiviert wird (erster `ONCE_PER_SECOND_CYCLE` ~600ms nach Tasks-Start), fällt APB von 240→40 MHz. I2C-Takt ist APB-relativ (`Wire.setClock(700kHz)`) → fällt auf ~116 kHz → korrumpiert laufende Transaktionen der 8 MAX11615-Sensoren / OLED → FreeRTOS-Tick-Interrupt blockiert >300ms → Interrupt-WDT. Fix: `ESP_PM_NO_LIGHT_SLEEP` → `ESP_PM_APB_FREQ_MAX` in Konstruktor. miniV3 unbetroffenen da beim Test per USB betrieben → PSM nie aktiviert. |
+| ~~B19~~ | `src/peripherie/Buzzer.cpp` | Konstruktor | ~~Low~~ **GEFIXT (2026-04-25)** | `ledcSetup(channel, 0, 8)` mit `frequency=0` → LEDC meldet "LEDC not initialized" + "LEDC not initialized" bei `ledcAttachPin()` im Boot-Log. Fix: Startfrequenz 0 → 4000 Hz. |
+| ~~B20~~ | `src/pitmaster/Pitmaster.cpp` | `disableActuators()` | ~~Medium~~ **GEFIXT (2026-04-25)** | B17-Fix unvollständig: Guard deckte nur `initActuator == SSR` ab. Bei `initActuator == NOAR` (Initialzustand — kein Aktuator konfiguriert) wurde `dacWrite(ioPin1=25, 0)` trotzdem aufgerufen → aktiviert DAC auf GPIO 25 bei jedem Boot, bevor SSR-LEDC initialisiert wird. Fix: Guard um `initActuator != NOAR` erweitert. |
+| ~~B21~~ | `src/Wlan.cpp` | `onWifiConnect()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `updateMdns()` direkt im WiFi-Event-Callback — gleicher unfixter Code wie der ursprüngliche `setHostName()`-Bug (B, bereits gefixt in `setHostName`). `MDNS.begin()` blockiert mehrere Sekunden in arduino-esp32 2.x → kann WDT im Event-Task auslösen. Fix: `updateMdns()` → `mdnsUpdatePending = true`, Abarbeitung im ConnectTask via `Wlan::update()`. |
+| ~~B22~~ | `src/main.cpp` | `loop()` | ~~Low~~ **GEFIXT (2026-04-25)** | `vTaskDelete(NULL)` ohne vorheriges `esp_task_wdt_delete(NULL)` → Loop-Task war noch im WDT-Monitor registriert beim Löschen. Fix: `esp_task_wdt_delete(NULL)` vor `vTaskDelete(NULL)`. |
 
 ### SRAM / Heap-Optimierungen
 
@@ -303,22 +316,27 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | M3 | `API.cpp:139–140` | `String sc[2]/vc[2]` lokal in `pitAry()` → Heap-Allokation jede Sekunde. | Gering, aber summiert sich | **Ausstehend** |
 | M4 | `Connect.cpp:49`, `OtaUpdate.cpp:49` | Task-Stacks je 10.000 B — vermutlich überdimensioniert | **7.000–9.000 B dauerhaftes SRAM** | **Ausstehend** (T1-Safety-Check zuerst) |
 
-**Vorgehen M4:** `highWaterMark`-Debug-Output aktiv in `main.cpp:89/124`, `Bluetooth.cpp:423`. T1 = Safety-Check unter Last, dann mit 512 B Puffer kürzen.
+**Vorgehen M4:** `highWaterMark`-Debug-Output aktiv in `main.cpp:89/124`, `Bluetooth.cpp:423`, `SystemBase.cpp` (SystemTask, Stack 6000 B — nach 2026-04-25 erhöht von 3000 B). T1 = Safety-Check unter Last, dann mit 512 B Puffer kürzen.
 
 ## Dependency Upgrade Guide
 
-Stand: 2026-04-24
+Stand: 2026-04-24 (Phase 4a abgeschlossen)
 
 ### Abgeschlossen ✅
 
 | Dep | Alt | Neu | Anmerkung |
 |-----|-----|-----|-----------|
 | **Arduino ESP32 Framework** | `tuniii/arduino-esp32#WifiFix` (1.x) | `espressif32@^6.0.0` (2.x / ESP-IDF 4.4.x) | WiFi-Patch via `extra_script.py`; Hardware-Test miniV3 weitgehend bestanden (Details siehe Phase 1) |
-| **arduino-esp32 Custom Build** | Standard SDK (CONFIG_PM_ENABLE=n) | `WLANThermo-nano/arduino-esp32@2.0.17-pm-enable` via `platform_packages` (2026-04-24) | `CONFIG_PM_ENABLE=y`; Power Save auf Kernel 2.x nutzbar; `setPowerSaveMode()` fix: `min_freq_mhz` 240→40 |
+| **arduino-esp32 Custom Build** | Standard SDK (CONFIG_PM_ENABLE=n) | `WLANThermo-nano/arduino-esp32@2.0.17-pm-enable` via `platform_packages` (2026-04-24) | `CONFIG_PM_ENABLE=y`; Power Save auf Kernel 2.x nutzbar; `setPowerSaveMode()` fix: `min_freq_mhz` 240→40; WiFi Modem Sleep aktiviert |
 | **AsyncTCP** | `me-no-dev@1.1.1` → `mathieucarbou@^3.0.0` | `ESP32Async/AsyncTCP@^3.4.10` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Nachfolger-Org `ESP32Async`; Drop-in kompatibel |
 | **ESPAsyncWebServer** | `me-no-dev#1dde9cf` → `mathieucarbou@^3.0.0` | `ESP32Async/ESPAsyncWebServer@^3.10.3` | `mathieucarbou`-Repo seit Jan 2025 archiviert; Breaking: `WebRequestMethodComposite` kein `int32_t` mehr ab v3.10.x (siehe Migrationshinweise) |
 | **ArduinoJson** | 5.13.4 | 7.x (Phase 4c, 2026-04-21) | 20 Dateien, ~404 API-Aufrufe; `DynamicJsonBuffer` → `JsonDocument`, `JsonObject&` → Value-Typ, `parseObject` → `deserializeJson`; kein Heap-Wachstum mehr; `double_with_n_digits()` entfernt |
-| **AsyncMqttClient** | 0.8.2 (`me-no-dev`) | `marvinroger/AsyncMqttClient@0.9.0` (2026-04-23) | `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo. 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP@^3.4.10`. Kein API-Umbau in `Mqtt.cpp`. Compile alle 7 Varianten OK. |
+| **AsyncMqttClient** | 0.8.2 (`me-no-dev`) | `marvinroger/AsyncMqttClient@0.9.0` (2026-04-23) | `mathieucarbou`-Repo existiert nicht mehr; `ESP32Async` hat kein MQTT-Repo. 0.9.0 nutzt `<AsyncTCP.h>` direkt → kompatibel mit `ESP32Async/AsyncTCP@^3.4.10`. Kein API-Umbau. |
+| **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` (2026-04-24) | Constraint für arduino-esp32 1.x obsolet; 2.5.43 aktuell |
+| **ArduinoLog** | 1.0.4 | 1.1.1 (2026-04-24) | Breaking: `setPrefix`-Callback-Signatur `+int level`; `loggingPrefix` in `main.cpp` angepasst |
+| **esp8266-oled-ssd1306** | 4.0.0 | 4.6.2 (2026-04-24) | Drop-in kompatibel |
+| **OneButton** | 1.3.0 | 2.6.2 (2026-04-24) | v2 Multi-Click-API abwärtskompatibel für bestehende Callbacks |
+| **asyncHTTPrequest** | `^1.2.1` | `^1.2.1` → 1.2.2 (2026-04-24) | Neueste 1.x durch Constraint bereits abgedeckt |
 
 ### Nicht upgraden – Breaking Changes (dedizierter Sprint nötig)
 
@@ -327,29 +345,14 @@ Stand: 2026-04-24
 | **LVGL** | 7.11.0 | 9.x | **5** | Widgets umbenannt, Event-System geändert; gesamtes `src/display/tft/` neu. |
 | **Vue** | 2.6.11 | 3.x | **2** | Vue 2 EOL seit 31.12.2023; vollständiger Frontend-Neubau; eigenständiges Projekt. |
 
-### Upgrade empfohlen – Phase 4a
+### Ausstehend
 
-| Dep | Aktuell | Ziel | Aufwand | Hinweis |
-|-----|---------|------|---------|---------|
-| **TFT_eSPI** | `^2.5.31,<2.5.34` | `^2.5.34` | **Trivial – Einzeiler** | `<2.5.34`-Constraint war Workaround für arduino-esp32 1.x (`hal/gpio_ll.h`); mit ESP-IDF 4.4.x (Phase 1) obsolet |
-| **ESPRandom** | 1.4.1 | neueste | Trivial | Upgrade macht `patch_esp_random()` in `extra_script.py` überflüssig |
-| **asyncHTTPrequest** | 1.2.2 | neueste 1.x | Trivial | Kleine Fixes, abwärtskompatibel |
-| **ArduinoLog** | 1.0.4 | ~1.1.x | Trivial | Patch-kompatibel |
-| **esp8266-oled-ssd1306** | 4.0.0 | neueste | Testen | Patch-Releases kompatibel |
-| **OneButton** | 1.3.0 | 2.x | Gering | v2 hat neue Multi-Click-API; alte Callbacks funktional; kurz testen |
-| **axios** (Frontend) | 0.21.1 | 1.x | Gering–Mittel | Besseres Error-Handling |
-
-### Sicher zu upgraden
-
-| Dep | Aktuell | Bemerkung |
-|-----|---------|-----------|
-| **ArduinoLog** | 1.0.4 | Patch-kompatibel |
-| **ESPRandom** | 1.4.1 | Bug (fehlendes `#include <vector>`) wird via `extra_script.py` gepatcht; Upgrade würde Patch überflüssig machen |
-| **asyncHTTPrequest** | 1.2.2 | Kleine Fixes, abwärtskompatibel |
-| **esp8266-oled-ssd1306** | 4.0.0 | Patch-Releases kompatibel |
-| **OneButton** | 1.3.0 | v2 hat neue Multi-Click-API; alte Callbacks weiter funktional |
-| **core-js** (Frontend) | ^3.6.5 | Polyfills, abwärtskompatibel |
-| **sass / sass-loader** (Frontend) | 1.26 / 9.x | Aktuellste 1.x / 10.x |
+| Dep | Aktuell | Ziel | Hinweis |
+|-----|---------|------|---------|
+| **ESPRandom** | 1.4.1 | neueste | Kein neueres Release im Registry; Upgrade würde `patch_esp_random()` in `extra_script.py` überflüssig machen |
+| **axios** (Frontend) | 0.21.1 | 1.x | Besseres Error-Handling |
+| **core-js** (Frontend) | ^3.6.5 | neueste | Polyfills, abwärtskompatibel |
+| **sass / sass-loader** (Frontend) | 1.26 / 9.x | neueste 1.x / 10.x | Abwärtskompatibel |
 
 ### Custom Forks – kein Upstream-Equivalent
 

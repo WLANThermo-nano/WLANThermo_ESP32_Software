@@ -28,6 +28,7 @@
 #include "LogRingBuffer.h"
 #include "TaskConfig.h"
 #include "DeviceId.h"
+#include "esp_task_wdt.h"
 
 // Forward declaration
 void createTasks();
@@ -173,5 +174,6 @@ void createTasks()
 // LOOP
 void loop()
 {
+  esp_task_wdt_delete(NULL);
   vTaskDelete(NULL);
 }
