@@ -35,6 +35,7 @@
 String Wlan::hostName = DEFAULT_HOSTNAME;
 String Wlan::accessPointName = DEFAULT_APNAME;
 bool Wlan::mdnsUpdatePending = false;
+bool Wlan::wifiModePsPending = false;
 bool Wlan::wlanSaveConfigPending = false;
 bool Wlan::recoveryPending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
@@ -240,6 +241,13 @@ WifiStrength Wlan::getSignalStrength()
 
 void Wlan::update()
 {
+  if (wifiModePsPending)
+  {
+    wifiModePsPending = false;
+    WiFi.mode(WIFI_STA);
+    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+  }
+
   if (mdnsUpdatePending)
   {
     mdnsUpdatePending = false;
@@ -377,8 +385,6 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   Serial.printf("STA: %s\n", WiFi.SSID().c_str());
   Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-  WiFi.mode(WIFI_STA);
-  esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
 
   Log.notice("Connected to Wifi: %s (%s, %d, %s)" CR, WiFi.SSID().c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
 
@@ -387,6 +393,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
     wlanSaveConfigPending = true;
   }
 
+  wifiModePsPending = true;
   mdnsUpdatePending = true;
 }
 

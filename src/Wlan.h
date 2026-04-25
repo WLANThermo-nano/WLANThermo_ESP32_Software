@@ -88,6 +88,7 @@ private:
   static String hostName;
   static String accessPointName;
   static bool mdnsUpdatePending;
+  static bool wifiModePsPending;
   static bool wlanSaveConfigPending;
   static bool recoveryPending;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
