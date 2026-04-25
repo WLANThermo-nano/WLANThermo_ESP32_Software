@@ -112,7 +112,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (teilweise abgeschlossen)
 
-Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), B23–B28 gefixt 2026-04-25 (/wlanthermo-review WebHandler+API), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
+Bug-Fixes: B1–B8 gefixt 2026-04-22, B18–B22 gefixt 2026-04-25 (NanoV3 TG1WDT-Reboot), B23–B28 gefixt 2026-04-25 (/wlanthermo-review WebHandler+API), B29–B32 gefixt 2026-04-25 (/wlanthermo-review Wlan.cpp+.h), `next`-Branch. SRAM-Optimierungen M2–M4 ausstehend — siehe Abschnitte unten.
 
 ### Phase 1 — Kernel Upgrade ✅ ABGESCHLOSSEN (2026-04-20)
 
@@ -312,6 +312,10 @@ Voraussetzung: Phase 4c abgeschlossen (saubere JSON-API im TFT-UI-Code).
 | ~~B26~~ | `src/WebHandler.cpp` | `setSystem()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `gSystem->temperatures.setUnit((TemperatureUnit)unit.charAt(0))` wurde bedingungslos aufgerufen, auch wenn `"unit"` gar nicht im JSON war. `String unit` bleibt leer → `charAt(0)` = `'\0'` → `setUnit(0)` resettet Einheit unbeabsichtigt. Fix: Aufruf in `if (!unit.isEmpty())` gewrapped. |
 | ~~B27~~ | `src/WebHandler.cpp` | `canHandle()` | ~~Low~~ **GEFIXT (2026-04-25)** | `boolean supported = false;` — Arduino-Typedef `uint8_t`, nicht ISO-C++ `bool`. Fix: → `bool`. |
 | ~~B28~~ | `src/API.cpp` | `customObj()` | ~~Low~~ **GEFIXT (2026-04-25)** | `_currentChannel["temp"] = (char*)0;` — C-Cast auf Null-Pointer statt `nullptr`. Fix: → `nullptr`. |
+| ~~B29~~ | `src/Wlan.cpp` | `loadConfig()` | ~~High~~ **GEFIXT (2026-04-25)** | `strlen(wifiEntry["SSID"].as<const char*>())` — ArduinoJson v7 gibt `nullptr` zurück wenn Key fehlt/null ist → `strlen(nullptr)` = UB → Crash beim Laden einer korrupten NVS-Wifi-Konfiguration. Fix: Pointer zuerst in `const char*` zwischenspeichern, `!ssid \|\| !pass` als Guard voranstellen. |
+| ~~B30~~ | `src/Wlan.cpp` | `onWifiConnect()` | ~~Medium~~ **GEFIXT (2026-04-25)** | `saveConfig()` direkt im WiFi-Event-Callback → `Settings::write()` → `prefs.putString()` → NVS-Write im Event-Task-Kontext. Inkonsistent mit dem Pending-Flag-Pattern; potenzieller Mutex-Konflikt mit `processPendingSave()`. Fix: `wlanSaveConfigPending = true`, Abarbeitung in `Wlan::update()` analog zu `mdnsUpdatePending`. |
+| ~~B31~~ | `src/Wlan.cpp` | `connectToKnownStations()` | ~~Low~~ **GEFIXT (2026-04-25)** | `connectTimeout--` (`uint16_t`) bedingungslos am Funktionsende. Wenn alle SSID-Slots leer sind, läuft For-Loop durch ohne `connectTimeout` zu setzen → bleibt 0 → Underflow auf 65535 → Gerät versucht ~18h lang nicht erneut zu verbinden. Fix: Guard `if (connectTimeout > 0u) connectTimeout--`. |
+| ~~B32~~ | `src/Wlan.h` + `src/Wlan.cpp` | `isConnected()`, `isAP()` | ~~Low~~ **GEFIXT (2026-04-25)** | `boolean` Rückgabetyp (Arduino-Typedef `uint8_t`) statt ISO-C++ `bool` — identisches Pattern wie B27. Fix: → `bool`. |
 
 ### SRAM / Heap-Optimierungen
 
@@ -379,6 +383,7 @@ Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review 
 | Datum | Dateien | Befunde | Fixes |
 |-------|---------|---------|-------|
 | 2026-04-25 | `src/WebHandler.cpp`, `src/API.h`, `src/API.cpp` | B23 Critical, B24+B25 High, B26 Medium, B27+B28 Low | Alle gefixt (same session) |
+| 2026-04-25 | `src/Wlan.cpp`, `src/Wlan.h` | B29 High, B30 Medium, B31+B32 Low | Alle gefixt (same session) |
 
 ### Ausstehend — Priorisiert
 
@@ -387,7 +392,6 @@ Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review 
 | Datei(en) | Grund |
 |-----------|-------|
 | `src/Notification.cpp` + `.h` | String-Handling Push-Tokens (Telegram, Pushover, App), HTTP-Requests |
-| `src/Wlan.cpp` + `.h` | WiFi-Events, MQTT-Callbacks, mDNS — bereits B21 repariert, weitere Async-Muster möglich |
 | `src/Mqtt.cpp` + `.h` | MQTT-Publish (M2-Kandidat: Arduino `String` 1×/s), Callback-Kontext |
 | `src/Cloud.cpp` + `.h` | asyncHTTPrequest, SPIFFS-URL-Cache, String-Handling |
 | `src/RecoveryMode.cpp` + `.h` | Bereits B14–B16 repariert; Upload-Handler, Import-Pfad noch nicht gereviewed |

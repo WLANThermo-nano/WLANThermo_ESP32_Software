@@ -34,6 +34,7 @@
 String Wlan::hostName = DEFAULT_HOSTNAME;
 String Wlan::accessPointName = DEFAULT_APNAME;
 bool Wlan::mdnsUpdatePending = false;
+bool Wlan::wlanSaveConfigPending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;
@@ -86,14 +87,16 @@ void Wlan::loadConfig()
       if (i >= NUM_OF_WLAN_CREDENTIALS)
         break;
 
-      if ((strlen(wifiEntry["SSID"].as<const char*>()) >= WLAN_SSID_MAX_LENGTH) || (strlen(wifiEntry["PASS"].as<const char*>()) >= WLAN_PASS_MAX_LENGTH))
+      const char *ssid = wifiEntry["SSID"].as<const char*>();
+      const char *pass = wifiEntry["PASS"].as<const char*>();
+      if (!ssid || !pass || strlen(ssid) >= WLAN_SSID_MAX_LENGTH || strlen(pass) >= WLAN_PASS_MAX_LENGTH)
       {
         Serial.println("Wlan::loadConfig: credentials invalid");
       }
       else
       {
-        strcpy(wlanCredentials[i].ssid, wifiEntry["SSID"].as<const char*>());
-        strcpy(wlanCredentials[i].password, wifiEntry["PASS"].as<const char*>());
+        strcpy(wlanCredentials[i].ssid, ssid);
+        strcpy(wlanCredentials[i].password, pass);
         Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
       }
       i++;
@@ -151,12 +154,12 @@ void Wlan::clearCredentials()
   saveConfig();
 }
 
-boolean Wlan::isConnected()
+bool Wlan::isConnected()
 {
   return WiFi.isConnected();
 }
 
-boolean Wlan::isAP()
+bool Wlan::isAP()
 {
   return (WiFi.getMode() == WIFI_MODE_APSTA) ? true : false;
 }
@@ -239,6 +242,12 @@ void Wlan::update()
   {
     mdnsUpdatePending = false;
     updateMdns();
+  }
+
+  if (wlanSaveConfigPending)
+  {
+    wlanSaveConfigPending = false;
+    saveConfig();
   }
 
   gSystem->processPendingSave();
@@ -324,7 +333,8 @@ void Wlan::connectToKnownStations()
       stationIndex = 0u;
   }
 
-  connectTimeout--;
+  if (connectTimeout > 0u)
+    connectTimeout--;
 }
 
 void Wlan::stopAllRadio()
@@ -364,7 +374,7 @@ void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
 
   if (WiFi.SSID() == newWlanCredentials.ssid)
   {
-    saveConfig();
+    wlanSaveConfigPending = true;
   }
 
   mdnsUpdatePending = true;

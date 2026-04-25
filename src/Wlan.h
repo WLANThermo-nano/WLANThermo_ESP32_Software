@@ -68,8 +68,8 @@ public:
   static void clearCredentials();
   static String getMacAddress();
   WifiState getWifiState();
-  boolean isConnected();
-  boolean isAP();
+  bool isConnected();
+  bool isAP();
   uint8_t numOfAPClients();
   static void saveConfig();
   void setStopRequest();
@@ -87,6 +87,7 @@ private:
   static String hostName;
   static String accessPointName;
   static bool mdnsUpdatePending;
+  static bool wlanSaveConfigPending;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
   static WlanCredentials newWlanCredentials;
   static uint8_t credentialIndex;
