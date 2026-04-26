@@ -21,6 +21,7 @@ gci env:
 (New-Object System.Net.WebClient).DownloadFile($sikulixUrl, $sikulix)
 (New-Object System.Net.WebClient).DownloadFile($jythonUrl, $jython)
 Expand-Archive -LiteralPath $nextionEditorZip -DestinationPath $nextionEditorFolder -Force
+Get-ChildItem -Recurse $nextionEditorFolder | Select-Object FullName
 Start-Process -FilePath $nextionEditor -ArgumentList $nextionHmiFile
 #Start-Sleep -s 10
 
