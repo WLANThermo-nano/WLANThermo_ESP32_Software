@@ -20,11 +20,11 @@ jobs:
       run: |
         .\nextion\build.ps1
     - uses: actions/upload-artifact@v4
-      with:
-        name: nextion_artifacts_next
-        path: ./nextion/artifacts
-    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: sikuli_debug_screenshot
-        path: ${{ github.workspace }}/nextion/nextion.sikuli/debug_screen.png
+        path: ${{ runner.temp }}/debug_screen*.png
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nextion_artifacts_next
+        path: ./nextion/artifacts

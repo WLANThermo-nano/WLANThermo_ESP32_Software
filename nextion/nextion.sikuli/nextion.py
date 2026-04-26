@@ -1,12 +1,21 @@
 import sys.argv
+import java.lang.System as System
+import org.sikuli.script.Screen as SikuliScreen
+
+tempDir = System.getenv("RUNNER_TEMP")
+
 if exists("Update.png", 10):
     click("Update.png")
 sleep(20)
-capture(SCREEN, "debug_screen.png")  # ← sofort nach dem Warten
+
+SikuliScreen().capture().save(tempDir, "debug_screen1.png")
+
 wait("Device_ID.png", 10)
 click("Device_ID.png")
 sleep(2)
-capture(SCREEN, "debug_screen2.png")  # ← nach Device_ID click
+
+SikuliScreen().capture().save(tempDir, "debug_screen2.png")
+
 click("Dummy_Direction.png")
 click(sys.argv[1] + ".png")
 wait(Pattern("Device.png").similar(0.80))
