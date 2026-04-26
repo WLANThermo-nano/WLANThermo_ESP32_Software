@@ -1,13 +1,12 @@
 import sys.argv
-
 if exists("Update.png", 10):
     click("Update.png")
 sleep(20)
+capture(SCREEN, "debug_screen.png")  # ← sofort nach dem Warten
 wait("Device_ID.png", 10)
 click("Device_ID.png")
 sleep(2)
-# Screenshot in Nextion-Ordner speichern
-capture(SCREEN, "debug_screen.png")
+capture(SCREEN, "debug_screen2.png")  # ← nach Device_ID click
 click("Dummy_Direction.png")
 click(sys.argv[1] + ".png")
 wait(Pattern("Device.png").similar(0.80))
