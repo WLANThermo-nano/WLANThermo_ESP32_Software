@@ -27,4 +27,4 @@ jobs:
       if: always()
       with:
         name: sikuli_debug_screenshot
-        path: ${{ github.workspace }}/nextion/*.png
+        path: ${{ github.workspace }}/nextion/nextion.sikuli/debug_screen.png
