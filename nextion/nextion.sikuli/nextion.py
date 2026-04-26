@@ -7,8 +7,7 @@ wait("Device_ID.png", 10)
 click("Device_ID.png")
 sleep(2)
 # Screenshot in Nextion-Ordner speichern
-screenshotPath = getParentPath() + "\\debug_screen.png"
-capture(SCREEN, screenshotPath)
+capture(SCREEN, "debug_screen.png")
 click("Dummy_Direction.png")
 click(sys.argv[1] + ".png")
 wait(Pattern("Device.png").similar(0.80))
