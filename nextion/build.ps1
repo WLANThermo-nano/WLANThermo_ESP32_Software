@@ -23,7 +23,7 @@ gci env:
 Expand-Archive -LiteralPath $nextionEditorZip -DestinationPath $nextionEditorFolder -Force
 Get-ChildItem -Recurse $nextionEditorFolder | Select-Object FullName
 Start-Process -FilePath $nextionEditor -ArgumentList $nextionHmiFile
-#Start-Sleep -s 10
+Start-Sleep -s 15
 
 New-Item -ItemType Directory -Force -Path $nextionArtifactsFolder
 New-Item -ItemType Directory -Force -Path $nextionDataFolder
