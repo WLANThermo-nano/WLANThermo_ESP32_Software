@@ -23,3 +23,8 @@ jobs:
       with:
           name: nextion_artifacts_next
           path: ./nextion/artifacts
+    - uses: actions/upload-artifact@v4
+          if: always()                    # ← auch bei Fehler uploaden
+            with:
+              name: sikuli_debug_screenshot
+              path: ${{ github.workspace }}/nextion/*.png
