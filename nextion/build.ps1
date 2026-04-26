@@ -1,7 +1,7 @@
 $nextionEditorUrl = "https://nextion.tech/download/nextion-setup-v1-68-1.zip"
 $nextionEditorZip = $PSScriptRoot + "\nextion.zip"
 $nextionEditorFolder = $PSScriptRoot
-$nextionEditor = $PSScriptRoot + "\nextion\NextionEditor.exe"
+$nextionEditor = $PSScriptRoot + "\nextion\Nextion Editor.exe"
 $nextionHmiFile = $PSScriptRoot + "\miniVx.HMI"
 $nextionTftFile = $PSScriptRoot + "\miniVx.tft"
 $nextionArtifactsFolder = $PSScriptRoot + "\artifacts"
