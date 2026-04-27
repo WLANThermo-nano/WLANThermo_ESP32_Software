@@ -212,7 +212,9 @@ boolean DisplayOledLink::handlePopUp()
   if (gSystem->temperatures.hasAlarm(true))
   {
     displayPopUp = DisplayPopUpType::Alarm;
+    return true;
   }
+  return false;
 }
 
 void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)

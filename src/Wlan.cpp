@@ -100,7 +100,7 @@ void Wlan::loadConfig()
       {
         strcpy(wlanCredentials[i].ssid, ssid);
         strcpy(wlanCredentials[i].password, pass);
-        Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+        Serial.printf("Wlan::loadConfig: ssid = %s, password = ***\n", wlanCredentials[i].ssid);
       }
       i++;
     }
@@ -139,7 +139,7 @@ void Wlan::saveConfig()
       JsonObject _wifi = array.add<JsonObject>();
       _wifi["SSID"] = wlanCredentials[i].ssid;
       _wifi["PASS"] = wlanCredentials[i].password;
-      Serial.printf("Wlan::saveCredentials: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+      Serial.printf("Wlan::saveCredentials: ssid = %s, password = ***\n", wlanCredentials[i].ssid);
     }
   }
 
@@ -186,7 +186,7 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
   else
   {
 
-    Serial.printf("Wlan::addCredentials: ssid = %s, password = %s, force = %d\n", ssid, password, force);
+    Serial.printf("Wlan::addCredentials: ssid = %s, password = ***, force = %d\n", ssid, force);
     strcpy(newWlanCredentials.ssid, ssid);
     strcpy(newWlanCredentials.password, password);
 
@@ -199,6 +199,7 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
       WiFi.disconnect();
 
     wifiState = WifiState::AddCredentials;
+    WiFi.persistent(false);
     WiFi.begin(ssid, password);
     wifi_config_t wifi_cfg;
     esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
@@ -337,12 +338,13 @@ void Wlan::connectToKnownStations()
     {
       connectTimeout = CONNECT_TIMEOUT;
       credentialIndex = stationIndex;
+      WiFi.persistent(false);
       WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
       wifi_config_t wifi_cfg;
       esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
       wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
       esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
-      Serial.printf("Wlan::connectToStations: SSID = %s, PW = %s\n", wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
+      Serial.printf("Wlan::connectToStations: SSID = %s\n", wlanCredentials[stationIndex].ssid);
     }
 
     stationIndex++;

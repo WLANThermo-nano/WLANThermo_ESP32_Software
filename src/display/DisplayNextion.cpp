@@ -759,7 +759,7 @@ void DisplayNextion::wifiConnect(void *ptr)
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").getText(password, sizeof(password));
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").setText("");
-  Serial.printf("%s, %s\n", ssid, password);
+  Serial.printf("Nextion WiFi: ssid = %s, password = ***\n", ssid);
 
   if (strlen(ssid) && strlen(password))
   {
