@@ -21,30 +21,37 @@ sleep(3)
 SikuliScreen().capture().save(tempDir, "debug_screen2.png")
 
 # --- Device tab: select series (sys.argv[2] = "Enhanced" | "Basic") ---
+# Check _sel first (orange = highly distinctive, low false-positive risk).
+# Fall back to _gray with strict threshold 0.85 (all gray tabs share the same
+# background color RGB(108,123,144); 0.70 caused wrong-tab false positives).
 series = sys.argv[2]
 series_gray = series + "_gray.png"
 series_sel  = series + "_sel.png"
-if exists(Pattern(series_gray).similar(0.70), 5):
-    click(Pattern(series_gray).similar(0.70))
-elif not exists(Pattern(series_sel).similar(0.70), 3):
+if exists(Pattern(series_sel).similar(0.80), 3):
+    pass  # already selected
+elif exists(Pattern(series_gray).similar(0.85), 5):
+    click(Pattern(series_gray).similar(0.85))
+else:
     raise Exception("Series tab not found: " + series)
-# If only _sel found: already selected — no click needed
 sleep(1)
 
 # --- Device tab: select model (sys.argv[3] = "NX3224K028" | "NX3224K024" | "NX3224T028") ---
+# Same strategy: _sel (purple) first, then _gray at 0.85.
 model = sys.argv[3]
 model_gray = model + "_gray.png"
 model_sel  = model + "_sel.png"
-if exists(Pattern(model_gray).similar(0.70), 5):
-    click(Pattern(model_gray).similar(0.70))
-elif not exists(Pattern(model_sel).similar(0.70), 3):
+if exists(Pattern(model_sel).similar(0.80), 3):
+    pass  # already selected
+elif exists(Pattern(model_gray).similar(0.85), 5):
+    click(Pattern(model_gray).similar(0.85))
+else:
     raise Exception("Model not found: " + model)
 sleep(1)
 
 SikuliScreen().capture().save(tempDir, "debug_screen3.png")
 
 # --- Navigate to Display tab (left panel) ---
-click(Pattern("Display_tab.png").similar(0.70))
+click(Pattern("Display_tab.png").similar(0.80))
 sleep(2)
 
 SikuliScreen().capture().save(tempDir, "debug_screen4.png")
@@ -62,9 +69,11 @@ elif direction == "180":
 else:
     raise Exception("Unknown direction argument: " + direction)
 
-if exists(Pattern(dir_dark).similar(0.70), 5):
-    click(Pattern(dir_dark).similar(0.70))
-elif not exists(Pattern(dir_sel).similar(0.70), 3):
+if exists(Pattern(dir_sel).similar(0.80), 3):
+    pass  # already selected
+elif exists(Pattern(dir_dark).similar(0.85), 5):
+    click(Pattern(dir_dark).similar(0.85))
+else:
     raise Exception("Direction button not found for: " + direction)
 sleep(1)
 
