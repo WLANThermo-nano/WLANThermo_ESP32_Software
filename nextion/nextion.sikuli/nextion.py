@@ -60,21 +60,18 @@ SikuliScreen().capture().save(tempDir, "debug_screen4.png")
 # sys.argv[1] = "0"   → click 90°  button (was "90 Horizontal" in old editor)
 # sys.argv[1] = "180" → click 270° button (was "270 Horizontal" in old editor)
 direction = sys.argv[1]
-if direction == "0":
-    dir_dark = "dir_90_dark.png"
-    dir_sel  = "dir_90_sel.png"
-elif direction == "180":
-    dir_dark = "dir_270_dark.png"
-    dir_sel  = "dir_270_sel.png"
-else:
+if direction not in ("0", "180"):
     raise Exception("Unknown direction argument: " + direction)
 
-if exists(Pattern(dir_sel).similar(0.80), 3):
-    pass  # already selected
-elif exists(Pattern(dir_dark).similar(0.85), 5):
-    click(Pattern(dir_dark).similar(0.85))
-else:
-    raise Exception("Direction button not found for: " + direction)
+# Similarity matching fails for direction buttons: all four share the same
+# background color, so the small number text (~10% of pixels) never dominates
+# the score. Use the unique "Display direction" heading as an anchor and click
+# at a fixed pixel offset — reliable because the dialog layout is fixed on CI.
+anchor = find(Pattern("Display_direction_title.png").similar(0.80))
+if direction == "0":
+    click(anchor.offset(187, 70))    # 90°  Horizontal button
+elif direction == "180":
+    click(anchor.offset(559, 70))    # 270° Horizontal button
 sleep(1)
 
 SikuliScreen().capture().save(tempDir, "debug_screen5.png")
