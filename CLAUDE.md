@@ -99,12 +99,12 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (laufend)
 
-B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 offen (Low, siehe Known Issues). SRAM-Optimierungen M2–M4 ausstehend.  
-nanoV3: Brownout bei WiFi-Init nach B18-Fix — Batterie prüfen; ggf. `WiFi.setTxPower(WIFI_POWER_13dBm)` vor `WiFi.begin()`. BLE-Discovery-Fix implementiert, Hardware-Test ausstehend.
+B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 offen (Low, siehe Known Issues). B39 gefixt (2026-04-27). SRAM-Optimierungen M2–M4 ausstehend.  
+nanoV3: Stabil nach B39-Fix + `WiFi.persistent(false)`. BLE-Discovery-Fix implementiert, Hardware-Test ausstehend.
 
 ### Phase 1 — Kernel Upgrade ✅ (2026-04-20)
 
-Alle 7 Hardware-Varianten auf `espressif32@^6.0.0` (arduino-esp32 2.x / ESP-IDF 4.4.x). miniV3 Hardware-Test weitgehend OK, nanoV3 Brownout offen.  
+Alle 7 Hardware-Varianten auf `espressif32@^6.0.0` (arduino-esp32 2.x / ESP-IDF 4.4.x). miniV3 Hardware-Test weitgehend OK, nanoV3 stabil (B39 gefixt).  
 Hardware-Test-Protokoll: [`docs/hardware-test-log.md`](docs/hardware-test-log.md)
 
 ### Phase 2 — UI-Redesign (ausstehend)
@@ -143,7 +143,7 @@ LVGL 7 → 9: gesamtes `src/display/tft/` neu. Sinnvoll mit Phase 2 gekoppelt.
 | B36 | `src/display/DisplayOled.cpp` + `DisplayOledLink.cpp` | `initDisplay()` | Low | → [Issue #190](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/190) — kDisplay NVS double-read at boot |
 | B37 | `src/system/SystemBase.cpp` | `loadConfig()` Zeile 265 | Low | → [Issue #191](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/191) — SPIFFS.begin() result unchecked |
 | B38 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` | Low | → [Issue #192](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/192) — Invalid JSON on first boot cycle |
-| B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3 (ESP-IDF 4.4.x) |
+| B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** ✅ → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3; `wifiModePsPending`-Flag + `WiFi.persistent(false)` |
 
 ### SRAM / Heap-Optimierungen
 
