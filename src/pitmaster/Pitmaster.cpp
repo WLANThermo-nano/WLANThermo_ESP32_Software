@@ -31,8 +31,6 @@
 #define PITMASTERSETMIN 50
 #define PITMASTERSETMAX 200
 
-#define SSR_FREQUENCY 0.5
-#define SSR_BIT_RES 16
 #define SERVO_FREQUENCY 50
 #define SERVO_BIT_RES 16
 
@@ -103,6 +101,10 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
     this->servoDcMin = PM_DEFAULT_SERVO_MIN_DUTY_CYCLE;
     this->servoDcMax = PM_DEFAULT_SERVO_MAX_DUTY_CYCLE;
+
+    this->ssrPeriodStart = 0;
+    this->ssrDutyCycle   = -1.0f;
+    this->ssrActive      = false;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -644,6 +646,15 @@ void Pitmaster::update()
     if (false == this->checkDutyCycleTest())
         return;
 
+    // SSR: pin toggling runs on every update() for time-proportional control,
+    // independent of the 2 s PID gate in checkPause().
+    if (this->type != pm_off && this->profile != NULL && this->profile->actuator == SSR)
+    {
+        initActuators();
+        this->enableStepUp(true);
+        this->controlSSR(this->value, this->profile->dcmin, this->profile->dcmax);
+    }
+
     // Check Pitmaster Pause
     if (false == this->checkPause())
         return;
@@ -748,15 +759,16 @@ void Pitmaster::initActuators()
     case SSR:
         if (initActuator != SSR)
         {
-            // dacWrite() enables the DAC which has priority over LEDC on GPIO 25/26
-            // in ESP-IDF 4.x. ledcAttachPin() does not disable it automatically.
+            // dacWrite() enables the DAC which has priority over GPIO on GPIO 25/26
+            // in ESP-IDF 4.x — disable it before using the pin as digital output.
             if (this->ioPin1 == 25u) dac_output_disable(DAC_CHANNEL_1);
             else if (this->ioPin1 == 26u) dac_output_disable(DAC_CHANNEL_2);
             ledcDetachPin(this->ioPin1);
             ledcDetachPin(this->ioPin2);
-            ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
-            ledcAttachPin(this->ioPin1, this->channel1);
-            ledcWrite(this->channel1, 0u);
+            pinMode(this->ioPin1, OUTPUT);
+            digitalWrite(this->ioPin1, LOW);
+            ssrActive    = false;
+            ssrDutyCycle = -1.0f;
             initActuator = SSR;
         }
         break;
@@ -833,27 +845,44 @@ void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
 
 void Pitmaster::controlSSR(float newValue, float newDcMin, float newDcMax)
 {
-    static float prevValue = 0;
-    // limits from global actor
-    uint16_t dcmin = newDcMin * 10u; // 1. Nachkommastelle
-    uint16_t dcmax = newDcMax * 10u; // 1. Nachkommastelle
+    const uint32_t SSR_PERIOD_MS = 2000;
 
-    dcmin = map(dcmin, 0, 1000u, 0u, 0xFFFFu);
-    dcmax = map(dcmax, 0, 1000u, 0u, 0xFFFFu);
+    float newDC = (newDcMax <= newDcMin)
+        ? newDcMin
+        : newDcMin + (newValue / 100.0f) * (newDcMax - newDcMin);
+    newDC = constrain(newDC, 0.0f, 100.0f);
 
-    uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
-    uint32_t prevDc = ledcRead(this->channel1);
-
-    prevValue = newValue;
-
-    if (0u == newValue)
+    if (newDC == 0.0f)
     {
-        ledcWrite(this->channel1, 0u);
+        digitalWrite(this->ioPin1, LOW);
+        ssrActive = false;
+        return;
     }
-    else if (newDc != prevDc)
+    if (newDC >= 100.0f)
     {
-        ledcWrite(this->channel1, newDc);
+        digitalWrite(this->ioPin1, HIGH);
+        ssrActive = false;
+        return;
     }
+
+    if (!ssrActive || ssrDutyCycle != newDC)
+    {
+        ssrPeriodStart = millis();
+        ssrActive      = true;
+        ssrDutyCycle   = newDC;
+        digitalWrite(this->ioPin1, HIGH);
+        return;
+    }
+
+    uint32_t elapsed = millis() - ssrPeriodStart;
+    if (elapsed >= SSR_PERIOD_MS)
+    {
+        ssrPeriodStart += SSR_PERIOD_MS;
+        elapsed = millis() - ssrPeriodStart;
+    }
+
+    uint32_t highTime = (uint32_t)((newDC / 100.0f) * SSR_PERIOD_MS);
+    digitalWrite(this->ioPin1, elapsed < highTime ? HIGH : LOW);
 }
 
 void Pitmaster::enableStepUp(boolean enable)
@@ -880,7 +909,7 @@ void Pitmaster::disableActuators(boolean allowdelay)
         return;
     }
 
-    // SSR uses LEDC, not DAC — calling dacWrite would re-enable the DAC
+    // SSR uses plain GPIO (not DAC) — calling dacWrite would re-enable the DAC
     // NOAR is the initial state (never initialized) — no actuator to disable
     if (initActuator != SSR && initActuator != NOAR)
         dacWrite(this->ioPin1, 0u);
@@ -891,6 +920,7 @@ void Pitmaster::disableActuators(boolean allowdelay)
 
     this->enableStepUp(false);
     initActuator = NOAR;
+    ssrActive    = false;
 
     this->pidReset();
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));

@@ -190,4 +190,8 @@ private:
 
   uint16_t servoDcMin;
   uint16_t servoDcMax;
+
+  uint32_t ssrPeriodStart;
+  float    ssrDutyCycle;
+  bool     ssrActive;
 };
