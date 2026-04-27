@@ -4,21 +4,20 @@ import org.sikuli.script.Screen as SikuliScreen
 
 tempDir = System.getenv("RUNNER_TEMP")
 
-# Dismiss update/version dialog if shown
+# Dismiss update/version dialog if shown (may appear before editor is fully loaded)
 if exists("Update.png", 10):
     click("Update.png")
-sleep(20)
+
+# Wait for the editor to be fully loaded (Device button in toolbar)
+wait("Device_button.png", 30)
+sleep(1)
 
 SikuliScreen().capture().save(tempDir, "debug_screen1.png")
 
-# Wait for the Setting dialog (Device tab) — new editor may open it automatically.
-# If it doesn't appear within 20s, fall back to clicking the old Device_ID button.
-if not exists(Pattern("Device_title.png").similar(0.70), 20):
-    if exists("Device_ID.png", 10):
-        click("Device_ID.png")
-    wait(Pattern("Device_title.png").similar(0.70), 15)
+# Open the Setting dialog via toolbar "Device" button
+click("Device_button.png")
+sleep(3)
 
-sleep(2)
 SikuliScreen().capture().save(tempDir, "debug_screen2.png")
 
 # --- Device tab: select series (sys.argv[2] = "Enhanced" | "Basic") ---
