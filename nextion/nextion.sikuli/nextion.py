@@ -4,31 +4,82 @@ import org.sikuli.script.Screen as SikuliScreen
 
 tempDir = System.getenv("RUNNER_TEMP")
 
+# Dismiss update/version dialog if shown
 if exists("Update.png", 10):
     click("Update.png")
 sleep(20)
 
 SikuliScreen().capture().save(tempDir, "debug_screen1.png")
 
-wait("Device_ID.png", 10)
-click("Device_ID.png")
-sleep(2)
+# Wait for the Setting dialog (Device tab) — new editor may open it automatically.
+# If it doesn't appear within 20s, fall back to clicking the old Device_ID button.
+if not exists(Pattern("Device_title.png").similar(0.70), 20):
+    if exists("Device_ID.png", 10):
+        click("Device_ID.png")
+    wait(Pattern("Device_title.png").similar(0.70), 15)
 
+sleep(2)
 SikuliScreen().capture().save(tempDir, "debug_screen2.png")
 
-click("Dummy_Direction.png")
-click(sys.argv[1] + ".png")
-wait(Pattern("Device.png").similar(0.80))
-click(Pattern("Device.png").similar(0.80))
-click("Intelligent.png")
-click(sys.argv[2] + ".png")
-click("Dummy_Model.png")
-click(sys.argv[3] + ".png")
+# --- Device tab: select series (sys.argv[2] = "Enhanced" | "Basic") ---
+series = sys.argv[2]
+series_gray = series + "_gray.png"
+series_sel  = series + "_sel.png"
+if exists(Pattern(series_gray).similar(0.70), 5):
+    click(Pattern(series_gray).similar(0.70))
+elif not exists(Pattern(series_sel).similar(0.70), 3):
+    raise Exception("Series tab not found: " + series)
+# If only _sel found: already selected — no click needed
+sleep(1)
+
+# --- Device tab: select model (sys.argv[3] = "NX3224K028" | "NX3224K024" | "NX3224T028") ---
+model = sys.argv[3]
+model_gray = model + "_gray.png"
+model_sel  = model + "_sel.png"
+if exists(Pattern(model_gray).similar(0.70), 5):
+    click(Pattern(model_gray).similar(0.70))
+elif not exists(Pattern(model_sel).similar(0.70), 3):
+    raise Exception("Model not found: " + model)
+sleep(1)
+
+SikuliScreen().capture().save(tempDir, "debug_screen3.png")
+
+# --- Navigate to Display tab (left panel) ---
+click(Pattern("Display_tab.png").similar(0.70))
+sleep(2)
+
+SikuliScreen().capture().save(tempDir, "debug_screen4.png")
+
+# --- Display tab: select direction ---
+# sys.argv[1] = "0"   → click 90°  button (was "90 Horizontal" in old editor)
+# sys.argv[1] = "180" → click 270° button (was "270 Horizontal" in old editor)
+direction = sys.argv[1]
+if direction == "0":
+    dir_dark = "dir_90_dark.png"
+    dir_sel  = "dir_90_sel.png"
+elif direction == "180":
+    dir_dark = "dir_270_dark.png"
+    dir_sel  = "dir_270_sel.png"
+else:
+    raise Exception("Unknown direction argument: " + direction)
+
+if exists(Pattern(dir_dark).similar(0.70), 5):
+    click(Pattern(dir_dark).similar(0.70))
+elif not exists(Pattern(dir_sel).similar(0.70), 3):
+    raise Exception("Direction button not found for: " + direction)
+sleep(1)
+
+SikuliScreen().capture().save(tempDir, "debug_screen5.png")
+
+# --- Confirm settings ---
 click("OK.png")
+sleep(2)
+
+# --- File → TFT file output → set output path → click Output ---
 click("File.png")
-click(Pattern("TFT_file_output.png").targetOffset(-85,0))
+click(Pattern("TFT_file_output.png").targetOffset(-85, 0))
 wait("Output.png")
-click(Pattern("Output.png").targetOffset(0,-50))
+click(Pattern("Output.png").targetOffset(0, -50))
 type(getParentPath())
 click("Output.png")
 wait(5)
