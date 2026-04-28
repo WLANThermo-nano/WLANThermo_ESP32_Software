@@ -28,6 +28,11 @@
 #define PUSHOVER_RETRY_DEFAULT 30u
 #define PUSHOVER_EXPIRE_DEFAULT 300u
 
+// Bounds-safe strncpy: copies at most sizeof(dst)-1 chars, always null-terminates.
+// No-op if src is nullptr (ArduinoJson v7 .as<const char*>() can return nullptr).
+#define SAFE_STRNCPY(dst, src) \
+  do { if (src) { strncpy((dst), (src), sizeof(dst) - 1u); (dst)[sizeof(dst) - 1u] = '\0'; } } while (0)
+
 #define APP_MAX_NOTIFICATION_SOUNDS 2u
 #define APP_DEFAULT_NOTIFICATION_SOUND "default"
 
@@ -245,14 +250,14 @@ void Notification::loadConfig()
       // telegram
       case 0u:
         pushTelegram.enabled = json["onP"];
-        strncpy(pushTelegram.token, json["tokP"].as<const char*>(), sizeof(pushTelegram.token));
-        strncpy(pushTelegram.chatId, json["idP"].as<const char*>(), sizeof(pushTelegram.chatId));
+        SAFE_STRNCPY(pushTelegram.token, json["tokP"].as<const char*>());
+        SAFE_STRNCPY(pushTelegram.chatId, json["idP"].as<const char*>());
         break;
       // pushover
       case 1u:
         pushPushover.enabled = json["onP"];
-        strncpy(pushPushover.token, json["tokP"].as<const char*>(), sizeof(pushPushover.token));
-        strncpy(pushPushover.userKey, json["idP"].as<const char*>(), sizeof(pushPushover.userKey));
+        SAFE_STRNCPY(pushPushover.token, json["tokP"].as<const char*>());
+        SAFE_STRNCPY(pushPushover.userKey, json["idP"].as<const char*>());
       }
     }
     // load current structure
@@ -267,8 +272,8 @@ void Notification::loadConfig()
         {
           // load telegram
           pushTelegram.enabled = _telegram["enabled"];
-          strncpy(pushTelegram.token, _telegram["token"].as<const char*>(), sizeof(pushTelegram.token));
-          strncpy(pushTelegram.chatId, _telegram["chat_id"].as<const char*>(), sizeof(pushTelegram.chatId));
+          SAFE_STRNCPY(pushTelegram.token, _telegram["token"].as<const char*>());
+          SAFE_STRNCPY(pushTelegram.chatId, _telegram["chat_id"].as<const char*>());
         }
       }
 
@@ -282,8 +287,8 @@ void Notification::loadConfig()
         {
           // load pushover
           pushPushover.enabled = _pushover["enabled"];
-          strncpy(pushPushover.token, _pushover["token"].as<const char*>(), sizeof(pushPushover.token));
-          strncpy(pushPushover.userKey, _pushover["user_key"].as<const char*>(), sizeof(pushPushover.userKey));
+          SAFE_STRNCPY(pushPushover.token, _pushover["token"].as<const char*>());
+          SAFE_STRNCPY(pushPushover.userKey, _pushover["user_key"].as<const char*>());
           pushPushover.priority = _pushover["priority"];
           pushPushover.retry = _pushover["retry"];
           pushPushover.expire = _pushover["expire"];
