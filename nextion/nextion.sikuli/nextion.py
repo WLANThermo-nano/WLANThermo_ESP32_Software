@@ -20,32 +20,37 @@ sleep(3)
 
 SikuliScreen().capture().save(tempDir, "debug_screen2.png")
 
-# --- Device tab: select series (sys.argv[2] = "Enhanced" | "Basic") ---
-# Check _sel first (orange = highly distinctive, low false-positive risk).
-# Fall back to _gray with strict threshold 0.85 (all gray tabs share the same
-# background color RGB(108,123,144); 0.70 caused wrong-tab false positives).
+# --- Device tab: select series and model via anchor+offset ---
+# Similarity matching is unreliable for tabs/buttons sharing the same background
+# color (orange/purple/gray dominate the score, text differences are too small).
+# Use the unique "Please Select The Model" blue heading as an anchor instead.
+# All offsets measured from its center (245, 77) in CI screen coordinates.
+#
+# Series tab centers (y=154):  Basic=(362,154) Enhanced=(544,154)
+# Model button centers (y=281): K024=(352,281) K028=(739,281) T028=(739,281)
 series = sys.argv[2]
-series_gray = series + "_gray.png"
-series_sel  = series + "_sel.png"
-if exists(Pattern(series_sel).similar(0.80), 3):
-    pass  # already selected
-elif exists(Pattern(series_gray).similar(0.85), 5):
-    click(Pattern(series_gray).similar(0.85))
+model  = sys.argv[3]
+
+heading = find(Pattern("Please_Select_Model_heading.png").similar(0.80))
+
+# Series tab (always click — idempotent, clicking selected tab keeps it selected)
+if series == "Enhanced":
+    click(heading.offset(299, 77))
+elif series == "Basic":
+    click(heading.offset(117, 77))
 else:
-    raise Exception("Series tab not found: " + series)
+    raise Exception("Unknown series: " + series)
 sleep(1)
 
-# --- Device tab: select model (sys.argv[3] = "NX3224K028" | "NX3224K024" | "NX3224T028") ---
-# Same strategy: _sel (purple) first, then _gray at 0.85.
-model = sys.argv[3]
-model_gray = model + "_gray.png"
-model_sel  = model + "_sel.png"
-if exists(Pattern(model_sel).similar(0.80), 3):
-    pass  # already selected
-elif exists(Pattern(model_gray).similar(0.85), 5):
-    click(Pattern(model_gray).similar(0.85))
+# Model button (always click — idempotent)
+if model == "NX3224K028":
+    click(heading.offset(494, 204))
+elif model == "NX3224K024":
+    click(heading.offset(107, 204))
+elif model == "NX3224T028":
+    click(heading.offset(494, 204))   # top-right in Basic grid, same position as K028
 else:
-    raise Exception("Model not found: " + model)
+    raise Exception("Unknown model: " + model)
 sleep(1)
 
 SikuliScreen().capture().save(tempDir, "debug_screen3.png")
