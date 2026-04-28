@@ -101,14 +101,20 @@ void Mqtt::loadConfig()
   if (!json.isNull())
   {
 
-    if (json.containsKey("host"))
-      strcpy(config.host, json["host"].as<const char*>());
+    if (json.containsKey("host")) {
+      const char *s = json["host"].as<const char*>();
+      if (s) { strncpy(config.host, s, sizeof(config.host) - 1); config.host[sizeof(config.host) - 1] = '\0'; }
+    }
     if (json.containsKey("port"))
       config.port = json["port"];
-    if (json.containsKey("user"))
-      strcpy(config.user, json["user"].as<const char*>());
-    if (json.containsKey("password"))
-      strcpy(config.password, json["password"].as<const char*>());
+    if (json.containsKey("user")) {
+      const char *s = json["user"].as<const char*>();
+      if (s) { strncpy(config.user, s, sizeof(config.user) - 1); config.user[sizeof(config.user) - 1] = '\0'; }
+    }
+    if (json.containsKey("password")) {
+      const char *s = json["password"].as<const char*>();
+      if (s) { strncpy(config.password, s, sizeof(config.password) - 1); config.password[sizeof(config.password) - 1] = '\0'; }
+    }
     if (json.containsKey("QoS"))
       config.QoS = json["QoS"];
     if (json.containsKey("enabled"))
