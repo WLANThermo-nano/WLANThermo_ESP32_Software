@@ -377,7 +377,7 @@ void Cloud::sendAPI(int apiIndex, int urlIndex)
     CloudRequest cloudRequest = {urlIndex, requestDataPointer};
     if(xQueueSend(apiQueue, &cloudRequest, 0u) != pdTRUE)
     {
-      delete cloudRequest.requestData;
+      delete[] cloudRequest.requestData;
       Log.warning("Cloud request queue full!" CR);
     }
   }
@@ -413,6 +413,6 @@ void Cloud::handleQueue()
       apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
     
     apiClient.send(cloudRequest.requestData);
-    delete cloudRequest.requestData;
+    delete[] cloudRequest.requestData;
   }
 }
