@@ -30,6 +30,7 @@
 #include "TaskConfig.h"
 #include "Utils.h"
 #include <byteswap.h>
+#include <esp_task_wdt.h>
 
 #define BLE_BAUD 115200u
 
@@ -456,7 +457,7 @@ void Bluetooth::task(void *parameter)
         vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
 
-    Serial.println("Delete Bluetooth task");
+    esp_task_wdt_delete(NULL);
     vTaskDelete(NULL);
 }
 
