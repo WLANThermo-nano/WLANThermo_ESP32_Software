@@ -36,3 +36,6 @@ jobs:
 
       - name: Compile all variants
         run: platformio run -e miniV1 -e miniV2 -e miniV3 -e nanoV3 -e linkV1 -e boneV1 -e connectV1
+
+      - name: Run native unit tests
+        run: platformio test -e native

@@ -19,6 +19,7 @@
     
 ****************************************************/
 #include "Pitmaster.h"
+#include "PidFormula.h"
 #include "DbgPrint.h"
 #include "math.h"
 #include "ArduinoLog.h"
@@ -1018,63 +1019,10 @@ float Pitmaster::pidCalc()
         this->jump = false;
     }*/
 
-    // Proportional-Anteil
-    float p_out = kp * e;
-
-    // Differential-Anteil (Intervall-Berechnung)
-    this->ecount++;
-    if (this->ecount >= this->dCount) {
-        this->edif = (e - this->elast) / (this->pause / 1000.0);
-        this->edif = this->edif / (float) this->dCount;
-        this->elast = e;
-        this->ecount = 0u;
-    }
-
-    float d_out = kd * edif;
-
-    // i-Anteil wechsl: https://github.com/WLANThermo/WLANThermo_v2/blob/b7bd6e1b56fe5659e8750c17c6dd1cd489872f6c/software/usr/sbin/wlt_2_pitmaster.py
-    // Integral-Anteil
-    float i_out;
-    if (ki != 0)
-    {
-
-        // Sprünge im Reglerausgangswert bei Anpassung von Ki vermeiden
-        if (ki != this->Ki_alt)
-        {
-            this->esum = (this->esum * this->Ki_alt) / ki;
-            this->Ki_alt = ki;
-        }
-
-        // Anti-Windup I-Anteil
-        // Keine Erhöhung I-Anteil wenn Regler bereits an der Grenze ist
-        if (p_out < PITMAX)
-        { //if ((p_out + d_out) < PITMAX) {
-            this->esum += e * (this->pause / 1000.0);
-        }
-
-        // Anti-Windup I-Anteil (Limits)
-        if (this->esum * ki > PIDKIMAX)
-            this->esum = PIDKIMAX / ki;
-        else if (this->esum * ki < PIDKIMIN)
-            this->esum = PIDKIMIN / ki;
-
-        i_out = ki * this->esum;
-    }
-    else
-    {
-        // Historie vergessen, da wir nach Ki = 0 von 0 aus anfangen
-        this->esum = 0;
-        i_out = 0;
-        this->Ki_alt = 0;
-    }
-
-    // PID-Regler berechnen
-    float y = p_out + i_out + d_out;
-    y = constrain(y, PITMIN, PITMAX); // Auflösung am Ausgang ist begrenzt
-
-    //PMPRINTLN("[PM]\tPID:" + String(y, 1) + "\tp:" + String(p_out, 1) + "\ti:" + String(i_out, 2) + "\td:" + String(d_out, 1));
-
-    return y;
+    return pidComputeOutput(e,
+                            this->esum, this->elast, this->Ki_alt, this->edif, this->ecount,
+                            kp, ki, kd,
+                            (float)this->pause, this->dCount);
 }
 
 void Pitmaster::pidReset()

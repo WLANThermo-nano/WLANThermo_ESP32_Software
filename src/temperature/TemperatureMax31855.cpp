@@ -20,6 +20,7 @@
 
 #include <SPI.h>
 #include "TemperatureMax31855.h"
+#include "TemperatureMax31855Calc.h"
 #include "ArduinoLog.h"
 
 #define MAX31855_FAULT_BITS 0x07u
@@ -109,37 +110,5 @@ uint32_t TemperatureMax31855::readChip()
 
 float TemperatureMax31855::calcTemperatureTypeK(uint32_t rawValue)
 {
-  float temperature = INACTIVEVALUE;
-  uint32_t calcValue = rawValue;
-
-  // Check error bits
-  if (calcValue & MAX31855_FAULT_BITS)
-  {
-    // Do nothing
-  }
-  else
-  {
-    calcValue = calcValue >> MAX31855_TEMPERATURE_SHIFT;
-
-    // handle negative value
-    if (calcValue & MAX31855_NEGATIVE_SIGN_BIT)
-    {
-      calcValue = ~calcValue;
-      temperature = calcValue & MAX31855_TEMPERATURE_MASK;
-      temperature += 1;
-      temperature *= -1;
-    }
-    // handle positive value
-    else
-    {
-      temperature = calcValue & MAX31855_TEMPERATURE_MASK;
-    }
-
-    temperature *= MAX31855_TEMPERATURE_UNIT;
-
-    // adjustment Typ K
-    temperature -= MAX31855_TEMPERATURE_ADJ;
-  }
-
-  return temperature;
+  return calcMax31855Temperature(rawValue);
 }
