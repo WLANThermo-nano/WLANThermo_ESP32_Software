@@ -310,18 +310,26 @@ void Notification::loadConfig()
             if (_device.containsKey("name") && _device.containsKey("id") &&
                 _device.containsKey("token"))
             {
-              strcpy(pushApp.devices[deviceIndex].name, _device["name"].as<const char*>());
-              strcpy(pushApp.devices[deviceIndex].id, _device["id"].as<const char*>());
-              strcpy(pushApp.devices[deviceIndex].token, _device["token"].as<const char*>());
+              PushAppDeviceType &dev = pushApp.devices[deviceIndex];
+
+              const char *name = _device["name"].as<const char*>();
+              if (name) { strncpy(dev.name, name, sizeof(dev.name) - 1); dev.name[sizeof(dev.name) - 1] = '\0'; }
+
+              const char *id = _device["id"].as<const char*>();
+              if (id) { strncpy(dev.id, id, sizeof(dev.id) - 1); dev.id[sizeof(dev.id) - 1] = '\0'; }
+
+              const char *token = _device["token"].as<const char*>();
+              if (token) { strncpy(dev.token, token, sizeof(dev.token) - 1); dev.token[sizeof(dev.token) - 1] = '\0'; }
 
               if (_device.containsKey("sound"))
               {
-                pushApp.devices[deviceIndex].sound = _device["sound"].as<uint8_t>();
+                dev.sound = _device["sound"].as<uint8_t>();
               }
 
               if (_device.containsKey("androidchannelid"))
               {
-                 strcpy(pushApp.devices[deviceIndex].androidchannelid, _device["androidchannelid"].as<const char*>());
+                const char *aci = _device["androidchannelid"].as<const char*>();
+                if (aci) { strncpy(dev.androidchannelid, aci, sizeof(dev.androidchannelid) - 1); dev.androidchannelid[sizeof(dev.androidchannelid) - 1] = '\0'; }
               }
 
               deviceIndex++;
