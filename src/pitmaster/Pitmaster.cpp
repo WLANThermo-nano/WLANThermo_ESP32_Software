@@ -636,6 +636,8 @@ void Pitmaster::update()
 {
     if (this->temperature == NULL)
         return;
+    if (this->profile == NULL)
+        return;
 
     // Control Autotune
     //TODO
