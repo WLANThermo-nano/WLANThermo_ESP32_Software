@@ -27,6 +27,7 @@
 AsyncMqttClient Mqtt::pmqttClient;
 MqttConfig Mqtt::config = {"192.168.2.1", 1883u, "", "", 0, false, 30};
 bool Mqtt::sendSettingsflag = false;
+bool Mqtt::saveConfigPending = false;
 uint16_t Mqtt::intervalCounter = 0u;
 
 Mqtt::Mqtt()
@@ -77,6 +78,12 @@ void Mqtt::update()
 
   if (intervalCounter)
     intervalCounter--;
+
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
 }
 
 void Mqtt::saveConfig()
@@ -148,8 +155,9 @@ void Mqtt::setConfig(MqttConfig newConfig)
   if (strlen(gSystem->mqtt.config.user) && strlen(gSystem->mqtt.config.password))
     pmqttClient.setCredentials(gSystem->mqtt.config.user, gSystem->mqtt.config.password);
 
-  // save to NvM
-  saveConfig();
+  // defer NVS write to ConnectTask context via update() — direct write in
+  // async_tcp handler blocks for flash-write duration and risks WDT reset
+  saveConfigPending = true;
 }
 
 void Mqtt::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)

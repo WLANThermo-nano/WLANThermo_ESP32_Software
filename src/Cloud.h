@@ -98,4 +98,5 @@ private:
   static QueueHandle_t apiQueue;
   uint16_t cloudCounter;
   uint16_t customCounter;
+  bool saveConfigPending;
 };

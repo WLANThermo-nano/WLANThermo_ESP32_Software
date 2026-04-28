@@ -102,6 +102,7 @@ Cloud::Cloud()
   config.customUrl = "";
   cloudCounter = 0u;
   customCounter = 0u;
+  saveConfigPending = false;
   state = 0u;
 }
 
@@ -147,6 +148,12 @@ void Cloud::update()
 
   if (customCounter)
     customCounter--;
+
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
 }
 
 String Cloud::newToken()
@@ -275,8 +282,9 @@ void Cloud::setConfig(CloudConfig newConfig)
   // trigger send after config update
   cloudCounter = 0u;
 
-  // save to NvM
-  saveConfig();
+  // defer NVS write to ConnectTask context via update() — direct write in
+  // async_tcp handler blocks for flash-write duration and risks WDT reset
+  saveConfigPending = true;
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
