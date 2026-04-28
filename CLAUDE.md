@@ -44,7 +44,7 @@ Tests laufen auch in CI (`compile-test.yml`). Neue Tests kommen als Verzeichnis 
 **Test-Architektur (Phase 1 — Pure Logic):**
 - `src/pitmaster/PidFormula.h` — header-only `pidComputeOutput()`, keine Arduino-Deps. Getestet in `test/test_pid_formula/`.
 - `src/temperature/TemperatureMax31855Calc.h` — header-only `calcMax31855Temperature()`, reines Bit-Math. Getestet in `test/test_temperature_max31855/`.
-- Phase 2 (ausstehend): HAL-Mocks für GPIO/PWM/DAC → `controlFan()`, `controlSSR()` → [Issue #205](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/205)
+- Phase 2 (ausstehend): HAL-Mocks für GPIO/PWM/DAC → `controlFan()`, `controlSSR()` → [Issue #206](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/206)
 
 Hardware variants: `miniV1`, `miniV2`, `miniV3`, `connectV1`, `nanoV3`, `linkV1`, `boneV1`
 
@@ -152,7 +152,8 @@ Power Save auf Kernel 2.x gelöst via Custom-Framework `2.0.17-pm-enable`.
 
 ### Phase 5 — LVGL 9 + TFT-UI Neubau (ausstehend)
 
-LVGL 7 → 9: gesamtes `src/display/tft/` neu. Sinnvoll mit Phase 2 gekoppelt.
+LVGL 7 → 9: gesamtes `src/display/tft/` neu. Sinnvoll mit Phase 2 gekoppelt. → [Issue #205](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/205)  
+Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-APIs → Komplettneuschreibung. Externe Abhängigkeit: `tuniii/lv_lib_qrcode` auf v9-Kompatibilität prüfen.
 
 ---
 

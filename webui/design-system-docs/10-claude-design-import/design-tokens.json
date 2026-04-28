@@ -1,0 +1,221 @@
+{
+  "meta": {
+    "projectName": "WLANThermo Web UI",
+    "version": "0.1.0",
+    "framework": "Vue 2",
+    "cssFramework": "Pure CSS (via SCSS)",
+    "extractedDate": "2026-04-28",
+    "notes": "Dark-Theme SPA, embedded auf ESP32 Hardware. Keine externen Webfonts. icomoon Custom-Icon-Font."
+  },
+  "colors": {
+    "primary": {
+      "main": "#00adb5",
+      "usage": "Buttons, Spinner-Border, Dialog-Header, App-Bar Buttons, Akzent-Elemente"
+    },
+    "semantic": {
+      "error": {
+        "main": "#f44336",
+        "usage": "Fehler-Buttons (pure-button-error), Form-Validation-Fehler, Swipe-Delete-Aktion, Verbindungsanzeige-rot, Batterie-kritisch"
+      },
+      "warning": {
+        "main": "#FFFF00",
+        "usage": "Update-Hinweis-Icon (icon-yellow), Kanalfarben"
+      },
+      "success": {
+        "main": "#00FF00",
+        "usage": "Cloud-verbunden Icon-Farbe, Verbindungsanzeige-grün (lightgreen)"
+      },
+      "info": {
+        "main": "#3366ff",
+        "usage": "Wiki-Links in Dialogen"
+      }
+    },
+    "neutral": {
+      "white": "#ffffff",
+      "gray-100": "#eeeeee",
+      "gray-300": "#cccccc",
+      "gray-500": "#b3b3b3",
+      "gray-600": "#999999",
+      "gray-700": "#808080",
+      "black": "#000000"
+    },
+    "background": {
+      "body": "#393e46",
+      "nav": "#222831",
+      "surface": "#474a4e",
+      "dialog": "#ffffff",
+      "overlay": "rgba(0, 0, 0, 0.3)"
+    },
+    "text": {
+      "primary": "#ffffff",
+      "secondary": "#cccccc",
+      "muted": "#b3b3b3",
+      "disabled": "#808080",
+      "label-inactive": "#b3b3b3",
+      "label-active": "#808080",
+      "label-focus": "#337ab7"
+    },
+    "input": {
+      "highlight": "#337ab7",
+      "border": "#999999",
+      "text": "#ffffff",
+      "background": "transparent"
+    },
+    "temperature": {
+      "too-hot": "#ff0000",
+      "too-cold": "#1874cd",
+      "normal": "#ffffff"
+    },
+    "channel-palette": [
+      "#FFFF00",
+      "#FFC002",
+      "#00FF00",
+      "#FFFFFF",
+      "#FF1DC4",
+      "#E46C0A",
+      "#C3D69B",
+      "#0FE6F1",
+      "#0000FF",
+      "#03A923",
+      "#C84B32",
+      "#FF9B69",
+      "#5082BE",
+      "#FFB1D0",
+      "#A6EF03",
+      "#D42A6B",
+      "#FFDA8F",
+      "#00B0F0",
+      "#948A54"
+    ]
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "system-ui, -apple-system, sans-serif",
+      "monospace": "monospace",
+      "icons": "icomoon"
+    },
+    "fontSizes": {
+      "xs": "0.75em",
+      "sm": "0.8em / 0.8rem",
+      "base": "1em / 1rem",
+      "sm-plus": "0.9em",
+      "md": "1.1em",
+      "lg": "1.2em",
+      "xl": "1.5em",
+      "2xl": "2.2em"
+    },
+    "fontWeights": {
+      "light": 300,
+      "regular": 400,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeights": {
+      "tight": "1",
+      "normal": "1.6",
+      "header": "45px"
+    },
+    "letterSpacing": {
+      "normal": "normal"
+    }
+  },
+  "spacing": {
+    "0": "0",
+    "1": "2px",
+    "2": "5px",
+    "3": "0.2em",
+    "4": "0.25rem",
+    "5": "0.3em",
+    "6": "0.5rem",
+    "7": "0.6em",
+    "8": "0.75rem",
+    "9": "1em",
+    "10": "1.25rem",
+    "12": "1.5rem",
+    "14": "1.55rem",
+    "16": "10px",
+    "form-group-top": "1.25rem",
+    "form-group-bottom": "1.55rem",
+    "config-form-padding": "0.25rem 0.5rem 0.75rem",
+    "list-item-padding": "0.6em",
+    "info-box-margin": "5px",
+    "info-box-padding": "10px"
+  },
+  "layout": {
+    "nav-width": "200px",
+    "header-height": "44px",
+    "content-padding-top": "44px",
+    "breakpoint-mobile": "48em (768px)"
+  },
+  "borderRadius": {
+    "none": "0",
+    "sm": "0.4em",
+    "full": "2em / 9999px",
+    "circle": "100%",
+    "toast": "15px"
+  },
+  "shadows": {
+    "none": "none"
+  },
+  "zIndex": {
+    "app-bar": "5",
+    "overlay-mask": "499",
+    "dialog": "500",
+    "mobile-nav": "500"
+  },
+  "transitions": {
+    "input": "all 0.28s ease",
+    "nav-slide": "left 0.4s ease",
+    "spinner": "rotation 0.6s infinite linear",
+    "icon-rotate-100": "rotate 2s infinite linear",
+    "icon-rotate-75": "rotate 3s infinite linear",
+    "icon-rotate-50": "rotate 4s infinite linear",
+    "icon-rotate-25": "rotate 5s infinite linear",
+    "blinker": "blinker 2s linear infinite"
+  },
+  "icons": {
+    "font": "icomoon (custom)",
+    "format": "TTF, WOFF, EOT, SVG",
+    "list": {
+      "icon-Wlan33": "\\e906 — WiFi schwach",
+      "icon-Wlan66": "\\e907 — WiFi mittel",
+      "icon-Wlan100": "\\e908 — WiFi stark",
+      "icon-arrow_left": "\\e901 — Zurück",
+      "icon-arrow_right": "\\e902 — Vor / Speichern",
+      "icon-temp_down": "\\e904 — Temp-Minimum",
+      "icon-temp_up": "\\e905 — Temp-Maximum",
+      "icon-fan": "\\e913 — Lüfter (Pitmaster)",
+      "icon-trash": "\\f014 — Löschen",
+      "icon-download": "\\f019 — Download",
+      "icon-refresh": "\\f021 — Aktualisieren",
+      "icon-lock": "\\f023 — Gesperrt (WiFi)",
+      "icon-pencil": "\\f040 — Bearbeiten",
+      "icon-question_sign": "\\f059 — Hilfe",
+      "icon-info_sign": "\\f05a — Info / Update",
+      "icon-notification": "\\f06a — Benachrichtigung",
+      "icon-unlock": "\\f09c — Entsperrt",
+      "icon-reorder": "\\f0c9 — Sortieren",
+      "icon-charger": "\\f1e6 — Ladegerät",
+      "icon-battery-100": "\\f240 — Akku voll",
+      "icon-battery-75": "\\f241 — Akku 75%",
+      "icon-battery-50": "\\f242 — Akku 50%",
+      "icon-battery-25": "\\f243 — Akku 25%",
+      "icon-battery-0": "\\f244 — Akku leer",
+      "icon-cloud": "\\f289 — Cloud",
+      "icon-bluetooth_1": "\\f293 — Bluetooth",
+      "icon-bluetooth_2": "\\f294 — Bluetooth aktiv",
+      "icon-stats-dots": "\\e99b — Statistik",
+      "icon-power-cord": "\\e9b7 — Stromversorgung",
+      "icon-home": "\\e900 — Home",
+      "icon-bell": "\\e951 — Benachrichtigung",
+      "icon-cog": "\\e994 — Einstellungen",
+      "icon-fire": "\\e9a9 — Pitmaster",
+      "icon-search": "\\e903 — Suchen / Scan",
+      "icon-uniF2C7": "\\f2c7 — Temperatur-Symbol 1",
+      "icon-uniF2C8": "\\f2c8 — Temperatur-Symbol 2",
+      "icon-uniF2C9": "\\f2c9 — Temperatur-Symbol 3",
+      "icon-uniF2CA": "\\f2ca — Temperatur-Symbol 4",
+      "icon-uniF2CB": "\\f2cb — Temperatur-Symbol 5"
+    }
+  }
+}
