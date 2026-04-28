@@ -218,7 +218,7 @@ void Bluetooth::getDevices()
     serialBle->printf("getDevices=%d\n", requestedDevices);
     String bleDeviceJson = serialBle->readStringUntil('\n');
     gSystem->wireRelease();
-    Serial.println(bleDeviceJson);
+    Log.verbose("BLE: %s\n", bleDeviceJson.c_str());
 
     JsonDocument doc;
     deserializeJson(doc, bleDeviceJson);
@@ -226,13 +226,13 @@ void Bluetooth::getDevices()
 
     if (json.isNull())
     {
-        Serial.println("Invalid JSON");
+        Log.error("BLE: invalid JSON\n");
         return;
     }
 
     if (json.containsKey(BLE_JSON_DEVICE) == false)
     {
-        Serial.println("Invalid JSON: devices missing");
+        Log.error("BLE: invalid JSON, devices missing\n");
         return;
     }
 
@@ -243,7 +243,7 @@ void Bluetooth::getDevices()
     {
         if (_device.containsKey(BLE_JSON_ADDRESS) == false)
         {
-            Serial.println("Invalid JSON: address missing");
+            Log.warning("BLE: invalid JSON, address missing\n");
             deviceIndex++;
             continue;
         }
@@ -435,7 +435,7 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
-        Serial.printf("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        Log.verbose("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         if (gSystem->otaUpdate.isUpdateInProgress())
         {
@@ -525,8 +525,7 @@ boolean Bluetooth::doDfu()
     // check for startup string of bootloader
     if (waitForBootloader(500u))
     {
-        Serial.println("Hello from BLE bootloader");
-        Serial.println("Start flashing of BLE application");
+        Log.notice("BLE: bootloader detected, start flashing\n");
         uint32_t flashStart = millis();
 
         TFwu sFwu;
@@ -577,12 +576,10 @@ boolean Bluetooth::doDfu()
             {
                 if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
                 {
-                    Serial.println("\nFlashing skipped, version already up to date");
                     Log.notice("BLE chip already up-to-date" CR);
                 }
                 else
                 {
-                    Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
                     Log.notice("BLE chip successfully flashed in %dms" CR, (millis() - flashStart));
                     flashed = true;
                 }
@@ -592,7 +589,6 @@ boolean Bluetooth::doDfu()
             }
             else if (status == FWU_STATUS_FAILURE)
             {
-                Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
                 Log.error("BLE chip flashing failed after %dms" CR, (millis() - flashStart));
                 break;
             }
@@ -604,7 +600,6 @@ boolean Bluetooth::doDfu()
     {
         if (waitForBootloader(5000u))
         {
-            Serial.println("Hello from BLE bootloader again");
             Log.notice("BLE chip detected after flashing" CR);
         }
         else
@@ -633,8 +628,7 @@ void Bluetooth::dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len)
         //Serial.printf("%02x ", c);
         if (++bytesSent % 1000 == 0)
         {
-            Serial.printf(".");
-            Serial.flush();
+            Log.verbose("BLE DFU: %d bytes sent\n", (int)bytesSent);
         }
     }
 

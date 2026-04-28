@@ -910,7 +910,7 @@ void Pitmaster::disableActuators(boolean allowdelay)
     {
         this->controlServo(0, this->profile->spmin, this->profile->spmax);
         initActuator = NOAR;
-        Serial.println("ServoOFF");
+        Log.verbose("Pitmaster: servo off\n");
         return;
     }
 

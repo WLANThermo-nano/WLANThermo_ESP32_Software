@@ -130,36 +130,25 @@ void Connect::getDevices()
 
     if (nrOfServices == 0)
     {
-        Serial.println("No services were found.");
+        Log.verbose("Connect: no mDNS services found\n");
     }
     else
     {
-        Serial.print("Number of services found: ");
-        Serial.println(nrOfServices);
+        Log.notice("Connect: %d mDNS service(s) found\n", nrOfServices);
 
         for (int i = 0; i < nrOfServices; i = i + 1)
         {
-
-            Serial.println("---------------");
-
-            Serial.print("Hostname: ");
-            Serial.println(MDNS.hostname(i));
-
-            Serial.print("IP address: ");
-            Serial.println(MDNS.IP(i));
+            Log.verbose("Connect: host=%s ip=%s\n", MDNS.hostname(i).c_str(), MDNS.IP(i).toString().c_str());
 
             if (MDNS.hasTxt(i, "mac_address"))
             {
-                Serial.print("MAC address: ");
-                Serial.println(MDNS.txt(i, "mac_address"));
+                Log.verbose("Connect: mac=%s\n", MDNS.txt(i, "mac_address").c_str());
 
                 String url = "http://" + MDNS.IP(i).toString() + "/data";
                 deviceClient.onReadyStateChange(Connect::onReadyStateChange, NULL);
                 deviceClient.open("GET", url.c_str());
                 deviceClient.send();
             }
-
-            Serial.println("---------------");
         }
     }
 }
