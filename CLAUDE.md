@@ -153,7 +153,7 @@ LVGL 7 → 9: gesamtes `src/display/tft/` neu. Sinnvoll mit Phase 2 gekoppelt.
 | B37 | `src/system/SystemBase.cpp` | `loadConfig()` Zeile 265 | Low | → [Issue #191](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/191) — SPIFFS.begin() result unchecked |
 | B38 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` | Low | → [Issue #192](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/192) — Invalid JSON on first boot cycle |
 | B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** ✅ → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3; `wifiModePsPending`-Flag + `WiFi.persistent(false)` |
-| B41 | `src/pitmaster/Pitmaster.cpp` | `controlSSR()`, `initActuators()`, `update()` | High | **Gefixt** ✅ → [Issue #201](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/201) — SSR kein Output auf miniV3 nach ESP-IDF 4.4 Upgrade; LEDC 0,5 Hz ersetzt durch millis()-basiertes time-proportional control; früher SSR-Block in `update()` vor `checkPause()` |
+| B41 | `src/pitmaster/Pitmaster.cpp`, `src/system/SystemBase.cpp` | `controlSSR()`, `initActuators()`, `update()` | High | **Gefixt** ✅ → [Issue #201](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/201) — SSR kein Output auf miniV3 nach ESP-IDF 4.4 Upgrade; LEDC 0,5 Hz ersetzt durch millis()-basiertes time-proportional control; `pitmasters.update()` aus `ONCE_PER_SECOND_CYCLE`-Gate herausgezogen (SystemBase.cpp) → 200 ms Tick; `SSR_PERIOD_MS` = 10 000 ms → 50 Stufen à 2% Auflösung |
 
 ### SRAM / Heap-Optimierungen
 

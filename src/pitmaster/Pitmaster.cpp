@@ -845,7 +845,7 @@ void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
 
 void Pitmaster::controlSSR(float newValue, float newDcMin, float newDcMax)
 {
-    const uint32_t SSR_PERIOD_MS = 2000;
+    const uint32_t SSR_PERIOD_MS = 10000;
 
     float newDC = (newDcMax <= newDcMin)
         ? newDcMin

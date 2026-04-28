@@ -144,10 +144,14 @@ void SystemBase::update()
   temperatures.update();
   this->wireRelease();
 
+  // SSR time-proportional control needs to run every 200 ms (task cycle) to
+  // get enough samples within the 2 s period.  Full PID/pause logic is still
+  // gated inside Pitmaster::update() via checkPause().
+  pitmasters.update();
+
   if (CHECK_CYCLE(cycleCounter, ONCE_PER_SECOND_CYCLE))
   {
     temperatures.refresh();
-    pitmasters.update();
 
     for (uint8_t i = 0; i < temperatures.count(); i++)
     {
