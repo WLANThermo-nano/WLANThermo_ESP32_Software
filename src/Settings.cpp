@@ -21,6 +21,7 @@
 #include "Settings.h"
 #include "nvs.h"
 #include "Preferences.h"
+#include "ArduinoLog.h"
 
 #define STRINGIFY(s) #s
 
@@ -65,7 +66,7 @@ void Settings::write(SettingsNvsKeys key, JsonObject json)
 
   if (NvsKeyConfig[key].debugPrint)
   {
-    Serial.printf("Settings::write: %s - %s\n", NvsKeyConfig[key].keyName, jsonString.c_str());
+    Log.notice("Settings::write: %s - %s" CR, NvsKeyConfig[key].keyName, jsonString.c_str());
   }
 
   for (std::vector<SettingsOnChangeCallback>::iterator it = registeredCallbacks.begin(); it != registeredCallbacks.end(); ++it)
@@ -83,7 +84,7 @@ JsonObject Settings::read(SettingsNvsKeys key, JsonDocument &doc)
 
   if (NvsKeyConfig[key].debugPrint)
   {
-    Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyConfig[key].keyName, jsonString.length(), jsonString.c_str());
+    Log.verbose("Settings::read: %s (%d bytes) - %s" CR, NvsKeyConfig[key].keyName, jsonString.length(), jsonString.c_str());
   }
 
   return doc.as<JsonObject>();
@@ -123,7 +124,7 @@ void Settings::write(String key, String value)
 
       if (NvsKeyConfig[keyIndex].debugPrint)
       {
-        Serial.printf("Settings::write: %s - %s\n", key.c_str(), value.c_str());
+        Log.notice("Settings::write: %s - %s" CR, key.c_str(), value.c_str());
       }
 
       prefs.end();
@@ -137,7 +138,7 @@ void Settings::remove(SettingsNvsKeys key)
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.remove(NvsKeyConfig[key].keyName);
-  Serial.printf("Settings::remove: %s\n", NvsKeyConfig[key].keyName);
+  Log.notice("Settings::remove: %s" CR, NvsKeyConfig[key].keyName);
   prefs.end();
 }
 
@@ -146,7 +147,7 @@ void Settings::remove(String key)
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.remove(key.c_str());
-  Serial.printf("Settings::remove: %s\n", key.c_str());
+  Log.notice("Settings::remove: %s" CR, key.c_str());
   prefs.end();
 }
 
@@ -155,7 +156,7 @@ void Settings::clear()
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.clear();
-  Serial.printf("Settings::clear\n");
+  Log.notice("Settings::clear" CR);
   prefs.end();
 }
 

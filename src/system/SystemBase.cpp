@@ -260,8 +260,11 @@ void SystemBase::loadConfig()
       disableTypeK = json["DisableTypeK"].as<bool>();
     if (json.containsKey("DisableReceiver"))
       disableReceiver = json["DisableReceiver"].as<bool>();
-    if (json.containsKey("language"))
-      language = json["language"].as<const char*>();
+    if (json.containsKey("language") && json["language"].is<const char*>()) {
+      const char *lang = json["language"].as<const char*>();
+      if (lang != nullptr)
+        language = lang;
+    }
     if (json.containsKey("CrashReport"))
       crashReport = json["CrashReport"].as<bool>();
   }
