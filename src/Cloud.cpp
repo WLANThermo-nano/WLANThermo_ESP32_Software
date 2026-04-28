@@ -244,7 +244,7 @@ void Cloud::loadConfig()
   if (file)
   {
     String jsonString = file.readString();
-    Serial.printf("url.json: %s\n", jsonString.c_str());
+    Log.verbose("url.json: %s" CR, jsonString.c_str());
     JsonDocument urlDoc;
     deserializeJson(urlDoc, jsonString);
     JsonObject urlJson = urlDoc.as<JsonObject>();
