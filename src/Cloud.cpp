@@ -349,7 +349,7 @@ tmElements_t *Cloud::string_to_tm(tmElements_t *tme, char *str)
 
 void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
 {
-  boolean *requestDone = (boolean *)optParm;
+  volatile boolean *requestDone = (volatile boolean *)optParm;
   int responseCode;
 
   if (READY_STATE_DONE == readyState)
@@ -368,7 +368,7 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
       Log.warning("API response HTTP code: %d" CR, responseCode);
     }
     
-    *requestDone = true;
+    *requestDone = true; // written from callback context — volatile ensures visibility
   }
 }
 
@@ -395,7 +395,7 @@ void Cloud::sendAPI(int apiIndex, int urlIndex)
 // Handle API queue
 void Cloud::handleQueue()
 {
-  static boolean requestDone = true;
+  static volatile boolean requestDone = true;
 
   CloudRequest cloudRequest;
 
