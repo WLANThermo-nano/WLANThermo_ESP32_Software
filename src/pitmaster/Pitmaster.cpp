@@ -270,7 +270,7 @@ void Pitmaster::handleCallbacks()
 boolean Pitmaster::checkPause()
 {
     boolean pauseDone = false;
-    uint currentMillis = millis();
+    uint32_t currentMillis = millis();
 
     // Global Pitmaster Aktor from PID-Profil
     uint8_t actuator = this->profile->actuator;

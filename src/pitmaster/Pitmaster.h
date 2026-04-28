@@ -186,7 +186,7 @@ private:
   uint8_t ampch;  // Amplitudenwechsel
 
   uint16_t pause;
-  uint previousMillis;
+  uint32_t previousMillis;
 
   uint16_t servoDcMin;
   uint16_t servoDcMax;
