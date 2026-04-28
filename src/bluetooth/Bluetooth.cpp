@@ -46,6 +46,7 @@
 
 HardwareSerial *Bluetooth::serialBle = NULL;
 std::vector<BleDeviceType *> Bluetooth::bleDevices;
+portMUX_TYPE Bluetooth::bleDevicesMux = portMUX_INITIALIZER_UNLOCKED;
 boolean Bluetooth::enabled = true;
 
 Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
@@ -278,6 +279,8 @@ void Bluetooth::getDevices()
             SAFE_STRNCPY(bleDevice->name, _device[BLE_JSON_NAME].as<const char*>());
         }
 
+        taskENTER_CRITICAL(&bleDevicesMux);
+
         if (_device.containsKey(BLE_JSON_STATUS) == true)
         {
             bleDevice->status = _device[BLE_JSON_STATUS];
@@ -317,6 +320,8 @@ void Bluetooth::getDevices()
                 sensorIndex++;
             }
         }
+
+        taskEXIT_CRITICAL(&bleDevicesMux);
 
         deviceIndex++;
     }
@@ -361,6 +366,7 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if (it != bleDevices.end())
@@ -378,6 +384,7 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
             }
         }
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return isConnected;
 }
@@ -389,12 +396,14 @@ float Bluetooth::getSensorValue(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
     {
         value = (*it)->sensors[index];
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return value;
 }
@@ -406,12 +415,14 @@ String Bluetooth::getSensorUnit(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
     {
         memcpy(unit, (*it)->units[index], BLE_SENSOR_UNIT_MAX_SIZE);
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return unit;
 }

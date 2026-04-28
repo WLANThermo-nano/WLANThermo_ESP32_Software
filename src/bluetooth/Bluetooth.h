@@ -79,5 +79,6 @@ private:
     boolean chipEnabled;
     boolean isNrf52840;
     static std::vector<BleDeviceType *> bleDevices;
+    static portMUX_TYPE bleDevicesMux;
     static HardwareSerial *serialBle;
 };

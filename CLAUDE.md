@@ -122,7 +122,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 ### Phase 0 — Stabilisierung (laufend)
 
-B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 offen (Low, siehe Known Issues). B39 gefixt (2026-04-27). SRAM-Optimierungen M2–M4 ausstehend.  
+B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 offen (Low, siehe Known Issues). B39 gefixt (2026-04-27). B42–B51 gefixt (2026-04-28, P1-Review). B52–B60 offen (P2-Review, siehe Known Issues). SRAM-Optimierungen M2–M4 ausstehend.  
 nanoV3: Stabil nach B39-Fix + `WiFi.persistent(false)`. BLE-Discovery-Fix implementiert, Hardware-Test ausstehend.
 
 ### Phase 1 — Kernel Upgrade ✅ (2026-04-20)
@@ -170,6 +170,15 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 | B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** ✅ → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3; `wifiModePsPending`-Flag + `WiFi.persistent(false)` |
 | B41 | `src/pitmaster/Pitmaster.cpp`, `src/system/SystemBase.cpp` | `controlSSR()`, `initActuators()`, `update()` | High | **Gefixt** ✅ → [Issue #201](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/201) — SSR kein Output auf miniV3 nach ESP-IDF 4.4 Upgrade; LEDC 0,5 Hz ersetzt durch millis()-basiertes time-proportional control; `pitmasters.update()` aus `ONCE_PER_SECOND_CYCLE`-Gate herausgezogen (SystemBase.cpp) → 200 ms Tick; `SSR_PERIOD_MS` = 10 000 ms → 50 Stufen à 2% Auflösung |
 | B42–B51 | — | — | — | **Alle gefixt** (2026-04-28) — Code Review P1 (#196) — Details unten |
+| B52 | `src/pitmaster/Pitmaster.cpp` | `update()` → `checkPause()`, `checkOpenLid()`, `controlActuators()`, `pidCalc()` | High | → [Issue #217](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/217) — Null-Deref wenn `profile == NULL` (fehlender Guard in `update()`) |
+| B53 | `src/pitmaster/Pitmaster.cpp`, `src/temperature/TemperatureGrp.cpp`, `src/pitmaster/PitmasterGrp.cpp` | `assignTemperature()`, `operator[]`, `loadConfig()` | High | → [Issue #218](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/218) — Null-Deref + negativer Index in `operator[](int)` |
+| B54 | `src/connect/Connect.cpp` | `onReadyStateChange()` Zeile ~183 | High | → [Issue #219](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/219) — channelIndex ohne Bounds-Check → Heap-Overflow aus Remote-Daten |
+| B55 | `src/bluetooth/Bluetooth.cpp`, `src/connect/Connect.cpp` | `loadConfig()`, `getDevices()` | High | → [Issue #220](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/220) — `strcpy` ohne Längencheck (6 Stellen) aus NVS + Netzwerk |
+| B56 | `src/bluetooth/Bluetooth.cpp` | `getDevices()` vs. `isDeviceConnected()`/`getSensorValue()` | Medium | → [Issue #221](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/221) — Race Condition `bleDevices`: BLE-Task schreibt, MainTask liest ohne Mutex |
+| B57 | `src/connect/Connect.cpp` | `onReadyStateChange()` vs. `isDeviceConnected()`/`getTemperatureValue()` | Medium | → [Issue #222](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/222) — Race Condition `connectDevices`: async_tcp-Callback schreibt, MainTask liest ohne Mutex |
+| B58 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` Zeile ~447 | Medium | → [Issue #223](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/223) — `vTaskDelete(NULL)` ohne `esp_task_wdt_delete(NULL)` im OTA-Exit-Pfad |
+| B59 | `src/bluetooth/Bluetooth.cpp`, `src/connect/Connect.cpp`, `src/pitmaster/Pitmaster.cpp` | diverse | Low | → [Issue #224](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/224) — `Serial.print/printf` statt `Log.*` (Logging-Konvention) |
+| B60 | `src/pitmaster/Pitmaster.h` | Zeile ~189 | Low | → [Issue #225](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/225) — `uint previousMillis` statt `uint32_t` |
 
 ### SRAM / Heap-Optimierungen
 
@@ -218,12 +227,13 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review nach Checkliste (Memory, FreeRTOS/Async, ArduinoJson v7, ESPAsyncWebServer 3.10.x, Input-Validation, ESP32-Fallstricke).
 
 **Bereits reviewed (2026-04-25):** `WebHandler.cpp`, `API.h`, `API.cpp`, `Wlan.cpp`, `Wlan.h`, `RecoveryMode.cpp` — B23–B35 gefixt.  
-**Bereits reviewed (2026-04-28):** `Notification.cpp/h`, `Mqtt.cpp/h`, `Cloud.cpp/h`, `OtaUpdate.cpp/h` — B42–B51 gefixt (#207–#216). Neue Konventionen: `SAFE_STRNCPY`-Makro in `Notification.cpp`, `saveConfigPending`-Flag in `Mqtt`+`Cloud`, `OtaProgressCalc.h` header-only + 7 Unit-Tests.
+**Bereits reviewed (2026-04-28):** `Notification.cpp/h`, `Mqtt.cpp/h`, `Cloud.cpp/h`, `OtaUpdate.cpp/h` — B42–B51 gefixt (#207–#216). Neue Konventionen: `SAFE_STRNCPY`-Makro in `Notification.cpp`, `saveConfigPending`-Flag in `Mqtt`+`Cloud`, `OtaProgressCalc.h` header-only + 7 Unit-Tests.  
+**Bereits reviewed (2026-04-28):** `Pitmaster.cpp/h`, `PitmasterGrp.cpp/h`, `TemperatureBase.cpp/h`, `TemperatureGrp.cpp/h`, `TemperatureBle`, `TemperatureConnect`, `TemperatureMavRadio`, `TemperatureMax*`, `TemperatureMcp3208`, `Bluetooth.cpp/h`, `Connect.cpp/h` — B52–B60 gefunden (#217–#225). 4× High (Null-Deref, Buffer-Overflow, strcpy), 3× Medium (Race Conditions, WDT), 2× Low. `SAFE_STRNCPY` auch auf Bluetooth + Connect ausweiten; `portMUX_TYPE` für `bleDevices`/`connectDevices` ergänzen.
 
 ### Ausstehend — Priorisiert
 
 - **P1 — Netzwerk-/Input-facing:** → [Issue #196](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/196) — **✅ Abgeschlossen** (2026-04-28)
-- **P2 — Pitmaster / Sensor:** → [Issue #197](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/197) — Pitmaster, Temperature, Bluetooth, Connect
+- **P2 — Pitmaster / Sensor:** → [Issue #197](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/197) — **Review abgeschlossen** (2026-04-28), B52–B60 offen (#217–#225)
 - **P3 — System / Settings:** → [Issue #198](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/198) — SystemBase, Settings, main.cpp, SerialCmd
 
 **Priorität 4 (Display/Peripherie, geringes Netzwerk-Risiko):** `src/display/tft/` (nach Phase 5), `DisplayNextion`, `DisplayOled`, `Battery`, `Buzzer`, `PbGuard`, `SdCard`.

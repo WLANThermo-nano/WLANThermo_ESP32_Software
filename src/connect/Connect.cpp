@@ -38,6 +38,7 @@
 
 std::vector<ConnectDeviceType *> Connect::connectDevices;
 boolean Connect::enabled = true;
+portMUX_TYPE Connect::connectDevicesMux = portMUX_INITIALIZER_UNLOCKED;
 
 asyncHTTPrequest deviceClient = asyncHTTPrequest();
 
@@ -174,8 +175,12 @@ void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int r
         JsonArray _channels = json["channel"].as<JsonArray>();
         uint8_t channelIndex = 0u;
 
+        taskENTER_CRITICAL(&connectDevicesMux);
         if (connectDevices.empty())
+        {
+            taskEXIT_CRITICAL(&connectDevicesMux);
             return;
+        }
 
         connectDevices[0]->status = 1u;
 
@@ -185,7 +190,8 @@ void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int r
             connectDevices[0]->temperatures[channelIndex] = _channel["temp"].as<float>();
             channelIndex++;
         }
-        
+        taskEXIT_CRITICAL(&connectDevicesMux);
+
         request->abort();
     }
 }
@@ -229,12 +235,14 @@ boolean Connect::isDeviceConnected(String peerAddress)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&connectDevicesMux);
     auto it = std::find_if(connectDevices.begin(), connectDevices.end(), isKnownDevice);
 
     if (it != connectDevices.end())
     {
         isConnected = (boolean)(*it)->status;
     }
+    taskEXIT_CRITICAL(&connectDevicesMux);
 
     return isConnected;
 }
@@ -246,12 +254,14 @@ float Connect::getTemperatureValue(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&connectDevicesMux);
     auto it = std::find_if(connectDevices.begin(), connectDevices.end(), isKnownDevice);
 
     if ((it != connectDevices.end()) && (index < CONNECT_TEMPERATURE_MAX_COUNT))
     {
         value = (*it)->temperatures[index];
     }
+    taskEXIT_CRITICAL(&connectDevicesMux);
 
     return value;
 }
