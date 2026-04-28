@@ -45,6 +45,15 @@ yarn build-mini     # Single variant
 
 After changing the web UI, rebuild firmware to embed the new assets — `extra_script.py` gzips HTML/JS/CSS into C header files at build time.
 
+**Nextion TFT Build (CI only, Windows runner):**
+- Script: `nextion/build.ps1` → lädt Nextion Editor, ruft SikuliX-Automatisierung auf
+- Sikuli-Script: `nextion/nextion.sikuli/nextion.py` — steuert den Nextion Editor GUI
+- Produces: 6 TFT-Dateien (3 Modelle × 2 Orientierungen) + `nextion_spiffs.bin`
+- **Wichtig — Anchor+Offset statt Similarity:** Der Editor-Dialog verwendet Buttons mit gleicher Hintergrundfarbe (orange/grau/lila), bei denen Template-Matching grundsätzlich versagt (Hintergrund dominiert den Score). Alle Klicks laufen über zwei Anchor-Bilder + feste Pixel-Offsets:
+  - `Please_Select_Model_heading.png` → Series-Tabs + Modell-Buttons
+  - `Display_direction_title.png` → Richtungs-Buttons (90°/270°)
+- Bei Nextion-Editor-Update: Anchor-Bilder aus CI `debug_screen*.png`-Artefakten neu messen und Offsets in `nextion.py` anpassen → [Issue #202](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/202)
+
 ## Architecture
 
 **Firmware entry:** `src/main.cpp` creates two FreeRTOS tasks pinned to separate cores:
