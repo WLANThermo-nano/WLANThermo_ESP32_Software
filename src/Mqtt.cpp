@@ -191,26 +191,35 @@ void Mqtt::onMqttMessage(char *topic, char *datas, AsyncMqttClientMessagePropert
   String topic_short = String(topic);
   topic_short.remove(0, topic_prefix_length);
 
+  // AsyncMqttClient payload is NOT null-terminated; create a null-terminated
+  // copy so WebHandler JSON parsers do not read past the end of the buffer.
+  uint8_t *buf = new uint8_t[len + 1u];
+  memcpy(buf, datas, len);
+  buf[len] = '\0';
+
   if (topic_short.startsWith("/set/channels"))
   {
-    nanoWebHandler.setChannels(NULL, (uint8_t *)datas);
+    nanoWebHandler.setChannels(NULL, buf);
   }
   if (topic_short.startsWith("/set/system"))
   {
-    nanoWebHandler.setSystem(NULL, (uint8_t *)datas);
+    nanoWebHandler.setSystem(NULL, buf);
   }
   if (topic_short.startsWith("/set/pitmaster"))
   {
-    nanoWebHandler.setPitmaster(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPitmaster(NULL, buf);
   }
   if (topic_short.startsWith("/set/pid"))
   {
-    nanoWebHandler.setPID(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPID(NULL, buf);
   }
   if (topic_short.startsWith("/set/iot"))
   {
-    nanoWebHandler.setIoT(NULL, (uint8_t *)datas);
+    nanoWebHandler.setIoT(NULL, buf);
   }
+
+  delete[] buf;
+
   if (topic_short.startsWith("/get/settings"))
   {
     sendSettings();
