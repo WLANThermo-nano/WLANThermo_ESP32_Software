@@ -24,6 +24,7 @@
 #include "Settings.h"
 #include "ArduinoLog.h"
 #include "TaskConfig.h"
+#include "Utils.h"
 #include <byteswap.h>
 #include <ESPmDNS.h>
 
@@ -74,8 +75,8 @@ void Connect::loadConfig(TemperatureGrp *temperatureGrp)
                     connectDevice->temperatures[i] = INACTIVEVALUE;
                 }
 
-                strcpy(connectDevice->name, json["tname"][i]);
-                strcpy(connectDevice->address, json["taddress"][i]);
+                SAFE_STRNCPY(connectDevice->name,    json["tname"][i].as<const char*>());
+                SAFE_STRNCPY(connectDevice->address, json["taddress"][i].as<const char*>());
                 connectDevice->count = json["tcount"][i];
                 connectDevice->selected = json["tselected"][i];
 

@@ -28,6 +28,7 @@
 #include "Settings.h"
 #include "ArduinoLog.h"
 #include "TaskConfig.h"
+#include "Utils.h"
 #include <byteswap.h>
 
 #define BLE_BAUD 115200u
@@ -106,8 +107,8 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
                     bleDevice->sensors[i] = INACTIVEVALUE;
                 }
 
-                strcpy(bleDevice->name, json["tname"][i]);
-                strcpy(bleDevice->address, json["taddress"][i]);
+                SAFE_STRNCPY(bleDevice->name,    json["tname"][i].as<const char*>());
+                SAFE_STRNCPY(bleDevice->address, json["taddress"][i].as<const char*>());
                 bleDevice->count = json["tcount"][i];
                 bleDevice->selected = json["tselected"][i];
 
@@ -263,7 +264,7 @@ void Bluetooth::getDevices()
             bleDevice = new BleDeviceType();
             memset(bleDevice, 0, sizeof(BleDeviceType));
             bleDevice->remoteIndex = BLE_DEVICE_REMOTE_INDEX_INIT;
-            strcpy(bleDevice->address, deviceAddress.c_str());
+            SAFE_STRNCPY(bleDevice->address, deviceAddress.c_str());
             bleDevices.push_back(bleDevice);
         }
 
@@ -274,7 +275,7 @@ void Bluetooth::getDevices()
 
         if (_device.containsKey(BLE_JSON_NAME) == true)
         {
-            strcpy(bleDevice->name, _device[BLE_JSON_NAME]);
+            SAFE_STRNCPY(bleDevice->name, _device[BLE_JSON_NAME].as<const char*>());
         }
 
         if (_device.containsKey(BLE_JSON_STATUS) == true)

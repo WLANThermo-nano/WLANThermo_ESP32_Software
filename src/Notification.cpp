@@ -24,14 +24,10 @@
 #include "Settings.h"
 #include "temperature/TemperatureGrp.h"
 #include "mbedtls/md.h"
+#include "Utils.h"
 
 #define PUSHOVER_RETRY_DEFAULT 30u
 #define PUSHOVER_EXPIRE_DEFAULT 300u
-
-// Bounds-safe strncpy: copies at most sizeof(dst)-1 chars, always null-terminates.
-// No-op if src is nullptr (ArduinoJson v7 .as<const char*>() can return nullptr).
-#define SAFE_STRNCPY(dst, src) \
-  do { if (src) { strncpy((dst), (src), sizeof(dst) - 1u); (dst)[sizeof(dst) - 1u] = '\0'; } } while (0)
 
 #define APP_MAX_NOTIFICATION_SOUNDS 2u
 #define APP_DEFAULT_NOTIFICATION_SOUND "default"
