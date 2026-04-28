@@ -30,7 +30,21 @@ WLANThermo ESP32 is Arduino-framework firmware for a WiFi BBQ thermometer. It su
 
 > **macOS:** `pio` ist nicht im PATH — vollständigen Pfad `~/.platformio/penv/bin/pio` verwenden.
 > **intelhex fehlt:** `~/.platformio/penv/bin/pip install intelhex` (tritt nach PlatformIO-Neuinstallation auf).
-> **16MB Flash (miniV3):** Konfiguration bereits in `[env]` eingetragen (`flash_size=16MB`, `flash_mode=dio`, `flash_freq=40m`). Beim ersten Flash nach Änderung: `pio run -e miniV3 -t erase` empfohlen.
+> **16MB Flash (miniV3):** `board_build.*`-Konfiguration in `[env]` eingetragen (`flash_size=16MB`, `flash_mode=dio`, `flash_freq=40m`). `board = esp32dev` steht in **jedem Hardware-Env einzeln** (nicht in `[env]`), damit `[env:native]` es nicht erbt. Beim ersten Flash nach Änderung: `pio run -e miniV3 -t erase` empfohlen.
+
+**Unit Tests (native, kein Hardware nötig):**
+```bash
+~/.platformio/penv/bin/pio test -e native            # Alle Tests (18 Fälle, ~4 s)
+~/.platformio/penv/bin/pio test -e native -f test_pid_formula          # Nur PID-Tests
+~/.platformio/penv/bin/pio test -e native -f test_temperature_max31855 # Nur MAX31855-Tests
+```
+
+Tests laufen auch in CI (`compile-test.yml`). Neue Tests kommen als Verzeichnis unter `test/test_<name>/test_<name>.cpp`. Test-Dateien inkludieren direkt aus `src/` — kein Arduino-Stub nötig, solange nur header-only Logik getestet wird.
+
+**Test-Architektur (Phase 1 — Pure Logic):**
+- `src/pitmaster/PidFormula.h` — header-only `pidComputeOutput()`, keine Arduino-Deps. Getestet in `test/test_pid_formula/`.
+- `src/temperature/TemperatureMax31855Calc.h` — header-only `calcMax31855Temperature()`, reines Bit-Math. Getestet in `test/test_temperature_max31855/`.
+- Phase 2 (ausstehend): HAL-Mocks für GPIO/PWM/DAC → `controlFan()`, `controlSSR()` → [Issue #205](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/205)
 
 Hardware variants: `miniV1`, `miniV2`, `miniV3`, `connectV1`, `nanoV3`, `linkV1`, `boneV1`
 
