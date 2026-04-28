@@ -180,9 +180,9 @@ void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int r
 
         for (JsonObject _channel : _channels)
         {
+            if (channelIndex >= CONNECT_TEMPERATURE_MAX_COUNT) break;
             connectDevices[0]->temperatures[channelIndex] = _channel["temp"].as<float>();
             channelIndex++;
-            Serial.println(connectDevices[0]->temperatures[channelIndex]);
         }
         
         request->abort();
