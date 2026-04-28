@@ -169,6 +169,7 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 | B38 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` | Low | → [Issue #192](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/192) — Invalid JSON on first boot cycle |
 | B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** ✅ → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3; `wifiModePsPending`-Flag + `WiFi.persistent(false)` |
 | B41 | `src/pitmaster/Pitmaster.cpp`, `src/system/SystemBase.cpp` | `controlSSR()`, `initActuators()`, `update()` | High | **Gefixt** ✅ → [Issue #201](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/201) — SSR kein Output auf miniV3 nach ESP-IDF 4.4 Upgrade; LEDC 0,5 Hz ersetzt durch millis()-basiertes time-proportional control; `pitmasters.update()` aus `ONCE_PER_SECOND_CYCLE`-Gate herausgezogen (SystemBase.cpp) → 200 ms Tick; `SSR_PERIOD_MS` = 10 000 ms → 50 Stufen à 2% Auflösung |
+| B42–B51 | — | — | — | **Alle gefixt** (2026-04-28) — Code Review P1 (#196) — Details unten |
 
 ### SRAM / Heap-Optimierungen
 
@@ -216,11 +217,12 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 
 Skill-Aufruf: `/wlanthermo-review <Datei(en)>` — strukturierter Safety-Review nach Checkliste (Memory, FreeRTOS/Async, ArduinoJson v7, ESPAsyncWebServer 3.10.x, Input-Validation, ESP32-Fallstricke).
 
-**Bereits reviewed (2026-04-25):** `WebHandler.cpp`, `API.h`, `API.cpp`, `Wlan.cpp`, `Wlan.h`, `RecoveryMode.cpp` — B23–B35 gefixt.
+**Bereits reviewed (2026-04-25):** `WebHandler.cpp`, `API.h`, `API.cpp`, `Wlan.cpp`, `Wlan.h`, `RecoveryMode.cpp` — B23–B35 gefixt.  
+**Bereits reviewed (2026-04-28):** `Notification.cpp/h`, `Mqtt.cpp/h`, `Cloud.cpp/h`, `OtaUpdate.cpp/h` — B42–B51 gefixt (#207–#216). Neue Konventionen: `SAFE_STRNCPY`-Makro in `Notification.cpp`, `saveConfigPending`-Flag in `Mqtt`+`Cloud`, `OtaProgressCalc.h` header-only + 7 Unit-Tests.
 
 ### Ausstehend — Priorisiert
 
-- **P1 — Netzwerk-/Input-facing:** → [Issue #196](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/196) — Notification, MQTT, Cloud, OtaUpdate
+- **P1 — Netzwerk-/Input-facing:** → [Issue #196](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/196) — **✅ Abgeschlossen** (2026-04-28)
 - **P2 — Pitmaster / Sensor:** → [Issue #197](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/197) — Pitmaster, Temperature, Bluetooth, Connect
 - **P3 — System / Settings:** → [Issue #198](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/198) — SystemBase, Settings, main.cpp, SerialCmd
 
