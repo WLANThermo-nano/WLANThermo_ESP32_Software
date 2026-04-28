@@ -74,7 +74,9 @@ void PitmasterGrp::loadConfig()
       Pitmaster *pm = pitmasters[pitsize];
       if (pm != NULL)
       {
-        pm->assignTemperature(gSystem->temperatures[entry["ch"].as<int>()]);
+        int ch = entry["ch"].as<int>();
+        if (ch >= 0 && ch < (int)gSystem->temperatures.count())
+          pm->assignTemperature(gSystem->temperatures[ch]);
         pm->assignProfile(gSystem->getPitmasterProfile(entry["pid"].as<uint8_t>()));
         pm->setTargetTemperature(entry["set"].as<float>());
         pm->setType((PitmasterType)entry["act"].as<uint8_t>());

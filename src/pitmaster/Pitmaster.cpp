@@ -160,6 +160,8 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
+    if (temperature == NULL)
+        return;
     // Skip BLE and Maverick Radio temperatures for assignment
     /*   if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
         (temperature->getType() != (uint8_t)SensorType::MaverickRadio))*/

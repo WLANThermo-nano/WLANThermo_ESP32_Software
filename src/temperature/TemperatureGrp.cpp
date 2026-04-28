@@ -341,7 +341,8 @@ void TemperatureGrp::saveConfig()
 
 TemperatureBase *TemperatureGrp::operator[](int index)
 {
-  return (index < count()) ? temperatures[index] : NULL;
+  if (index < 0 || index >= (int)count()) return NULL;
+  return temperatures[index];
 }
 
 void TemperatureGrp::registerCallback(TemperatureCallback_t callback, void *userData)
