@@ -43,7 +43,7 @@ void Notification::loadDefaultValues()
   memset(&pushTelegram, 0, sizeof(pushTelegram));
   memset(&pushPushover, 0, sizeof(pushPushover));
   memset(&pushApp, 0, sizeof(pushApp));
-  memset(&notificationData, 0u, sizeof(Notification));
+  memset(&notificationData, 0u, sizeof(notificationData));
 
   pushPushover.retry = PUSHOVER_RETRY_DEFAULT;
   pushPushover.expire = PUSHOVER_EXPIRE_DEFAULT;
