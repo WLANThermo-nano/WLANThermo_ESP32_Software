@@ -411,7 +411,7 @@ void Cloud::handleQueue()
 
     String url = (cloudRequest.urlIndex != CUSTOMLINK) ? String("http://" + serverurl[cloudRequest.urlIndex].host + "/") : config.customUrl;
 
-    apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
+    apiClient.onReadyStateChange(Cloud::onReadyStateChange, (void *)&requestDone);
     apiClient.open("POST", url.c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
