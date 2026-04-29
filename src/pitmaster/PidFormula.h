@@ -23,8 +23,10 @@ inline float pidComputeOutput(float e,
                                float kp, float ki, float kd,
                                float pause_ms, uint8_t dCount)
 {
+    // Proportional-Anteil
     float p_out = kp * e;
 
+    // Differential-Anteil (Intervall-Berechnung)
     ecount++;
     if (ecount >= dCount) {
         edif   = (e - elast) / (pause_ms / 1000.0f);
@@ -34,26 +36,40 @@ inline float pidComputeOutput(float e,
     }
     float d_out = kd * edif;
 
+    // Integral-Anteil
     float i_out;
-    if (ki != 0.0f) {
+    if (ki != 0.0f) 
+    {
+        // Sprünge im Reglerausgangswert bei Anpassung von Ki vermeiden
         if (ki != Ki_alt) {
             esum   = (esum * Ki_alt) / ki;
             Ki_alt = ki;
         }
+
+        // Anti-Windup I-Anteil: keine Erhöhung I-Anteil wenn Regler bereits an der Grenze ist
         if (p_out < PID_OUT_MAX) {
             esum += e * (pause_ms / 1000.0f);
         }
+
+        // Anti-Windup I-Anteil (Limits)
         if      (esum * ki > PID_KIMAX) esum = PID_KIMAX / ki;
         else if (esum * ki < PID_KIMIN) esum = PID_KIMIN / ki;
+
         i_out = ki * esum;
-    } else {
+    } else 
+    {
+        // Historie vergessen, da wir nach Ki = 0 von 0 aus anfangen
         esum   = 0.0f;
         i_out  = 0.0f;
         Ki_alt = 0.0f;
     }
 
+    // PID-Regler berechnen
     float y = p_out + i_out + d_out;
+
+    // Auflösung am Ausgang ist begrenzt
     if (y < PID_OUT_MIN) y = PID_OUT_MIN;
     if (y > PID_OUT_MAX) y = PID_OUT_MAX;
+    
     return y;
 }
