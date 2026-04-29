@@ -136,8 +136,8 @@ void API::pitTyp(JsonObject jObj)
 void API::pitAry(JsonArray jAry, int cc)
 {
 
-  String sc[2] = {"#ff0000", "#FE2EF7"};
-  String vc[2] = {"#000000", "#848484"};
+  static const char sc[2][8] = {"#ff0000", "#FE2EF7"};
+  static const char vc[2][8] = {"#000000", "#848484"};
 
   for (uint8_t i = 0u; i < cc; i++)
   {
