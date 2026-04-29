@@ -106,8 +106,6 @@ void DisplayOledLink::init()
 
 boolean DisplayOledLink::initDisplay()
 {
-  this->loadConfig();
-
   ui.setTargetFPS(30);
   ui.setFrames(frames, (uint8_t)Frames::NumOfFrames);
   ui.setOverlays(overlays, 1u);
