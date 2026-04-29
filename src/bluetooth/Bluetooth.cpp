@@ -447,6 +447,9 @@ void Bluetooth::task(void *parameter)
         if (bluetooth->enabled != bluetooth->chipEnabled)
         {
             bluetooth->enableChip(bluetooth->enabled);
+            // skip getDevices this cycle — chip needs time to initialize after reset
+            vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
+            continue;
         }
 
         // get devices only when bluetooth is enabled

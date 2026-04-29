@@ -269,7 +269,8 @@ void SystemBase::loadConfig()
       crashReport = json["CrashReport"].as<bool>();
   }
 
-  SPIFFS.begin();
+  if (!SPIFFS.begin())
+    Log.error("SystemBase: SPIFFS mount failed\n");
   cloud.loadConfig();
   mqtt.loadConfig();
   notification.loadConfig();

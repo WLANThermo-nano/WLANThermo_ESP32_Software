@@ -170,23 +170,6 @@ void DisplayOledLink::task(void *parameter)
   }
 }
 
-void DisplayOledLink::saveConfig()
-{
-  JsonDocument doc;
-  JsonObject json = doc.to<JsonObject>();
-  Settings::write(kDisplay, json);
-}
-
-void DisplayOledLink::loadConfig()
-{
-  JsonDocument doc;
-  JsonObject json = Settings::read(kDisplay, doc);
-
-  if (!json.isNull())
-  {
-  }
-}
-
 void DisplayOledLink::update()
 {
   // check global block
