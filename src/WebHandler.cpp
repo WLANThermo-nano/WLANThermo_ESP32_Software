@@ -363,7 +363,7 @@ void NanoWebHandler::handleClearWifi(AsyncWebServerRequest *request)
   {
     request->send(200, TEXTPLAIN, TEXTTRUE);
     gSystem->wlan.clearCredentials();
-    gSystem->restart();
+    gSystem->restartDeferred();
   }
 }
 

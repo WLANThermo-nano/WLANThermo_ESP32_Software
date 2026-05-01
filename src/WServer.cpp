@@ -133,7 +133,7 @@ void WServer::init()
              response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
              response->addHeader("Content-Encoding", "gzip");
              request->send(response);
-             gSystem->restart();
+             gSystem->restartDeferred();
            })
       .setFilter(ON_STA_FILTER);
 

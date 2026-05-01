@@ -63,6 +63,7 @@ public:
   Wlan wlan;
   SdCard *sdCard;
   void restart();
+  void restartDeferred(uint32_t delayMs = 2000);
   void wireLock();
   void wireRelease();
   void run();

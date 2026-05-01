@@ -22,6 +22,7 @@
 #include <WiFi.h>
 #include <SPIFFS.h>
 #include <rom/rtc.h>
+#include <esp_timer.h>
 #include "SystemBase.h"
 #include "Constants.h"
 #include "RecoveryMode.h"
@@ -288,6 +289,17 @@ void SystemBase::restart()
   delay(500);
   yield();
   ESP.restart();
+}
+
+void SystemBase::restartDeferred(uint32_t delayMs)
+{
+  esp_timer_handle_t handle;
+  esp_timer_create_args_t args = {};
+  args.callback = [](void *) { ESP.restart(); };
+  args.dispatch_method = ESP_TIMER_TASK;
+  args.name = "restart-deferred";
+  if (esp_timer_create(&args, &handle) == ESP_OK)
+    esp_timer_start_once(handle, (uint64_t)delayMs * 1000ULL);
 }
 
 void SystemBase::wireLock()
