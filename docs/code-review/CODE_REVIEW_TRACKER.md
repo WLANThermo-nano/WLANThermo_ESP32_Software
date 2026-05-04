@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-001b-009 gefixt, Commit 207c30b) |
+| **Letztes Update** | 2026-05-04 (CR-001b-011 gefixt, Commit fc0ece1) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 6 |
+| **Im neuen Review gefixte Issues** | 7 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -237,7 +237,10 @@
   - **Status:** ✅ DONE — Commit `207c30b`, Issue #236 (2026-05-04)
   - **Aufwand:** S
 - [ ] **CR-001b-010** — `setPitmaster` Loop-Index `ii` vs. JSON-`id` Inkonsistenz (`WebHandler.cpp:975–1058`)
-- [ ] **CR-001b-011** — `setBluetooth` UB durch fehlenden Bit-Shift-Upper-Bound (`WebHandler.cpp:1308–1313`)
+- [x] **CR-001b-011** — `setBluetooth` UB durch fehlenden Bit-Shift-Upper-Bound (`WebHandler.cpp:1308–1313`)
+  - **Datei:** `src/WebHandler.cpp:1362–1367`
+  - **Status:** ✅ DONE — Commit `fc0ece1`, Issue #237 (2026-05-04)
+  - **Aufwand:** S
 - [ ] **CR-001b-012** — `setServerAPI` `cloud.saveUrl()` direkt aus async_tcp (`WebHandler.cpp:1174`)
 - [ ] **CR-003-007** — `stopAllRadio()` lässt `mdnsUpdatePending`/`wifiModePsPending` aktiv → MDNS/PS auf gestoppter Radio (`Wlan.cpp:360–367`)
 - [ ] **CR-003-008** — Hardcoded AP-Password `"12345678"` (`Wlan.cpp:31, 66`) — bekanntes Default, mit Phase 3 koppeln

@@ -426,6 +426,8 @@ Die zehn `set*`-Handler verwenden in der Mehrzahl saubere Patterns: ArduinoJson-
   ```
 
 - **Geschätzter Aufwand:** S
+- **GitHub-Issue:** [#237](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/237)
+- **Fix:** ✅ Commit `fc0ece1` (2026-05-04)
 
 ---
 
