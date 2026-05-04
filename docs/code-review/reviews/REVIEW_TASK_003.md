@@ -348,6 +348,8 @@ Der B39-Fix (`wifiModePsPending`-Flag + `WiFi.persistent(false)`) ist sauber imp
   Oder den Wlan-State in `init()` einmalig auf All-Channel-Scan + Sort-by-Signal konfigurieren — `esp_wifi_set_config()` persistiert bis zum Reboot.
 
 - **Geschätzter Aufwand:** S (~30 min, plus Verifikations-Test mit zwei APs gleichen SSID).
+- **GitHub-Issue:** [#244](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/244)
+- **Fix:** ✅ Commit `a1797e7` (2026-05-04)
 
 ---
 
