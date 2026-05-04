@@ -93,6 +93,7 @@ private:
   static bool wifiModePsPending;
   static bool wlanSaveConfigPending;
   static bool recoveryPending;
+  static bool newCredentialsPending;
   static WlanCredentials wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
   static WlanCredentials newWlanCredentials;
   static uint8_t credentialIndex;

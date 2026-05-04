@@ -38,6 +38,7 @@ bool Wlan::mdnsUpdatePending = false;
 bool Wlan::wifiModePsPending = false;
 bool Wlan::wlanSaveConfigPending = false;
 bool Wlan::recoveryPending = false;
+bool Wlan::newCredentialsPending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;
@@ -203,17 +204,7 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
       wlanSaveConfigPending = true;
     }
 
-    if (isConnected())
-      WiFi.disconnect();
-
-    wifiState = WifiState::AddCredentials;
-    WiFi.persistent(false);
-    WiFi.begin(ssid, password);
-    wifi_config_t wifi_cfg;
-    esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
-    wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
-    esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
-    connectTimeout = CONNECT_TIMEOUT;
+    newCredentialsPending = true;
   }
 }
 
@@ -275,6 +266,23 @@ void Wlan::update()
     WlanCredentials credentials;
     getCredentials(&credentials);
     RecoveryMode::runFromApp(credentials.ssid, credentials.password);
+  }
+
+  if (newCredentialsPending)
+  {
+    newCredentialsPending = false;
+    if (isConnected())
+      WiFi.disconnect();
+    wifiState = WifiState::AddCredentials;
+    WiFi.persistent(false);
+    WiFi.begin(newWlanCredentials.ssid, newWlanCredentials.password);
+    wifi_config_t wifi_cfg;
+    if (esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg) == ESP_OK)
+    {
+      wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+      esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+    }
+    connectTimeout = CONNECT_TIMEOUT;
   }
 
   gSystem->processPendingSave();
