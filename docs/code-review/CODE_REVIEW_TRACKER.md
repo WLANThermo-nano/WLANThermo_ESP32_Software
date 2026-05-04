@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-003-001 gefixt) |
+| **Letztes Update** | 2026-05-04 (CR-003-002 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 11 |
+| **Im neuen Review gefixte Issues** | 12 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -186,9 +186,9 @@
   - **Datei:** `src/Wlan.cpp:149–158, 192–196` (Aufrufer: `WebHandler.cpp:365, 732`)
   - **Status:** ✅ DONE — Commit `d1b2c47`, Issue #241 (2026-05-04)
   - **Aufwand:** S — `wlanSaveConfigPending` existiert bereits, nur Roll-out
-- [ ] **CR-003-002** — Race auf statische `String hostName`/`accessPointName` (Heap-Realloc concurrent zu `MDNS.begin(hostName.c_str())`) → Use-After-Free möglich
+- [x] **CR-003-002** — Race auf statische `String hostName`/`accessPointName` (Heap-Realloc concurrent zu `MDNS.begin(hostName.c_str())`) → Use-After-Free möglich
   - **Datei:** `src/Wlan.cpp:35–36, 82, 84, 130–131, 371, 432–449`
-  - **Status:** ⏳ PENDING
+  - **Status:** ✅ DONE — Commit `1366239`, Issue #242 (2026-05-04)
   - **Aufwand:** M (1 PT) — Migration zu `char[]`-Buffer, mit Phase-2-Cleanup koppeln
 
 ### 🟠 HIGH

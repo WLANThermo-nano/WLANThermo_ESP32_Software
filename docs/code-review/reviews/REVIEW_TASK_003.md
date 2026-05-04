@@ -180,6 +180,8 @@ Der B39-Fix (`wifiModePsPending`-Flag + `WiFi.persistent(false)`) ist sauber imp
 
 - **Geschätzter Aufwand:** M (1 PT) — Signaturen-Anpassung, Settings-Mapping, Cross-Caller-Anpassung in `WebHandler` und `SystemBase`.
 - **Cross-Reference:** Gleiches Pattern bei `accessPointName` (Z. 36, 446–450) und ggf. anderen statischen `String`-Membern in der Codebasis. Bei Phase-2 / Phase-4c-Folge-Cleanup mitnehmen.
+- **GitHub-Issue:** [#242](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/242)
+- **Fix:** ✅ Commit `1366239` (2026-05-04)
 
 ---
 
