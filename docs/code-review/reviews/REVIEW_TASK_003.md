@@ -304,6 +304,8 @@ Der B39-Fix (`wifiModePsPending`-Flag + `WiFi.persistent(false)`) ist sauber imp
   ```
 
 - **Geschätzter Aufwand:** S (~10 min).
+- **GitHub-Issue:** [#242](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/242)
+- **Fix:** ✅ Commit `1366239` (2026-05-04) — mitgefixt durch CR-003-002 (`char[]`-Migration)
 
 ---
 

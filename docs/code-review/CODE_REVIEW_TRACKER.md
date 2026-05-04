@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-003-003 gefixt) |
+| **Letztes Update** | 2026-05-04 (CR-003-004 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 13 |
+| **Im neuen Review gefixte Issues** | 14 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -210,7 +210,10 @@
   - **Datei:** `src/Wlan.cpp:198–209` (Aufrufer: `WebHandler.cpp:703, 732`)
   - **Status:** ✅ DONE — Commit `74230ce`, Issue #243 (2026-05-04)
   - **Aufwand:** M (1 PT) — `newCredentialsPending`-Flag, Logik nach `update()` verlagern; mit CR-003-001 kombinieren
-- [ ] **CR-003-004** — `loadConfig()` Type-Confusion-Crash: `host`/`ap` ohne NULL-Check → String-Crash bei JSON-Type-Mismatch (`Wlan.cpp:81–85`)
+- [x] **CR-003-004** — `loadConfig()` Type-Confusion-Crash: `host`/`ap` ohne NULL-Check → String-Crash bei JSON-Type-Mismatch (`Wlan.cpp:81–85`)
+  - **Datei:** `src/Wlan.cpp:81–93`
+  - **Status:** ✅ DONE — Commit `1366239`, Issue #242 (2026-05-04) — mitgefixt durch CR-003-002 (`char[]`-Migration)
+  - **Aufwand:** S
 - [ ] **CR-003-005** — `WIFI_ALL_CHANNEL_SCAN` wird **nach** `WiFi.begin()` gesetzt → wirkt nicht auf laufenden Verbindungsversuch (`Wlan.cpp:202–207, 341–346`)
 - [ ] **CR-003-006** — `wifiState` Race zwischen async_tcp (`addCredentials`/`setStopRequest`) und ConnectTask (`update()`); löst sich mit CR-003-003-Fix mit auf (`Wlan.cpp:201, 459`)
 - [ ] **CR-002-001** — Plain-Text-Credentials in `iotObj()`+`notificationObj()` (MQTT-Pass, Cloud-Token, Telegram/Pushover/App-Tokens)
