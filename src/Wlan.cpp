@@ -154,7 +154,7 @@ void Wlan::clearCredentials()
     wlanCredentials[i].password[0] = '\0';
   }
 
-  saveConfig();
+  wlanSaveConfigPending = true;
 }
 
 bool Wlan::isConnected()
@@ -192,7 +192,7 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 
     if (force)
     {
-      saveConfig();
+      wlanSaveConfigPending = true;
     }
 
     if (isConnected())
