@@ -275,13 +275,13 @@ void Wlan::update()
       WiFi.disconnect();
     wifiState = WifiState::AddCredentials;
     WiFi.persistent(false);
-    WiFi.begin(newWlanCredentials.ssid, newWlanCredentials.password);
     wifi_config_t wifi_cfg;
     if (esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg) == ESP_OK)
     {
       wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
       esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
     }
+    WiFi.begin(newWlanCredentials.ssid, newWlanCredentials.password);
     connectTimeout = CONNECT_TIMEOUT;
   }
 
@@ -355,11 +355,13 @@ void Wlan::connectToKnownStations()
       connectTimeout = CONNECT_TIMEOUT;
       credentialIndex = stationIndex;
       WiFi.persistent(false);
-      WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
       wifi_config_t wifi_cfg;
-      esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
-      wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
-      esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+      if (esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg) == ESP_OK)
+      {
+        wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+        esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+      }
+      WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
       Log.verbose("Wlan::connectToStations: SSID = %s" CR, wlanCredentials[stationIndex].ssid);
     }
 
