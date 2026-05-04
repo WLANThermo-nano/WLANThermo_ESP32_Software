@@ -24,6 +24,8 @@
 #define NUM_OF_WLAN_CREDENTIALS 5u
 #define WLAN_SSID_MAX_LENGTH 33u // 32 + '\0'
 #define WLAN_PASS_MAX_LENGTH 64u // 63 + '\0'
+#define WLAN_HOSTNAME_MAX_LEN 64u // 63 + '\0' (RFC 1035 single-label limit)
+#define WLAN_APNAME_MAX_LEN 33u  // 32 + '\0' (IEEE 802.11 SSID limit)
 
 typedef struct {
     char ssid[WLAN_SSID_MAX_LENGTH];
@@ -57,10 +59,10 @@ public:
   void init();
   void update();
 
-  String getHostName();
-  void setHostName(String hostName);
-  String getAccessPointName();
-  void setAccessPointName(String accessPointName);
+  const char *getHostName();
+  void setHostName(const char *hostName);
+  const char *getAccessPointName();
+  void setAccessPointName(const char *accessPointName);
   void addCredentials(const char *ssid, const char *password, bool force = false);
   void getCredentials(WlanCredentials *credentials);
   WifiStrength getSignalStrength();
@@ -85,8 +87,8 @@ private:
   void stopAllRadio();
   static void updateMdns();
 
-  static String hostName;
-  static String accessPointName;
+  static char hostName[WLAN_HOSTNAME_MAX_LEN];
+  static char accessPointName[WLAN_APNAME_MAX_LEN];
   static bool mdnsUpdatePending;
   static bool wifiModePsPending;
   static bool wlanSaveConfigPending;

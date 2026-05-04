@@ -96,7 +96,9 @@ void SystemNanoVx::init()
   deviceName = "nano";
   deviceID = DeviceId::get();
   hardwareVersion = 3u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // initialize temperatures
   this->wireLock();

@@ -71,7 +71,9 @@ void SystemConnectV1::init()
   deviceName = "connect";
   deviceID = DeviceId::get();
   hardwareVersion = 1u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // add connect feature
   connect = new Connect();

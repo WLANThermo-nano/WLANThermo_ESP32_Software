@@ -43,7 +43,9 @@ void SystemBoneV1::init()
   deviceName = "bone";
   deviceID = DeviceId::get();
   hardwareVersion = 1u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // add blutetooth feature
   bluetooth = new Bluetooth(BLE_UART_RX, BLE_UART_TX, BLE_RESET_PIN);

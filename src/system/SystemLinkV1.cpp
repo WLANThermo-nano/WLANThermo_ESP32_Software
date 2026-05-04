@@ -74,7 +74,9 @@ void SystemLinkV1::init()
   deviceName = "link";
   deviceID = DeviceId::get();
   hardwareVersion = 1u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // initialize temperatures
   this->wireLock();

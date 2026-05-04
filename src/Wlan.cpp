@@ -32,8 +32,8 @@
 
 #define CONNECT_TIMEOUT 10u // 10s
 
-String Wlan::hostName = DEFAULT_HOSTNAME;
-String Wlan::accessPointName = DEFAULT_APNAME;
+char Wlan::hostName[WLAN_HOSTNAME_MAX_LEN] = DEFAULT_HOSTNAME;
+char Wlan::accessPointName[WLAN_APNAME_MAX_LEN] = DEFAULT_APNAME;
 bool Wlan::mdnsUpdatePending = false;
 bool Wlan::wifiModePsPending = false;
 bool Wlan::wlanSaveConfigPending = false;
@@ -55,7 +55,7 @@ void Wlan::init()
 {
   loadConfig();
 
-  WiFi.setHostname(this->hostName.c_str());
+  WiFi.setHostname(this->hostName);
   WiFi.persistent(false);
 
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
@@ -63,10 +63,10 @@ void Wlan::init()
   WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
   IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
   WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(this->accessPointName.c_str(), APPASSWORD, 5);
+  WiFi.softAP(this->accessPointName, APPASSWORD, 5);
 
   WiFi.mode(WIFI_AP_STA);
-  Log.notice("AP: %s" CR, this->accessPointName.c_str());
+  Log.notice("AP: %s" CR, this->accessPointName);
   Log.notice("IP: %s" CR, local_IP.toString().c_str());
   update();
 }
@@ -79,9 +79,17 @@ void Wlan::loadConfig()
   if (!json.isNull())
   {
     if (json.containsKey("host"))
-      hostName = json["host"].as<const char*>();
+    {
+      const char *host = json["host"].as<const char*>();
+      if (host && strlen(host) < WLAN_HOSTNAME_MAX_LEN)
+        strncpy(hostName, host, WLAN_HOSTNAME_MAX_LEN - 1);
+    }
     if (json.containsKey("ap"))
-      accessPointName = json["ap"].as<const char*>();
+    {
+      const char *ap = json["ap"].as<const char*>();
+      if (ap && strlen(ap) < WLAN_APNAME_MAX_LEN)
+        strncpy(accessPointName, ap, WLAN_APNAME_MAX_LEN - 1);
+    }
 
     JsonArray _wifi = json["wifi"].as<JsonArray>();
     uint8_t i = 0u;
@@ -368,7 +376,7 @@ void Wlan::stopAllRadio()
 
 void Wlan::updateMdns()
 {
-  if (!MDNS.begin(hostName.c_str()))
+  if (!MDNS.begin(hostName))
   {
     Log.error("Error MDNS!" CR);
   }
@@ -420,29 +428,33 @@ WifiState Wlan::getWifiState()
   return this->wifiState;
 }
 
-String Wlan::getHostName()
+const char *Wlan::getHostName()
 {
-  return this->hostName;
+  return hostName;
 }
 
-void Wlan::setHostName(String hostName)
+void Wlan::setHostName(const char *name)
 {
-  if (hostName.length() && hostName != this->hostName)
+  if (name && *name && strcmp(name, hostName) != 0)
   {
-    this->hostName = hostName;
+    strncpy(hostName, name, WLAN_HOSTNAME_MAX_LEN - 1);
+    hostName[WLAN_HOSTNAME_MAX_LEN - 1] = '\0';
     mdnsUpdatePending = true;
   }
 }
 
-String Wlan::getAccessPointName()
+const char *Wlan::getAccessPointName()
 {
-  return this->accessPointName;
+  return accessPointName;
 }
 
-void Wlan::setAccessPointName(String accessPointName)
+void Wlan::setAccessPointName(const char *name)
 {
-  if (accessPointName.length())
-    this->accessPointName = accessPointName;
+  if (name && *name)
+  {
+    strncpy(accessPointName, name, WLAN_APNAME_MAX_LEN - 1);
+    accessPointName[WLAN_APNAME_MAX_LEN - 1] = '\0';
+  }
 }
 
 int32_t Wlan::getRssi()

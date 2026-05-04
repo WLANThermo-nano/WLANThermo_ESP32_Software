@@ -82,9 +82,9 @@ void lvWifi_Update(boolean forceUpdate)
     switch (newWifiState)
     {
     case WifiState::SoftAPNoClient:
-      qrCode = "WIFI:T:WPA;S:" + gSystem->wlan.getAccessPointName() + ";P:12345678;;";
+      qrCode = String("WIFI:T:WPA;S:") + gSystem->wlan.getAccessPointName() + ";P:12345678;;";
       lv_qrcode_update(lvWifi.qrCode, qrCode.c_str(), qrCode.length());
-      lv_label_set_text_fmt(lvWifi.labelFirst, "WLAN: %s", gSystem->wlan.getAccessPointName().c_str());
+      lv_label_set_text_fmt(lvWifi.labelFirst, "WLAN: %s", gSystem->wlan.getAccessPointName());
       lv_label_set_text_fmt(lvWifi.labelSecond, "PW: %s", "12345678");
       break;
     case WifiState::SoftAPClientConnected:

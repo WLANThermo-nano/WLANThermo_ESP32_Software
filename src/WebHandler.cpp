@@ -621,14 +621,14 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
   {
     _name = _system["host"].as<const char*>();
     if (checkStringLength(_name) < 14)
-      gSystem->wlan.setHostName(_name);
+      gSystem->wlan.setHostName(_name.c_str());
   }
 
   if (_system.containsKey("ap"))
   {
     _name = _system["ap"].as<const char*>();
     if (checkStringLength(_name) < 14)
-      gSystem->wlan.setAccessPointName(_name);
+      gSystem->wlan.setAccessPointName(_name.c_str());
   }
 
   if (!unit.isEmpty())
