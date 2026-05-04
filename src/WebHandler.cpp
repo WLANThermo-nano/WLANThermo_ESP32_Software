@@ -142,6 +142,32 @@ void NanoWebHandler::handleRequest(AsyncWebServerRequest *request)
 
 void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
+  static constexpr size_t MAX_BODY_SIZE = 8192u;
+
+  // First chunk: enforce size limit and allocate reassembly buffer
+  if (index == 0) {
+    if (total > MAX_BODY_SIZE) {
+      request->send(413, TEXTPLAIN, "Payload Too Large");
+      return;
+    }
+    request->_tempObject = malloc(total + 1);
+    if (request->_tempObject == nullptr) {
+      request->send(500, TEXTPLAIN, "Out of memory");
+      return;
+    }
+  }
+
+  // Guard: allocation may have failed on a previous chunk (413/OOM path)
+  if (request->_tempObject == nullptr) return;
+
+  memcpy(static_cast<uint8_t *>(request->_tempObject) + index, data, len);
+
+  // Wait until all chunks have arrived
+  if (index + len != total) return;
+
+  uint8_t *body = static_cast<uint8_t *>(request->_tempObject);
+  body[total] = '\0';
+
   for (uint8_t i = 0u; i < sizeof(nanoWebHandlerList) / sizeof(NanoWebHandlerList); i++)
   {
     if (NULL == nanoWebHandlerList[i].bodyHandlerFunc)
@@ -160,20 +186,12 @@ void NanoWebHandler::handleBody(AsyncWebServerRequest *request, uint8_t *data, s
           }
         }
 
-        uint8_t *nullTerminated = new uint8_t[len + 1];
-        memcpy(nullTerminated, data, len);
-        nullTerminated[len] = '\0';
-        bool ok = (this->*nanoWebHandlerList[i].bodyHandlerFunc)(request, nullTerminated);
-        delete[] nullTerminated;
+        bool ok = (this->*nanoWebHandlerList[i].bodyHandlerFunc)(request, body);
 
         if (ok)
-        {
           request->send(200, TEXTPLAIN, TEXTTRUE);
-        }
         else
-        {
           request->send(200, TEXTPLAIN, TEXTFALSE);
-        }
 
         break;
       }
