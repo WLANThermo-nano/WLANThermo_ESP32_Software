@@ -292,7 +292,10 @@ void NanoWebHandler::handleWifiResult(AsyncWebServerRequest *request)
     request->send(response);
   }
   else
+  {
     serializeJson(json, Serial);
+    delete response;
+  }
 }
 
 void NanoWebHandler::handleWifiScan(AsyncWebServerRequest *request)
