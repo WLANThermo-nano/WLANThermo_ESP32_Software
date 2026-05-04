@@ -462,7 +462,7 @@ void NanoWebHandler::handleUpdate(AsyncWebServerRequest *request)
     if (request->hasParam("version", true))
     {
       String version = request->getParam("version", true)->value();
-      Serial.println(version);
+      Log.notice("Update version: %s" CR, version.c_str());
       if (version.indexOf("v") == 0)
       {
         gSystem->otaUpdate.resetUpdateInfo();
