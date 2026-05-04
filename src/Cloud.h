@@ -99,4 +99,5 @@ private:
   uint16_t cloudCounter;
   uint16_t customCounter;
   bool saveConfigPending;
+  bool saveUrlPending;
 };

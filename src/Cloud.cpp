@@ -103,6 +103,7 @@ Cloud::Cloud()
   cloudCounter = 0u;
   customCounter = 0u;
   saveConfigPending = false;
+  saveUrlPending = false;
   state = 0u;
 }
 
@@ -154,6 +155,25 @@ void Cloud::update()
     saveConfig();
     saveConfigPending = false;
   }
+
+  if (saveUrlPending)
+  {
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
+    for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
+    {
+      JsonObject _obj = json[serverurl[i].typ].to<JsonObject>();
+      _obj["host"] = serverurl[i].host;
+      _obj["page"] = serverurl[i].page;
+    }
+    File file = SPIFFS.open(URL_FILE, "w");
+    if (file)
+    {
+      serializeJson(doc, file);
+      file.close();
+    }
+    saveUrlPending = false;
+  }
 }
 
 String Cloud::newToken()
@@ -198,23 +218,7 @@ void Cloud::saveConfig()
 
 void Cloud::saveUrl()
 {
-  JsonDocument doc;
-  JsonObject json = doc.to<JsonObject>();
-
-  for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
-  {
-    JsonObject _obj = json[serverurl[i].typ].to<JsonObject>();
-    _obj["host"] = serverurl[i].host;
-    _obj["page"] = serverurl[i].page;
-  }
-
-  File file = SPIFFS.open(URL_FILE, "w");
-
-  if (file)
-  {
-    serializeJson(doc, file);
-    file.close();
-  }
+  saveUrlPending = true;
 }
 
 void Cloud::loadConfig()
