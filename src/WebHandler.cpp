@@ -28,6 +28,7 @@
 #include "WServer.h"
 #include "API.h"
 #include "DbgPrint.h"
+#include "ArduinoLog.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
 #include "Version.h"
@@ -593,7 +594,11 @@ bool NanoWebHandler::setSystem(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setSystem: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _system = doc.as<JsonObject>();
   if (_system.isNull())
     return 0;
@@ -645,7 +650,11 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setChannels: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _cha = doc.as<JsonObject>();
   if (_cha.isNull())
     return 0;
@@ -706,7 +715,11 @@ bool NanoWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setNetwork: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _network = doc.as<JsonObject>();
   if (_network.isNull())
     return 0;
@@ -735,7 +748,11 @@ bool NanoWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("addNetwork: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _network = doc.as<JsonObject>();
   if (_network.isNull())
     return 0;
@@ -764,7 +781,11 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setIoT: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _chart = doc.as<JsonObject>();
   if (_chart.isNull())
     return 0;
@@ -824,7 +845,11 @@ bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setPush: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject _push = doc.as<JsonObject>();
   if (_push.isNull())
     return 0;
@@ -988,7 +1013,11 @@ bool NanoWebHandler::setPitmaster(AsyncWebServerRequest *request, uint8_t *datas
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setPitmaster: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonArray json = doc.as<JsonArray>();
   if (json.isNull())
     return 0;
@@ -1090,7 +1119,11 @@ bool NanoWebHandler::setPID(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setPID: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonArray json = doc.as<JsonArray>();
   if (json.isNull())
     return 0;
@@ -1172,7 +1205,11 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   //printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setServerAPI: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject json = doc.as<JsonObject>();
   if (json.isNull())
     return 0;
@@ -1285,7 +1322,11 @@ bool NanoWebHandler::setDCTest(AsyncWebServerRequest *request, uint8_t *datas)
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setDCTest: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject json = doc.as<JsonObject>();
   if (json.isNull())
     return 0;
@@ -1305,7 +1346,11 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
   printRequest(datas);
 
   JsonDocument doc;
-  deserializeJson(doc, (const char *)datas);
+  DeserializationError err = deserializeJson(doc, (const char *)datas);
+  if (err) {
+    Log.warning("setBluetooth: JSON parse error: %s" CR, err.c_str());
+    return 0;
+  }
   JsonObject json = doc.as<JsonObject>();
   if (json.isNull())
     return 0;
