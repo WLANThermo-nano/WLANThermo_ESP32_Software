@@ -711,9 +711,6 @@ bool NanoWebHandler::setChannels(AsyncWebServerRequest *request, uint8_t *datas)
 
 bool NanoWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 {
-
-  printRequest(datas);
-
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, (const char *)datas);
   if (err) {
@@ -744,9 +741,6 @@ bool NanoWebHandler::setNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 
 bool NanoWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 {
-
-  printRequest(datas);
-
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, (const char *)datas);
   if (err) {
@@ -777,9 +771,6 @@ bool NanoWebHandler::addNetwork(AsyncWebServerRequest *request, uint8_t *datas)
 
 bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 {
-
-  printRequest(datas);
-
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, (const char *)datas);
   if (err) {
@@ -841,9 +832,6 @@ bool NanoWebHandler::setIoT(AsyncWebServerRequest *request, uint8_t *datas)
 
 bool NanoWebHandler::setPush(AsyncWebServerRequest *request, uint8_t *datas)
 {
-
-  printRequest(datas);
-
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, (const char *)datas);
   if (err) {
