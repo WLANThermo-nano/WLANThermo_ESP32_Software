@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-001b-011 gefixt, Commit fc0ece1) |
+| **Letztes Update** | 2026-05-04 (CR-001b-012 gefixt, Commit 100a3f1) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 7 |
+| **Im neuen Review gefixte Issues** | 8 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -241,7 +241,10 @@
   - **Datei:** `src/WebHandler.cpp:1362–1367`
   - **Status:** ✅ DONE — Commit `fc0ece1`, Issue #237 (2026-05-04)
   - **Aufwand:** S
-- [ ] **CR-001b-012** — `setServerAPI` `cloud.saveUrl()` direkt aus async_tcp (`WebHandler.cpp:1174`)
+- [x] **CR-001b-012** — `setServerAPI` `cloud.saveUrl()` direkt aus async_tcp (`WebHandler.cpp:1174`)
+  - **Datei:** `src/Cloud.cpp:152–174, Cloud.h:101`
+  - **Status:** ✅ DONE — Commit `100a3f1`, Issue #238 (2026-05-04)
+  - **Aufwand:** S
 - [ ] **CR-003-007** — `stopAllRadio()` lässt `mdnsUpdatePending`/`wifiModePsPending` aktiv → MDNS/PS auf gestoppter Radio (`Wlan.cpp:360–367`)
 - [ ] **CR-003-008** — Hardcoded AP-Password `"12345678"` (`Wlan.cpp:31, 66`) — bekanntes Default, mit Phase 3 koppeln
 - [ ] **CR-003-009** — `onWifiConnect()` Race auf `newWlanCredentials.ssid` (concurrent mit `addCredentials` und `saveConfig` → False-Negative-Match) (`Wlan.cpp:386–400`)
