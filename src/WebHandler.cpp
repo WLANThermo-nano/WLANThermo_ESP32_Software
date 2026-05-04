@@ -1205,7 +1205,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   // URL
   if (json.containsKey("url"))
   {
-    Serial.println("Server-URL");
+    Log.verbose("Server-URL" CR);
     JsonObject _url = json["url"].as<JsonObject>();
 
     for (int i = 0; i < Cloud::serverurlCount; i++)
@@ -1224,7 +1224,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
   bool available = false;
   if (json.containsKey("update"))
   {
-    Serial.println("Update object");
+    Log.verbose("Update object" CR);
     JsonObject _update = json["update"].as<JsonObject>();
     if (_update.containsKey("available"))
       available = _update["available"];
@@ -1249,7 +1249,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
         JsonObject _fw = _update[gDisplay->getUpdateName()].as<JsonObject>();
         if (_fw.containsKey("url"))
           gSystem->otaUpdate.setDisplayUrl(_fw["url"].as<const char*>());
-        Serial.println(_fw["url"].as<const char*>());
+        Log.verbose("%s" CR, _fw["url"].as<const char*>());
       }
 
       if (_update.containsKey("firmware"))
@@ -1257,7 +1257,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
         JsonObject _fw = _update["firmware"].as<JsonObject>();
         if (_fw.containsKey("url"))
           gSystem->otaUpdate.setFirmwareUrl(_fw["url"].as<const char*>());
-        Serial.println(_fw["url"].as<const char*>());
+        Log.verbose("%s" CR, _fw["url"].as<const char*>());
       }
 
       if (_update.containsKey("force"))
@@ -1282,8 +1282,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
         gSystem->cloud.state = 2;
       else
         gSystem->cloud.state = 1;
-      Serial.print("[CLOUD]: ");
-      Serial.println(gSystem->cloud.state);
+      Log.notice("[CLOUD]: %d" CR, gSystem->cloud.state);
     }
   }
 
@@ -1296,8 +1295,7 @@ bool NanoWebHandler::setServerAPI(AsyncWebServerRequest *request, uint8_t *datas
     {
       //if (_note["task"]) sys.online |= (1<<2);
       //else sys.online &= ~(1<<2);
-      Serial.print("[NOTE]: ");
-      Serial.println(_note["task"].as<const char*>());
+      Log.notice("[NOTE]: %s" CR, _note["task"].as<const char*>());
     }
   }
 
@@ -1355,7 +1353,7 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
 
     if (_device.containsKey("address") == false || _device.containsKey("count") == false || _device.containsKey("selected") == false)
     {
-      Serial.println("Invalid JSON!");
+      Log.error("Invalid JSON!" CR);
       continue;
     }
 
