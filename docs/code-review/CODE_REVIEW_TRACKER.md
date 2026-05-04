@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-001b-013 gefixt) |
+| **Letztes Update** | 2026-05-04 (CR-003-011 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 9 |
+| **Im neuen Review gefixte Issues** | 10 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -273,7 +273,8 @@
 - [ ] **CR-001b-017** — `setPitmaster` auskommentierte Code/TODO (`WebHandler.cpp:1007–1008, 1022`)
 - [ ] **CR-001b-018** — `addNetwork` deklariert aber nicht im Routing-Array (toter Code)
 - [ ] **CR-001b-019** — `setSystem` magische 14-Zeichen-Hostname-Limit ohne Doku (`WebHandler.cpp:597, 604`)
-- [ ] **CR-003-011** — 15+ `Serial.print/printf` statt `ArduinoLog` in `Wlan.cpp` (`Wlan.cpp:69, 70, 97, 103, 142, 184, 189, 347, 373, 388, 389, 404, 410`)
+- [x] **CR-003-011** — 15+ `Serial.print/printf` statt `ArduinoLog` in `Wlan.cpp` (`Wlan.cpp:69, 70, 97, 103, 142, 184, 189, 347, 373, 388, 389, 404, 410`)
+  - **Status:** ✅ DONE — Commit `7d85dab`, Issue #240 (2026-05-04)
 - [ ] **CR-003-012** — SSID im Klartext im `Serial.printf` (Privacy-Issue) (`Wlan.cpp:103, 142, 189, 347, 388`)
 - [ ] **CR-003-013** — `WiFi.softAPConfig()`/`WiFi.softAP()` Return-Werte ignoriert in `init()` (`Wlan.cpp:65–66`)
 - [ ] **CR-003-014** — Inkonsistentes static/instance-Pattern in `Wlan`-Klasse (`Wlan.h:74–96`)
