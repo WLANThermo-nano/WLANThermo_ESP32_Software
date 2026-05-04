@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-003-002 gefixt) |
+| **Letztes Update** | 2026-05-04 (CR-003-003 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 12 |
+| **Im neuen Review gefixte Issues** | 13 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -206,9 +206,9 @@
   - **Aufwand:** S
 - [ ] **CR-001b-007** — `setNetwork`/`addNetwork` ohne SSID/Password-Längen-Validierung (`WebHandler.cpp:696–706, 725–735`)
 - [ ] **CR-001b-008** — `setIoT` ohne Port-Validierung und keine Custom-URL-Whitelist (`WebHandler.cpp:760–798`)
-- [ ] **CR-003-003** — `addCredentials()` ruft `WiFi.disconnect()` + `WiFi.begin()` direkt aus async_tcp (~100–300 ms blockierend)
+- [x] **CR-003-003** — `addCredentials()` ruft `WiFi.disconnect()` + `WiFi.begin()` direkt aus async_tcp (~100–300 ms blockierend)
   - **Datei:** `src/Wlan.cpp:198–209` (Aufrufer: `WebHandler.cpp:703, 732`)
-  - **Status:** ⏳ PENDING
+  - **Status:** ✅ DONE — Commit `74230ce`, Issue #243 (2026-05-04)
   - **Aufwand:** M (1 PT) — `newCredentialsPending`-Flag, Logik nach `update()` verlagern; mit CR-003-001 kombinieren
 - [ ] **CR-003-004** — `loadConfig()` Type-Confusion-Crash: `host`/`ap` ohne NULL-Check → String-Crash bei JSON-Type-Mismatch (`Wlan.cpp:81–85`)
 - [ ] **CR-003-005** — `WIFI_ALL_CHANNEL_SCAN` wird **nach** `WiFi.begin()` gesetzt → wirkt nicht auf laufenden Verbindungsversuch (`Wlan.cpp:202–207, 341–346`)

@@ -252,6 +252,8 @@ Der B39-Fix (`wifiModePsPending`-Flag + `WiFi.persistent(false)`) ist sauber imp
 
 - **Geschätzter Aufwand:** M (1 PT) — neues Flag, Refactoring von `addCredentials()`, Test mit Recovery-Captive-Portal.
 - **Cross-Reference:** CR-003-001 (gleicher Aufruf-Pfad, gemeinsam fixen).
+- **GitHub-Issue:** [#243](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/243)
+- **Fix:** ✅ Commit `74230ce` (2026-05-04)
 
 ---
 

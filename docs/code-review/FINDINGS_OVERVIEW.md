@@ -4,7 +4,7 @@
 > Wird von `/review-next` (neue Tasks) und `/fix-next` (Status-Updates) aktualisiert.
 > `/review-list` liest nur diese Datei.
 
-**Stand:** 2026-05-04 | 66 Findings gesamt · 13 ✅ DONE · 53 ⏳ PENDING
+**Stand:** 2026-05-04 | 66 Findings gesamt · 14 ✅ DONE · 52 ⏳ PENDING
 
 ---
 
@@ -85,7 +85,7 @@
 |-----|----|---------|--------|
 | 🔴 | CR-003-001 | `addCredentials(force)`/`clearCredentials()` — NVS-Write direkt aus async_tcp | ✅ DONE |
 | 🔴 | CR-003-002 | Race auf `String hostName`/`accessPointName` → Use-After-Free möglich | ✅ DONE |
-| 🟠 | CR-003-003 | `addCredentials()` ruft `WiFi.disconnect()`+`WiFi.begin()` aus async_tcp (~300 ms) | ⏳ PENDING |
+| 🟠 | CR-003-003 | `addCredentials()` ruft `WiFi.disconnect()`+`WiFi.begin()` aus async_tcp (~300 ms) | ✅ DONE |
 | 🟠 | CR-003-004 | `loadConfig()` Type-Confusion: `host`/`ap` ohne NULL-Check → Boot-Crash | ⏳ PENDING |
 | 🟠 | CR-003-005 | `WIFI_ALL_CHANNEL_SCAN` wird nach `WiFi.begin()` gesetzt — wirkt nicht | ⏳ PENDING |
 | 🟠 | CR-003-006 | Race auf `wifiState` zwischen async_tcp und ConnectTask | ⏳ PENDING |
