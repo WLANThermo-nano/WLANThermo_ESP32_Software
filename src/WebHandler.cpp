@@ -1360,11 +1360,12 @@ bool NanoWebHandler::setBluetooth(AsyncWebServerRequest *request, uint8_t *datas
     }
 
     uint8_t count = _device["count"];
+    if (count > 32u) count = 32u;
     uint32_t selected = _device["selected"];
 
     for (uint8_t i = 0u; i < count; i++)
     {
-      if (selected & (1 << i))
+      if (selected & (1u << i))
       {
         gSystem->temperatures.add((uint8_t)SensorType::Ble, _device["address"], i);
       }
