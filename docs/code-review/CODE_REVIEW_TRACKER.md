@@ -10,7 +10,7 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-04 (CR-001b-012 gefixt, Commit 100a3f1) |
+| **Letztes Update** | 2026-05-04 (CR-001b-013 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
 | **Tasks abgeschlossen** | 4 / 34 (12 %) |
@@ -20,7 +20,7 @@
 | **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
 | **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 8 |
+| **Im neuen Review gefixte Issues** | 9 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -263,7 +263,10 @@
 - [ ] **CR-001-016** — `DPRINTLN` bei jedem `handleUpdateStatus` → Log-Spam (`WebHandler.cpp:328`)
 - [ ] **CR-001-017** — Linearer Loop in `canHandle()` — akzeptabel, nur dokumentiert (`WebHandler.cpp:188–202`)
 - [ ] **CR-001-018** — Heap-Fragmentierung durch String-Konkatenation in WiFi-Loop (`WebHandler.cpp:254, 257`)
-- [ ] **CR-001b-013** — Mehrere `Serial.println` statt ArduinoLog in `setServerAPI`/`setBluetooth`
+- [x] **CR-001b-013** — Mehrere `Serial.println` statt ArduinoLog in `setServerAPI`/`setBluetooth`
+  - **Datei:** `src/WebHandler.cpp:1208, 1227, 1252, 1260, 1285, 1286, 1299, 1300, 1358`
+  - **Status:** ✅ DONE — Commit `eadef8c`, Issue #239 (2026-05-04)
+  - **Aufwand:** S
 - [ ] **CR-001b-014** — `setChannels` `byte _typ > -1` immer wahr/falsch (unsigned-Vergleich) (`WebHandler.cpp:653`)
 - [ ] **CR-001b-015** — `setDCTest` Dead variable `dc` (`WebHandler.cpp:1273`)
 - [ ] **CR-001b-016** — `setDCTest` TODO-Kommentare und Frontend-Kopplung (`WebHandler.cpp:1274–1276`)
