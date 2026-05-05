@@ -403,7 +403,7 @@ void Wlan::updateMdns()
 
 void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
-  Log.notice("Connected to Wifi: %s (%s, %d, %s)" CR, WiFi.SSID().c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
+  Log.notice("Connected to Wifi: (%s, %d, %s)" CR, WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
 
   if (WiFi.SSID() == newWlanCredentials.ssid)
   {
