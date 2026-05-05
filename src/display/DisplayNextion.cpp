@@ -943,7 +943,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
       if (delayApSymbol)
         break;
       NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("l");
-      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName().c_str());
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName());
       NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
       break;
     case WifiState::SoftAPClientConnected:
