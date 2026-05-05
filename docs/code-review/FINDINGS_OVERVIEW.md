@@ -4,7 +4,7 @@
 > Wird von `/review-next` (neue Tasks) und `/fix-next` (Status-Updates) aktualisiert.
 > `/review-list` liest nur diese Datei.
 
-**Stand:** 2026-05-04 | 66 Findings gesamt · 16 ✅ DONE · 50 ⏳ PENDING
+**Stand:** 2026-05-05 | 66 Findings gesamt · 17 ✅ DONE · 49 ⏳ PENDING
 
 ---
 
@@ -94,7 +94,7 @@
 | 🟡 | CR-003-009 | Race auf `newWlanCredentials.ssid` in `onWifiConnect()` → False-Negative-Match | ⏳ PENDING |
 | 🟡 | CR-003-010 | `esp_wifi_get_config()`/`esp_wifi_set_config()` Rückgabewerte ignoriert | ⏳ PENDING |
 | 🟢 | CR-003-011 | 15+ `Serial.print/printf` statt ArduinoLog in `Wlan.cpp` | ✅ DONE |
-| 🟢 | CR-003-012 | SSID im Klartext im Serial-Log (Privacy-Issue) | ⏳ PENDING |
+| 🟢 | CR-003-012 | SSID im Klartext im Serial-Log (Privacy-Issue) | ✅ DONE |
 | 🟢 | CR-003-013 | `WiFi.softAPConfig()`/`WiFi.softAP()` Return-Werte ignoriert | ⏳ PENDING |
 | 🟢 | CR-003-014 | Inkonsistentes static/instance-Pattern in `Wlan`-Klasse | ⏳ PENDING |
 | 🟢 | CR-003-015 | Auskommentierter Debug-Code (`Wlan.cpp:274, 362`) | ⏳ PENDING |
