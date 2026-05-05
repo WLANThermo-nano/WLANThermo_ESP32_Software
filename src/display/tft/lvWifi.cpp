@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,12 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "lvWifi.h"
 #include "lvScreen.h"
-#include "lv_qrcode.h"
 #include "display/DisplayBase.h"
 #include "display/tft/DisplayTft.h"
 
@@ -27,47 +26,50 @@ LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 
 static lvWifiType lvWifi = {NULL};
 
-static void lvWifi_BtnClose(lv_obj_t *obj, lv_event_t event);
+static void lvWifi_BtnClose(lv_event_t *e);
 
 void lvWifi_Create(void *userData)
 {
-  /* create screen for wifi */
-  lvWifi.screen = lv_obj_create(NULL, NULL);
+  lvWifi.screen = lv_obj_create(NULL);
 
-  lv_obj_t *cont = lv_cont_create(lvWifi.screen, NULL);
-  lv_cont_set_fit(cont, LV_FIT_PARENT);
-  lv_cont_set_layout(cont, LV_LAYOUT_COLUMN_MID);
-  lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_t *cont = lv_obj_create(lvWifi.screen);
+  lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_border_width(cont, 0, 0);
+  lv_obj_set_style_radius(cont, 0, 0);
 
-  lv_obj_t *btn = lv_btn_create(lvWifi.screen, NULL);
-  lv_obj_set_event_cb(btn, lvWifi_BtnClose);
-  lv_obj_t *label = lv_label_create(btn, NULL);
+  lv_obj_t *btn = lv_btn_create(lvWifi.screen);
+  lv_obj_add_event_cb(btn, lvWifi_BtnClose, LV_EVENT_CLICKED, NULL);
+  lv_obj_t *label = lv_label_create(btn);
   lv_label_set_text(label, LV_SYMBOL_CLOSE);
   lv_obj_set_pos(btn, LV_DPX(335), LV_DPX(12));
   lv_obj_set_size(btn, LV_DPX(50), LV_DPX(35));
 
-  lvWifi.qrCode = lv_qrcode_create(cont, 132, LV_COLOR_BLACK, LV_COLOR_WHITE);
+  lvWifi.qrCode = lv_qrcode_create(cont);
+  lv_qrcode_set_size(lvWifi.qrCode, 132);
+  lv_qrcode_set_dark_color(lvWifi.qrCode, lv_color_black());
+  lv_qrcode_set_light_color(lvWifi.qrCode, lv_color_white());
 
-  lvWifi.labelFirst = lv_label_create(cont, NULL);
+  lvWifi.labelFirst = lv_label_create(cont);
   lv_label_set_text(lvWifi.labelFirst, "");
-  lv_label_set_align(lvWifi.labelFirst, LV_LABEL_ALIGN_CENTER);
-  lv_label_set_long_mode(lvWifi.labelFirst, LV_LABEL_LONG_BREAK);
-  lv_obj_set_style_local_text_font(lvWifi.labelFirst, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
-  lv_obj_set_style_local_text_color(lvWifi.labelFirst, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_set_style_text_align(lvWifi.labelFirst, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_long_mode(lvWifi.labelFirst, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(lvWifi.labelFirst, &Font_Gothic_A1_Medium_h16, 0);
+  lv_obj_set_style_text_color(lvWifi.labelFirst, lv_color_white(), 0);
   lv_obj_set_size(lvWifi.labelFirst, 320, 30);
 
-  lvWifi.labelSecond = lv_label_create(cont, NULL);
+  lvWifi.labelSecond = lv_label_create(cont);
   lv_label_set_text(lvWifi.labelSecond, "");
-  lv_label_set_align(lvWifi.labelSecond, LV_LABEL_ALIGN_CENTER);
-  lv_label_set_long_mode(lvWifi.labelSecond, LV_LABEL_LONG_BREAK);
-  lv_obj_set_style_local_text_font(lvWifi.labelSecond, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
-  lv_obj_set_style_local_text_color(lvWifi.labelSecond, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_set_style_text_align(lvWifi.labelSecond, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_long_mode(lvWifi.labelSecond, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(lvWifi.labelSecond, &Font_Gothic_A1_Medium_h16, 0);
+  lv_obj_set_style_text_color(lvWifi.labelSecond, lv_color_white(), 0);
   lv_obj_set_size(lvWifi.labelSecond, 320, 30);
 
   lvWifi_Update(true);
 
-  lv_scr_load(lvWifi.screen);
+  lv_screen_load(lvWifi.screen);
 }
 
 void lvWifi_Update(boolean forceUpdate)
@@ -115,13 +117,12 @@ void lvWifi_Update(boolean forceUpdate)
 
 void lvWifi_Delete(void)
 {
-  lv_qrcode_delete(lvWifi.qrCode);
-  lv_obj_del(lvWifi.screen);
+  lv_obj_delete(lvWifi.screen);
 }
 
-void lvWifi_BtnClose(lv_obj_t *obj, lv_event_t event)
+void lvWifi_BtnClose(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Home);
   }

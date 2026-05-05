@@ -21,7 +21,6 @@
 #include "Settings.h"
 #include "TaskConfig.h"
 #include "Preferences.h"
-#include "lv_qrcode.h"
 #include "lvScreen.h"
 #include "lvTheme.h"
 #include "PCA9533.h"
@@ -34,6 +33,7 @@ extern const uint16_t DisplayTftCharging[];
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
 TFT_eSPI DisplayTft::tft = TFT_eSPI();
+uint16_t DisplayTft::lvBuffer[320 * 4];
 
 DisplayTft::DisplayTft()
 {
@@ -102,28 +102,19 @@ boolean DisplayTft::initDisplay()
     calibrate();
   }
 
-  lv_disp_buf_init(&lvDispBuffer, lvBuffer, NULL, LV_HOR_RES_MAX * 10);
+  lv_display_t *disp = lv_display_create(320, 240);
+  lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
+  lv_display_set_flush_cb(disp, DisplayTft::displayFlushing);
+  lv_display_set_buffers(disp, lvBuffer, NULL, sizeof(lvBuffer), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-  lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  disp_drv.hor_res = 320;
-  disp_drv.ver_res = 240;
-  disp_drv.flush_cb = DisplayTft::displayFlushing;
-  disp_drv.buffer = &lvDispBuffer;
-  lv_disp_drv_register(&disp_drv);
+  lv_indev_t *indev = lv_indev_create();
+  lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
+  lv_indev_set_read_cb(indev, DisplayTft::touchRead);
 
-  lv_indev_drv_t indev_drv;
-  lv_indev_drv_init(&indev_drv);
-  indev_drv.type = LV_INDEV_TYPE_POINTER;
-  indev_drv.read_cb = DisplayTft::touchRead;
-  lv_indev_drv_register(&indev_drv);
-
-  lv_theme_t *theme = lvTheme_Init(lv_color_hex(0x0aa5c4), lv_theme_get_color_secondary(),
+  lv_theme_t *theme = lvTheme_Init(disp, lv_color_hex(0x0aa5c4), lv_color_hex(0x444444),
                                    LVTHEME_FLAG_DARK | LVTHEME_FLAG_NO_FOCUS,
-                                   lv_theme_get_font_small(), lv_theme_get_font_normal(),
-                                   lv_theme_get_font_subtitle(), lv_theme_get_font_title());
-
-  lv_theme_set_act(theme);
+                                   lv_font_get_default(), lv_font_get_default(),
+                                   lv_font_get_default(), lv_font_get_default());
 
   lvScreen_Open(lvScreenType::Home);
   setBrightness(this->brightness);
@@ -257,20 +248,20 @@ void DisplayTft::update()
   lv_task_handler();
 }
 
-void DisplayTft::displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void DisplayTft::displayFlushing(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
   uint32_t w = (area->x2 - area->x1 + 1);
   uint32_t h = (area->y2 - area->y1 + 1);
 
   tft.startWrite();
   tft.setAddrWindow(area->x1, area->y1, w, h);
-  tft.pushColors(&color_p->full, w * h, true);
+  tft.pushColors((uint16_t *)px_map, w * h, true);
   tft.endWrite();
 
-  lv_disp_flush_ready(disp);
+  lv_display_flush_ready(disp);
 }
 
-bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+void DisplayTft::touchRead(lv_indev_t *indev, lv_indev_data_t *data)
 {
   uint16_t touchX, touchY;
 
@@ -278,21 +269,18 @@ bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
   if (!touched)
   {
-    return false;
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
   }
 
   if (touchX > 320 || touchY > 240)
   {
     Serial.printf("Touch coordinates issue: x: %d, y: %d\n", touchX, touchY);
-  }
-  else
-  {
-
-    data->state = touched ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-
-    data->point.x = touchX;
-    data->point.y = touchY;
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
   }
 
-  return false;
+  data->state = LV_INDEV_STATE_PRESSED;
+  data->point.x = touchX;
+  data->point.y = touchY;
 }

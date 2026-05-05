@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,12 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "lvHome.h"
 #include "lvScreen.h"
-#include "lv_qrcode.h"
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
 #include "display/tft/DisplayTft.h"
@@ -33,23 +32,28 @@ LV_FONT_DECLARE(Font_Roboto_Medium_h22);
 LV_FONT_DECLARE(Font_Roboto_Regular_h16);
 LV_FONT_DECLARE(Font_Roboto_Regular_h14);
 
-#define LV_COLOR_LIGHTBLUE LV_COLOR_MAKE(0x00, 0xBF, 0xFF)
-#define LVHOME_COLOR_TILE LV_COLOR_MAKE(0x29, 0x31, 0x3A)
-#define LVHOME_COLOR_BG LV_COLOR_MAKE(0x18, 0x1d, 0x23)
+#define LVHOME_COLOR_TILE lv_color_make(0x29, 0x31, 0x3A)
+#define LVHOME_COLOR_BG   lv_color_make(0x18, 0x1d, 0x23)
 
-#define LVHOME_SYMBOL_BATTERY_PLUGGED_INDEX 7u
-#define LVHOME_SYMBOL_BATTERY_CHARGING_INDEX 8u
+#define LVHOME_SYMBOL_BATTERY_PLUGGED_INDEX       7u
+#define LVHOME_SYMBOL_BATTERY_CHARGING_INDEX      8u
 #define LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX 6u
 
 static const char *lvHome_WifiSymbolText[4] = {"I", "H", "G", ""};
 static const char *lvHome_PitSymbols[3] = {"J", "}", "~"};
-static const lv_color_t lvHome_AlarmColorMap[] = {LV_COLOR_WHITE, LV_COLOR_LIGHTBLUE, LV_COLOR_RED};
 static uint32_t lvHome_UpdateTemperature = 0u;
 static uint32_t lvHome_UpdatePitmaster = 0u;
 static uint8_t lvHome_TempPageIndex = 0u;
 static boolean lvHome_InitOnceDone = false;
 
 static lvHomeType lvHome = {NULL};
+
+static lv_color_t lvHome_GetAlarmColor(uint8_t status)
+{
+  if (status == 1u) return lv_color_make(0x00, 0xBF, 0xFF);
+  if (status == 2u) return lv_color_make(0xFF, 0x00, 0x00);
+  return lv_color_white();
+}
 
 static void lvHome_UpdateSensorTiles(boolean forceUpdate);
 static void lvHome_CreateMsgBox(const char *text, lv_color_t textColor);
@@ -60,214 +64,181 @@ static void lvHome_UpdateAlarmSymbol(boolean forceUpdate);
 static void lvHome_UpdateSymbols(boolean forceUpdate);
 static lv_color_t htmlColorToLvColor(String htmlColor);
 static void lvlvHome_UpdateSensorCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData);
-static void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event);
-static void lvHome_NavigationPitmasterEvent(lv_obj_t *obj, lv_event_t event);
+static void lvHome_TileEvent(lv_event_t *e);
+static void lvHome_NavigationMenuEvent(lv_event_t *e);
+static void lvHome_NavigationLeftEvent(lv_event_t *e);
+static void lvHome_NavigationRightEvent(lv_event_t *e);
+static void lvHome_NavigationWifiEvent(lv_event_t *e);
+static void lvHome_NavigationPitmasterEvent(lv_event_t *e);
+
+static void lvHome_AddSymbolBtn(lv_obj_t *parent, lv_obj_t **btn, lv_obj_t **labelOut,
+                                lv_style_t *style, const char *text, lv_color_t textColor,
+                                int x, int y, lv_event_cb_t cb)
+{
+  *btn = lv_btn_create(parent);
+  lv_obj_remove_flag(*btn, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+  lv_obj_add_style(*btn, style, 0);
+  lv_obj_set_size(*btn, 40, 40);
+  lv_obj_set_pos(*btn, x, y);
+  if (cb) lv_obj_add_event_cb(*btn, cb, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *lbl = lv_label_create(*btn);
+  lv_label_set_text(lbl, text);
+  lv_obj_set_style_text_font(lbl, &Font_Nano_h24, 0);
+  lv_obj_set_style_text_color(lbl, textColor, 0);
+  lv_obj_center(lbl);
+  if (labelOut) *labelOut = lbl;
+}
 
 void lvHome_Create(void *userData)
 {
-  /* create style for symbols */
   lvHome.symbols.style = new lv_style_t();
   lv_style_init(lvHome.symbols.style);
-  lv_style_set_bg_color(lvHome.symbols.style, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
-  lv_style_set_bg_grad_color(lvHome.symbols.style, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
-  lv_style_set_border_width(lvHome.symbols.style, LV_STATE_DEFAULT, 0);
-  lv_style_set_clip_corner(lvHome.symbols.style, LV_STATE_DEFAULT, false);
-  lv_style_set_radius(lvHome.symbols.style, LV_STATE_DEFAULT, 0);
-  lv_style_set_value_font(lvHome.symbols.style, LV_STATE_DEFAULT, &Font_Nano_h24);
-  lv_style_set_value_color(lvHome.symbols.style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_style_set_value_align(lvHome.symbols.style, LV_STATE_DEFAULT, LV_ALIGN_CENTER);
+  lv_style_set_bg_color(lvHome.symbols.style, LVHOME_COLOR_BG);
+  lv_style_set_border_width(lvHome.symbols.style, 0);
+  lv_style_set_clip_corner(lvHome.symbols.style, false);
+  lv_style_set_radius(lvHome.symbols.style, 0);
 
-  /* create screen for temperatures */
-  lvHome.screen = lv_obj_create(NULL, NULL);
+  lvHome.screen = lv_obj_create(NULL);
 
-  /* create container for symbols */
-  lv_obj_t *contHeader = lv_cont_create(lvHome.screen, NULL);
-  lv_obj_add_style(contHeader, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_click(contHeader, false);
+  lv_obj_t *contHeader = lv_obj_create(lvHome.screen);
+  lv_obj_add_style(contHeader, lvHome.symbols.style, 0);
+  lv_obj_remove_flag(contHeader, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_set_size(contHeader, 320, 40);
 
-  /* create menu symbol */
-  lvHome.symbols.btnMenu = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnMenu, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnMenu, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnMenu, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "f");
-  lv_obj_set_size(lvHome.symbols.btnMenu, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnMenu, 0, 0);
-  lv_obj_set_event_cb(lvHome.symbols.btnMenu, lvHome_NavigationMenuEvent);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnMenu, NULL,
+                      lvHome.symbols.style, "f", lv_color_white(),
+                      0, 0, lvHome_NavigationMenuEvent);
 
-  /* create left navigation symbol */
-  lvHome.symbols.btnLeft = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnLeft, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnLeft, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnLeft, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "S");
-  lv_obj_set_size(lvHome.symbols.btnLeft, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnLeft, 40, 0);
-  lv_obj_set_event_cb(lvHome.symbols.btnLeft, lvHome_NavigationLeftEvent);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnLeft, NULL,
+                      lvHome.symbols.style, "S", lv_color_white(),
+                      40, 0, lvHome_NavigationLeftEvent);
 
-  /* create right navigation symbol */
-  lvHome.symbols.btnRight = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnRight, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnRight, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnRight, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Q");
-  lv_obj_set_size(lvHome.symbols.btnRight, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnRight, 80, 0);
-  lv_obj_set_event_cb(lvHome.symbols.btnRight, lvHome_NavigationRightEvent);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnRight, NULL,
+                      lvHome.symbols.style, "Q", lv_color_white(),
+                      80, 0, lvHome_NavigationRightEvent);
 
-  /* create pitmaster symbol */
-  lvHome.symbols.btnPitmaster = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnPitmaster, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnPitmaster, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "J");
-  lv_obj_set_size(lvHome.symbols.btnPitmaster, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnPitmaster, 160, 0);
-  lv_obj_set_event_cb(lvHome.symbols.btnPitmaster, lvHome_NavigationPitmasterEvent);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnPitmaster, &lvHome.symbols.labelPitmaster,
+                      lvHome.symbols.style, "J", lv_color_white(),
+                      160, 0, lvHome_NavigationPitmasterEvent);
 
-  /* create alarm symbol */
-  lvHome.symbols.btnAlarm = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnAlarm, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnAlarm, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "o");
-  lv_obj_set_style_local_value_color(lvHome.symbols.btnAlarm, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
-  lv_obj_set_size(lvHome.symbols.btnAlarm, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnAlarm, 160, 0);
-  lv_obj_set_hidden(lvHome.symbols.btnAlarm, true);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnAlarm, NULL,
+                      lvHome.symbols.style, "o", lv_color_make(0xFF, 0x00, 0x00),
+                      160, 0, NULL);
+  lv_obj_add_flag(lvHome.symbols.btnAlarm, LV_OBJ_FLAG_HIDDEN);
 
-  /* create cloud symbol */
-  lvHome.symbols.btnCloud = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnCloud, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnCloud, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "h");
-  lv_obj_set_style_local_value_color(lvHome.symbols.btnCloud, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_LIME);
-  lv_obj_set_size(lvHome.symbols.btnCloud, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnCloud, 200, 0);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnCloud, NULL,
+                      lvHome.symbols.style, "h", lv_color_make(0x00, 0xFF, 0x00),
+                      200, 0, NULL);
 
-  /* create battery symbol */
-  lvHome.symbols.btnBattery = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnBattery, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnBattery, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
-  lv_obj_set_size(lvHome.symbols.btnBattery, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnBattery, 240, 0);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnBattery, &lvHome.symbols.labelBattery,
+                      lvHome.symbols.style, "", lv_color_white(),
+                      240, 0, NULL);
 
-  /* create wifi symbol */
-  lvHome.symbols.btnWifi = lv_btn_create(contHeader, NULL);
-  lv_obj_add_protect(lvHome.symbols.btnWifi, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvHome.symbols.btnWifi, LV_CONT_PART_MAIN, lvHome.symbols.style);
-  lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
-  lv_obj_set_size(lvHome.symbols.btnWifi, 40, 40);
-  lv_obj_set_pos(lvHome.symbols.btnWifi, 280, 0);
-  lv_obj_set_hidden(lvHome.symbols.btnWifi, true);
-  lv_obj_set_event_cb(lvHome.symbols.btnWifi, lvHome_NavigationWifiEvent);
+  lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnWifi, &lvHome.symbols.labelWifi,
+                      lvHome.symbols.style, "", lv_color_white(),
+                      280, 0, lvHome_NavigationWifiEvent);
+  lv_obj_add_flag(lvHome.symbols.btnWifi, LV_OBJ_FLAG_HIDDEN);
 
-  lv_obj_t *contTemperature = lv_cont_create(lvHome.screen, NULL);
-  lv_obj_set_style_local_bg_color(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LVHOME_COLOR_BG);
-  lv_obj_set_style_local_border_width(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_clip_corner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-  lv_obj_set_style_local_radius(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_pad_inner(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 4);
-  lv_obj_set_style_local_pad_left(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_right(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_style_local_pad_top(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_pad_bottom(contTemperature, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2);
-  lv_obj_set_click(contTemperature, false);
+  lv_obj_t *contTemperature = lv_obj_create(lvHome.screen);
+  lv_obj_set_style_bg_color(contTemperature, LVHOME_COLOR_BG, 0);
+  lv_obj_set_style_border_width(contTemperature, 0, 0);
+  lv_obj_set_style_clip_corner(contTemperature, false, 0);
+  lv_obj_set_style_radius(contTemperature, 0, 0);
+  lv_obj_set_style_pad_column(contTemperature, 4, 0);
+  lv_obj_set_style_pad_row(contTemperature, 4, 0);
+  lv_obj_set_style_pad_left(contTemperature, 2, 0);
+  lv_obj_set_style_pad_right(contTemperature, 2, 0);
+  lv_obj_set_style_pad_top(contTemperature, 0, 0);
+  lv_obj_set_style_pad_bottom(contTemperature, 2, 0);
+  lv_obj_remove_flag(contTemperature, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_set_size(contTemperature, 330, 200);
   lv_obj_set_pos(contTemperature, 0, 40);
-  lv_cont_set_layout(contTemperature, LV_LAYOUT_GRID);
+  lv_obj_set_flex_flow(contTemperature, LV_FLEX_FLOW_ROW_WRAP);
+  lv_obj_set_flex_align(contTemperature, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
 
   for (uint8_t i = 0u; (i < LV_HOME_SENSORS_PER_PAGE) && (i < gSystem->temperatures.count()); i++)
   {
     lvHomeSensorTileType *tile = &lvHome.sensorTiles[i];
 
-    tile->objTile = lv_obj_create(contTemperature, NULL);
-    lv_obj_set_style_local_bg_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LVHOME_COLOR_TILE);
-    lv_obj_set_style_local_border_width(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_clip_corner(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-    lv_obj_set_style_local_radius(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
-    lv_obj_set_style_local_text_color(tile->objTile, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    tile->objTile = lv_obj_create(contTemperature);
+    lv_obj_set_style_bg_color(tile->objTile, LVHOME_COLOR_TILE, 0);
+    lv_obj_set_style_border_width(tile->objTile, 0, 0);
+    lv_obj_set_style_clip_corner(tile->objTile, false, 0);
+    lv_obj_set_style_radius(tile->objTile, 10, 0);
+    lv_obj_set_style_text_color(tile->objTile, lv_color_white(), 0);
     lv_obj_set_size(tile->objTile, 156, 63);
-    lv_obj_set_click(tile->objTile, true);
+    lv_obj_add_flag(tile->objTile, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_user_data(tile->objTile, gSystem->temperatures[i]);
-    lv_obj_set_event_cb(tile->objTile, lvHome_TileEvent);
+    lv_obj_add_event_cb(tile->objTile, lvHome_TileEvent, LV_EVENT_CLICKED, NULL);
 
-    tile->objColor = lv_obj_create(tile->objTile, NULL);
-    lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(gSystem->temperatures[i]->getColor()));
-    lv_obj_set_style_local_border_width(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_clip_corner(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, false);
-    lv_obj_set_style_local_radius(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+    tile->objColor = lv_obj_create(tile->objTile);
+    lv_obj_set_style_bg_color(tile->objColor, htmlColorToLvColor(gSystem->temperatures[i]->getColor()), 0);
+    lv_obj_set_style_border_width(tile->objColor, 0, 0);
+    lv_obj_set_style_clip_corner(tile->objColor, false, 0);
+    lv_obj_set_style_radius(tile->objColor, 10, 0);
     lv_obj_set_size(tile->objColor, 10, 63);
     lv_obj_set_pos(tile->objColor, 0, 0);
 
-    tile->labelName = lv_label_create(tile->objTile, NULL);
+    tile->labelName = lv_label_create(tile->objTile);
     lv_label_set_text(tile->labelName, gSystem->temperatures[i]->getName().c_str());
-    lv_obj_set_style_local_text_font(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
-    lv_obj_set_style_local_text_color(tile->labelName, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_text_font(tile->labelName, &Font_Roboto_Regular_h16, 0);
+    lv_obj_set_style_text_color(tile->labelName, lv_color_white(), 0);
     lv_obj_set_size(tile->labelName, 109, 21);
     lv_obj_set_pos(tile->labelName, 15, 1);
 
-    tile->labelNumber = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelNumber, LV_LABEL_ALIGN_RIGHT);
-    lv_label_set_long_mode(tile->labelNumber, LV_LABEL_LONG_BREAK);
+    tile->labelNumber = lv_label_create(tile->objTile);
+    lv_obj_set_style_text_align(tile->labelNumber, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_label_set_long_mode(tile->labelNumber, LV_LABEL_LONG_WRAP);
     lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
-    lv_obj_set_style_local_text_font(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
-    lv_obj_set_style_local_text_color(tile->labelNumber, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_text_font(tile->labelNumber, &Font_Roboto_Regular_h16, 0);
+    lv_obj_set_style_text_color(tile->labelNumber, lv_color_white(), 0);
     lv_obj_set_size(tile->labelNumber, 40, 21);
     lv_obj_set_pos(tile->labelNumber, 112, 1);
 
-    tile->labelSymbolMax = lv_label_create(tile->objTile, NULL);
+    tile->labelSymbolMax = lv_label_create(tile->objTile);
     lv_label_set_text(tile->labelSymbolMax, "F");
-    lv_obj_set_style_local_text_font(tile->labelSymbolMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h14);
-    lv_obj_set_style_local_text_color(tile->labelSymbolMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_text_font(tile->labelSymbolMax, &Font_Nano_Temp_Limit_h14, 0);
+    lv_obj_set_style_text_color(tile->labelSymbolMax, lv_color_white(), 0);
     lv_obj_set_size(tile->labelSymbolMax, 20, 21);
     lv_obj_set_pos(tile->labelSymbolMax, 15, 24);
 
-    tile->labelMax = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelMax, LV_LABEL_ALIGN_LEFT);
-    lv_label_set_long_mode(tile->labelMax, LV_LABEL_LONG_BREAK);
-    lv_obj_set_style_local_text_font(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h14);
-    lv_obj_set_style_local_text_color(tile->labelMax, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    tile->labelMax = lv_label_create(tile->objTile);
+    lv_obj_set_style_text_align(tile->labelMax, LV_TEXT_ALIGN_LEFT, 0);
+    lv_label_set_long_mode(tile->labelMax, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(tile->labelMax, &Font_Roboto_Regular_h14, 0);
+    lv_obj_set_style_text_color(tile->labelMax, lv_color_white(), 0);
     lv_label_set_text_fmt(tile->labelMax, "%i°", (int)gSystem->temperatures[i]->getMaxValue());
     lv_obj_set_size(tile->labelMax, 37, 21);
     lv_obj_set_pos(tile->labelMax, 34, 22);
 
-    tile->labelSymbolMin = lv_label_create(tile->objTile, NULL);
+    tile->labelSymbolMin = lv_label_create(tile->objTile);
     lv_label_set_text(tile->labelSymbolMin, "E");
-    lv_obj_set_style_local_text_font(tile->labelSymbolMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_Temp_Limit_h14);
-    lv_obj_set_style_local_text_color(tile->labelSymbolMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_text_font(tile->labelSymbolMin, &Font_Nano_Temp_Limit_h14, 0);
+    lv_obj_set_style_text_color(tile->labelSymbolMin, lv_color_white(), 0);
     lv_obj_set_size(tile->labelSymbolMin, 20, 21);
     lv_obj_set_pos(tile->labelSymbolMin, 15, 44);
 
-    tile->labelMin = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelMin, LV_LABEL_ALIGN_LEFT);
-    lv_label_set_long_mode(tile->labelMin, LV_LABEL_LONG_BREAK);
-    lv_obj_set_style_local_text_font(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h14);
-    lv_obj_set_style_local_text_color(tile->labelMin, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    tile->labelMin = lv_label_create(tile->objTile);
+    lv_obj_set_style_text_align(tile->labelMin, LV_TEXT_ALIGN_LEFT, 0);
+    lv_label_set_long_mode(tile->labelMin, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(tile->labelMin, &Font_Roboto_Regular_h14, 0);
+    lv_obj_set_style_text_color(tile->labelMin, lv_color_white(), 0);
     lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
     lv_obj_set_size(tile->labelMin, 37, 21);
     lv_obj_set_pos(tile->labelMin, 34, 42);
-    /*
-    tile->labelSymbolBLE = lv_label_create(tile->objTile, NULL);
-    lv_label_set_text(tile->labelSymbolBLE, "B");
-    lv_obj_set_style_local_text_font(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Regular_h16);
-    lv_obj_set_style_local_text_color(tile->labelSymbolBLE, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-    lv_obj_set_size(tile->labelSymbolBLE, 20, 21);
-    lv_obj_set_pos(tile->labelSymbolBLE, 109, 1);
-*/
-    tile->labelCurrent = lv_label_create(tile->objTile, NULL);
-    lv_label_set_align(tile->labelCurrent, LV_LABEL_ALIGN_RIGHT);
-    lv_label_set_long_mode(tile->labelCurrent, LV_LABEL_LONG_BREAK);
+
+    tile->labelCurrent = lv_label_create(tile->objTile);
+    lv_obj_set_style_text_align(tile->labelCurrent, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_label_set_long_mode(tile->labelCurrent, LV_LABEL_LONG_WRAP);
 
     char labelCurrentText[10] = "OFF";
-
     if (gSystem->temperatures[i]->isActive())
       sprintf(labelCurrentText, "%.1lf°%c", gSystem->temperatures[i]->getValue(), (char)gSystem->temperatures.getUnit());
 
     lv_label_set_text(tile->labelCurrent, labelCurrentText);
-    lv_obj_set_style_local_text_font(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Roboto_Medium_h22);
-    lv_obj_set_style_local_text_color(tile->labelCurrent, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_text_font(tile->labelCurrent, &Font_Roboto_Medium_h22, 0);
+    lv_obj_set_style_text_color(tile->labelCurrent, lv_color_white(), 0);
     lv_obj_set_size(tile->labelCurrent, 82, 42);
     lv_obj_set_pos(tile->labelCurrent, 70, 33);
   }
@@ -278,11 +249,10 @@ void lvHome_Create(void *userData)
   if (false == lvHome_InitOnceDone)
   {
     lvHome_InitOnceDone = true;
-    // register for all temperature callbacks
     gSystem->temperatures.registerCallback(lvlvHome_UpdateSensorCb, NULL);
   }
 
-  lv_scr_load(lvHome.screen);
+  lv_screen_load(lvHome.screen);
 }
 
 void lvHome_Update(boolean forceUpdate)
@@ -295,7 +265,7 @@ void lvHome_Delete(void)
 {
   if (lvHome.screen)
   {
-    lv_obj_del(lvHome.screen);
+    lv_obj_delete(lvHome.screen);
     lvHome.screen = NULL;
 
     delete lvHome.symbols.style;
@@ -320,13 +290,10 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
     uint32_t numOfTemperatures = gSystem->temperatures.getActiveCount();
     numOfTemperatures = (0u == numOfTemperatures) ? gSystem->temperatures.count() : numOfTemperatures;
     uint8_t numOfPages = (numOfTemperatures / LV_HOME_SENSORS_PER_PAGE) + 1u;
-    // check if page index is still valid
     lvHome_TempPageIndex = (lvHome_TempPageIndex < numOfPages) ? lvHome_TempPageIndex : numOfPages - 1u;
   }
 
   activeBitsOld = activeBits;
-
-  // set all active bits when no temperature is active
   activeBits = (0u == activeBits) ? ((1 << gSystem->temperatures.count()) - 1u) : activeBits;
 
   for (uint8_t i = 0; (i < gSystem->temperatures.count()) && (visibleCount < LV_HOME_SENSORS_PER_PAGE); i++)
@@ -340,34 +307,29 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
         if (updatePage)
         {
           char labelCurrentText[10] = "OFF";
-
           if (gSystem->temperatures[i]->isActive())
             sprintf(labelCurrentText, "%.1lf°%c", gSystem->temperatures[i]->getValue(), (char)gSystem->temperatures.getUnit());
 
           lv_label_set_text(tile->labelCurrent, labelCurrentText);
-          lv_obj_set_style_local_text_color(tile->labelCurrent, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, lvHome_AlarmColorMap[gSystem->temperatures[i]->getAlarmStatus()]);
+          lv_obj_set_style_text_color(tile->labelCurrent, lvHome_GetAlarmColor(gSystem->temperatures[i]->getAlarmStatus()), 0);
 
           lv_label_set_text(tile->labelName, gSystem->temperatures[i]->getName().c_str());
-          lv_obj_set_style_local_bg_color(tile->objColor, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, htmlColorToLvColor(gSystem->temperatures[i]->getColor()));
+          lv_obj_set_style_bg_color(tile->objColor, htmlColorToLvColor(gSystem->temperatures[i]->getColor()), 0);
           lv_label_set_text_fmt(tile->labelMax, "%i°", (int)gSystem->temperatures[i]->getMaxValue());
           lv_label_set_text_fmt(tile->labelMin, "%i°", (int)gSystem->temperatures[i]->getMinValue());
           lv_label_set_text_fmt(tile->labelNumber, "#%d", i + 1u);
           lv_obj_set_user_data(tile->objTile, gSystem->temperatures[i]);
-          lv_obj_set_hidden(tile->objTile, false);
+          lv_obj_remove_flag(tile->objTile, LV_OBJ_FLAG_HIDDEN);
         }
         else if (lvHome_UpdateTemperature & (1u << i))
         {
           char labelCurrentText[10] = "OFF";
-
           if (gSystem->temperatures[i]->isActive())
             sprintf(labelCurrentText, "%.1lf°%c", gSystem->temperatures[i]->getValue(), (char)gSystem->temperatures.getUnit());
 
           lv_label_set_text(tile->labelCurrent, labelCurrentText);
-          lv_obj_set_style_local_text_color(tile->labelCurrent, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, lvHome_AlarmColorMap[gSystem->temperatures[i]->getAlarmStatus()]);
+          lv_obj_set_style_text_color(tile->labelCurrent, lvHome_GetAlarmColor(gSystem->temperatures[i]->getAlarmStatus()), 0);
         }
-
-        /*if (lvHome_UpdatePitmaster & (1u << i))
-          setTemperaturePitmasterName(visibleCount, gSystem->temperatures[i]);*/
 
         visibleCount++;
       }
@@ -383,7 +345,7 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
     for (uint8_t i = visibleCount; i < LV_HOME_SENSORS_PER_PAGE; i++)
     {
       lvHomeSensorTile *tile = &lvHome.sensorTiles[i];
-      lv_obj_set_hidden(tile->objTile, true);
+      lv_obj_add_flag(tile->objTile, LV_OBJ_FLAG_HIDDEN);
     }
   }
 
@@ -393,32 +355,27 @@ void lvHome_UpdateSensorTiles(boolean forceUpdate)
 
 void lvHome_CreateMsgBox(const char *text, lv_color_t textColor)
 {
-  static const char *btns[] = {"OK", ""};
-
-  lv_obj_t *mbox = lv_msgbox_create(lvHome.screen, NULL);
-  lv_msgbox_set_text(mbox, "o");
-  lv_msgbox_ext_t *ext = (lv_msgbox_ext_t *)lv_obj_get_ext_attr(mbox);
-  lv_obj_set_style_local_text_font(ext->text, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h40);
-  lv_obj_set_style_local_text_color(ext->text, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, textColor);
-
-  lv_msgbox_add_btns(mbox, btns);
+  lv_obj_t *mbox = lv_msgbox_create(lvHome.screen);
+  lv_obj_t *content = lv_msgbox_get_content(mbox);
+  lv_obj_t *lbl = lv_label_create(content);
+  lv_label_set_text(lbl, text);
+  lv_obj_set_style_text_font(lbl, &Font_Nano_h40, 0);
+  lv_obj_set_style_text_color(lbl, textColor, 0);
+  lv_obj_t *btn = lv_msgbox_add_footer_button(mbox, "OK");
+  lv_obj_add_event_cb(btn,
+    [](lv_event_t *e)
+    {
+      if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+      {
+        gSystem->temperatures.acknowledgeAlarm();
+        gSystem->getBuzzer()->disable();
+        lv_obj_t *m = (lv_obj_t *)lv_event_get_user_data(e);
+        lv_msgbox_close(m);
+      }
+    },
+    LV_EVENT_CLICKED, mbox);
   lv_obj_set_width(mbox, 200);
-  lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
-  lv_obj_set_event_cb(mbox,
-                      [](lv_obj_t *obj, lv_event_t event) 
-                      {
-                        if (event == LV_EVENT_VALUE_CHANGED)
-                        {
-                          const char *buttonText = lv_msgbox_get_text(obj);
-
-                          if (0u == strcmp(buttonText, "o"))
-                          {
-                            gSystem->temperatures.acknowledgeAlarm();
-                            gSystem->getBuzzer()->disable();
-                            lv_msgbox_start_auto_close(obj, 0);
-                          }
-                        }
-                      });
+  lv_obj_center(mbox);
 }
 
 void lvHome_UpdateBuzzerMsgBox(void)
@@ -430,9 +387,8 @@ void lvHome_UpdateBuzzerMsgBox(void)
   {
     if (true == newBuzzerEnabled)
     {
-      lvHome_CreateMsgBox("o", LV_COLOR_RED);
+      lvHome_CreateMsgBox("o", lv_color_make(0xFF, 0x00, 0x00));
     }
-
     BuzzerEnabled = newBuzzerEnabled;
   }
 }
@@ -460,7 +416,7 @@ void lvHome_UpdateBatterySymbol(boolean forceUpdate)
 
   if ((batterySymbol != newBatterySymbol) || forceUpdate)
   {
-    lv_obj_set_style_local_value_str(lvHome.symbols.btnBattery, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, newBatterySymbol);
+    lv_label_set_text(lvHome.symbols.labelBattery, newBatterySymbol);
     batterySymbol = newBatterySymbol;
   }
 }
@@ -488,23 +444,21 @@ void lvHome_UpdatePitmasterSymbol(boolean forceUpdate)
   {
     if (pitmasterShouldSpin)
     {
-      // do animation
       if ((counter++ % 10u) == 0u)
       {
-        lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
+        lv_label_set_text(lvHome.symbols.labelPitmaster, lvHome_PitSymbols[angle]);
         angle = (angle >= 2u) ? 0u : (angle + 1u);
       }
     }
     else
     {
-      // stop animation
       angle = 0u;
-      lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, lvHome_PitSymbols[angle]);
+      lv_label_set_text(lvHome.symbols.labelPitmaster, lvHome_PitSymbols[angle]);
     }
   }
   else
   {
-    lv_obj_set_style_local_value_str(lvHome.symbols.btnPitmaster, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
+    lv_label_set_text(lvHome.symbols.labelPitmaster, "");
   }
 }
 
@@ -515,7 +469,10 @@ void lvHome_UpdateAlarmSymbol(boolean forceUpdate)
 
   if ((hasAlarm != newHasAlarm) || forceUpdate)
   {
-    lv_obj_set_hidden(lvHome.symbols.btnAlarm, !newHasAlarm);
+    if (newHasAlarm)
+      lv_obj_remove_flag(lvHome.symbols.btnAlarm, LV_OBJ_FLAG_HIDDEN);
+    else
+      lv_obj_add_flag(lvHome.symbols.btnAlarm, LV_OBJ_FLAG_HIDDEN);
     hasAlarm = newHasAlarm;
   }
 }
@@ -525,7 +482,6 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
   WifiState newWifiState = gSystem->wlan.getWifiState();
   WifiStrength newWifiStrength = gSystem->wlan.getSignalStrength();
   const char *newWifiSymbolText = lvHome_WifiSymbolText[(uint8_t)WifiStrength::None];
-  char wifiSymbol = 'I';
   static uint8_t cloudState = gSystem->cloud.state;
   static WifiState wifiState = newWifiState;
   static WifiStrength wifiStrength = newWifiStrength;
@@ -539,7 +495,10 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
 
   if ((cloudState != gSystem->cloud.state) || forceUpdate)
   {
-    lv_obj_set_hidden(lvHome.symbols.btnCloud, (gSystem->cloud.state != 2));
+    if (gSystem->cloud.state != 2)
+      lv_obj_add_flag(lvHome.symbols.btnCloud, LV_OBJ_FLAG_HIDDEN);
+    else
+      lv_obj_remove_flag(lvHome.symbols.btnCloud, LV_OBJ_FLAG_HIDDEN);
     cloudState = gSystem->cloud.state;
   }
 
@@ -569,32 +528,28 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
 
   if ((wifiState != newWifiState) || forceUpdate)
   {
-    String info;
-
     switch (newWifiState)
     {
     case WifiState::SoftAPNoClient:
-      if (delayApSymbol)
-        break;
-      lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
-      lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
+      if (delayApSymbol) break;
+      lv_label_set_text(lvHome.symbols.labelWifi, "l");
+      lv_obj_remove_flag(lvHome.symbols.btnWifi, LV_OBJ_FLAG_HIDDEN);
       break;
     case WifiState::SoftAPClientConnected:
-      if (delayApSymbol)
-        break;
-      lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "l");
-      lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
+      if (delayApSymbol) break;
+      lv_label_set_text(lvHome.symbols.labelWifi, "l");
+      lv_obj_remove_flag(lvHome.symbols.btnWifi, LV_OBJ_FLAG_HIDDEN);
       break;
     case WifiState::ConnectedToSTA:
-      lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, newWifiSymbolText);
-      lv_obj_set_hidden(lvHome.symbols.btnWifi, false);
+      lv_label_set_text(lvHome.symbols.labelWifi, newWifiSymbolText);
+      lv_obj_remove_flag(lvHome.symbols.btnWifi, LV_OBJ_FLAG_HIDDEN);
       break;
     case WifiState::ConnectingToSTA:
     case WifiState::AddCredentials:
       break;
     default:
-      lv_obj_set_style_local_value_str(lvHome.symbols.btnWifi, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "");
-      lv_obj_set_hidden(lvHome.symbols.btnWifi, true);
+      lv_label_set_text(lvHome.symbols.labelWifi, "");
+      lv_obj_add_flag(lvHome.symbols.btnWifi, LV_OBJ_FLAG_HIDDEN);
       break;
     }
     wifiState = newWifiState;
@@ -603,15 +558,11 @@ void lvHome_UpdateSymbols(boolean forceUpdate)
 
 lv_color_t htmlColorToLvColor(String htmlColor)
 {
-  // Get rid of '#' and convert it to integer
   uint32_t number = (uint32_t)strtol(htmlColor.substring(1).c_str(), NULL, 16);
-
-  // Split them up into r, g, b values
   uint8_t r = number >> 16;
   uint8_t g = number >> 8 & 0xFF;
   uint8_t b = number & 0xFF;
-
-  return LV_COLOR_MAKE(r, g, b);
+  return lv_color_make(r, g, b);
 }
 
 void lvlvHome_UpdateSensorCb(uint8_t index, TemperatureBase *temperature, boolean settingsChanged, void *userData)
@@ -619,30 +570,26 @@ void lvlvHome_UpdateSensorCb(uint8_t index, TemperatureBase *temperature, boolea
   lvHome_UpdateTemperature |= (true == settingsChanged) ? UPDATE_ALL : (1u << index);
 }
 
-void lvHome_TileEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_TileEvent(lv_event_t *e)
 {
-  DisplayTft *tftDisplay = (DisplayTft *)gDisplay;
-
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
-    lvScreen_Open(lvScreenType::Temperature, lv_obj_get_user_data(obj));
+    lvScreen_Open(lvScreenType::Temperature, lv_obj_get_user_data((lv_obj_t *)lv_event_get_target(e)));
   }
 }
 
-void lvHome_NavigationMenuEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_NavigationMenuEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Display);
   }
 }
 
-void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_NavigationLeftEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
-    DisplayTft *displayTft = (DisplayTft *)gDisplay;
-
     int8_t newPageIndex = lvHome_TempPageIndex - 1;
     uint32_t numOfTemperatures = gSystem->temperatures.getActiveCount();
 
@@ -650,13 +597,9 @@ void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event)
     uint8_t numOfPages = (numOfTemperatures / LV_HOME_SENSORS_PER_PAGE) + 1u;
 
     if (newPageIndex < 0)
-    {
       newPageIndex = numOfPages - 1u;
-    }
     else if (newPageIndex >= numOfPages)
-    {
       newPageIndex = 0u;
-    }
 
     if (lvHome_TempPageIndex != newPageIndex)
     {
@@ -666,12 +609,10 @@ void lvHome_NavigationLeftEvent(lv_obj_t *obj, lv_event_t event)
   }
 }
 
-void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_NavigationRightEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
-    DisplayTft *displayTft = (DisplayTft *)gDisplay;
-
     int8_t newPageIndex = lvHome_TempPageIndex + 1;
     uint32_t numOfTemperatures = gSystem->temperatures.getActiveCount();
 
@@ -679,13 +620,9 @@ void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event)
     uint8_t numOfPages = (numOfTemperatures / LV_HOME_SENSORS_PER_PAGE) + 1u;
 
     if (newPageIndex < 0)
-    {
       newPageIndex = numOfPages - 1u;
-    }
     else if (newPageIndex >= numOfPages)
-    {
       newPageIndex = 0u;
-    }
 
     if (lvHome_TempPageIndex != newPageIndex)
     {
@@ -695,17 +632,17 @@ void lvHome_NavigationRightEvent(lv_obj_t *obj, lv_event_t event)
   }
 }
 
-void lvHome_NavigationWifiEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_NavigationWifiEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Wifi);
   }
 }
 
-void lvHome_NavigationPitmasterEvent(lv_obj_t *obj, lv_event_t event)
+void lvHome_NavigationPitmasterEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Pitmaster);
   }

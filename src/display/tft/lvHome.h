@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #pragma once
 
@@ -50,6 +50,9 @@ typedef struct lvSymbols
   lv_obj_t *btnBattery;
   lv_obj_t *btnWifi;
   lv_obj_t *btnPitmaster;
+  lv_obj_t *labelBattery;
+  lv_obj_t *labelWifi;
+  lv_obj_t *labelPitmaster;
 } lvHomeSymbolsType;
 
 typedef struct lvHome

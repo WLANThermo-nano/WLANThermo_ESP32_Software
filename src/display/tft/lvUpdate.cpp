@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "lvUpdate.h"
 #include "lvScreen.h"
@@ -29,27 +29,27 @@ static lvUpdateType lvUpdate = {NULL};
 
 void lvUpdate_Create(void *userData)
 {
-  /* create screen for update */
-  lvUpdate.screen = lv_obj_create(NULL, NULL);
+  lvUpdate.screen = lv_obj_create(NULL);
 
-  lv_obj_t *cont = lv_cont_create(lvUpdate.screen, NULL);
-  lv_cont_set_fit(cont, LV_FIT_PARENT);
-  lv_cont_set_layout(cont, LV_LAYOUT_ROW_MID);
-  lv_obj_set_style_local_pad_left(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 40);
-  lv_obj_set_style_local_border_width(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-  lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+  lv_obj_t *cont = lv_obj_create(lvUpdate.screen);
+  lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_left(cont, 40, 0);
+  lv_obj_set_style_border_width(cont, 0, 0);
+  lv_obj_set_style_radius(cont, 0, 0);
 
-  lv_obj_t *label = lv_label_create(cont, NULL);
+  lv_obj_t *label = lv_label_create(cont);
   lv_label_set_text(label, "X");
-  lv_obj_set_style_local_text_font(label, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, &Font_Nano_h24);
+  lv_obj_set_style_text_font(label, &Font_Nano_h24, 0);
 
-  lvUpdate.bar = lv_bar_create(cont, NULL);
+  lvUpdate.bar = lv_bar_create(cont);
   lv_obj_set_size(lvUpdate.bar, 200, 25);
-  lv_obj_align(lvUpdate.bar, NULL, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_align(lvUpdate.bar, LV_ALIGN_CENTER, 0, 0);
 
   lvUpdate_Update(true);
 
-  lv_scr_load(lvUpdate.screen);
+  lv_screen_load(lvUpdate.screen);
 }
 
 void lvUpdate_Update(boolean forceUpdate)
@@ -59,5 +59,5 @@ void lvUpdate_Update(boolean forceUpdate)
 
 void lvUpdate_Delete(void)
 {
-  lv_obj_del(lvUpdate.screen);
+  lv_obj_delete(lvUpdate.screen);
 }

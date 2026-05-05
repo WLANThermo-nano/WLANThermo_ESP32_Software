@@ -44,10 +44,9 @@ private:
   boolean isCalibrated();
   static void task(void *parameter);
 
-  static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-  static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+  static void displayFlushing(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map);
+  static void touchRead(lv_indev_t *indev, lv_indev_data_t *data);
 
   static TFT_eSPI tft;
-  lv_disp_buf_t lvDispBuffer;
-  lv_color_t lvBuffer[LV_HOR_RES_MAX * 10];
+  static uint16_t lvBuffer[320 * 4];
 };

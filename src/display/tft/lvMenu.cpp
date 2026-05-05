@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "lvMenu.h"
 #include "lvScreen.h"
@@ -27,71 +27,67 @@ LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 
 static lvMenuType lvMenu = {NULL};
 
-static void lvMenu_TemperaturesEvent(lv_obj_t *obj, lv_event_t event);
-static void lvMenu_DisplayEvent(lv_obj_t *obj, lv_event_t event);
+static void lvMenu_TemperaturesEvent(lv_event_t *e);
+static void lvMenu_DisplayEvent(lv_event_t *e);
 
 void lvMenu_Create(void *userData)
 {
-  /* create screen for menu */
-  lvMenu.screen = lv_obj_create(NULL, NULL);
-  lv_obj_set_style_local_bg_color(lvMenu.screen, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+  lvMenu.screen = lv_obj_create(NULL);
+  lv_obj_set_style_bg_color(lvMenu.screen, lv_color_make(0x33, 0x33, 0x33), 0);
 
-  /* create style for buttons */
   lvMenu.btnStyle = new lv_style_t();
   lv_style_init(lvMenu.btnStyle);
-  lv_style_set_bg_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_style_set_bg_grad_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
-  lv_style_set_border_width(lvMenu.btnStyle, LV_STATE_DEFAULT, 1);
-  lv_style_set_clip_corner(lvMenu.btnStyle, LV_STATE_DEFAULT, false);
-  lv_style_set_radius(lvMenu.btnStyle, LV_STATE_DEFAULT, 0);
-  lv_style_set_value_font(lvMenu.btnStyle, LV_STATE_DEFAULT, &Font_Gothic_A1_Medium_h16);
-  lv_style_set_value_color(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-  lv_style_set_value_align(lvMenu.btnStyle, LV_STATE_DEFAULT, LV_ALIGN_CENTER);
+  lv_style_set_bg_color(lvMenu.btnStyle, lv_color_make(0x33, 0x33, 0x33));
+  lv_style_set_border_width(lvMenu.btnStyle, 1);
+  lv_style_set_radius(lvMenu.btnStyle, 0);
+  lv_style_set_text_font(lvMenu.btnStyle, &Font_Gothic_A1_Medium_h16);
+  lv_style_set_text_color(lvMenu.btnStyle, lv_color_white());
 
-  /* create temperatures button */
-  lvMenu.btnTemperatures = lv_btn_create(lvMenu.screen, NULL);
-  lv_obj_add_protect(lvMenu.btnTemperatures, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvMenu.btnTemperatures, LV_CONT_PART_MAIN, lvMenu.btnStyle);
-  lv_obj_set_style_local_value_str(lvMenu.btnTemperatures, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Temperatures");
+  lvMenu.btnTemperatures = lv_btn_create(lvMenu.screen);
+  lv_obj_remove_flag(lvMenu.btnTemperatures, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+  lv_obj_add_style(lvMenu.btnTemperatures, lvMenu.btnStyle, 0);
   lv_obj_set_size(lvMenu.btnTemperatures, 200, 40);
   lv_obj_set_pos(lvMenu.btnTemperatures, 40, 40);
-  lv_obj_set_event_cb(lvMenu.btnTemperatures, lvMenu_TemperaturesEvent);
+  lv_obj_add_event_cb(lvMenu.btnTemperatures, lvMenu_TemperaturesEvent, LV_EVENT_CLICKED, NULL);
+  lv_obj_t *labelTemp = lv_label_create(lvMenu.btnTemperatures);
+  lv_label_set_text(labelTemp, "Temperatures");
+  lv_obj_center(labelTemp);
 
-  /* create display button */
-  lvMenu.btnDisplay = lv_btn_create(lvMenu.screen, NULL);
-  lv_obj_add_protect(lvMenu.btnDisplay, LV_PROTECT_CLICK_FOCUS);
-  lv_obj_add_style(lvMenu.btnDisplay, LV_CONT_PART_MAIN, lvMenu.btnStyle);
-  lv_obj_set_style_local_value_str(lvMenu.btnDisplay, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, "Display");
+  lvMenu.btnDisplay = lv_btn_create(lvMenu.screen);
+  lv_obj_remove_flag(lvMenu.btnDisplay, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+  lv_obj_add_style(lvMenu.btnDisplay, lvMenu.btnStyle, 0);
   lv_obj_set_size(lvMenu.btnDisplay, 200, 40);
   lv_obj_set_pos(lvMenu.btnDisplay, 40, 100);
-  lv_obj_set_event_cb(lvMenu.btnDisplay, lvMenu_DisplayEvent);
+  lv_obj_add_event_cb(lvMenu.btnDisplay, lvMenu_DisplayEvent, LV_EVENT_CLICKED, NULL);
+  lv_obj_t *labelDisp = lv_label_create(lvMenu.btnDisplay);
+  lv_label_set_text(labelDisp, "Display");
+  lv_obj_center(labelDisp);
 
   lvMenu_Update(true);
 
-  lv_scr_load(lvMenu.screen);
+  lv_screen_load(lvMenu.screen);
 }
 
 void lvMenu_Update(boolean forceUpdate)
 {
-  
 }
 
 void lvMenu_Delete(void)
 {
-  lv_obj_del(lvMenu.screen);
+  lv_obj_delete(lvMenu.screen);
 }
 
-void lvMenu_TemperaturesEvent(lv_obj_t *obj, lv_event_t event)
+void lvMenu_TemperaturesEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Home);
   }
 }
 
-void lvMenu_DisplayEvent(lv_obj_t *obj, lv_event_t event)
+void lvMenu_DisplayEvent(lv_event_t *e)
 {
-  if (LV_EVENT_CLICKED == event)
+  if (lv_event_get_code(e) == LV_EVENT_CLICKED)
   {
     lvScreen_Open(lvScreenType::Display);
   }
