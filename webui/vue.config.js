@@ -22,15 +22,18 @@ module.exports = {
         config.plugins.delete('preload')
         config.plugins.delete('prefetch')
 
-        // Inline all JS/CSS into the HTML file (single-file output for firmware embedding)
-        config.plugin('inline-source')
-            .use(require('@effortlessmotion/html-webpack-inline-source-plugin'))
-        config
-            .plugin('html')
-            .tap(args => {
-                args[0].inlineSource = '.(js|css)$'
-                return args
-            })
+        // Inline all JS/CSS into the HTML file — only for production builds.
+        // In dev mode the scripts land in <head> before #app exists → mount fails.
+        if (process.env.NODE_ENV === 'production') {
+            config.plugin('inline-source')
+                .use(require('@effortlessmotion/html-webpack-inline-source-plugin'))
+            config
+                .plugin('html')
+                .tap(args => {
+                    args[0].inlineSource = '.(js|css)$'
+                    return args
+                })
+        }
     },
     filenameHashing: false,
     configureWebpack: {
@@ -46,6 +49,18 @@ module.exports = {
         extract: false
     },
     devServer: {
-        proxy: 'http://localhost'
+        proxy: {
+            '/': {
+                target: 'http://localhost',
+                ws: false,  // don't proxy HMR websocket (/ws) to the device
+                bypass: function(req) {
+                    // Vue Router routes (browser navigation) must not be proxied —
+                    // return index.html so the SPA handles routing client-side.
+                    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+                        return '/index.html'
+                    }
+                }
+            }
+        }
     }
 };

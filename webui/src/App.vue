@@ -47,7 +47,9 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <router-view :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" />
+          <router-view v-slot="{ Component }">
+            <component :is="Component" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" :settings="settings" />
+          </router-view>
         </div>
       </div>
     </div>

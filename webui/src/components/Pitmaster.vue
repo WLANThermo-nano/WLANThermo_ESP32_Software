@@ -28,7 +28,7 @@
           <div class="config-form" >
             <form>
               <div class="form-group">
-                <select v-model="$v.pitmaster.pm.$each[index].typ.$model">
+                <select v-model="pitmaster.pm[index].typ">
                   <option
                     v-for="type in pitmaster.type"
                     :key="type"
@@ -40,8 +40,8 @@
                 <i class="bar"></i>
               </div>
               <!-- profiles -->
-              <div class="form-group" v-if="$v.pitmaster.pm.$each[index].typ.$model !== 'off'">
-                <select v-model="$v.pitmaster.pm.$each[index].pid.$model">
+              <div class="form-group" v-if="pitmaster.pm[index].typ !== 'off'">
+                <select v-model="pitmaster.pm[index].pid">
                   <option
                     v-for="(profile, pindex) in profiles"
                     :key="pindex"
@@ -51,11 +51,11 @@
                 </select>
                 <label class="control-label" for="select">{{$t("pitProfile")}}</label>
                 <i class="bar"></i>
-                <span @click="editProfile($v.pitmaster.pm.$each[index].pid.$model, $v.pitmaster.pm.$each[index].typ.$model)" class="icon-pencil icon-form"></span>
+                <span @click="editProfile(pitmaster.pm[index].pid, pitmaster.pm[index].typ)" class="icon-pencil icon-form"></span>
               </div>
               <!-- channels -->
-              <div class="form-group" v-if="$v.pitmaster.pm.$each[index].typ.$model === 'auto'">
-                <select v-model="$v.pitmaster.pm.$each[index].channel.$model">
+              <div class="form-group" v-if="pitmaster.pm[index].typ === 'auto'">
+                <select v-model="pitmaster.pm[index].channel">
                   <option
                     v-for="(channel, cindex) in channels"
                     :key="cindex"
@@ -67,20 +67,20 @@
                 <i class="bar"></i>
               </div>
               <!-- pitmaster value -->
-              <div class="form-group" v-if="$v.pitmaster.pm.$each[index].typ.$model === 'manual'" :class="{ 'error': $v.pitmaster.pm.$each[index].value.$invalid}">
-                <input type="number" v-model="$v.pitmaster.pm.$each[index].value.$model" max="100" min="0" required />
+              <div class="form-group" v-if="pitmaster.pm[index].typ === 'manual'" :class="{ 'error': $v.pitmaster.pm.$each[index]?.value?.$invalid}">
+                <input type="number" v-model="pitmaster.pm[index].value" max="100" min="0" required />
                 <label class="control-label" for="input">{{$t("pitValue")}}</label>
                 <i class="bar"></i>
-                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index].value.$invalid">
+                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index]?.value?.$invalid">
                   {{$t('v_must_between', {min: 0, max: 100})}}
                 </div>
               </div>
               <!-- set value -->
-              <div class="form-group" v-if="$v.pitmaster.pm.$each[index].typ.$model === 'auto'" :class="{ 'error': $v.pitmaster.pm.$each[index].set.$invalid}">
-                <input type="number" v-model="$v.pitmaster.pm.$each[index].set.$model" max="999.9" min="-999.9" step="any" required />
+              <div class="form-group" v-if="pitmaster.pm[index].typ === 'auto'" :class="{ 'error': $v.pitmaster.pm.$each[index]?.set?.$invalid}">
+                <input type="number" v-model="pitmaster.pm[index].set" max="999.9" min="-999.9" step="any" required />
                 <label class="control-label" for="input">{{$t("pitTemp")}}</label>
                 <i class="bar"></i>
-                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index].set.$invalid">
+                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index]?.set?.$invalid">
                   {{$t('v_must_between', {min: -999.9, max: 999.9})}}
                 </div>
               </div>
