@@ -327,14 +327,14 @@ export default {
       this.getSettings()
       this.initGetDataPeriodically()
     }
-    EventBus.$on('show-help-dialog', (dialogData) => {
+    EventBus.on('show-help-dialog', (dialogData) => {
       this.dialogTitle = dialogData.title
       this.dialogBodyText = dialogData.content
       this.wikiLink = dialogData.wikiLink
       this.linkText = dialogData.linkText
       this.dialogActive = true
     })
-    EventBus.$on('back-to-home', () => {
+    EventBus.on('back-to-home', () => {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
         if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
           this.toPage('/')
@@ -345,33 +345,33 @@ export default {
         this.toPage('/')
       }
     })
-    EventBus.$on('device-selected', () => {
+    EventBus.on('device-selected', () => {
       this.clearGetDataInteval()
       this.toPage('/')
       this.menuItems = menuItem
       this.getSettings()
       this.initGetDataPeriodically()
     })
-    EventBus.$on('show-auth-popup', (axiosError) => {
+    EventBus.on('show-auth-popup', (axiosError) => {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
         this.requestToRetry = axiosError.config
         this.authDialogActive = true
       }
     })
-    EventBus.$on('api-error', () => {
+    EventBus.on('api-error', () => {
       this.showSpinner = false
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
         this.clearGetDataInteval()
         this.toPage('scan', { connectionLost: true })
       }
     })
-    EventBus.$on('loading', (value) => {
+    EventBus.on('loading', (value) => {
       this.showSpinner = value
     })
-    EventBus.$on('getData', () => {
+    EventBus.on('getData', () => {
       this.getData()
     })
-    EventBus.$on('getSettings', () => {
+    EventBus.on('getSettings', () => {
       this.getSettings()
     })
   }

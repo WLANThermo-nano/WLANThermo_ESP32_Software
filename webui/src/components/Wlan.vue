@@ -116,7 +116,7 @@ export default {
   },
   methods: {
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_wlan_title'),
         content: this.$t('help_wlan'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/WLAN',
@@ -199,7 +199,7 @@ export default {
       });
     },
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     },
   },
   components: {

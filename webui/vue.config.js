@@ -1,40 +1,30 @@
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const CompressionPlugin = require('compression-webpack-plugin');
-
 
 module.exports = {
     outputDir: `dist/${process.env.VUE_APP_PRODUCT_NAME}`,
     chainWebpack: config => {
+        // SVG: inline as data URI (webpack 5 asset module, replaces url-loader)
         const svgRule = config.module.rule('svg')
         svgRule.uses.clear()
+        svgRule.delete('type')
+        svgRule.delete('generator')
+        svgRule.set('type', 'asset/inline')
 
-        svgRule
-            .use('url-loader')
-                .loader('url-loader')
-
+        // Fonts: inline as base64 data URI (webpack 5 asset module, replaces base64-inline-loader)
         const fontsRule = config.module.rule('fonts')
         fontsRule.uses.clear()
+        fontsRule.delete('type')
+        fontsRule.delete('generator')
+        fontsRule.test(/\.(ttf|otf|eot|woff|woff2)$/)
+        fontsRule.set('type', 'asset/inline')
 
-        config.module
-            .rule('fonts')
-            .test(/\.(ttf|otf|eot|woff|woff2)$/)
-            .use('base64-inline-loader')
-            .loader('base64-inline-loader')
-            .tap(options => {
-                // modify the options...    
-                return options
-                })
-            .end()
+        // Remove preload/prefetch — everything is inlined into HTML anyway
+        config.plugins.delete('preload')
+        config.plugins.delete('prefetch')
 
-        // see here, otherwise the css and js are inlined twice
-        // https://github.com/DustinJackson/html-webpack-inline-source-plugin/issues/50
-        config.plugin('preload')
-            .tap(args => {
-                args[0].fileBlacklist.push(/\.css/, /app\.js/)
-                return args
-            })
+        // Inline all JS/CSS into the HTML file (single-file output for firmware embedding)
         config.plugin('inline-source')
-            .use(require('html-webpack-inline-source-plugin'))
+            .use(require('@effortlessmotion/html-webpack-inline-source-plugin'))
         config
             .plugin('html')
             .tap(args => {
@@ -48,7 +38,7 @@ module.exports = {
             splitChunks: false
         },
         plugins: [
-            // new BundleAnalyzerPlugin(),
+            // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)(),
             new CompressionPlugin()
         ]
     },

@@ -142,20 +142,20 @@ export default {
   },
   watch: {},
   mounted: function () {
-    EventBus.$emit("loading", true)
+    EventBus.emit("loading", true)
     this.axios.get("/settings").then((response) => {
       this.hardwareVersions = response.data.hardware
       this.copyOfSystem = Object.assign({}, response.data) 
       this.systemSettings = response.data.system
-      EventBus.$emit("loading", false)
+      EventBus.emit("loading", false)
     });
   },
   methods: {
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     },
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_system_title'),
         content: this.$t('help_system'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/System-Einstellungen',
@@ -163,32 +163,32 @@ export default {
       })
     },
     save: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       this.axios.post('/setsystem', this.systemSettings).then(() => {
-        EventBus.$emit("loading", false)
-        EventBus.$emit("getSettings")
+        EventBus.emit("loading", false)
+        EventBus.emit("getSettings")
         this.backToHome()
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     },
     rotateDisplay: function() {
       if (confirm(this.$t('rotate_restart_prompt')) === true) {
-        EventBus.$emit("loading", true)
+        EventBus.emit("loading", true)
         this.axios.post('/rotate', this.systemSettings).then(() => {
-          EventBus.$emit("loading", false)
+          EventBus.emit("loading", false)
           location.reload()
         }).catch(() => {
-          EventBus.$emit("loading", false)
+          EventBus.emit("loading", false)
         })
       }
     },
     calibrateTouch: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       this.axios.post('/calibrate', this.systemSettings).then(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     }
   },

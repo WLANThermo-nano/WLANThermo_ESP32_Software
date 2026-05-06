@@ -144,10 +144,10 @@ export default {
       this.devices[deviceIndex].selectedChannels = this.devices[deviceIndex].channels.filter(c => c.checked).length
     },
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     },
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_bluetooth_title'),
         content: this.$t('help_bluetooth'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Bluetooth-Schnittstelle',
@@ -156,12 +156,12 @@ export default {
     },
     save: function() {
       const requestObj = Object.assign({}, this.bluetoothSettings)
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       this.axios.post('/setbluetooth', requestObj).then(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
         this.backToHome()
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     }
   },

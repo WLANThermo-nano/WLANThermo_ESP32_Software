@@ -14,45 +14,40 @@
               @click="checkConnection"
             ></span>
           </div>
-          <swipe-list
-            :items="displayedDevices"
-            :item-disabled="disableSwipe"
-            item-key="name"
-            >
-              <template v-slot="{ item }">
-                <div 
-                  @click="deviceSelected(item)"
-                  class="scan-device-item">
-                  <div class="info">
-                    <div class="body">
-                      <div class="image" style="width: 30px;">
-                        <div class="connection-state"
-                            v-if="item.type !== 'demo'"
-                            :class="{ connected: item.connected, lower: item.type === 'linkv1' }">
-                        </div>
-                        <img :src="images[item.type]" alt="">
-                      </div>
-                      <div class="name-address">
-                        <div class="name">
-                          {{ item.name }}
-                        </div>
-                        <div class="address">
-                          {{ item.ip }}
-                        </div>
-                        <div class="info">
-                          {{ item.info }}
-                        </div>
-                      </div>
+          <div
+            v-for="item in displayedDevices"
+            :key="item.name"
+            class="scan-device-item-row">
+            <div
+              @click="deviceSelected(item)"
+              class="scan-device-item">
+              <div class="info">
+                <div class="body">
+                  <div class="image" style="width: 30px;">
+                    <div class="connection-state"
+                        v-if="item.type !== 'demo'"
+                        :class="{ connected: item.connected, lower: item.type === 'linkv1' }">
+                    </div>
+                    <img :src="images[item.type]" alt="">
+                  </div>
+                  <div class="name-address">
+                    <div class="name">
+                      {{ item.name }}
+                    </div>
+                    <div class="address">
+                      {{ item.ip }}
+                    </div>
+                    <div class="info">
+                      {{ item.info }}
                     </div>
                   </div>
                 </div>
-              </template>
-              <template v-slot:right="{ item }">
-                <div class="swipeout-action red" @click="removeDevice(item)">
-                  <span class="icon-trash icon"></span>
-                </div>
-              </template>
-          </swipe-list>
+              </div>
+            </div>
+            <div v-if="item.type !== 'demo'" class="delete-action" @click.stop="removeDevice(item)">
+              <span class="icon-trash icon"></span>
+            </div>
+          </div>
         </form>
         <!--
         <div style="color: #fff">
@@ -75,7 +70,6 @@
 <script>
 import EventBus from "../event-bus";
 import {SPECIAL_URL_FOR_DEMO_API} from '../demo/mock-apis-mobile.models';
-import { SwipeList } from 'vue-swipe-actions';
 
 
 const Netmask = require("netmask").Netmask;
@@ -144,7 +138,6 @@ export default {
       blockSize: 0,
       requestCancelTokenSource: '',
       showConnectionLost: false,
-      disableSwipe: (device) => device.type === 'demo'
     };
   },
   watch: {},
@@ -169,21 +162,21 @@ export default {
     },
     deviceSelected: function(device) {
       if (device.type === 'demo') {
-        EventBus.$emit("loading", true)
+        EventBus.emit("loading", true)
         console.log(`should be SPECIAL_URL_FOR_DEMO_API ${SPECIAL_URL_FOR_DEMO_API}`)
         this.axios.defaults.baseURL = `http://${SPECIAL_URL_FOR_DEMO_API}`
-        EventBus.$emit("loading", false)
-        EventBus.$emit('device-selected')
+        EventBus.emit("loading", false)
+        EventBus.emit('device-selected')
       } else if (device.incompatible) {
         var url = "http://" + device.ip
         // eslint-disable-next-line
         cordova.InAppBrowser.open(url, '_system')
       } else if (device.connected) {
-        EventBus.$emit("loading", true)
+        EventBus.emit("loading", true)
         setTimeout(() => {
           this.axios.defaults.baseURL = `http://${device.ip}`
-          EventBus.$emit("loading", false)
-          EventBus.$emit('device-selected')
+          EventBus.emit("loading", false)
+          EventBus.emit('device-selected')
         })
       }
     },
@@ -372,15 +365,10 @@ export default {
       return info
     },
   },
-  components: {
-    SwipeList, 
-  },
+  components: {},
 };
 </script>
 
-<style src='vue-swipe-actions/dist/vue-swipe-actions.css'>
-    /* global styles */
-</style> 
 <style lang="scss" scoped>
 @import "../assets/colors.scss";
 
@@ -505,18 +493,23 @@ export default {
   text-align: center;
 }
 
-.swipeout-action {
+.scan-device-item-row {
+  display: flex;
+  align-items: stretch;
+  .scan-device-item {
+    flex: 1 1 auto;
+  }
+}
+
+.delete-action {
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  left: 0;
-  width: 6em;
-  &.red {
-    background-color: $error_color;
-  }
+  width: 3.5em;
+  background-color: $error_color;
   .icon {
-    font-size: 2em;
+    font-size: 1.5em;
     color: #fff;
   }
 }

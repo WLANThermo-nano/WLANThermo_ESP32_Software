@@ -171,7 +171,7 @@ export default {
     }
   },
   mounted: function () {
-    EventBus.$emit("loading", true)
+    EventBus.emit("loading", true)
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
     if (this.isMobile) {
       document.addEventListener('deviceready', this.initMobileInfo.bind(this), false)
@@ -181,7 +181,7 @@ export default {
       this.telegram = response.data.telegram
       this.pushover = response.data.pushover
       this.app = response.data.app
-      EventBus.$emit("loading", false)
+      EventBus.emit("loading", false)
     });
   },
   methods: {
@@ -203,14 +203,14 @@ export default {
       }
     },
     configuredCurrentPhone: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       // eslint-disable-next-line
       const messaging = cordova.plugins.firebase.messaging
       messaging.requestPermission({forceShow: true}).then(function() {
         console.log("Push messaging is allowed");
       });
       messaging.getToken().then((token) => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
         console.log(`got token ${token}`)
         // eslint-disable-next-line
         const model = device.model
@@ -223,14 +223,14 @@ export default {
       }).catch((error) => {
         console.log(`don't get got token`)
         console.log(error)
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       });
     },
     backToHome: function () {
-      EventBus.$emit("back-to-home");
+      EventBus.emit("back-to-home");
     },
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_notification_title'),
         content: this.$t('help_notification'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Push-Notification',
@@ -238,10 +238,10 @@ export default {
       })
     },
     save: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       const requestObj = Object.assign({}, { telegram: this.telegram, pushover: this.pushover, app: this.app })
       this.axios.post('/setpush', requestObj).then(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
         this.backToHome()
       });
     },

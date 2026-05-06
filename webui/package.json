@@ -15,31 +15,29 @@
     "build-mobile": "vue-cli-service build --mode mobile && node copyMobileBuildResults.js"
   },
   "dependencies": {
-    "axios": "0.21.1",
-    "base64-inline-loader": "^1.1.1",
-    "core-js": "^3.6.5",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
+    "axios": "^1.7.9",
+    "core-js": "^3.38.0",
+    "mitt": "^3.0.1",
     "netmask": "^1.0.6",
-    "vue": "^2.6.11",
-    "vue-axios": "^2.1.5",
-    "vue-i18n": "^8.20.0",
-    "vue-router": "^3.2.0",
-    "vue-swipe-actions": "^2.0.0-beta.20",
-    "vuelidate": "^0.7.5"
+    "vue": "^3.4.0",
+    "vue-axios": "^3.5.2",
+    "vue-i18n": "^9.14.1",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.4.0",
-    "@vue/cli-plugin-eslint": "~4.4.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-service": "~4.4.0",
-    "babel-eslint": "^10.1.0",
-    "compression-webpack-plugin": "^4.0.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
-    "html-webpack-inline-source-plugin": "0.0.10",
-    "sass": "^1.26.10",
-    "sass-loader": "^9.0.3",
-    "vue-template-compiler": "^2.6.11",
-    "webpack-bundle-analyzer": "^3.8.0"
+    "@babel/eslint-parser": "^7.24.0",
+    "@vue/cli-plugin-babel": "~5.0.8",
+    "@vue/cli-plugin-eslint": "~5.0.8",
+    "@vue/cli-service": "~5.0.8",
+    "compression-webpack-plugin": "^10.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "@effortlessmotion/html-webpack-inline-source-plugin": "^1.0.3",
+    "sass": "^1.77.0",
+    "sass-loader": "^14.2.0",
+    "webpack-bundle-analyzer": "^4.10.1"
   },
   "eslintConfig": {
     "root": true,
@@ -47,13 +45,16 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/essential",
+      "plugin:vue/vue3-essential",
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser",
+      "requireConfigFile": false
     },
-    "rules": {}
+    "rules": {
+      "vue/multi-word-component-names": "off"
+    }
   },
   "browserslist": [
     "> 1%",
