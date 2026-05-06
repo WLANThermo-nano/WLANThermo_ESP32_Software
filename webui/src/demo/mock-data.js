@@ -13,15 +13,17 @@ export class MockData {
         if (config.method === 'get') {
             return mock[config.url]
         } else if (config.method === 'post') {
+            // axios 1.x serializes POST bodies to JSON strings; parse back to object
+            const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data
             if (config.url === '/setchannels') {
-                const channelToUpdateIndex = mock['/data'].channel.findIndex(c => c.number === config.data.number)
-                mock['/data'].channel[channelToUpdateIndex] = config.data
+                const channelToUpdateIndex = mock['/data'].channel.findIndex(c => c.number === body.number)
+                mock['/data'].channel[channelToUpdateIndex] = body
             } else if (config.url === '/setsystem') {
-                mock['/settings'].system = config.data
+                mock['/settings'].system = body
             } else if (config.url === '/newtoken') {
                 mock['/newtoken'] = 'random-demo-token' + Math.floor(Math.random() * Math.floor(10000000000000))
             } else if (config.url === '/setpush') {
-                mock['/getpush'] = config.data
+                mock['/getpush'] = body
             }
             return mock[config.url]
         }
