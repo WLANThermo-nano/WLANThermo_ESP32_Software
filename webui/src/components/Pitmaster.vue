@@ -67,20 +67,20 @@
                 <i class="bar"></i>
               </div>
               <!-- pitmaster value -->
-              <div class="form-group" v-if="pitmaster.pm[index].typ === 'manual'" :class="{ 'error': $v.pitmaster.pm.$each[index]?.value?.$invalid}">
+              <div class="form-group" v-if="pitmaster.pm[index].typ === 'manual'" :class="{ 'error': v$.pitmaster.pm.$each[index]?.value?.$invalid}">
                 <input type="number" v-model="pitmaster.pm[index].value" max="100" min="0" required />
                 <label class="control-label" for="input">{{$t("pitValue")}}</label>
                 <i class="bar"></i>
-                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index]?.value?.$invalid">
+                <div class="error-prompt" v-if="v$.pitmaster.pm.$each[index]?.value?.$invalid">
                   {{$t('v_must_between', {min: 0, max: 100})}}
                 </div>
               </div>
               <!-- set value -->
-              <div class="form-group" v-if="pitmaster.pm[index].typ === 'auto'" :class="{ 'error': $v.pitmaster.pm.$each[index]?.set?.$invalid}">
+              <div class="form-group" v-if="pitmaster.pm[index].typ === 'auto'" :class="{ 'error': v$.pitmaster.pm.$each[index]?.set?.$invalid}">
                 <input type="number" v-model="pitmaster.pm[index].set" max="999.9" min="-999.9" step="any" required />
                 <label class="control-label" for="input">{{$t("pitTemp")}}</label>
                 <i class="bar"></i>
-                <div class="error-prompt" v-if="$v.pitmaster.pm.$each[index]?.set?.$invalid">
+                <div class="error-prompt" v-if="v$.pitmaster.pm.$each[index]?.set?.$invalid">
                   {{$t('v_must_between', {min: -999.9, max: 999.9})}}
                 </div>
               </div>
@@ -123,21 +123,21 @@
             <!-- 0 => SSR, 1 => FAN  -->
             <template v-if="editingProfile.aktor == 0 || editingProfile.aktor === 1 || editingProfile.aktor == 3">
               <div class="pure-u-1-2 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmin.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.DCmmin.$invalid}">
                   <input type="number" v-model="editingProfile.DCmmin" max="100" min="0" step="any" required />
                   <label class="control-label" for="input">{{$t("pitDCmin")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.DCmmin.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.DCmmin.$invalid">
                     {{$t('v_must_between', {min: 0, max: 100})}}
                   </div>
                 </div>
               </div>
               <div class="pure-u-1-2 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.DCmmax.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.DCmmax.$invalid}">
                   <input type="number" v-model="editingProfile.DCmmax" max="100" min="0" step="any" required />
                   <label class="control-label" for="input">{{$t("pitDCmax")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.DCmmax.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.DCmmax.$invalid">
                     {{$t('v_must_between', {min: 0, max: 100})}}
                   </div>
                 </div>
@@ -146,21 +146,21 @@
             <!-- 2 => SERVO, 3 => DAMPER  -->
             <template v-if="editingProfile.aktor == 2 || editingProfile.aktor == 3">
               <div class="pure-u-1-2 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.SPmin.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.SPmin.$invalid}">
                   <input type="number" v-model="editingProfile.SPmin" max="3000" min="0" required />
                   <label class="control-label" for="input">{{$t("pitSPmin")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.SPmin.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.SPmin.$invalid">
                     {{$t('v_must_between', {min: 0, max: 3000})}}
                   </div>
                 </div>
               </div>
               <div class="pure-u-1-2 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.SPmax.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.SPmax.$invalid}">
                   <input type="number" v-model="editingProfile.SPmax" max="3000" min="0" required />
                   <label class="control-label" for="input">{{$t("pitSPmax")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.SPmax.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.SPmax.$invalid">
                     {{$t('v_must_between', {min: 0, max: 3000})}}
                   </div>
                 </div>
@@ -187,40 +187,40 @@
             <form>
               <div class="form-spacing"></div>
               <div class="pure-u-1-3 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.Kp.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.Kp.$invalid}">
                   <input type="number" min="0" max="150" step="any" v-model="editingProfile.Kp" required />
                   <label class="control-label" for="input">{{$t("pidKp")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.Kp.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.Kp.$invalid">
                     {{$t('v_must_between', {min: 0, max: 150})}}
                   </div>
                 </div>
               </div>
               <div class="pure-u-1-3 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.Ki.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.Ki.$invalid}">
                   <input type="number" min="0.0" max="5.0" step="0.01" v-model="editingProfile.Ki" required />
                   <label class="control-label" for="input">{{$t("pidKi")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.Ki.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.Ki.$invalid">
                     {{$t('v_must_between', {min: 0, max: 5})}}
                   </div>
                 </div>
               </div>
               <div class="pure-u-1-3 control">
-                <div class="form-group" :class="{ 'error': $v.editingProfile.Kd.$invalid}">
+                <div class="form-group" :class="{ 'error': v$.editingProfile.Kd.$invalid}">
                   <input type="number" min="0" max="800" v-model="editingProfile.Kd" required />
                   <label class="control-label" for="input">{{$t("pidKd")}}</label>
                   <i class="bar"></i>
-                  <div class="error-prompt" v-if="$v.editingProfile.Kd.$invalid">
+                  <div class="error-prompt" v-if="v$.editingProfile.Kd.$invalid">
                     {{$t('v_must_between', {min: 0, max: 800})}}
                   </div>
                 </div>
               </div>
-              <div class="form-group control-at-top" :class="{ 'error': $v.editingProfile.jp.$invalid}">
+              <div class="form-group control-at-top" :class="{ 'error': v$.editingProfile.jp.$invalid}">
                 <input type="number" min="0" max="100" v-model="editingProfile.jp" required/>
                 <label class="control-label" for="input">{{$t("pidJump")}}</label>
                 <i class="bar"></i>
-                <div class="error-prompt" v-if="$v.editingProfile.jp.$invalid">
+                <div class="error-prompt" v-if="v$.editingProfile.jp.$invalid">
                   {{$t('v_must_between', {min: 10, max: 100})}}
                 </div>
               </div>
@@ -253,7 +253,7 @@ import { between, helpers } from '@vuelidate/validators'
 export default {
   name: "Pitmaster",
   setup() {
-    return { $v: useVuelidate() }
+    return { v$: useVuelidate() }
   },
   props: {},
   data: () => {
@@ -356,7 +356,7 @@ export default {
     },
     save: function() {
       if (this.isEditingProfile) {
-        if (this.$v.editingProfile.$invalid) {
+        if (this.v$.editingProfile.$invalid) {
           return;
         }
         this.profiles[this.editingProfileIndex] = this.editingProfile;
@@ -368,7 +368,7 @@ export default {
           EventBus.emit("loading", false)
         })
       } else {
-        if (this.$v.pitmaster.$invalid) {
+        if (this.v$.pitmaster.$invalid) {
           return;
         }
         EventBus.emit("loading", true)

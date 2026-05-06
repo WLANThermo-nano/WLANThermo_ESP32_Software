@@ -76,19 +76,19 @@
               <label class="control-label" for="input">{{$t("channel_name")}}</label>
               <i class="bar"></i>
             </div>
-            <div class="form-group" :class="{ 'error': $v.editingChanelClone.max.$invalid}">
+            <div class="form-group" :class="{ 'error': v$.editingChanelClone.max.$invalid}">
               <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.max" required>
               <label class="control-label" for="input">{{$t("temp_max")}}</label>
               <i class="bar"></i>
-              <div class="error-prompt" v-if="$v.editingChanelClone.max.$invalid">
+              <div class="error-prompt" v-if="v$.editingChanelClone.max.$invalid">
                 {{$t('v_must_between', {min: maxValidMin, max: maxValidMax})}}
               </div>
             </div>
-            <div class="form-group" :class="{ 'error': $v.editingChanelClone.min.$invalid}">
+            <div class="form-group" :class="{ 'error': v$.editingChanelClone.min.$invalid}">
               <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.min" required>
               <label class="control-label" for="input">{{$t("temp_min")}}</label>
               <i class="bar"></i>
-              <div class="error-prompt" v-if="$v.editingChanelClone.min.$invalid">
+              <div class="error-prompt" v-if="v$.editingChanelClone.min.$invalid">
                 {{$t('v_must_between', {min: minValidMin, max: minValidMax})}}
               </div>
             </div>
@@ -132,7 +132,7 @@ import { between } from '@vuelidate/validators'
 export default {
   name: "Home",
   setup() {
-    return { $v: useVuelidate() }
+    return { v$: useVuelidate() }
   },
   props: {
     unit: {
@@ -202,12 +202,8 @@ export default {
   validations() {
     return {
       editingChanelClone: {
-        max: {
-          between: between(Math.max(this.editingChanelClone.min, -999.9), 999.9)
-        },
-        min: {
-          between: between(-999.9, Math.min(this.editingChanelClone.max, 999.9))
-        }
+        max: { between: between(-999.9, 999.9) },
+        min: { between: between(-999.9, 999.9) }
       }
     }
   },
@@ -274,7 +270,7 @@ export default {
       })
     },
     save: function() {
-      if (this.$v.$invalid) {
+      if (this.v$.$invalid) {
         return;
       }
       EventBus.emit("loading", true)
