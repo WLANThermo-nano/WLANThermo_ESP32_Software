@@ -86,6 +86,8 @@ static lv_obj_t *lvTemperature_CreateTabCont(lv_obj_t *tab)
   lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_border_width(cont, 0, 0);
   lv_obj_set_style_radius(cont, 10, 0);
+  lv_obj_set_style_pad_all(cont, 4, 0);
+  lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
   return cont;
 }
 
@@ -94,6 +96,7 @@ void lvTemperature_Create(void *userData)
   lvTemperature_temperatureBase = (TemperatureBase *)userData;
 
   lvTemperature.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvTemperature.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lvTemperature.tabview = lv_tabview_create(lvTemperature.screen);
   lv_tabview_set_tab_bar_position(lvTemperature.tabview, LV_DIR_TOP);
@@ -109,8 +112,8 @@ void lvTemperature_Create(void *userData)
   lv_obj_add_event_cb(btn, lvTemperature_BtnClose, LV_EVENT_CLICKED, NULL);
   lv_obj_t *label = lv_label_create(btn);
   lv_label_set_text(label, LV_SYMBOL_CLOSE);
-  lv_obj_set_pos(btn, LV_DPX(335), LV_DPX(12));
-  lv_obj_set_size(btn, LV_DPX(50), LV_DPX(35));
+  lv_obj_set_size(btn, 50, 35);
+  lv_obj_align(btn, LV_ALIGN_TOP_RIGHT, -5, 7);
 
   lvTemperature_CreateTabMin();
   lvTemperature_CreateTabMax();

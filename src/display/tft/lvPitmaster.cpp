@@ -52,6 +52,8 @@ static lv_obj_t *lvPitmaster_CreateTabCont(lv_obj_t *tab)
   lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_border_width(cont, 0, 0);
   lv_obj_set_style_radius(cont, 10, 0);
+  lv_obj_set_style_pad_all(cont, 4, 0);
+  lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
   return cont;
 }
 
@@ -61,6 +63,7 @@ void lvPitmaster_Create(void *userData)
   lvPitmaster_temperature = lvPitmaster_pitmaster->getAssignedTemperature();
 
   lvPitmaster.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvPitmaster.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lvPitmaster.tabview = lv_tabview_create(lvPitmaster.screen);
   lv_tabview_set_tab_bar_position(lvPitmaster.tabview, LV_DIR_TOP);
@@ -76,8 +79,8 @@ void lvPitmaster_Create(void *userData)
   lv_obj_add_event_cb(btn, lvPitmaster_BtnClose, LV_EVENT_CLICKED, NULL);
   lv_obj_t *label = lv_label_create(btn);
   lv_label_set_text(label, LV_SYMBOL_CLOSE);
-  lv_obj_set_pos(btn, LV_DPX(335), LV_DPX(12));
-  lv_obj_set_size(btn, LV_DPX(50), LV_DPX(35));
+  lv_obj_set_size(btn, 50, 35);
+  lv_obj_align(btn, LV_ALIGN_TOP_RIGHT, -5, 7);
 
   lvPitmaster_CreateTarget();
   lvPitmaster_CreateChannel();

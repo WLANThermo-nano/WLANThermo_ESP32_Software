@@ -30,14 +30,16 @@ static lvUpdateType lvUpdate = {NULL};
 void lvUpdate_Create(void *userData)
 {
   lvUpdate.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvUpdate.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *cont = lv_obj_create(lvUpdate.screen);
   lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
   lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_left(cont, 40, 0);
+  lv_obj_set_style_pad_all(cont, 4, 0);
   lv_obj_set_style_border_width(cont, 0, 0);
   lv_obj_set_style_radius(cont, 0, 0);
+  lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *label = lv_label_create(cont);
   lv_label_set_text(label, "X");

@@ -78,6 +78,9 @@ static void lvHome_AddSymbolBtn(lv_obj_t *parent, lv_obj_t **btn, lv_obj_t **lab
   *btn = lv_btn_create(parent);
   lv_obj_remove_flag(*btn, LV_OBJ_FLAG_CLICK_FOCUSABLE);
   lv_obj_add_style(*btn, style, 0);
+  lv_obj_set_style_pad_all(*btn, 0, 0);
+  lv_obj_set_style_border_width(*btn, 0, 0);
+  lv_obj_set_style_shadow_width(*btn, 0, 0);
   lv_obj_set_size(*btn, 40, 40);
   lv_obj_set_pos(*btn, x, y);
   if (cb) lv_obj_add_event_cb(*btn, cb, LV_EVENT_CLICKED, NULL);
@@ -98,13 +101,19 @@ void lvHome_Create(void *userData)
   lv_style_set_border_width(lvHome.symbols.style, 0);
   lv_style_set_clip_corner(lvHome.symbols.style, false);
   lv_style_set_radius(lvHome.symbols.style, 0);
+  lv_style_set_pad_all(lvHome.symbols.style, 0);
 
   lvHome.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvHome.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *contHeader = lv_obj_create(lvHome.screen);
   lv_obj_add_style(contHeader, lvHome.symbols.style, 0);
+  lv_obj_set_style_pad_all(contHeader, 0, 0);
+  lv_obj_set_style_border_width(contHeader, 0, 0);
   lv_obj_remove_flag(contHeader, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_remove_flag(contHeader, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_set_size(contHeader, 320, 40);
+  lv_obj_set_pos(contHeader, 0, 0);
 
   lvHome_AddSymbolBtn(contHeader, &lvHome.symbols.btnMenu, NULL,
                       lvHome.symbols.style, "f", lv_color_white(),
@@ -152,7 +161,7 @@ void lvHome_Create(void *userData)
   lv_obj_set_style_pad_top(contTemperature, 0, 0);
   lv_obj_set_style_pad_bottom(contTemperature, 2, 0);
   lv_obj_remove_flag(contTemperature, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_set_size(contTemperature, 330, 200);
+  lv_obj_set_size(contTemperature, 320, 200);
   lv_obj_set_pos(contTemperature, 0, 40);
   lv_obj_set_flex_flow(contTemperature, LV_FLEX_FLOW_ROW_WRAP);
   lv_obj_set_flex_align(contTemperature, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -167,6 +176,8 @@ void lvHome_Create(void *userData)
     lv_obj_set_style_clip_corner(tile->objTile, false, 0);
     lv_obj_set_style_radius(tile->objTile, 10, 0);
     lv_obj_set_style_text_color(tile->objTile, lv_color_white(), 0);
+    lv_obj_set_style_pad_all(tile->objTile, 0, 0);
+    lv_obj_remove_flag(tile->objTile, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(tile->objTile, 156, 63);
     lv_obj_add_flag(tile->objTile, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_user_data(tile->objTile, gSystem->temperatures[i]);
@@ -177,6 +188,8 @@ void lvHome_Create(void *userData)
     lv_obj_set_style_border_width(tile->objColor, 0, 0);
     lv_obj_set_style_clip_corner(tile->objColor, false, 0);
     lv_obj_set_style_radius(tile->objColor, 10, 0);
+    lv_obj_set_style_pad_all(tile->objColor, 0, 0);
+    lv_obj_remove_flag(tile->objColor, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(tile->objColor, 10, 63);
     lv_obj_set_pos(tile->objColor, 0, 0);
 

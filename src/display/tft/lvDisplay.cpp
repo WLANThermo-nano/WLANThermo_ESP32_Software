@@ -35,6 +35,7 @@ void lvDisplay_Create(void *userData)
   DisplayTft *tftDisplay = (DisplayTft *)gDisplay;
 
   lvDisplay.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvDisplay.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *tabview = lv_tabview_create(lvDisplay.screen);
   lv_tabview_set_tab_bar_position(tabview, LV_DIR_TOP);
@@ -50,8 +51,8 @@ void lvDisplay_Create(void *userData)
   lv_obj_add_event_cb(btn, lvDisplay_BtnClose, LV_EVENT_CLICKED, NULL);
   lv_obj_t *label = lv_label_create(btn);
   lv_label_set_text(label, LV_SYMBOL_CLOSE);
-  lv_obj_set_pos(btn, LV_DPX(335), LV_DPX(12));
-  lv_obj_set_size(btn, LV_DPX(50), LV_DPX(35));
+  lv_obj_set_size(btn, 50, 35);
+  lv_obj_align(btn, LV_ALIGN_TOP_RIGHT, -5, 7);
 
   lv_obj_t *tab = lv_tabview_add_tab(tabview, "r");
 

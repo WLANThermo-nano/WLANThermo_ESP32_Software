@@ -79,7 +79,7 @@ void DisplayTft::init()
   xTaskCreatePinnedToCore(
       DisplayTft::task,           /* Task function. */
       "DisplayTft::task",         /* String with name of task. */
-      5000,                       /* Stack size in bytes. */
+      10000,                      /* Stack size in bytes. */
       this,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_DISPLAY_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */

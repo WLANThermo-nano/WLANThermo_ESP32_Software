@@ -31,6 +31,7 @@ static void lvWifi_BtnClose(lv_event_t *e);
 void lvWifi_Create(void *userData)
 {
   lvWifi.screen = lv_obj_create(NULL);
+  lv_obj_remove_flag(lvWifi.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *cont = lv_obj_create(lvWifi.screen);
   lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
@@ -38,13 +39,15 @@ void lvWifi_Create(void *userData)
   lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_border_width(cont, 0, 0);
   lv_obj_set_style_radius(cont, 0, 0);
+  lv_obj_set_style_pad_all(cont, 4, 0);
+  lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
 
   lv_obj_t *btn = lv_btn_create(lvWifi.screen);
   lv_obj_add_event_cb(btn, lvWifi_BtnClose, LV_EVENT_CLICKED, NULL);
   lv_obj_t *label = lv_label_create(btn);
   lv_label_set_text(label, LV_SYMBOL_CLOSE);
-  lv_obj_set_pos(btn, LV_DPX(335), LV_DPX(12));
-  lv_obj_set_size(btn, LV_DPX(50), LV_DPX(35));
+  lv_obj_set_size(btn, 50, 35);
+  lv_obj_align(btn, LV_ALIGN_TOP_RIGHT, -5, 7);
 
   lvWifi.qrCode = lv_qrcode_create(cont);
   lv_qrcode_set_size(lvWifi.qrCode, 132);

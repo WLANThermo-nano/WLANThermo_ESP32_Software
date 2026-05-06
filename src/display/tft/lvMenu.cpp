@@ -34,6 +34,7 @@ void lvMenu_Create(void *userData)
 {
   lvMenu.screen = lv_obj_create(NULL);
   lv_obj_set_style_bg_color(lvMenu.screen, lv_color_make(0x33, 0x33, 0x33), 0);
+  lv_obj_remove_flag(lvMenu.screen, LV_OBJ_FLAG_SCROLLABLE);
 
   lvMenu.btnStyle = new lv_style_t();
   lv_style_init(lvMenu.btnStyle);
