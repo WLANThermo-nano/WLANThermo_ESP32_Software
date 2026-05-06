@@ -48,14 +48,20 @@ Tests laufen auch in CI (`compile-test.yml`). Neue Tests kommen als Verzeichnis 
 
 Hardware variants: `miniV1`, `miniV2`, `miniV3`, `connectV1`, `nanoV3`, `linkV1`, `boneV1`
 
-**Web UI (Node.js v12 + yarn):**
+**Web UI (Node.js 18+ + npm):**
 ```bash
 cd webui
-yarn install
-yarn serve          # Dev server with hot reload
-yarn build          # All variants (nano, mini, link, bone)
-yarn build-mini     # Single variant
+npm install --legacy-peer-deps
+npm run serve       # Dev server with hot reload (mock data, kein Gerät nötig)
+npm run build       # Alle Varianten (nano, mini, link, bone, cloud, demo)
+npm run build-mini  # Einzelne Variante
 ```
+
+> **Vue 3 / webpack 5 Hinweise (Branch `feature/phase-2-vue3`):**
+> - Vuelidate v2: setup-Property heißt `v$` (nicht `$v` — Vue 3 blockiert `$`-Properties aus `setup()`)
+> - Vue Router 4: Props an `<router-view>` via `v-slot="{ Component }"` + `<component :is="Component" ...>` übergeben
+> - Mock-API: axios 1.x übergibt POST-Body als JSON-String → `JSON.parse(config.data)` in `mock-data.js`
+> - Dev-Server-Proxy: `ws: false` + `bypass` für HTML-Requests nötig (HMR-WebSocket + Vue-Router-Routen)
 
 After changing the web UI, rebuild firmware to embed the new assets — `extra_script.py` gzips HTML/JS/CSS into C header files at build time.
 
@@ -89,7 +95,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 | `src/API.h` | JSON API schema (ArduinoJson 7) |
 | `src/Wlan.cpp` | WiFi + MQTT (AsyncMQTT) |
 
-**Web UI:** Vue 2 SPA in `webui/src/`. Build output lands in `webui/dist/[variant]/`. The firmware's `extra_script.py` converts these into embedded C arrays.
+**Web UI:** Vue 3 SPA in `webui/src/` (Branch `feature/phase-2-vue3`). Build output lands in `webui/dist/[variant]/`. The firmware's `extra_script.py` converts these into embedded C arrays.
 
 **Display variants:** Nextion HMI (serial), SSD1306 OLED (I2C), ILI9341 TFT with LVGL touchscreen. TFT UI lives in `src/display/tft/`.
 
@@ -130,9 +136,17 @@ nanoV3: Stabil nach B39-Fix + `WiFi.persistent(false)`. BLE-Discovery-Fix implem
 Alle 7 Hardware-Varianten auf `espressif32@^6.0.0` (arduino-esp32 2.x / ESP-IDF 4.4.x). miniV3 Hardware-Test weitgehend OK, nanoV3 stabil (B39 gefixt).  
 Hardware-Test-Protokoll: [`docs/hardware-test-log.md`](docs/hardware-test-log.md)
 
-### Phase 2 — UI-Redesign (ausstehend)
+### Phase 2 — UI-Redesign ✅ (2026-05-07)
 
-Vue 2 → Vue 3 (Neubau, Vue 2 seit 31.12.2023 EOL).
+Vue 2 → Vue 3 Migration abgeschlossen auf Branch `feature/phase-2-vue3` (Commit `a8cefe7`).
+
+Migriert: Vue 3.4, Vue Router 4, vue-i18n 9 (legacy mode), vue-axios 3, axios 1.7, mitt (EventBus), @vuelidate/core v2, @vue/cli-service 5, webpack 5.  
+Alle 6 Build-Varianten verifiziert: nano, mini, link, bone, cloud, demo (je ~124–130 KB gzip).
+
+Ausstehend (Follow-up, nicht blockierend):
+- vue-i18n 9 → 11 (v9 deprecated)
+- Sass `@import` → `@use/@forward` (Dart Sass 3.0 Deprecation-Warnings)
+- PR `feature/phase-2-vue3` → `next` nach Hardware-UI-Tests
 
 ### Phase 3 — App Store (ausstehend)
 
@@ -200,7 +214,7 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 | Dep | Aktuell | Ziel | Phase | Grund |
 |-----|---------|------|-------|-------|
 | **LVGL** | 7.11.0 | 9.x | **5** | Widgets umbenannt, Event-System geändert; gesamtes `src/display/tft/` neu |
-| **Vue** | 2.6.11 | 3.x | **2** | Vue 2 EOL seit 31.12.2023; vollständiger Frontend-Neubau |
+| **Vue** | ~~2.6.11~~ **3.4** | — | **✅ 2** | Abgeschlossen 2026-05-07 auf `feature/phase-2-vue3` |
 
 ### Ausstehend
 
