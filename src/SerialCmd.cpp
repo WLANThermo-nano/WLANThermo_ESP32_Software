@@ -23,6 +23,7 @@
 #include "system/SystemBase.h"
 #include "display/DisplayBase.h"
 #include "WebHandler.h"
+#include "WServer.h"
 #include "API.h"
 #include "DbgPrint.h"
 #include <Preferences.h>
@@ -246,6 +247,14 @@ void read_serial(char *buffer)
           pm->setType(pm_off);
       }
       gSystem->pitmasters.saveConfig();
+      return;
+    }
+
+    else if (str == "resetpassword")
+    {
+      WServer::setPassword("");
+      WServer::saveConfig();
+      Serial.println("Password cleared.");
       return;
     }
 
