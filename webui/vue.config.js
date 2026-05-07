@@ -24,6 +24,7 @@ module.exports = {
 
         // Inline all JS/CSS into the HTML file — only for production builds.
         // In dev mode the scripts land in <head> before #app exists → mount fails.
+        // inject:'body' ensures the inline script is placed after <div id="app">.
         if (process.env.NODE_ENV === 'production') {
             config.plugin('inline-source')
                 .use(require('@effortlessmotion/html-webpack-inline-source-plugin'))
@@ -31,6 +32,7 @@ module.exports = {
                 .plugin('html')
                 .tap(args => {
                     args[0].inlineSource = '.(js|css)$'
+                    args[0].inject = 'body'
                     return args
                 })
         }
