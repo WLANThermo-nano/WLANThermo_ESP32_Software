@@ -53,7 +53,7 @@ export default {
   },
   methods: {
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     }
   },
   components: {},

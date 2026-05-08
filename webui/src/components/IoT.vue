@@ -201,15 +201,15 @@ export default {
   },
   watch: {},
   mounted: function () {
-    EventBus.$emit("loading", true)
+    EventBus.emit("loading", true)
     this.axios.get("/settings").then((response) => {
       this.iot = response.data.iot
-      EventBus.$emit("loading", false)
+      EventBus.emit("loading", false)
     });
   },
   methods: {
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     },
     openCloudUrl: function() {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
@@ -220,7 +220,7 @@ export default {
       }
     },
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_iot_title'),
         content: this.$t('help_iot'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/CloudService',
@@ -228,7 +228,7 @@ export default {
       })
     },
     showMQTTHelpText: function() {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_mqtt_title'),
         content: this.$t('help_mqtt'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Private-MQTT',
@@ -236,21 +236,21 @@ export default {
       })
     },
     generateToken: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       this.axios.post('/newtoken').then((resp) => {
         this.iot.CLtoken = resp.data;
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     },
     save: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       this.axios.post('/setIoT', this.iot).then(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
         this.backToHome()
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     }
   },

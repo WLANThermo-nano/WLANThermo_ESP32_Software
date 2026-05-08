@@ -1,38 +1,18 @@
 import axios from 'axios'
 import { MockData } from './mock-data'
 
-const getMockError = config => {
-  const mockError = new Error()
-  mockError.config = config
-  return Promise.reject(mockError)
-}
-
-// Add a request interceptor
-axios.interceptors.request.use(config => {
-  return getMockError(config)
-}, error => Promise.reject(error))
-
-// Add a response interceptor
-axios.interceptors.response.use(response => response, error => {
-  return getMockResponse(error)
-})
-
-const getMockResponse = mockError => {
-  const {config} = mockError
-
-  if (process.env.VUE_APP_DEBUG_MOCK_API) {
-    if (config.url !== '/data') {
-      console.log(config)
-    }
+// axios 1.x: rejected request interceptors no longer flow through response error
+// interceptors. Use a custom adapter instead to intercept at the transport layer.
+axios.defaults.adapter = async (config) => {
+  if (process.env.VUE_APP_DEBUG_MOCK_API && config.url !== '/data') {
+    console.log(config)
   }
-
-  // Handle mocked success
-  return Promise.resolve(Object.assign({
-    data: {},
+  return {
+    data: MockData.mock(config),
     status: 200,
     statusText: 'OK',
     headers: {},
     config,
-    isMock: true
-  }, {data: MockData.mock(config)}))
+    request: {}
+  }
 }

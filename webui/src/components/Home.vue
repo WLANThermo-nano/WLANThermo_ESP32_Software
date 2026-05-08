@@ -76,20 +76,20 @@
               <label class="control-label" for="input">{{$t("channel_name")}}</label>
               <i class="bar"></i>
             </div>
-            <div class="form-group" :class="{ 'error': $v.editingChanelClone.max.$invalid}">
+            <div class="form-group" :class="{ 'error': v$.editingChanelClone.max.$invalid}">
               <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.max" required>
               <label class="control-label" for="input">{{$t("temp_max")}}</label>
               <i class="bar"></i>
-              <div class="error-prompt" v-if="$v.editingChanelClone.max.$invalid">
-                {{$t('v_must_between', {min: $v.editingChanelClone.max.$params.between.min, max: $v.editingChanelClone.max.$params.between.max})}}
+              <div class="error-prompt" v-if="v$.editingChanelClone.max.$invalid">
+                {{$t('v_must_between', {min: maxValidMin, max: maxValidMax})}}
               </div>
             </div>
-            <div class="form-group" :class="{ 'error': $v.editingChanelClone.min.$invalid}">
+            <div class="form-group" :class="{ 'error': v$.editingChanelClone.min.$invalid}">
               <input type="number" max="999.9" min="-999.9" step="any" v-model.lazy="editingChanelClone.min" required>
               <label class="control-label" for="input">{{$t("temp_min")}}</label>
               <i class="bar"></i>
-              <div class="error-prompt" v-if="$v.editingChanelClone.min.$invalid">
-                {{$t('v_must_between', {min: $v.editingChanelClone.min.$params.between.min, max: $v.editingChanelClone.min.$params.between.max})}}
+              <div class="error-prompt" v-if="v$.editingChanelClone.min.$invalid">
+                {{$t('v_must_between', {min: minValidMin, max: minValidMax})}}
               </div>
             </div>
             <div class="form-group">
@@ -126,10 +126,14 @@
 
 <script>
 import EventBus from '../event-bus'
-import { between } from 'vuelidate/lib/validators'
+import { useVuelidate } from '@vuelidate/core'
+import { between } from '@vuelidate/validators'
 
 export default {
   name: "Home",
+  setup() {
+    return { v$: useVuelidate() }
+  },
   props: {
     unit: {
       type: String
@@ -189,17 +193,17 @@ export default {
         return this.sensors;
       }
       return this.sensors.filter(i => i.fixed === false)
-    }
+    },
+    maxValidMin() { return Math.max(this.editingChanelClone.min || -999.9, -999.9) },
+    maxValidMax() { return 999.9 },
+    minValidMin() { return -999.9 },
+    minValidMax() { return Math.min(this.editingChanelClone.max || 999.9, 999.9) },
   },
   validations() {
     return {
       editingChanelClone: {
-        max: {
-          between: between(Math.max(this.editingChanelClone.min, -999.9), 999.9)
-        },
-        min: {
-          between: between(-999.9, Math.min(this.editingChanelClone.max, 999.9))
-        }
+        max: { between: between(-999.9, 999.9) },
+        min: { between: between(-999.9, 999.9) }
       }
     }
   },
@@ -258,7 +262,7 @@ export default {
       return value
     },
     showHelpText: function() {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_channel_title'),
         content: this.$t('help_channel'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Temperaturmessung',
@@ -266,10 +270,10 @@ export default {
       })
     },
     save: function() {
-      if (this.$v.$invalid) {
+      if (this.v$.$invalid) {
         return;
       }
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       const requestObj = {
         alarm: this.getAlarmValue(),
         color: this.editingChanelClone.color,
@@ -284,10 +288,10 @@ export default {
       }
       this.axios.post('/setchannels', requestObj).then(() => {
         this.editing = false;
-        EventBus.$emit("getData")
-        EventBus.$emit("loading", false)
+        EventBus.emit("getData")
+        EventBus.emit("loading", false)
       }).catch(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       })
     }
   },
