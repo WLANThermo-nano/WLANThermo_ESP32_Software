@@ -34,14 +34,12 @@ extern const uint16_t DisplayTftCharged[];
 extern const uint16_t DisplayTftCharging[];
 extern const uint16_t DisplayTftStartScreenImg[25400];
 
-// DisplayTft.cpp
-
 static const uint32_t TIMEOUT_VALUES[] = {
-    0,          // AUS
+    0,          // OFF
     30000,      // 30 s
     60000,      // 60 s
     120000,     // 120 s
-    300000      // 30000 s
+    300000,     // 300 s
 };
 
 static constexpr uint8_t TIMEOUT_VALUE_COUNT =

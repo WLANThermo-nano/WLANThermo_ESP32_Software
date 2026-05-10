@@ -26,7 +26,6 @@
 LV_FONT_DECLARE(Font_Gothic_A1_Medium_h16);
 LV_FONT_DECLARE(Font_Nano_h24);
 LV_FONT_DECLARE(Font_Roboto_Medium_h28);
-LV_FONT_DECLARE(Font_Roboto_Medium_h80);
 
 static lvDisplayType lvDisplay = {NULL};
 
@@ -73,9 +72,8 @@ void lvDisplay_Create(void *userData)
 
 void lvDisplay_CreateTabBrightness(void)
 {
-
   DisplayTft *tftDisplay = (DisplayTft *)gDisplay;
-  
+
   /* create display tab */
   lv_obj_t *tab = lv_tabview_add_tab(lvDisplay.tabview, "t");
 
@@ -99,9 +97,8 @@ void lvDisplay_CreateTabBrightness(void)
   lv_obj_set_style_local_value_ofs_x(lvDisplay.sliderBrightness, LV_SWITCH_PART_BG, LV_STATE_DEFAULT, -20);
 }
 
-void lvDisplay_CreateTabTimeout(void) 
+void lvDisplay_CreateTabTimeout(void)
 {
-
   DisplayTft *tftDisplay = (DisplayTft *)gDisplay;
 
   /* create display tab */
@@ -115,7 +112,7 @@ void lvDisplay_CreateTabTimeout(void)
   lv_obj_set_style_local_radius(cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
 
   /* ===== Timeout UI ===== */
-  
+
   /* Label */
   lvDisplay.labelTimeout = lv_label_create(cont, NULL);
   lv_obj_align(lvDisplay.labelTimeout, NULL, LV_ALIGN_CENTER, 0, 0);
