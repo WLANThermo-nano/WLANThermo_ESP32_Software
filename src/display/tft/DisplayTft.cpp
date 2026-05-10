@@ -122,7 +122,7 @@ boolean DisplayTft::initDisplay()
 
   if (this->disabled)
   {
-    Serial.printf("DisplayTft::init: display disabled\n");
+    Log.notice("DisplayTft::init: display disabled" CR);
     return true;
   }
 
