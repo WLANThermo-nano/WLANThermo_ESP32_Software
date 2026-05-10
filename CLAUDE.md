@@ -74,6 +74,19 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
   - `Display_direction_title.png` → Richtungs-Buttons (90°/270°)
 - Bei Nextion-Editor-Update: Anchor-Bilder aus CI `debug_screen*.png`-Artefakten neu messen und Offsets in `nextion.py` anpassen → [Issue #202](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/202)
 
+**Flutter App (Android/iOS):**
+```bash
+cd mobile_flutter/wlanthermo_flutter_app
+flutter pub get
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+flutter build apk --debug    # Debug-APK
+flutter build apk --release  # Release-APK (key.properties + keystore erforderlich)
+```
+
+> **Voraussetzungen:** Java 17 (Temurin) via `brew install --cask temurin@17`. Flutter 3.24.x (stable).  
+> **macOS-Duplikat-Verzeichnisse:** Bei `drawable-hdpi 2` o.ä. im `res/`-Ordner → `find android/app/src/main/res -maxdepth 1 -name "* 2" -type d -exec rm -rf {} +`. Diese entstehen durch macOS-Kopiervorgänge und sind untracked.  
+> **Gradle-Plugin-Stil:** `settings.gradle` verwendet den deklarativen `plugins {}`-Block (AGP + Kotlin dort versioniert, kein `buildscript {}`-Block mehr in `build.gradle`). `app/build.gradle` nutzt `id "org.jetbrains.kotlin.android"` (vollständige Plugin-ID).
+
 ## Architecture
 
 **Firmware entry:** `src/main.cpp` creates two FreeRTOS tasks pinned to separate cores:
