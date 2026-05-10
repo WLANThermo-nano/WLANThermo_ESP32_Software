@@ -169,6 +169,12 @@ Power Save auf Kernel 2.x gelöst via Custom-Framework `2.0.17-pm-enable`.
 LVGL 7 → 9: gesamtes `src/display/tft/` neu. Sinnvoll mit Phase 2 gekoppelt. → [Issue #205](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/205)  
 Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-APIs → Komplettneuschreibung. Externe Abhängigkeit: `tuniii/lv_lib_qrcode` auf v9-Kompatibilität prüfen.
 
+### Feature-Ideen / ausstehende Branches (nicht in next)
+
+| Branch | Konzept | Hinweis |
+|--------|---------|---------|
+| `GenericSensorSupport` | BLE-Sensoren mit beliebigen Einheiten (Luftfeuchtigkeit, CO₂ etc.): `currentUnitString` + `getUnitString()` in `TemperatureBase`, `sensors[]`/`units[]` statt `temperatures[]` in `BleDevice`, optionales `unit`-Feld im API-JSON | Draft von 2020, nie fertiggestellt. Rename `getTemperatureValue` → `getSensorValue` würde B52–B60-BLE-Fixes berühren — Neuimplementierung gegen aktuellen Code nötig. Branch absichtlich behalten als Referenz. |
+
 ---
 
 ## Known Issues (pending fixes)
