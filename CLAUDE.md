@@ -221,6 +221,7 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 | Dep | Aktuell | Ziel | Hinweis |
 |-----|---------|------|---------|
 | **ESPRandom** | 1.4.1 | neueste | Kein neueres Release im Registry; Patch in `extra_script.py` bleibt |
+| **asyncHTTPrequest** | 1.2.1 | `AsyncHTTPRequest_Generic` (khoih-prog) | Inkompatibel mit `ESP32Async/AsyncTCP@^3.4.10`; Ersatz-Lib unterstützt neuen Async-Stack explizit. Betrifft `Cloud.cpp/.h` + `Connect.cpp/.h` — sauberer Neu-Commit nötig (alter Branch `http-request` hatte Debug-Prints und war gegen Ur-Codebase). **Design-Referenz:** Branch `UrlHandling` (gelöscht 2026-05-10, Commit `bc42385`) enthielt sinnvolle Refaktorierung: `ServerData`-Array → `Url`-Enum + `getUrl()`-Methode, `kUrl`-NVS-Key für user-konfigurierbare Note/Cloud-URLs, `devUrlEnabled`-Flag. Code war ArduinoJson v5 — beim Cloud-Neuschreibung als Vorlage nutzen. |
 | **axios** (Frontend) | 0.21.1 | 1.x | Besseres Error-Handling |
 | **core-js** (Frontend) | ^3.6.5 | neueste | Polyfills, abwärtskompatibel |
 | **sass / sass-loader** (Frontend) | 1.26 / 9.x | neueste 1.x / 10.x | Abwärtskompatibel |
