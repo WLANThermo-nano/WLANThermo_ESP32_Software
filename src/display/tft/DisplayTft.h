@@ -47,6 +47,7 @@ public:
 private:
   boolean initDisplay();
   boolean isCalibrated();
+  void setCalibration();
   static void task(void *parameter);
   void applyBrightness(uint8_t brightness);
   void setTargetBrightness(uint8_t brightness);

@@ -132,6 +132,10 @@ boolean DisplayTft::initDisplay()
   {
     calibrate();
   }
+  else
+  {
+    setCalibration();
+  }
 
   lv_disp_buf_init(&lvDispBuffer, lvBuffer, NULL, LV_HOR_RES_MAX * 10);
 
@@ -205,6 +209,22 @@ void DisplayTft::calibrate()
   prefs.begin("TFT", false);
   touchCalibrationSize = prefs.putBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
   prefs.end();
+}
+
+void DisplayTft::setCalibration()
+{
+  Preferences prefs;
+  uint16_t touchCalibration[TFT_TOUCH_CALIBRATION_ARRAY_SIZE];
+
+  prefs.begin("TFT", true);
+  size_t size = prefs.getBytes("Touch", touchCalibration, sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE);
+  prefs.end();
+
+  if (size == sizeof(uint16_t) * TFT_TOUCH_CALIBRATION_ARRAY_SIZE)
+  {
+    tft.setTouch(touchCalibration);
+    Log.notice("DisplayTft: touch calibration applied from NVS" CR);
+  }
 }
 
 void DisplayTft::setTimeout(uint32_t newTimeout)
