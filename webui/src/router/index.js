@@ -8,6 +8,7 @@ import About from '../components/About'
 import IoT from '../components/IoT'
 import PushNotification from '../components/PushNotification'
 const Scan = require(process.env.VUE_APP_SCAN_COMPONENT).default;
+const Diagnosis = require(process.env.VUE_APP_DIAGNOSIS_COMPONENT).default;
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -16,6 +17,7 @@ const routes = [
   { path: '/bluetooth', name: 'bluetooth', component: Bluetooth },
   { path: '/pitmaster', name: 'pitmaster', component: Pitmaster },
   { path: '/about', name: 'about', component: About },
+  { path: '/diagnosis', name: 'diagnosis', component: Diagnosis },
   { path: '/iot', name: 'iot', component: IoT },
   { path: '/notification', name: 'notification', component: PushNotification },
   { path: '/scan', name: 'scan', component: Scan }

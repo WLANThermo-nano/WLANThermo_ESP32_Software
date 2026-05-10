@@ -1,6 +1,10 @@
 ## 
 The project is develop using nodejs version _v12.15.0_ and yarn version _1.22.0_
 
+```
+nvm use 12.15.0
+```
+
 ## Project setup
 ```
 yarn install
