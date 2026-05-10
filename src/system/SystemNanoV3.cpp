@@ -25,6 +25,7 @@
 #include "temperature/TemperatureMax11615.h"
 #include "display/DisplayOled.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // PITMASTER
 #define PITMASTER0IO1 25u   // Fan Pin
@@ -93,8 +94,11 @@ void SystemNanoVx::hwInit()
 void SystemNanoVx::init()
 {
   deviceName = "nano";
+  deviceID = DeviceId::get();
   hardwareVersion = 3u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // initialize temperatures
   this->wireLock();
@@ -127,7 +131,10 @@ void SystemNanoVx::init()
   profile[pitmasterProfileCount++] = new PitmasterProfile{"SSR SousVide", 0, 0, 104, 0.2, 0, 0, 100, 100};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"BLOWER50", 1, 1, 7.0, 0.01, 200, 25, 100, 80, 25, 75, 0, 1};
   profile[pitmasterProfileCount++] = new PitmasterProfile{"Servo MG995", 2, 2, 104, 0.2, 0, 0, 100, 100, 25, 75};
-  profile[pitmasterProfileCount++] = new PitmasterProfile{"Custom", 3, 1, 7.0, 0.2, 0, 0, 100, 100, 0, 100};
+  profile[pitmasterProfileCount++] = new PitmasterProfile{"Custom", 3, 3, 7.0, 0.2, 0, 0, 100, 100, 0, 100};
+
+  // Add Damper support
+  damperSupport = true;
 
   // default profiles and temperatures, will be overwritten when config exists
   pitmasters[0u]->assignProfile(profile[0]);

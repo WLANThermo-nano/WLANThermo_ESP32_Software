@@ -21,6 +21,7 @@
 #include <Update.h>
 #include <Preferences.h>
 #include <rom/rtc.h>
+#include "esp_timer.h"
 #if defined HW_MINI_V1 || defined HW_MINI_V2 
 #include "ESPNexUpload.h"
 #endif
@@ -184,10 +185,16 @@ void RecoveryMode::run()
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
+  webServer->on("/cleanpush", HTTP_GET, [](AsyncWebServerRequest *request) {
+    RMPRINTLN("GET /cleanpush");
+    Settings::remove("kPush");
+    request->send(200, TEXTPLAIN, TEXTTRUE);
+  });
+
   webServer->on("/export", HTTP_GET, [](AsyncWebServerRequest *request) {
     RMPRINTLN("GET /export");
     String exportSettings = Settings::exportFile();
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/text", (uint8_t *)exportSettings.c_str(), exportSettings.length());
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", exportSettings);
     response->addHeader("Content-Disposition", "attachment; filename=settings.txt");
     response->addHeader("Connection", "close");
     request->send(response);
@@ -224,7 +231,20 @@ void RecoveryMode::run()
           nexUpload = NULL;
         }
 
-        request->send(200, TEXTPLAIN, TEXTTRUE); },
+        request->send(200, TEXTPLAIN, TEXTTRUE);
+        if (uploadFileType == UploadFileType::Firmware || uploadFileType == UploadFileType::SPIFFS)
+        {
+          // esp_timer statt delay() + WiFi.disconnect(): der async_tcp-Task muss
+          // die "200 OK"-Response noch senden können bevor wir neu starten.
+          // delay() würde async_tcp blockieren; WiFi.disconnect() würde die
+          // TCP-Verbindung vor dem Flush killen. Timer läuft außerhalb async_tcp.
+          esp_timer_handle_t timer;
+          esp_timer_create_args_t args = {};
+          args.callback = [](void *) { ESP.restart(); };
+          args.name = "ota_rst";
+          if (esp_timer_create(&args, &timer) == ESP_OK)
+            esp_timer_start_once(timer, 2000000);
+        } },
       [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
         if (!index)
           uploadFileType = getFileType(filename);
@@ -232,18 +252,38 @@ void RecoveryMode::run()
         switch (uploadFileType)
         {
         case UploadFileType::Firmware:
-          if (!index)
-            Update.begin(uploadFileSize);
-          Update.write(data, len);
-          if (final)
-            Update.end(true);
+          if (!index && !Update.begin(uploadFileSize))
+          {
+            RMPRINTF("Update.begin failed: %s\n", Update.errorString());
+            uploadFileType = UploadFileType::None;
+            break;
+          }
+          if (!Update.write(data, len))
+          {
+            RMPRINTF("Update.write failed: %s\n", Update.errorString());
+            Update.abort();
+            uploadFileType = UploadFileType::None;
+            break;
+          }
+          if (final && !Update.end(true))
+            RMPRINTF("Update.end failed: %s\n", Update.errorString());
           break;
         case UploadFileType::SPIFFS:
-          if (!index)
-            Update.begin(uploadFileSize, U_SPIFFS);
-          Update.write(data, len);
-          if (final)
-            Update.end(true);
+          if (!index && !Update.begin(uploadFileSize, U_SPIFFS))
+          {
+            RMPRINTF("Update.begin (SPIFFS) failed: %s\n", Update.errorString());
+            uploadFileType = UploadFileType::None;
+            break;
+          }
+          if (!Update.write(data, len))
+          {
+            RMPRINTF("Update.write (SPIFFS) failed: %s\n", Update.errorString());
+            Update.abort();
+            uploadFileType = UploadFileType::None;
+            break;
+          }
+          if (final && !Update.end(true))
+            RMPRINTF("Update.end (SPIFFS) failed: %s\n", Update.errorString());
           break;
 #if defined HW_MINI_V1 || defined HW_MINI_V2 
         case UploadFileType::Nextion:

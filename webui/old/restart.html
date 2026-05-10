@@ -74,23 +74,30 @@
 		document.getElementById('cover').classList.add("cover_active");
 		document.getElementById('spinner').classList.add("spinner");
 
-		const xhr = new XMLHttpRequest();
-		xhr.open("GET", "/ping");
-		xhr.timeout = 1000; // 1s timeout
+		var offline = false;
 
-		xhr.onload = function () {
-			if (xhr.readyState === xhr.DONE) {
-				if (xhr.status === 200) {
+		function ping() {
+			var xhr = new XMLHttpRequest();
+			xhr.timeout = 1500;
+			xhr.onload = function () {
+				if (offline) {
 					window.location.href = "/";
+				} else {
+					setTimeout(ping, 500);
 				}
-			}
-		};
-
-		xhr.ontimeout = function (e) {
+			};
+			xhr.ontimeout = function () {
+				offline = true;
+				setTimeout(ping, 1000);
+			};
+			xhr.onerror = function () {
+				offline = true;
+				setTimeout(ping, 1000);
+			};
 			xhr.open("GET", "/ping");
 			xhr.send(null);
-		};
+		}
 
-		xhr.send(null);
+		ping();
 	</script>
 </body>

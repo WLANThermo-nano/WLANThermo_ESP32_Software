@@ -43,6 +43,8 @@ size_t LogRingBuffer::write(uint8_t character)
     bufferIndex = 0u;
     isFull = true;
   }
+
+  return 1u;
 }
 
 String LogRingBuffer::get()

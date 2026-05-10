@@ -24,6 +24,7 @@
 #include "lvDisplay.h"
 #include "lvTemperature.h"
 #include "lvUpdate.h"
+#include "lvPitmaster.h"
 
 static lvScreenType lvScreen_CurrentScreen = lvScreenType::None;
 static lvScreenType lvScreen_RequestedScreen = lvScreenType::None;
@@ -36,7 +37,9 @@ static lvScreenFuncType lvScreen_Functions[] = {
     {lvScreenType::Wifi, lvWifi_Create, lvWifi_Update, lvWifi_Delete},
     {lvScreenType::Display, lvDisplay_Create, lvDisplay_Update, lvDisplay_Delete},
     {lvScreenType::Temperature, lvTemperature_Create, lvTemperature_Update, lvTemperature_Delete},
-    {lvScreenType::Update, lvUpdate_Create, lvUpdate_Update, lvUpdate_Delete}};
+    {lvScreenType::Update, lvUpdate_Create, lvUpdate_Update, lvUpdate_Delete},
+    {lvScreenType::Pitmaster, lvPitmaster_Create, lvPitmaster_Update, lvPitmaster_Delete},
+    };
 
 void lvScreen_Open(lvScreenType screen, void *userData)
 {

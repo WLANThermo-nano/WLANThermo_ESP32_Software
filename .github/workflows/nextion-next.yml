@@ -1,0 +1,30 @@
+name: Nextion build (next branch – dev only)
+
+on:
+  pull_request:
+    branches:
+      - next
+  push:
+    branches:
+      - next
+
+jobs:
+  build:
+
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build nextion
+      shell: pwsh
+      run: |
+        .\nextion\build.ps1
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: sikuli_debug_screenshot
+        path: ${{ runner.temp }}/debug_screen*.png
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nextion_artifacts_next
+        path: ./nextion/artifacts

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WLANThermo — Component Examples (Claude Design Import)</title>
+<link rel="stylesheet" href="design-system.css">
+<style>
+  /* Minimal zusätzliche Stile für diese Seite */
+  body { padding: 1rem; }
+  .example-section { margin-bottom: 3rem; }
+  .example-title { color: #00adb5; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-family: monospace; }
+  .example-box { border: 1px solid #474a4e; padding: 1rem; border-radius: 4px; }
+
+  /* Pure CSS Grid Emulation */
+  .pure-g { display: flex; flex-wrap: wrap; }
+  .pure-u-1 { width: 100%; }
+  .pure-u-1-1 { width: 100%; }
+  .pure-u-1-2 { width: 50%; }
+  .pure-u-1-4 { width: 25%; }
+
+  /* Buttons (vereinfacht ohne Pure CSS Lib) */
+  .pure-button {
+    display: inline-block; padding: 0.5em 1em;
+    border: none; border-radius: 2px; cursor: pointer;
+    font-size: 1rem; font-family: inherit; margin-right: 0.5rem;
+  }
+  .pure-button-primary { background: var(--color-primary); color: #fff; }
+  .pure-button-error { background: var(--color-error); color: #fff; }
+  .pure-button:not(.pure-button-primary):not(.pure-button-error) { background: #666; color: #fff; }
+  .pure-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* icomoon-ähnliche Icon-Placeholder für Demonstration */
+  .icon-demo { display: inline-block; width: 24px; height: 24px; background: #00adb5; border-radius: 50%; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- ====================================================
+     WLANTHERMO DESIGN SYSTEM — COMPONENT EXAMPLES
+     Für Claude Design Import
+     ==================================================== -->
+
+<div style="margin-bottom: 2rem;">
+  <h1 style="color: var(--color-primary); font-size: 1.5rem;">WLANThermo Web UI — Komponenten-Referenz</h1>
+  <p style="color: var(--color-text-help); margin-top: 0.5rem;">Dark Theme · Vue 2 SPA · Embedded auf ESP32</p>
+</div>
+
+<!-- ======================== -->
+<!-- 1. LAYOUT               -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">1. App-Layout-Gerüst</div>
+  <div class="example-box">
+    <div style="display: flex; height: 200px; border: 1px solid #474a4e;">
+      <!-- Nav -->
+      <div style="width: 200px; background: var(--color-bg-nav); padding: 1rem; flex-shrink: 0;">
+        <div style="color: var(--color-primary); font-size: 0.8rem; margin-bottom: 0.5rem;">WLANThermo Logo</div>
+        <div style="color: #fff; font-size: 0.9rem; margin-bottom: 1rem; text-align: right;">v1.2.3</div>
+        <div style="background: #fff; color: #222; padding: 0.4em 0.8em; border-radius: 2px; margin-bottom: 0.25rem;">🏠 Home</div>
+        <div style="color: #ccc; padding: 0.4em 0.8em; margin-bottom: 0.25rem; cursor: pointer; border-radius: 2px;">📶 WLAN</div>
+        <div style="color: #ccc; padding: 0.4em 0.8em; cursor: pointer; border-radius: 2px;">⚙️ System</div>
+      </div>
+      <!-- Main -->
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <!-- Header -->
+        <div style="background: var(--color-bg-nav); color: #ccc; height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; font-size: 1.2em;">
+          <span>MiniV3</span>
+          <span style="display:flex;gap:0.5rem;color:var(--color-primary)">📶 🔋</span>
+        </div>
+        <!-- Content -->
+        <div style="padding: 1rem; flex: 1;">
+          <div style="color: var(--color-text-help); font-size: 0.8rem;">&lt;router-view&gt; — Seiten-Inhalt hier</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 2. TEMPERATUR-KACHELN   -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">2. Temperaturkanal-Kacheln (Home-Screen)</div>
+  <div class="example-box">
+    <div class="pure-g">
+      <!-- Normal -->
+      <div style="width: 220px; padding: 5px;">
+        <div class="info-box" style="border-color: #FF9B69">
+          <div class="title-row">
+            <div class="name">Fleisch</div>
+            <div class="number">#1</div>
+          </div>
+          <div class="body-row">
+            <div class="temperature-range">
+              <div>↑ 90°</div>
+              <div>↓ 60°</div>
+            </div>
+            <div class="temperature">72.3°</div>
+          </div>
+        </div>
+      </div>
+      <!-- Zu heiß -->
+      <div style="width: 220px; padding: 5px;">
+        <div class="info-box" style="border-color: #00B0F0">
+          <div class="title-row">
+            <div class="name">Grill</div>
+            <div class="number">#2</div>
+          </div>
+          <div class="body-row">
+            <div class="temperature-range">
+              <div>↑ 200°</div>
+              <div>↓ 180°</div>
+            </div>
+            <div class="temperature"><span class="too-hot">215°</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Zu kalt -->
+      <div style="width: 220px; padding: 5px;">
+        <div class="info-box" style="border-color: #5082BE">
+          <div class="title-row">
+            <div class="name">Räuchern</div>
+            <div class="number">#3</div>
+          </div>
+          <div class="body-row">
+            <div class="temperature-range">
+              <div>↑ 120°</div>
+              <div>↓ 80°</div>
+            </div>
+            <div class="temperature"><span class="too-cold">65°</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- OFF -->
+      <div style="width: 220px; padding: 5px;">
+        <div class="info-box" style="border-color: #808080">
+          <div class="title-row">
+            <div class="name">Kanal 4</div>
+            <div class="number">#4</div>
+          </div>
+          <div class="body-row">
+            <div class="temperature-range">
+              <div>↑ 100°</div>
+              <div>↓ 20°</div>
+            </div>
+            <div class="temperature">OFF</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 3. APP BAR              -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">3. App-Bar (Zurück / Speichern)</div>
+  <div class="example-box">
+    <div class="app-bar-actions" style="position: relative; width: 100%;">
+      <div class="button-container">← Zurück</div>
+      <div class="button-container">Speichern →</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 4. CONFIG FORM          -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">4. Config-Form (Formular-Screen)</div>
+  <div class="example-box" style="max-width: 500px;">
+    <div class="config-form-container">
+      <div class="name">System-Einstellungen <span class="icon-question" style="float:right;cursor:pointer;font-size:0.7em">?</span></div>
+      <div class="config-form">
+        <form>
+          <!-- Text Input -->
+          <div class="form-group">
+            <input type="text" value="MiniV3" required>
+            <label class="control-label">Hostname</label>
+            <i class="bar"></i>
+          </div>
+          <!-- Select -->
+          <div class="form-group">
+            <select>
+              <option>Deutsch</option>
+              <option>English</option>
+            </select>
+            <label class="control-label">Sprache</label>
+            <i class="bar"></i>
+          </div>
+          <!-- Checkbox -->
+          <div class="form-checkbox">
+            <label class="checkbox">
+              <input type="checkbox" checked> Auto-Update suchen
+            </label>
+          </div>
+        </form>
+      </div>
+      <!-- Section 2 -->
+      <div class="form-section-name">Weitere Einstellungen</div>
+      <div class="config-form">
+        <div style="margin-top: 0.5rem;">
+          <button class="pure-button pure-button-primary" type="button">Primäre Aktion</button>
+          <button class="pure-button" type="button">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 5. FORM STATES          -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">5. Formular-Zustände</div>
+  <div class="example-box" style="max-width: 500px;">
+    <!-- Normal (kein Wert) -->
+    <div class="form-group">
+      <input type="text" required>
+      <label class="control-label">Leeres Feld</label>
+      <i class="bar"></i>
+    </div>
+    <!-- Hat Wert -->
+    <div class="form-group">
+      <input type="text" value="192.168.178.1" required>
+      <label class="control-label">Feld mit Wert</label>
+      <i class="bar"></i>
+    </div>
+    <!-- Error -->
+    <div class="form-group error">
+      <input type="number" value="999" required>
+      <label class="control-label">Fehler-State</label>
+      <i class="bar"></i>
+      <div class="error-prompt">Wert muss zwischen -999.9 und 999.9 liegen</div>
+    </div>
+    <!-- Help Text -->
+    <div class="form-group">
+      <input type="text" value="MiniV3" required>
+      <label class="control-label">Mit Hilfstext</label>
+      <i class="bar"></i>
+      <span class="form-help">Maximal 13 Zeichen, nur Buchstaben und Zahlen</span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 6. BUTTONS              -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">6. Buttons</div>
+  <div class="example-box">
+    <button class="pure-button pure-button-primary">Primär / Speichern</button>
+    <button class="pure-button pure-button-error">🗑 Löschen</button>
+    <button class="pure-button">Standard / Abbrechen</button>
+    <button class="pure-button pure-button-primary" disabled>Deaktiviert</button>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 7. MODAL DIALOG         -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">7. Modal-Dialog (Hilfe)</div>
+  <div class="example-box">
+    <div class="dialog" style="position: relative; left: auto; top: auto; transform: none; max-width: 400px;">
+      <div class="title">
+        Kanal-Einstellungen
+        <span class="close-btn">×</span>
+      </div>
+      <div class="body">
+        <p>Hier kannst du den Temperaturkanal konfigurieren.</p>
+        <p style="margin-top: 0.7em">
+          Weitere Infos:
+          <a href="#" style="color: var(--color-link)">Wiki - Temperaturmessung</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 8. LOADING SPINNER      -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">8. Loading-Spinner</div>
+  <div class="example-box" style="display: flex; align-items: center; gap: 2rem;">
+    <div class="spinner" style="position: relative; left: auto; top: auto;"></div>
+    <span style="color: var(--color-text-help)">Angezeigt während API-Calls, über Overlay-Maske</span>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 9. LISTE ITEMS          -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">9. Expandierbare Listen-Items (WiFi / BLE / Scan)</div>
+  <div class="example-box" style="max-width: 400px;">
+    <!-- Aktuelles Netz -->
+    <div class="wifi-item current" style="margin-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="color: #fff; font-size: 1.5em;">📶</div>
+        <div>
+          <div style="color: #fff;">MeinHeimNetz</div>
+          <div style="color: #b3b3b3; font-size: 0.8em;">D4:CA:6E:AB:CD:12</div>
+        </div>
+        <div style="margin-left: auto; color: #fff;">🔒</div>
+      </div>
+    </div>
+    <!-- Anderes Netz -->
+    <div class="wifi-item other" style="margin-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="color: #fff; font-size: 1.5em;">📶</div>
+        <div>
+          <div style="color: #fff;">Nachbars-WLAN</div>
+          <div style="color: #b3b3b3; font-size: 0.8em;">A0:B1:C2:D3:E4:F5</div>
+        </div>
+      </div>
+    </div>
+    <!-- Expandiertes Netz -->
+    <div class="wifi-item other expand" style="margin-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="color: #fff; font-size: 1.5em;">📶</div>
+        <div>
+          <div style="color: #fff;">Gast-WLAN (expanded)</div>
+        </div>
+      </div>
+      <div style="padding-top: 0.5rem;">
+        <div class="form-group">
+          <input type="password" required>
+          <label class="control-label">Passwort</label>
+          <i class="bar"></i>
+        </div>
+        <button class="pure-button">Abbrechen</button>
+        <button class="pure-button pure-button-primary">Verbinden</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- 10. COLOR PICKER        -->
+<!-- ======================== -->
+<div class="example-section">
+  <div class="example-title">10. Kanal-Farbwähler (Home Edit)</div>
+  <div class="example-box">
+    <div class="colors-container">
+      <div class="color-option" style="background:#FFFF00"></div>
+      <div class="color-option" style="background:#FFC002"></div>
+      <div class="color-option" style="background:#00FF00"></div>
+      <div class="color-option" style="background:#FFFFFF;border:1px solid #ccc"></div>
+      <div class="color-option" style="background:#FF1DC4"></div>
+      <div class="color-option" style="background:#E46C0A"></div>
+      <div class="color-option" style="background:#C3D69B"></div>
+      <div class="color-option" style="background:#0FE6F1"></div>
+      <div class="color-option" style="background:#0000FF"></div>
+      <div class="color-option" style="background:#03A923"></div>
+      <div class="color-option" style="background:#C84B32"></div>
+      <div class="color-option" style="background:#FF9B69"></div>
+      <div class="color-option" style="background:#5082BE"></div>
+      <div class="color-option" style="background:#FFB1D0"></div>
+      <div class="color-option" style="background:#A6EF03"></div>
+      <div class="color-option" style="background:#D42A6B"></div>
+      <div class="color-option" style="background:#FFDA8F"></div>
+      <div class="color-option" style="background:#00B0F0"></div>
+      <div class="color-option" style="background:#948A54"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

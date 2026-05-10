@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WLANThermo — Komponenten-Galerie</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #393e46; color: #fff; padding: 1rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 2rem; color: #00adb5; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 1rem; color: #eeeeee; border-bottom: 1px solid #474a4e; padding-bottom: 0.5rem; }
+  .demo-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+  .section { background: #474a4e; border-radius: 4px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .label { color: #b3b3b3; font-size: 0.75rem; margin-bottom: 0.5rem; font-family: monospace; }
+
+  /* Buttons */
+  .pure-button {
+    display: inline-block; padding: 0.5em 1em; border: none; border-radius: 2px;
+    cursor: pointer; font-size: 1rem; font-family: inherit; text-decoration: none;
+  }
+  .pure-button-primary { background: #00adb5; color: #fff; }
+  .pure-button-primary:hover { background: #009aa2; }
+  .pure-button-error { background: #f44336; color: #fff; }
+  .pure-button-error:hover { background: #d32f2f; }
+  .pure-button:not(.pure-button-primary):not(.pure-button-error) { background: #555; color: #fff; }
+  .pure-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Form Groups */
+  .form-group { position: relative; margin-top: 1.25rem; margin-bottom: 1.55rem; }
+  .form-group input, .form-group select {
+    display: block; width: 100%; background: none; border: none;
+    border-bottom: 1px solid #999; padding: 0.375rem 0.125rem;
+    font-size: 1rem; color: #fff; font-family: inherit;
+    outline: none; -webkit-appearance: none;
+  }
+  .form-group select option { background: #474a4e; }
+  .control-label {
+    position: absolute; top: 0.25rem; left: 0;
+    color: #b3b3b3; font-size: 1rem; font-weight: normal;
+    transition: all 0.28s ease; pointer-events: none;
+  }
+  .form-group input:focus ~ .control-label,
+  .form-group input:valid ~ .control-label,
+  .form-group select ~ .control-label {
+    font-size: 0.8rem; color: #808080; top: -0.5rem;
+  }
+  .form-group input:focus ~ .control-label,
+  .form-group select:focus ~ .control-label { color: #337ab7; }
+  .bar { position: relative; border-bottom: 1px solid #999; display: block; }
+  .bar::before {
+    content: ""; height: 2px; width: 0; left: 50%; bottom: -1px;
+    position: absolute; background: #337ab7;
+    transition: left 0.28s ease, width 0.28s ease;
+  }
+  .form-group input:focus ~ .bar::before,
+  .form-group select:focus ~ .bar::before { width: 100%; left: 0; }
+  .form-group.error .control-label { color: #f44336 !important; }
+  .form-group.error .bar { border-bottom-color: #f44336 !important; }
+  .error-prompt { color: #f44336; font-size: 0.8em; margin-top: 0.2em; }
+
+  /* Info Box (Kanal-Kachel) */
+  .info-box {
+    display: flex; flex-direction: column;
+    margin: 5px; padding: 10px; height: 70px;
+    color: #fff; background-color: #474a4e;
+    border-left: 10px solid; border-radius: 2px;
+    cursor: pointer;
+  }
+  .info-box:hover { background-color: #555; }
+  .info-box .title-row { display: flex; padding-bottom: 0.5em; }
+  .info-box .title-row .name { flex: 1; font-size: 0.9em; }
+  .info-box .title-row .number { flex: 0 0 auto; font-size: 0.9em; color: #b3b3b3; }
+  .info-box .body-row { display: flex; flex: 1; }
+  .info-box .temperature-range { flex: 1; font-size: 0.85em; color: #b3b3b3; }
+  .info-box .temperature { font-size: 2.2em; margin-top: 0.05em; }
+  .too-hot { color: red; font-weight: bold; }
+  .too-cold { color: #1874cd; font-weight: bold; }
+
+  /* Dialog */
+  .dialog-demo {
+    position: relative; background: #fff; color: #222;
+    max-width: 400px; border-radius: 2px; overflow: hidden;
+  }
+  .dialog-demo .title {
+    padding: 0.3em 0.5em; font-size: 1.5em;
+    background: #00adb5; color: #fff;
+    display: flex; justify-content: space-between;
+  }
+  .dialog-demo .body { padding: 0.7em 1em; }
+
+  /* WiFi Item */
+  .wifi-item {
+    display: flex; flex-direction: column;
+    padding: 0.6em; border-radius: 0.4em; cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .wifi-item.current { background: #337ab7; }
+  .wifi-item.other:hover { background: #393e46; }
+  .wifi-item.expand { background: #393e46; }
+  .wifi-item .info { display: flex; }
+  .wifi-item .icon-col { flex: 0 0 3em; margin-top: 0.3em; font-size: 1.5em; }
+  .wifi-item .body { flex: 1; display: flex; justify-content: space-between; line-height: 2.1em; }
+  .wifi-item .name { font-size: 1em; color: #fff; }
+  .wifi-item .address { font-size: 0.8em; color: #b3b3b3; }
+
+  /* Spinner */
+  @keyframes spinner_rotation { from {transform:rotate(0deg)} to {transform:rotate(359deg)} }
+  .spinner-demo {
+    width: 40px; height: 40px;
+    animation: spinner_rotation .6s infinite linear;
+    border-left: 4px solid rgba(0,174,239,.15);
+    border-right: 4px solid rgba(0,174,239,.15);
+    border-bottom: 4px solid rgba(0,174,239,.15);
+    border-top: 4px solid #00adb5;
+    border-radius: 100%;
+  }
+
+  /* Config Form */
+  .config-form { background: #474a4e; padding: 0.5rem 0.75rem 1rem; margin: 0.25rem; }
+  .config-name { font-size: 1.5em; font-weight: 600; color: #eeeeee; padding: 0.1em; margin-bottom: 0.25rem; }
+  .form-section-name { color: #fff; font-size: 1.1em; padding: 0.3em; margin-top: 0.3em; }
+
+  /* Checkbox */
+  .form-checkbox { margin-top: 1.25rem; margin-bottom: 1rem; color: #fff; }
+  .pure-checkbox input { margin-right: 0.5em; }
+
+  /* App Bar */
+  .app-bar {
+    background: #222831; padding: 0.2em; font-size: 1.2em;
+    display: flex; justify-content: space-between;
+    height: 1.7em; margin-bottom: 1.5rem;
+  }
+  .btn-container { padding: 0.2em; color: #00adb5; cursor: pointer; }
+  .btn-container:hover { color: #009aa2; }
+</style>
+</head>
+<body>
+<h1>WLANThermo Design System — Komponenten-Galerie</h1>
+
+<!-- BUTTONS -->
+<h2>Buttons</h2>
+<div class="section">
+  <div class="demo-row">
+    <div>
+      <div class="label">primary</div>
+      <button class="pure-button pure-button-primary">Speichern →</button>
+    </div>
+    <div>
+      <div class="label">error</div>
+      <button class="pure-button pure-button-error">🗑 Löschen</button>
+    </div>
+    <div>
+      <div class="label">default</div>
+      <button class="pure-button">Abbrechen</button>
+    </div>
+    <div>
+      <div class="label">primary disabled</div>
+      <button class="pure-button pure-button-primary" disabled>Gesperrt</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARE -->
+<h2>Formular-Felder</h2>
+<div class="section" style="max-width: 500px;">
+  <div class="form-group">
+    <input type="text" required>
+    <label class="control-label">Hostname</label>
+    <i class="bar"></i>
+  </div>
+  <div class="form-group">
+    <input type="text" value="MiniV3" required>
+    <label class="control-label">AP-Name (mit Wert)</label>
+    <i class="bar"></i>
+  </div>
+  <div class="form-group">
+    <select>
+      <option>Deutsch</option>
+      <option>English</option>
+    </select>
+    <label class="control-label">Sprache</label>
+    <i class="bar"></i>
+  </div>
+  <div class="form-group error">
+    <input type="number" value="150" required>
+    <label class="control-label">Max-Temperatur (Fehler)</label>
+    <i class="bar"></i>
+    <div class="error-prompt">Wert muss zwischen -999.9 und 999.9 liegen</div>
+  </div>
+  <div class="form-checkbox">
+    <label class="pure-checkbox">
+      <input type="checkbox" checked> Auto-Update
+    </label>
+  </div>
+</div>
+
+<!-- APP BAR -->
+<h2>App-Bar (Navigation)</h2>
+<div class="section">
+  <div class="app-bar">
+    <div class="btn-container">← Zurück</div>
+    <div class="btn-container">Speichern →</div>
+  </div>
+  <div class="label">Nur Zurück (z.B. WLAN):</div>
+  <div class="app-bar" style="margin-top: 0.5rem;">
+    <div class="btn-container">← Zurück</div>
+  </div>
+</div>
+
+<!-- KANAL-KACHELN -->
+<h2>Temperaturkanal-Kacheln</h2>
+<div class="section">
+  <div style="display: flex; flex-wrap: wrap;">
+    <div style="width: 220px;">
+      <div class="label">Normal</div>
+      <div class="info-box" style="border-color: #FF9B69">
+        <div class="title-row">
+          <div class="name">Fleisch</div>
+          <div class="number">#1</div>
+        </div>
+        <div class="body-row">
+          <div class="temperature-range">
+            <div>↑ 90°</div>
+            <div>↓ 60°</div>
+          </div>
+          <div class="temperature">72.3°</div>
+        </div>
+      </div>
+    </div>
+    <div style="width: 220px;">
+      <div class="label">Zu heiß</div>
+      <div class="info-box" style="border-color: #00B0F0">
+        <div class="title-row">
+          <div class="name">Grill</div>
+          <div class="number">#2</div>
+        </div>
+        <div class="body-row">
+          <div class="temperature-range">
+            <div>↑ 200°</div>
+            <div>↓ 180°</div>
+          </div>
+          <div class="temperature"><span class="too-hot">215°</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="width: 220px;">
+      <div class="label">Zu kalt</div>
+      <div class="info-box" style="border-color: #5082BE">
+        <div class="title-row">
+          <div class="name">Räuchern</div>
+          <div class="number">#3</div>
+        </div>
+        <div class="body-row">
+          <div class="temperature-range">
+            <div>↑ 120°</div>
+            <div>↓ 80°</div>
+          </div>
+          <div class="temperature"><span class="too-cold">65°</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="width: 220px;">
+      <div class="label">Sensor aus (OFF)</div>
+      <div class="info-box" style="border-color: #808080">
+        <div class="title-row">
+          <div class="name">Kanal 4</div>
+          <div class="number">#4</div>
+        </div>
+        <div class="body-row">
+          <div class="temperature-range">
+            <div>↑ 100°</div>
+            <div>↓ 20°</div>
+          </div>
+          <div class="temperature">OFF</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIALOG -->
+<h2>Modal-Dialog</h2>
+<div class="section">
+  <div class="dialog-demo">
+    <div class="title">
+      Kanal-Einstellungen
+      <span style="cursor:pointer;font-size:1.5em;line-height:0.9em;">×</span>
+    </div>
+    <div class="body">
+      <p>Konfiguriere den Temperaturkanal mit Name, Grenzwerten und Sensor-Typ.</p>
+      <p style="margin-top:0.5em">Weitere Infos: <a href="#" style="color:#3366ff">Wiki - Temperaturmessung</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- WIFI LISTE -->
+<h2>WiFi-Liste</h2>
+<div class="section" style="max-width: 400px;">
+  <div class="wifi-item current">
+    <div class="info">
+      <div class="icon-col">📶</div>
+      <div class="body">
+        <div>
+          <div class="name">MeinHeimNetz</div>
+          <div class="address">D4:CA:6E:AB:CD:12</div>
+        </div>
+        <div>🔒</div>
+      </div>
+    </div>
+  </div>
+  <div class="wifi-item other">
+    <div class="info">
+      <div class="icon-col">📶</div>
+      <div class="body">
+        <div>
+          <div class="name">Nachbars-WLAN</div>
+          <div class="address">A0:B1:C2:D3:E4:F5</div>
+        </div>
+        <div>🔒</div>
+      </div>
+    </div>
+  </div>
+  <div class="wifi-item other expand">
+    <div class="info">
+      <div class="icon-col">📶</div>
+      <div class="body">
+        <div>
+          <div class="name">Gast-WLAN</div>
+          <div class="address">B2:C3:D4:E5:F6:A7</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-top:0.5em;">
+      <div class="form-group" style="margin-top:0.5rem;">
+        <input type="password" required>
+        <label class="control-label">Passwort</label>
+        <i class="bar"></i>
+      </div>
+      <button class="pure-button" style="margin-right:0.5rem">Abbrechen</button>
+      <button class="pure-button pure-button-primary">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG FORM -->
+<h2>Config-Form Struktur</h2>
+<div class="section">
+  <div class="config-name">System-Einstellungen <span style="float:right;font-size:0.7em;cursor:pointer">?</span></div>
+  <div class="config-form" style="margin: 0.25rem 0;">
+    <div class="form-group">
+      <input type="text" value="MiniV3" required>
+      <label class="control-label">Hostname</label>
+      <i class="bar"></i>
+    </div>
+    <div class="form-group">
+      <select>
+        <option>Deutsch</option>
+        <option>English</option>
+      </select>
+      <label class="control-label">Sprache</label>
+      <i class="bar"></i>
+    </div>
+    <div class="form-checkbox">
+      <label class="pure-checkbox"><input type="checkbox"> Auto-Update</label>
+    </div>
+  </div>
+  <div class="form-section-name">Display-Einstellungen</div>
+  <div class="config-form" style="margin: 0.25rem 0;">
+    <div style="margin-top: 0.5rem;">
+      <button class="pure-button pure-button-primary" style="margin-right:0.5rem">Display drehen</button>
+      <button class="pure-button pure-button-primary">Touch kalibrieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- SPINNER -->
+<h2>Loading-Spinner</h2>
+<div class="section" style="display:flex;align-items:center;gap:2rem;">
+  <div class="spinner-demo"></div>
+  <div style="color:#b3b3b3;font-size:0.9em">Wird über einem halbtransparenten Overlay angezeigt<br>während API-Calls laufen.</div>
+</div>
+
+</body>
+</html>

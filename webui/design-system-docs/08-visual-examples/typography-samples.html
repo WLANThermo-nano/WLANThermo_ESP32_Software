@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WLANThermo — Typografie</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #393e46; color: #fff; padding: 2rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 2rem; color: #00adb5; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 1rem; color: #eeeeee; border-bottom: 1px solid #474a4e; padding-bottom: 0.5rem; }
+
+  .sample-row { display: flex; align-items: baseline; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1rem; background: #474a4e; border-radius: 4px; }
+  .sample-label { color: #b3b3b3; font-size: 0.75rem; width: 160px; flex-shrink: 0; font-family: monospace; }
+  .sample-text { flex: 1; }
+
+  .weight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .weight-item { background: #474a4e; padding: 1rem; border-radius: 4px; }
+  .weight-label { color: #b3b3b3; font-size: 0.75rem; margin-bottom: 0.5rem; font-family: monospace; }
+
+  .context-demo { background: #474a4e; border-radius: 4px; margin-bottom: 1rem; overflow: hidden; }
+  .context-header { background: #222831; padding: 0.75rem 1rem; font-size: 1.2em; color: #ccc; display: flex; justify-content: space-between; }
+  .context-body { padding: 1rem; }
+  .config-name { font-size: 1.5em; font-weight: 600; color: #eeeeee; padding: 0.1em; margin-bottom: 0.5rem; }
+  .section-name { font-size: 1.1em; color: #fff; padding: 0.3em 0; margin-top: 0.3em; }
+  .form-label { font-size: 0.8rem; color: #808080; }
+  .form-value { font-size: 1rem; color: #fff; border-bottom: 1px solid #999; padding-bottom: 0.3rem; margin-bottom: 1rem; }
+  .help-text { font-size: 0.8rem; color: #b3b3b3; }
+
+  .temp-demo { display: flex; gap: 2rem; align-items: flex-end; }
+  .temp-value { font-size: 2.2em; }
+  .temp-too-hot { color: red; font-weight: bold; }
+  .temp-too-cold { color: #1874cd; font-weight: bold; }
+  .temp-label { font-size: 0.8em; color: #b3b3b3; }
+</style>
+</head>
+<body>
+<h1>WLANThermo Design System — Typografie</h1>
+
+<h2>Schriftgrößen-Skala</h2>
+<div>
+  <div class="sample-row">
+    <div class="sample-label">xs — 0.75em</div>
+    <div class="sample-text" style="font-size: 0.75em">192.168.178.134 · MAC: A4:CF:12:45:67:89</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">sm — 0.8em</div>
+    <div class="sample-text" style="font-size: 0.8em; color: #b3b3b3">Hilfstext / Inaktives Label / Fehler-Prompt</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">sm-plus — 0.9em</div>
+    <div class="sample-text" style="font-size: 0.9em">v1.2.3 · Versionsanzeige</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">base — 1em</div>
+    <div class="sample-text" style="font-size: 1em">Standard-Fließtext, Formulareingaben, Netzwerknamen</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">md — 1.1em</div>
+    <div class="sample-text" style="font-size: 1.1em">Pitmaster 1 · Section-Name</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">lg — 1.2em</div>
+    <div class="sample-text" style="font-size: 1.2em">Verfügbare Netzwerke</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">xl — 1.5em</div>
+    <div class="sample-text" style="font-size: 1.5em; font-weight: 600">System-Einstellungen</div>
+  </div>
+  <div class="sample-row">
+    <div class="sample-label">2xl — 2.2em</div>
+    <div class="sample-text" style="font-size: 2.2em">23.5°C</div>
+  </div>
+</div>
+
+<h2>Font-Weights</h2>
+<div class="weight-grid">
+  <div class="weight-item">
+    <div class="weight-label">300 — Light</div>
+    <div style="font-weight: 300; font-size: 1rem">Adresse · Info-Text</div>
+  </div>
+  <div class="weight-item">
+    <div class="weight-label">400 — Regular</div>
+    <div style="font-weight: 400; font-size: 1rem">Standard-Text · Fließtext</div>
+  </div>
+  <div class="weight-item">
+    <div class="weight-label">600 — Semibold</div>
+    <div style="font-weight: 600; font-size: 1rem">Screen-Überschriften</div>
+  </div>
+  <div class="weight-item">
+    <div class="weight-label">700 — Bold</div>
+    <div style="font-weight: 700; font-size: 1rem">Alarm-Temperaturen</div>
+  </div>
+</div>
+
+<h2>Temperaturanzeige</h2>
+<div class="context-body" style="background: #474a4e; border-radius: 4px; padding: 1rem;">
+  <div class="temp-demo">
+    <div>
+      <div class="temp-label">Normal</div>
+      <div class="temp-value">23.5°C</div>
+    </div>
+    <div>
+      <div class="temp-label">Zu heiß (>Max)</div>
+      <div class="temp-value temp-too-hot">92.0°C</div>
+    </div>
+    <div>
+      <div class="temp-label">Zu kalt (&lt;Min)</div>
+      <div class="temp-value temp-too-cold">5.2°C</div>
+    </div>
+    <div>
+      <div class="temp-label">Sensor aus</div>
+      <div class="temp-value">OFF</div>
+    </div>
+  </div>
+</div>
+
+<h2>UI-Kontext Demo</h2>
+<div class="context-demo">
+  <div class="context-header">
+    <span>MiniV3 <span style="font-size:0.8em;color:#b3b3b3">· Hostname</span></span>
+    <span style="color:#00adb5">● Cloud</span>
+  </div>
+  <div class="context-body">
+    <div class="config-name">System-Einstellungen <span style="float:right;font-size:0.7em;cursor:pointer">?</span></div>
+    <div class="section-name">Allgemein</div>
+    <div class="form-label">Hostname</div>
+    <div class="form-value">MiniV3</div>
+    <div class="form-label">Sprache</div>
+    <div class="form-value">Deutsch</div>
+    <div class="help-text">Änderungen werden nach dem Speichern wirksam.</div>
+  </div>
+</div>
+
+<h2>Links</h2>
+<div style="background: #474a4e; padding: 1rem; border-radius: 4px;">
+  <p style="margin-bottom: 0.5rem">Normaler Text mit <a href="#" style="color: #fff; text-decoration: none;" onmouseover="this.style.color='#337ab7'" onmouseout="this.style.color='#fff'">Config-Form Link (weiß → Highlight)</a></p>
+  <p>Dialog mit <a href="#" style="color: #3366ff;">Wiki-Link (blau)</a></p>
+</div>
+
+<h2>i18n Demo (DE/EN)</h2>
+<div style="display:flex;gap:2rem;">
+  <div style="background: #222831; padding: 1rem; border-radius: 4px; flex: 1;">
+    <div style="color:#b3b3b3;font-size:0.8rem;margin-bottom:0.5rem">Deutsch</div>
+    <div>Zurück · Speichern · Abbrechen</div>
+    <div style="color:#b3b3b3;font-size:0.8rem;margin-top:0.5rem">System-Einstellungen · Pitmaster · Bluetooth</div>
+  </div>
+  <div style="background: #222831; padding: 1rem; border-radius: 4px; flex: 1;">
+    <div style="color:#b3b3b3;font-size:0.8rem;margin-bottom:0.5rem">English</div>
+    <div>Back · Save · Cancel</div>
+    <div style="color:#b3b3b3;font-size:0.8rem;margin-top:0.5rem">System Settings · Pitmaster · Bluetooth</div>
+  </div>
+</div>
+
+</body>
+</html>

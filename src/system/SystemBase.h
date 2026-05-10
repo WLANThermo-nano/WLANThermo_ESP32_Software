@@ -50,17 +50,26 @@ public:
   void update();
   void resetConfig();
   void saveConfig();
+  void processPendingSave();
   void loadConfig();
+  bool systemConfigSavePending = false;
+  bool otaConfigSavePending = false;
+  bool wlanConfigSavePending = false;
+  bool tempConfigSavePending = false;
+  bool notificationConfigSavePending = false;
+  bool pitmasterConfigSavePending = false;
   boolean isInitDone();
   Notification notification;
   Wlan wlan;
   SdCard *sdCard;
   void restart();
+  void restartDeferred(uint32_t delayMs = 2000);
   void wireLock();
   void wireRelease();
   void run();
 
   String getDeviceName();
+  String getDeviceID();
   String getCpuName();
   size_t getFlashSize();
   static String getSerialNumber();
@@ -88,6 +97,7 @@ protected:
   PitmasterProfile *profile[MAX_PITMASTERPROFILES];
   uint8_t pitmasterProfileCount;
   String deviceName;
+  String deviceID;
   String cpuName;
   static char serialNumber[13];
   String language;

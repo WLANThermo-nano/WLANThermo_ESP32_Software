@@ -94,13 +94,14 @@ void Battery::updatePowerPercentage()
   //Serial.println("Battery::updatePowerPercentage");
 
   // Calculate battery percentage
-  uint32_t percraw;
-  // linear
-  //percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
-  // polynom
-  float rVol = this->voltage/1000.0;
-  percraw = (1664.4 - 197.3*rVol)*rVol - 3408.0;
 
+  // Linear-Ansatz: float percraw = ((this->voltage - this->min) * 100) / (this->max - this->min);
+ 
+  // Polynom-Ansatz zur Berechnung der rohen Prozentzahl
+  float rVol = this->voltage/1000.0;
+  float percraw = (1688.8 - 200.0*rVol)*rVol - 3460.0;
+
+  // auf 0–100% begrenzen
   percraw = constrain(percraw, 0, 100);
 
   // Korrektur
@@ -125,9 +126,10 @@ void Battery::updatePowerPercentage()
     this->percentage = 100;
     break;
 
+  case PowerMode::Protection:
   case PowerMode::Battery:
     // Nach vollständiger Ladung 
-    if (this->setreference > 0)
+    if (this->setreference > 0 && this->voltage > 4000)
     {
       this->percentage = 100;
       if ((millis() - this->correction) > CORRECTIONTIME)
@@ -140,14 +142,19 @@ void Battery::updatePowerPercentage()
     }
     // Freier Betrieb
     else {
+      // Nach Systemstart ohne Filterung
       if (millis() < BATTERYSTARTUP)
       {
         this->percentage = percraw;
       }
       else 
       {
+      // Gleitender Mittelwert / Filter zum Ausgleich von schwankenden Messwerten
         int FF = 2;
-        this->percentage = ceil(((this->percentage * FF) + percraw) / (FF +1.0));
+        float newPerc = ((this->percentage * FF) + percraw) / (FF + 1.0);
+        
+        // Endwert wieder auf 0–100% begrenzen
+        this->percentage = constrain(newPerc, 0, 100);
       }
     }
     break;
@@ -257,21 +264,22 @@ void Battery::setReference()
 
 void Battery::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["batmax"]  = this->max;
   json["batmin"]  = this->min;
   json["batfull"] = this->setreference;
   json["batref"]  = this->refvoltage;
+  json["nobattery"]  = this->nobattery;
   Settings::write(kBattery, json);
 }
 
 void Battery::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kBattery, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kBattery, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("batmax"))
@@ -282,5 +290,7 @@ void Battery::loadConfig()
       this->setreference = json["batfull"];    
     if (json.containsKey("batref"))
       this->refvoltage = json["batref"];
+    if (json.containsKey("nobattery"))
+      this->nobattery = json["nobattery"];
   }
 }

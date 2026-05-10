@@ -19,7 +19,9 @@
 ****************************************************/
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
+#include "esp_wifi.h"
 #include "Wlan.h"
+#include "RecoveryMode.h"
 #include "Settings.h"
 #include "Constants.h"
 #include "Version.h"
@@ -30,8 +32,13 @@
 
 #define CONNECT_TIMEOUT 10u // 10s
 
-String Wlan::hostName = DEFAULT_HOSTNAME;
-String Wlan::accessPointName = DEFAULT_APNAME;
+char Wlan::hostName[WLAN_HOSTNAME_MAX_LEN] = DEFAULT_HOSTNAME;
+char Wlan::accessPointName[WLAN_APNAME_MAX_LEN] = DEFAULT_APNAME;
+bool Wlan::mdnsUpdatePending = false;
+bool Wlan::wifiModePsPending = false;
+bool Wlan::wlanSaveConfigPending = false;
+bool Wlan::recoveryPending = false;
+bool Wlan::newCredentialsPending = false;
 WlanCredentials Wlan::wlanCredentials[NUM_OF_WLAN_CREDENTIALS];
 WlanCredentials Wlan::newWlanCredentials;
 uint8_t Wlan::credentialIndex = 0u;
@@ -49,49 +56,60 @@ void Wlan::init()
 {
   loadConfig();
 
-  WiFi.setHostname(this->hostName.c_str());
+  WiFi.setHostname(this->hostName);
   WiFi.persistent(false);
 
-  WiFi.onEvent(onWifiConnect, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
-  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
-  WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::SYSTEM_EVENT_AP_STADISCONNECTED);
-
+  WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(onsoftAPDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
   IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
   WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(this->accessPointName.c_str(), APPASSWORD, 5);
+  WiFi.softAP(this->accessPointName, APPASSWORD, 5);
 
   WiFi.mode(WIFI_AP_STA);
-  Serial.printf("AP: %s\n", this->accessPointName.c_str());
-  Serial.printf("IP: %s\n", local_IP.toString().c_str());
+  Log.notice("AP: %s" CR, this->accessPointName);
+  Log.notice("IP: %s" CR, local_IP.toString().c_str());
   update();
 }
 
 void Wlan::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kWifi, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kWifi, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
-    uint8_t i = 0u;
-
     if (json.containsKey("host"))
-      hostName = json["host"].asString();
-    if (json.containsKey("ap"))
-      accessPointName = json["ap"].asString();
-
-    JsonArray &_wifi = json["wifi"];
-    for (JsonArray::iterator it = _wifi.begin(); (it != _wifi.end()) && (i < NUM_OF_WLAN_CREDENTIALS); ++it)
     {
-      if ((strlen(_wifi[i]["SSID"].asString()) >= WLAN_SSID_MAX_LENGTH) || (strlen(_wifi[i]["PASS"].asString()) >= WLAN_PASS_MAX_LENGTH))
+      const char *host = json["host"].as<const char*>();
+      if (host && strlen(host) < WLAN_HOSTNAME_MAX_LEN)
+        strncpy(hostName, host, WLAN_HOSTNAME_MAX_LEN - 1);
+    }
+    if (json.containsKey("ap"))
+    {
+      const char *ap = json["ap"].as<const char*>();
+      if (ap && strlen(ap) < WLAN_APNAME_MAX_LEN)
+        strncpy(accessPointName, ap, WLAN_APNAME_MAX_LEN - 1);
+    }
+
+    JsonArray _wifi = json["wifi"].as<JsonArray>();
+    uint8_t i = 0u;
+    for (JsonObject wifiEntry : _wifi)
+    {
+      if (i >= NUM_OF_WLAN_CREDENTIALS)
+        break;
+
+      const char *ssid = wifiEntry["SSID"].as<const char*>();
+      const char *pass = wifiEntry["PASS"].as<const char*>();
+      if (!ssid || !pass || strlen(ssid) >= WLAN_SSID_MAX_LENGTH || strlen(pass) >= WLAN_PASS_MAX_LENGTH)
       {
-        Serial.println("Wlan::loadConfig: credentials invalid");
+        Log.warning("Wlan::loadConfig: credentials invalid" CR);
       }
       else
       {
-        strcpy(wlanCredentials[i].ssid, _wifi[i]["SSID"].asString());
-        strcpy(wlanCredentials[i].password, _wifi[i]["PASS"].asString());
-        Serial.printf("Wlan::loadConfig: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+        strcpy(wlanCredentials[i].ssid, ssid);
+        strcpy(wlanCredentials[i].password, pass);
+        Log.verbose("Wlan::loadConfig: ssid = %s, password = ***" CR, wlanCredentials[i].ssid);
       }
       i++;
     }
@@ -115,22 +133,22 @@ void Wlan::saveConfig()
     credentialIndex = 0u;
   }
 
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
 
   json["host"] = hostName;
   json["ap"] = accessPointName;
 
-  JsonArray &array = json.createNestedArray("wifi");
+  JsonArray array = json["wifi"].to<JsonArray>();
 
   for (uint8_t i = 0; i < NUM_OF_WLAN_CREDENTIALS; ++i)
   {
     if (wlanCredentials[i].ssid[0] != '\0')
     {
-      JsonObject &_wifi = array.createNestedObject();
+      JsonObject _wifi = array.add<JsonObject>();
       _wifi["SSID"] = wlanCredentials[i].ssid;
       _wifi["PASS"] = wlanCredentials[i].password;
-      Serial.printf("Wlan::saveCredentials: ssid = %s, password = %s\n", wlanCredentials[i].ssid, wlanCredentials[i].password);
+      Log.verbose("Wlan::saveCredentials: ssid = %s, password = ***" CR, wlanCredentials[i].ssid);
     }
   }
 
@@ -145,15 +163,15 @@ void Wlan::clearCredentials()
     wlanCredentials[i].password[0] = '\0';
   }
 
-  saveConfig();
+  wlanSaveConfigPending = true;
 }
 
-boolean Wlan::isConnected()
+bool Wlan::isConnected()
 {
   return WiFi.isConnected();
 }
 
-boolean Wlan::isAP()
+bool Wlan::isAP()
 {
   return (WiFi.getMode() == WIFI_MODE_APSTA) ? true : false;
 }
@@ -172,26 +190,21 @@ void Wlan::addCredentials(const char *ssid, const char *password, bool force)
 {
   if ((strlen(ssid) >= WLAN_SSID_MAX_LENGTH) || (strlen(password) >= WLAN_PASS_MAX_LENGTH))
   {
-    Serial.println("Wlan::addCredentials: credentials invalid");
+    Log.warning("Wlan::addCredentials: credentials invalid" CR);
   }
   else
   {
 
-    Serial.printf("Wlan::addCredentials: ssid = %s, password = %s, force = %d\n", ssid, password, force);
+    Log.verbose("Wlan::addCredentials: ssid = %s, password = ***, force = %d" CR, ssid, (int)force);
     strcpy(newWlanCredentials.ssid, ssid);
     strcpy(newWlanCredentials.password, password);
 
     if (force)
     {
-      saveConfig();
+      wlanSaveConfigPending = true;
     }
 
-    if (isConnected())
-      WiFi.disconnect();
-
-    wifiState = WifiState::AddCredentials;
-    WiFi.begin(ssid, password);
-    connectTimeout = CONNECT_TIMEOUT;
+    newCredentialsPending = true;
   }
 }
 
@@ -228,6 +241,52 @@ WifiStrength Wlan::getSignalStrength()
 
 void Wlan::update()
 {
+  if (wifiModePsPending)
+  {
+    wifiModePsPending = false;
+    WiFi.mode(WIFI_STA);
+    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+  }
+
+  if (mdnsUpdatePending)
+  {
+    mdnsUpdatePending = false;
+    updateMdns();
+  }
+
+  if (wlanSaveConfigPending)
+  {
+    wlanSaveConfigPending = false;
+    saveConfig();
+  }
+
+  if (recoveryPending)
+  {
+    recoveryPending = false;
+    WlanCredentials credentials;
+    getCredentials(&credentials);
+    RecoveryMode::runFromApp(credentials.ssid, credentials.password);
+  }
+
+  if (newCredentialsPending)
+  {
+    newCredentialsPending = false;
+    if (isConnected())
+      WiFi.disconnect();
+    wifiState = WifiState::AddCredentials;
+    WiFi.persistent(false);
+    wifi_config_t wifi_cfg;
+    if (esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg) == ESP_OK)
+    {
+      wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+      esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+    }
+    WiFi.begin(newWlanCredentials.ssid, newWlanCredentials.password);
+    connectTimeout = CONNECT_TIMEOUT;
+  }
+
+  gSystem->processPendingSave();
+
   //Serial.printf("Wlan::update: wifiState = %d\n", wifiState);
 
   switch (wifiState)
@@ -295,8 +354,15 @@ void Wlan::connectToKnownStations()
     {
       connectTimeout = CONNECT_TIMEOUT;
       credentialIndex = stationIndex;
+      WiFi.persistent(false);
+      wifi_config_t wifi_cfg;
+      if (esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg) == ESP_OK)
+      {
+        wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+        esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+      }
       WiFi.begin(wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
-      Serial.printf("Wlan::connectToStations: SSID = %s, PW = %s\n", wlanCredentials[stationIndex].ssid, wlanCredentials[stationIndex].password);
+      Log.verbose("Wlan::connectToStations: SSID = %s" CR, wlanCredentials[stationIndex].ssid);
     }
 
     stationIndex++;
@@ -305,7 +371,8 @@ void Wlan::connectToKnownStations()
       stationIndex = 0u;
   }
 
-  connectTimeout--;
+  if (connectTimeout > 0u)
+    connectTimeout--;
 }
 
 void Wlan::stopAllRadio()
@@ -319,9 +386,9 @@ void Wlan::stopAllRadio()
 
 void Wlan::updateMdns()
 {
-  if (!MDNS.begin(hostName.c_str()))
+  if (!MDNS.begin(hostName))
   {
-    Serial.println("Error MDNS!");
+    Log.error("Error MDNS!" CR);
   }
   else
   {
@@ -336,29 +403,25 @@ void Wlan::updateMdns()
 
 void Wlan::onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
-  Serial.printf("STA: %s\n", WiFi.SSID().c_str());
-  Serial.printf("IP: %s\n", WiFi.localIP().toString().c_str());
-  WiFi.mode(WIFI_STA);
-
-  Log.notice("Connected to Wifi: %s (%s, %d, %s)" CR, WiFi.SSID().c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
+  Log.notice("Connected to Wifi: (%s, %d, %s)" CR, WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str());
 
   if (WiFi.SSID() == newWlanCredentials.ssid)
   {
-    saveConfig();
+    wlanSaveConfigPending = true;
   }
 
-  updateMdns();
+  wifiModePsPending = true;
+  mdnsUpdatePending = true;
 }
 
 void Wlan::onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
-  Serial.println("wifi: disconnect");
   Log.notice("Disconnected from Wifi" CR);
 }
 
 void Wlan::onsoftAPDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)
 {
-  Serial.print("NO AP: ");
+  Log.notice("NO AP" CR);
 }
 
 String Wlan::getMacAddress()
@@ -375,29 +438,33 @@ WifiState Wlan::getWifiState()
   return this->wifiState;
 }
 
-String Wlan::getHostName()
+const char *Wlan::getHostName()
 {
-  return this->hostName;
+  return hostName;
 }
 
-void Wlan::setHostName(String hostName)
+void Wlan::setHostName(const char *name)
 {
-  if (hostName.length())
+  if (name && *name && strcmp(name, hostName) != 0)
   {
-    this->hostName = hostName;
-    this->updateMdns();
+    strncpy(hostName, name, WLAN_HOSTNAME_MAX_LEN - 1);
+    hostName[WLAN_HOSTNAME_MAX_LEN - 1] = '\0';
+    mdnsUpdatePending = true;
   }
 }
 
-String Wlan::getAccessPointName()
+const char *Wlan::getAccessPointName()
 {
-  return this->accessPointName;
+  return accessPointName;
 }
 
-void Wlan::setAccessPointName(String accessPointName)
+void Wlan::setAccessPointName(const char *name)
 {
-  if (accessPointName.length())
-    this->accessPointName = accessPointName;
+  if (name && *name)
+  {
+    strncpy(accessPointName, name, WLAN_APNAME_MAX_LEN - 1);
+    accessPointName[WLAN_APNAME_MAX_LEN - 1] = '\0';
+  }
 }
 
 int32_t Wlan::getRssi()

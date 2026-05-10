@@ -34,9 +34,9 @@ axios.interceptors.response.use(response => response, error => {
 
   // auth error
   if (error.response.status === 401) {
-    EventBus.$emit('show-auth-popup', error)
+    EventBus.emit('show-auth-popup', error)
   } else if (!error?.config?.headers?.scan) {
-    EventBus.$emit('api-error')
+    EventBus.emit('api-error')
   }
   console.log('normal error')
   return Promise.reject(error)

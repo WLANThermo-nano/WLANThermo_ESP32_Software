@@ -27,6 +27,7 @@
 AsyncMqttClient Mqtt::pmqttClient;
 MqttConfig Mqtt::config = {"192.168.2.1", 1883u, "", "", 0, false, 30};
 bool Mqtt::sendSettingsflag = false;
+bool Mqtt::saveConfigPending = false;
 uint16_t Mqtt::intervalCounter = 0u;
 
 Mqtt::Mqtt()
@@ -77,12 +78,18 @@ void Mqtt::update()
 
   if (intervalCounter)
     intervalCounter--;
+
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
 }
 
 void Mqtt::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["host"] = config.host;
   json["port"] = config.port;
   json["user"] = config.user;
@@ -95,20 +102,26 @@ void Mqtt::saveConfig()
 
 void Mqtt::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kMqtt, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kMqtt, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
-    if (json.containsKey("host"))
-      strcpy(config.host, json["host"].asString());
+    if (json.containsKey("host")) {
+      const char *s = json["host"].as<const char*>();
+      if (s) { strncpy(config.host, s, sizeof(config.host) - 1); config.host[sizeof(config.host) - 1] = '\0'; }
+    }
     if (json.containsKey("port"))
       config.port = json["port"];
-    if (json.containsKey("user"))
-      strcpy(config.user, json["user"].asString());
-    if (json.containsKey("password"))
-      strcpy(config.password, json["password"].asString());
+    if (json.containsKey("user")) {
+      const char *s = json["user"].as<const char*>();
+      if (s) { strncpy(config.user, s, sizeof(config.user) - 1); config.user[sizeof(config.user) - 1] = '\0'; }
+    }
+    if (json.containsKey("password")) {
+      const char *s = json["password"].as<const char*>();
+      if (s) { strncpy(config.password, s, sizeof(config.password) - 1); config.password[sizeof(config.password) - 1] = '\0'; }
+    }
     if (json.containsKey("QoS"))
       config.QoS = json["QoS"];
     if (json.containsKey("enabled"))
@@ -142,8 +155,9 @@ void Mqtt::setConfig(MqttConfig newConfig)
   if (strlen(gSystem->mqtt.config.user) && strlen(gSystem->mqtt.config.password))
     pmqttClient.setCredentials(gSystem->mqtt.config.user, gSystem->mqtt.config.password);
 
-  // save to NvM
-  saveConfig();
+  // defer NVS write to ConnectTask context via update() — direct write in
+  // async_tcp handler blocks for flash-write duration and risks WDT reset
+  saveConfigPending = true;
 }
 
 void Mqtt::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
@@ -157,10 +171,9 @@ void Mqtt::onMqttConnect(bool sessionPresent)
   IPRINTPLN("c:MQTT");
   MQPRINTP("[MQTT]\tSession present: ");
   MQPRINTLN(sessionPresent);
-  String adress = F("WLanThermo/");
-  adress += gSystem->wlan.getHostName();
-  adress += F("/#");
-  uint16_t packetIdSub = pmqttClient.subscribe(adress.c_str(), 2);
+  char adress[128];
+  snprintf(adress, sizeof(adress), "WLanThermo/%s/#", gSystem->wlan.getHostName());
+  uint16_t packetIdSub = pmqttClient.subscribe(adress, 2);
   MQPRINTP("[MQTT]\tSubscribing, packetId: ");
   MQPRINTLN(packetIdSub);
   sendSettingsflag = true;
@@ -185,37 +198,44 @@ void Mqtt::onMqttUnsubscribe(uint16_t packetId)
 
 void Mqtt::onMqttMessage(char *topic, char *datas, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 {
-  String topic_prefix = F("WLanThermo/");
-  topic_prefix += gSystem->wlan.getHostName();
-  int topic_prefix_length = topic_prefix.length();
-  String topic_short = String(topic);
-  topic_short.remove(0, topic_prefix_length);
+  char topic_prefix[128];
+  snprintf(topic_prefix, sizeof(topic_prefix), "WLanThermo/%s", gSystem->wlan.getHostName());
+  const char *topic_short = topic + strlen(topic_prefix);
 
-  if (topic_short.startsWith("/set/channels"))
+  // AsyncMqttClient payload is NOT null-terminated; create a null-terminated
+  // copy so WebHandler JSON parsers do not read past the end of the buffer.
+  uint8_t *buf = new uint8_t[len + 1u];
+  memcpy(buf, datas, len);
+  buf[len] = '\0';
+
+  if (strncmp(topic_short, "/set/channels", 13) == 0)
   {
-    nanoWebHandler.setChannels(NULL, (uint8_t *)datas);
+    nanoWebHandler.setChannels(NULL, buf);
   }
-  if (topic_short.startsWith("/set/system"))
+  if (strncmp(topic_short, "/set/system", 11) == 0)
   {
-    nanoWebHandler.setSystem(NULL, (uint8_t *)datas);
+    nanoWebHandler.setSystem(NULL, buf);
   }
-  if (topic_short.startsWith("/set/pitmaster"))
+  if (strncmp(topic_short, "/set/pitmaster", 14) == 0)
   {
-    nanoWebHandler.setPitmaster(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPitmaster(NULL, buf);
   }
-  if (topic_short.startsWith("/set/pid"))
+  if (strncmp(topic_short, "/set/pid", 8) == 0)
   {
-    nanoWebHandler.setPID(NULL, (uint8_t *)datas);
+    nanoWebHandler.setPID(NULL, buf);
   }
-  if (topic_short.startsWith("/set/iot"))
+  if (strncmp(topic_short, "/set/iot", 8) == 0)
   {
-    nanoWebHandler.setIoT(NULL, (uint8_t *)datas);
+    nanoWebHandler.setIoT(NULL, buf);
   }
-  if (topic_short.startsWith("/get/settings"))
+
+  delete[] buf;
+
+  if (strncmp(topic_short, "/get/settings", 13) == 0)
   {
     sendSettings();
   }
-  if (topic_short.startsWith("/get/data"))
+  if (strncmp(topic_short, "/get/data", 9) == 0)
   {
     sendData();
   }
@@ -232,31 +252,16 @@ void Mqtt::onMqttPublish(uint16_t packetId)
   MQPRINTLN(packetId);
 }
 
-String prefixgen(uint8_t stil = 0)
-{
-  String prefix = F("WLanThermo/");
-  prefix += gSystem->wlan.getHostName();
-
-  switch (stil)
-  {
-  case 1:
-    return prefix + F("/status/data");
-  case 2:
-    return prefix + F("/status/settings");
-  default:
-    return prefix + F("/#");
-  }
-}
-
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // send datas
 bool Mqtt::sendData()
 {
-
   if (pmqttClient.connected())
   {
+    char topic[128];
+    snprintf(topic, sizeof(topic), "WLanThermo/%s/status/data", gSystem->wlan.getHostName());
     String payload_data = API::apiData(APIDATA);
-    pmqttClient.publish(prefixgen(1).c_str(), gSystem->mqtt.config.QoS, false, payload_data.c_str());
+    pmqttClient.publish(topic, gSystem->mqtt.config.QoS, false, payload_data.c_str());
     MQPRINTPLN("[MQTT] Send: /data ");
     return true;
   }
@@ -268,11 +273,12 @@ bool Mqtt::sendData()
 // send settings
 bool Mqtt::sendSettings()
 {
-
   if (pmqttClient.connected())
   {
+    char topic[128];
+    snprintf(topic, sizeof(topic), "WLanThermo/%s/status/settings", gSystem->wlan.getHostName());
     String payload_settings = API::apiData(APISETTINGS);
-    pmqttClient.publish(prefixgen(2).c_str(), gSystem->mqtt.config.QoS, false, payload_settings.c_str());
+    pmqttClient.publish(topic, gSystem->mqtt.config.QoS, false, payload_settings.c_str());
     MQPRINTPLN("[MQTT] Send: /settings ");
     return true;
   }

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WLANThermo — Farbpalette</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #393e46; color: #fff; padding: 2rem; }
+  h1 { font-size: 1.5rem; margin-bottom: 2rem; color: #00adb5; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 1rem; color: #eeeeee; border-bottom: 1px solid #474a4e; padding-bottom: 0.5rem; }
+  .grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+  .swatch { display: flex; flex-direction: column; min-width: 150px; border-radius: 4px; overflow: hidden; }
+  .swatch-color { height: 80px; }
+  .swatch-info { background: #222831; padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+  .swatch-name { font-weight: 600; margin-bottom: 0.2rem; }
+  .swatch-hex { color: #b3b3b3; font-family: monospace; }
+  .swatch-usage { color: #888; font-size: 0.7rem; margin-top: 0.2rem; }
+
+  /* Kanal-Palette */
+  .channel-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .channel-swatch { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-family: monospace; cursor: default; }
+  .channel-swatch:hover { transform: scale(1.1); transition: transform 0.2s; }
+  .dark-text { color: #222; }
+  .light-text { color: #fff; }
+
+  /* Kontrast-Demo */
+  .contrast-demo { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .contrast-item { padding: 1rem; border-radius: 4px; }
+  .contrast-item .label { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem; }
+  .contrast-item .sample { font-size: 1rem; }
+  .contrast-item .ratio { font-size: 0.7rem; opacity: 0.6; margin-top: 0.3rem; font-family: monospace; }
+
+  /* Semantisch */
+  .semantic-demo { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .semantic-item { padding: 0.75rem 1.25rem; border-radius: 4px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>WLANThermo Design System — Farbpalette</h1>
+
+<h2>Hintergrund-Hierarchie</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#222831"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$medium</div>
+      <div class="swatch-hex">#222831</div>
+      <div class="swatch-usage">Navigation, Header</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#393e46"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$dark</div>
+      <div class="swatch-hex">#393e46</div>
+      <div class="swatch-usage">Body, Hover-States</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#474a4e"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$medium_dark</div>
+      <div class="swatch-hex">#474a4e</div>
+      <div class="swatch-usage">Cards, Config-Forms</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#ffffff; border: 1px solid #474a4e;"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">White</div>
+      <div class="swatch-hex">#ffffff</div>
+      <div class="swatch-usage">Dialoge, Aktiver Nav-Item</div>
+    </div>
+  </div>
+</div>
+
+<h2>Akzent-Farben</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#00adb5"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$primary (Teal)</div>
+      <div class="swatch-hex">#00adb5</div>
+      <div class="swatch-usage">Buttons, Spinner, Dialog-Header, App-Bar</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#337ab7"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$input_highlight_color</div>
+      <div class="swatch-hex">#337ab7</div>
+      <div class="swatch-usage">Input-Fokus, Label-Fokus, Aktuelles WiFi</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#f44336"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">$error_color</div>
+      <div class="swatch-hex">#f44336</div>
+      <div class="swatch-usage">Fehler, Löschen, Batterie-kritisch</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#3366ff"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Link-Blue</div>
+      <div class="swatch-hex">#3366ff</div>
+      <div class="swatch-usage">Wiki-Links in Dialogen</div>
+    </div>
+  </div>
+</div>
+
+<h2>Text-Farben</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#ffffff"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Primärer Text</div>
+      <div class="swatch-hex">#ffffff</div>
+      <div class="swatch-usage">Formulare, Kacheln, Navigation</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#cccccc"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Sekundärer Text</div>
+      <div class="swatch-hex">#cccccc</div>
+      <div class="swatch-usage">Header-Bar Text</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#b3b3b3"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Muted</div>
+      <div class="swatch-hex">#b3b3b3</div>
+      <div class="swatch-usage">Hilfstext, Inaktive Labels</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#808080"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Disabled</div>
+      <div class="swatch-hex">#808080</div>
+      <div class="swatch-usage">Disabled Icons, Aktive Labels</div>
+    </div>
+  </div>
+</div>
+
+<h2>Semantische Farben</h2>
+<div class="semantic-demo">
+  <div class="semantic-item" style="background:#00FF00;color:#222">✓ Cloud verbunden / Gerät online</div>
+  <div class="semantic-item" style="background:#f44336;color:#fff">✕ Fehler / Nicht verbunden</div>
+  <div class="semantic-item" style="background:#FFFF00;color:#222">⚠ Update verfügbar</div>
+  <div class="semantic-item" style="background:#ff0000;color:#fff">🌡 Temperatur zu hoch</div>
+  <div class="semantic-item" style="background:#1874cd;color:#fff">🌡 Temperatur zu niedrig</div>
+</div>
+
+<h2>Kanal-Farbpalette (19 Farben)</h2>
+<div class="channel-grid">
+  <div class="channel-swatch dark-text" style="background:#FFFF00" title="#FFFF00">#FFFF00</div>
+  <div class="channel-swatch dark-text" style="background:#FFC002" title="#FFC002">#FFC002</div>
+  <div class="channel-swatch dark-text" style="background:#00FF00" title="#00FF00">#00FF00</div>
+  <div class="channel-swatch dark-text" style="background:#FFFFFF;border:1px solid #ccc" title="#FFFFFF">#FFF</div>
+  <div class="channel-swatch light-text" style="background:#FF1DC4" title="#FF1DC4">#FF1D</div>
+  <div class="channel-swatch dark-text" style="background:#E46C0A" title="#E46C0A">#E46C</div>
+  <div class="channel-swatch dark-text" style="background:#C3D69B" title="#C3D69B">#C3D6</div>
+  <div class="channel-swatch dark-text" style="background:#0FE6F1" title="#0FE6F1">#0FE6</div>
+  <div class="channel-swatch light-text" style="background:#0000FF" title="#0000FF">#0000FF</div>
+  <div class="channel-swatch light-text" style="background:#03A923" title="#03A923">#03A9</div>
+  <div class="channel-swatch light-text" style="background:#C84B32" title="#C84B32">#C84B</div>
+  <div class="channel-swatch dark-text" style="background:#FF9B69" title="#FF9B69">#FF9B</div>
+  <div class="channel-swatch light-text" style="background:#5082BE" title="#5082BE">#5082</div>
+  <div class="channel-swatch dark-text" style="background:#FFB1D0" title="#FFB1D0">#FFB1</div>
+  <div class="channel-swatch dark-text" style="background:#A6EF03" title="#A6EF03">#A6EF</div>
+  <div class="channel-swatch light-text" style="background:#D42A6B" title="#D42A6B">#D42A</div>
+  <div class="channel-swatch dark-text" style="background:#FFDA8F" title="#FFDA8F">#FFDA</div>
+  <div class="channel-swatch dark-text" style="background:#00B0F0" title="#00B0F0">#00B0</div>
+  <div class="channel-swatch light-text" style="background:#948A54" title="#948A54">#948A</div>
+</div>
+
+<h2>Kontrast-Kombinationen</h2>
+<div class="contrast-demo">
+  <div class="contrast-item" style="background:#222831;color:#ffffff">
+    <div class="label">Nav / Header</div>
+    <div class="sample">Weißer Text auf $medium</div>
+    <div class="ratio">#fff auf #222831</div>
+  </div>
+  <div class="contrast-item" style="background:#474a4e;color:#ffffff">
+    <div class="label">Cards / Forms</div>
+    <div class="sample">Weißer Text auf $medium_dark</div>
+    <div class="ratio">#fff auf #474a4e</div>
+  </div>
+  <div class="contrast-item" style="background:#00adb5;color:#ffffff">
+    <div class="label">Primary Button</div>
+    <div class="sample">Weißer Text auf $primary</div>
+    <div class="ratio">#fff auf #00adb5</div>
+  </div>
+  <div class="contrast-item" style="background:#f44336;color:#ffffff">
+    <div class="label">Error Button</div>
+    <div class="sample">Weißer Text auf $error</div>
+    <div class="ratio">#fff auf #f44336</div>
+  </div>
+  <div class="contrast-item" style="background:#337ab7;color:#ffffff">
+    <div class="label">Aktuelles WiFi-Netz</div>
+    <div class="sample">Weißer Text auf Highlight</div>
+    <div class="ratio">#fff auf #337ab7</div>
+  </div>
+  <div class="contrast-item" style="background:#ffffff;color:#222831">
+    <div class="label">Dialog</div>
+    <div class="sample">Dunkler Text auf weiß</div>
+    <div class="ratio">#222831 auf #fff</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -20,7 +20,7 @@ jobs:
           pip install -U platformio
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+        run: echo version=$(echo $GITHUB_REF | cut -d / -f 3) >> $GITHUB_OUTPUT
       - name: Build firmware
         run: |
           sed -i -e 's/\/\*REL_VER\*\//#define FIRMWAREVERSION  "${{ steps.get_version.outputs.version }}"/g' ./src/Version.h
@@ -33,7 +33,7 @@ jobs:
           cp ./.pio/build/miniV3/firmware.bin ./artifacts/miniV3.bin
           cp ./.pio/build/nanoV3/firmware.bin ./artifacts/nanoV3.bin
           cp ./.pio/build/linkV1/firmware.bin ./artifacts/linkV1.bin
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
             name: firmware
             path: ./artifacts
@@ -42,12 +42,12 @@ jobs:
     name: Build Nextion
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build nextion
         shell: pwsh
         run: |
           .\nextion\build.ps1
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
             name: nextion
             path: ./nextion/artifacts
@@ -58,13 +58,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download firmware
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: firmware
+          path: ./firmware
+          merge-multiple: true
+      - run: ls -R ./firmware
       - name: Download nextion
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: nextion
+          path: ./nextion
+          merge-multiple: true
+      - run: ls -R ./nextion
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -74,13 +80,12 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            Changes in this Release
+            Changes in this release:
           draft: true
           prerelease: true
-          allowUpdates: true
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+        run: echo version=$(echo $GITHUB_REF | cut -d / -f 3) >> $GITHUB_OUTPUT
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.2
         env:

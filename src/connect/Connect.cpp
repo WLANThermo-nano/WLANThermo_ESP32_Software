@@ -24,6 +24,7 @@
 #include "Settings.h"
 #include "ArduinoLog.h"
 #include "TaskConfig.h"
+#include "Utils.h"
 #include <byteswap.h>
 #include <ESPmDNS.h>
 
@@ -37,6 +38,7 @@
 
 std::vector<ConnectDeviceType *> Connect::connectDevices;
 boolean Connect::enabled = true;
+portMUX_TYPE Connect::connectDevicesMux = portMUX_INITIALIZER_UNLOCKED;
 
 asyncHTTPrequest deviceClient = asyncHTTPrequest();
 
@@ -51,14 +53,14 @@ void Connect::init()
 
 void Connect::loadConfig(TemperatureGrp *temperatureGrp)
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = Settings::read(kConnect, &jsonBuffer);
+    JsonDocument doc;
+    JsonObject json = Settings::read(kConnect, doc);
 
-    if (json.success())
+    if (!json.isNull())
     {
         if (json.containsKey("enabled"))
         {
-            enabled = json["enabled"].as<boolean>();
+            enabled = json["enabled"].as<bool>();
         }
 
         for (uint8_t i = 0u; i < json["tname"].size(); i++)
@@ -74,8 +76,8 @@ void Connect::loadConfig(TemperatureGrp *temperatureGrp)
                     connectDevice->temperatures[i] = INACTIVEVALUE;
                 }
 
-                strcpy(connectDevice->name, json["tname"][i]);
-                strcpy(connectDevice->address, json["taddress"][i]);
+                SAFE_STRNCPY(connectDevice->name,    json["tname"][i].as<const char*>());
+                SAFE_STRNCPY(connectDevice->address, json["taddress"][i].as<const char*>());
                 connectDevice->count = json["tcount"][i];
                 connectDevice->selected = json["tselected"][i];
 
@@ -94,14 +96,14 @@ void Connect::loadConfig(TemperatureGrp *temperatureGrp)
 
 void Connect::saveConfig()
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = jsonBuffer.createObject();
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
 
     json["enabled"] = enabled;
-    JsonArray &_name = json.createNestedArray("tname");
-    JsonArray &_address = json.createNestedArray("taddress");
-    JsonArray &_count = json.createNestedArray("tcount");
-    JsonArray &_selected = json.createNestedArray("tselected");
+    JsonArray _name = json["tname"].to<JsonArray>();
+    JsonArray _address = json["taddress"].to<JsonArray>();
+    JsonArray _count = json["tcount"].to<JsonArray>();
+    JsonArray _selected = json["tselected"].to<JsonArray>();
 
     for (uint8_t i = 0u; i < connectDevices.size(); i++)
     {
@@ -128,36 +130,25 @@ void Connect::getDevices()
 
     if (nrOfServices == 0)
     {
-        Serial.println("No services were found.");
+        Log.verbose("Connect: no mDNS services found\n");
     }
     else
     {
-        Serial.print("Number of services found: ");
-        Serial.println(nrOfServices);
+        Log.notice("Connect: %d mDNS service(s) found\n", nrOfServices);
 
         for (int i = 0; i < nrOfServices; i = i + 1)
         {
-
-            Serial.println("---------------");
-
-            Serial.print("Hostname: ");
-            Serial.println(MDNS.hostname(i));
-
-            Serial.print("IP address: ");
-            Serial.println(MDNS.IP(i));
+            Log.verbose("Connect: host=%s ip=%s\n", MDNS.hostname(i).c_str(), MDNS.IP(i).toString().c_str());
 
             if (MDNS.hasTxt(i, "mac_address"))
             {
-                Serial.print("MAC address: ");
-                Serial.println(MDNS.txt(i, "mac_address"));
+                Log.verbose("Connect: mac=%s\n", MDNS.txt(i, "mac_address").c_str());
 
                 String url = "http://" + MDNS.IP(i).toString() + "/data";
                 deviceClient.onReadyStateChange(Connect::onReadyStateChange, NULL);
                 deviceClient.open("GET", url.c_str());
                 deviceClient.send();
             }
-
-            Serial.println("---------------");
         }
     }
 }
@@ -166,21 +157,30 @@ void Connect::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int r
 {
     if (READY_STATE_DONE == readyState)
     {
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject &json = jsonBuffer.parseObject(request->responseText());
+        JsonDocument doc;
+        deserializeJson(doc, request->responseText());
+        JsonObject json = doc.as<JsonObject>();
 
-        JsonArray &_channels = json["channel"].asArray();
+        JsonArray _channels = json["channel"].as<JsonArray>();
         uint8_t channelIndex = 0u;
+
+        taskENTER_CRITICAL(&connectDevicesMux);
+        if (connectDevices.empty())
+        {
+            taskEXIT_CRITICAL(&connectDevicesMux);
+            return;
+        }
 
         connectDevices[0]->status = 1u;
 
-        for (JsonArray::iterator itChannel = _channels.begin(); itChannel != _channels.end(); ++itChannel, channelIndex++)
+        for (JsonObject _channel : _channels)
         {
-            JsonObject &_channel = itChannel->asObject();
-            connectDevices[0]->temperatures[channelIndex] = _channel["temp"];
-            Serial.println(connectDevices[0]->temperatures[channelIndex]);
+            if (channelIndex >= CONNECT_TEMPERATURE_MAX_COUNT) break;
+            connectDevices[0]->temperatures[channelIndex] = _channel["temp"].as<float>();
+            channelIndex++;
         }
-        
+        taskEXIT_CRITICAL(&connectDevicesMux);
+
         request->abort();
     }
 }
@@ -224,12 +224,14 @@ boolean Connect::isDeviceConnected(String peerAddress)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&connectDevicesMux);
     auto it = std::find_if(connectDevices.begin(), connectDevices.end(), isKnownDevice);
 
     if (it != connectDevices.end())
     {
         isConnected = (boolean)(*it)->status;
     }
+    taskEXIT_CRITICAL(&connectDevicesMux);
 
     return isConnected;
 }
@@ -241,12 +243,14 @@ float Connect::getTemperatureValue(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&connectDevicesMux);
     auto it = std::find_if(connectDevices.begin(), connectDevices.end(), isKnownDevice);
 
     if ((it != connectDevices.end()) && (index < CONNECT_TEMPERATURE_MAX_COUNT))
     {
         value = (*it)->temperatures[index];
     }
+    taskEXIT_CRITICAL(&connectDevicesMux);
 
     return value;
 }

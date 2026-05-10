@@ -89,24 +89,24 @@ void TemperatureBase::loadDefaultValues(uint8_t index)
 
 void TemperatureBase::loadConfig(TemperatureUnit unit)
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kChannels, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kChannels, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     for (uint8_t i = 0u; i < json["tname"].size(); i++)
     {
       if (json.containsKey("taddress") && json.containsKey("tlindex"))
       {
-        if ((this->address == json["taddress"][i].asString()) && (this->localIndex == json["tlindex"][i].as<uint8_t>()))
+        if ((this->address == json["taddress"][i].as<const char*>()) && (this->localIndex == json["tlindex"][i].as<uint8_t>()))
         {
-          this->name = json["tname"][i].asString();
+          this->name = json["tname"][i].as<const char*>();
           this->type = (SensorType)json["ttyp"][i].as<uint8_t>();
           setType((uint8_t)this->type);
           this->minValue = json["tmin"][i];
           this->maxValue = json["tmax"][i];
           this->alarmSetting = (AlarmSetting)json["talarm"][i].as<uint8_t>();
-          this->color = json["tcolor"][i].asString();
+          this->color = json["tcolor"][i].as<const char*>();
           this->currentUnit = unit;
         }
       }

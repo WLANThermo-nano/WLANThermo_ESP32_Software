@@ -59,4 +59,5 @@ private:
     static void onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState);
     static boolean enabled;
     static std::vector<ConnectDeviceType *> connectDevices;
+    static portMUX_TYPE connectDevicesMux;
 };

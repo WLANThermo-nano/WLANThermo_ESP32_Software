@@ -102,6 +102,8 @@ Cloud::Cloud()
   config.customUrl = "";
   cloudCounter = 0u;
   customCounter = 0u;
+  saveConfigPending = false;
+  saveUrlPending = false;
   state = 0u;
 }
 
@@ -147,6 +149,31 @@ void Cloud::update()
 
   if (customCounter)
     customCounter--;
+
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
+
+  if (saveUrlPending)
+  {
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
+    for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
+    {
+      JsonObject _obj = json[serverurl[i].typ].to<JsonObject>();
+      _obj["host"] = serverurl[i].host;
+      _obj["page"] = serverurl[i].page;
+    }
+    File file = SPIFFS.open(URL_FILE, "w");
+    if (file)
+    {
+      serializeJson(doc, file);
+      file.close();
+    }
+    saveUrlPending = false;
+  }
 }
 
 String Cloud::newToken()
@@ -174,8 +201,8 @@ String Cloud::createToken()
 
 void Cloud::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["enabled"] = config.cloudEnabled;
   json["token"] = config.cloudToken;
   json["interval"] = config.cloudInterval;
@@ -191,44 +218,27 @@ void Cloud::saveConfig()
 
 void Cloud::saveUrl()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
-
-  for (uint8_t i = 0; i < Cloud::serverurlCount; i++)
-  {
-
-    JsonObject &_obj = json.createNestedObject(serverurl[i].typ);
-    _obj["host"] = serverurl[i].host;
-    _obj["page"] = serverurl[i].page;
-  }
-
-  File file = SPIFFS.open(URL_FILE, "w");
-
-  if (file)
-  {
-    json.printTo(file);
-    file.close();
-  }
+  saveUrlPending = true;
 }
 
 void Cloud::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kCloud, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kCloud, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("enabled"))
       config.cloudEnabled = json["enabled"];
     if (json.containsKey("token"))
-      config.cloudToken = json["token"].asString();
+      config.cloudToken = json["token"].as<const char*>();
     if (json.containsKey("interval"))
       config.cloudInterval = json["interval"];
 
     if (json.containsKey("customEnabled"))
       config.customEnabled = json["customEnabled"];
     if (json.containsKey("customUrl"))
-      config.customUrl = json["customUrl"].asString();
+      config.customUrl = json["customUrl"].as<const char*>();
     if (json.containsKey("customInterval"))
       config.customInterval = json["customInterval"];
   }
@@ -238,22 +248,24 @@ void Cloud::loadConfig()
   if (file)
   {
     String jsonString = file.readString();
-    Serial.printf("url.json: %s\n", jsonString.c_str());
-    JsonObject &json = jsonBuffer.parseObject(file.readString().c_str());
+    Log.verbose("url.json: %s" CR, jsonString.c_str());
+    JsonDocument urlDoc;
+    deserializeJson(urlDoc, jsonString);
+    JsonObject urlJson = urlDoc.as<JsonObject>();
 
-    if (json.success())
+    if (!urlJson.isNull())
     {
       for (int i = 0; i < Cloud::serverurlCount; i++)
       {
-        JsonObject &_link = json[Cloud::serverurl[i].typ];
+        JsonObject _link = urlJson[Cloud::serverurl[i].typ].as<JsonObject>();
 
         if (_link.containsKey("host"))
-          Cloud::serverurl[i].host = _link["host"].asString();
+          Cloud::serverurl[i].host = _link["host"].as<const char*>();
         else
           break;
 
         if (_link.containsKey("page"))
-          Cloud::serverurl[i].page = _link["page"].asString();
+          Cloud::serverurl[i].page = _link["page"].as<const char*>();
       }
     }
 
@@ -274,8 +286,9 @@ void Cloud::setConfig(CloudConfig newConfig)
   // trigger send after config update
   cloudCounter = 0u;
 
-  // save to NvM
-  saveConfig();
+  // defer NVS write to ConnectTask context via update() — direct write in
+  // async_tcp handler blocks for flash-write duration and risks WDT reset
+  saveConfigPending = true;
 }
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -340,7 +353,7 @@ tmElements_t *Cloud::string_to_tm(tmElements_t *tme, char *str)
 
 void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int readyState)
 {
-  boolean *requestDone = (boolean *)optParm;
+  volatile boolean *requestDone = (volatile boolean *)optParm;
   int responseCode;
 
   if (READY_STATE_DONE == readyState)
@@ -359,7 +372,7 @@ void Cloud::onReadyStateChange(void *optParm, asyncHTTPrequest *request, int rea
       Log.warning("API response HTTP code: %d" CR, responseCode);
     }
     
-    *requestDone = true;
+    *requestDone = true; // written from callback context — volatile ensures visibility
   }
 }
 
@@ -376,7 +389,7 @@ void Cloud::sendAPI(int apiIndex, int urlIndex)
     CloudRequest cloudRequest = {urlIndex, requestDataPointer};
     if(xQueueSend(apiQueue, &cloudRequest, 0u) != pdTRUE)
     {
-      delete cloudRequest.requestData;
+      delete[] cloudRequest.requestData;
       Log.warning("Cloud request queue full!" CR);
     }
   }
@@ -386,7 +399,7 @@ void Cloud::sendAPI(int apiIndex, int urlIndex)
 // Handle API queue
 void Cloud::handleQueue()
 {
-  static boolean requestDone = true;
+  static volatile boolean requestDone = true;
 
   CloudRequest cloudRequest;
 
@@ -402,7 +415,7 @@ void Cloud::handleQueue()
 
     String url = (cloudRequest.urlIndex != CUSTOMLINK) ? String("http://" + serverurl[cloudRequest.urlIndex].host + "/") : config.customUrl;
 
-    apiClient.onReadyStateChange(Cloud::onReadyStateChange, &requestDone);
+    apiClient.onReadyStateChange(Cloud::onReadyStateChange, (void *)&requestDone);
     apiClient.open("POST", url.c_str());
     apiClient.setReqHeader("Connection", "close");
     apiClient.setReqHeader("User-Agent", "WLANThermo ESP32");
@@ -412,6 +425,6 @@ void Cloud::handleQueue()
       apiClient.setReqHeader("SN", gSystem->getSerialNumber().c_str());
     
     apiClient.send(cloudRequest.requestData);
-    delete cloudRequest.requestData;
+    delete[] cloudRequest.requestData;
   }
 }

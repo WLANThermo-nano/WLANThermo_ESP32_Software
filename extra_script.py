@@ -18,7 +18,8 @@ web_ui_target_path = "./src/webui/"
 web_ui_source_files = ["recoverymode.html", "restart.html"]
 
 def install_package(package):
-    subprocess.call(["pip", "install", "--upgrade", package])
+    import sys
+    subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade", package])
 
 install_package("html_utils_becothal")	
 from html_utils import HTML
@@ -47,3 +48,28 @@ def convert_web_ui_to_include_files():
             f.write(char_array_string)
 
 convert_web_ui_to_include_files()
+
+
+
+# --- ESPRandom Patch: library missing #include <vector> (bug in protohaus/ESPRandom@1.4.1) ---
+def patch_esp_random():
+    libdeps_base = env.subst("$PROJECT_LIBDEPS_DIR")
+    pioenv = env.subst("$PIOENV")
+    esp_random_h = os.path.join(libdeps_base, pioenv, "ESPRandom", "ESPRandom.h")
+
+    if not os.path.exists(esp_random_h):
+        print("[ESPRandom Patch] not found, skipping")
+        return
+
+    with open(esp_random_h, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    if "#include <vector>" in content:
+        print("[ESPRandom Patch] already applied, skipping")
+        return
+
+    with open(esp_random_h, "w", encoding="utf-8") as f:
+        f.write("#include <vector>\n" + content)
+    print("[ESPRandom Patch] applied to: " + esp_random_h)
+
+patch_esp_random()

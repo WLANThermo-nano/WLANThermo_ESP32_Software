@@ -60,66 +60,67 @@ uint8_t PitmasterGrp::count()
 
 void PitmasterGrp::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kPitmasters, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kPitmasters, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
-    JsonArray &_master = json["pm"];
+    JsonArray _master = json["pm"].as<JsonArray>();
 
     byte pitsize = 0;
 
-    for (JsonArray::iterator it = _master.begin(); it != _master.end(); ++it)
+    for (JsonVariant entry : _master)
     {
       Pitmaster *pm = pitmasters[pitsize];
       if (pm != NULL)
       {
-        pm->assignTemperature(gSystem->temperatures[_master[pitsize]["ch"]]);
-        pm->assignProfile(gSystem->getPitmasterProfile(_master[pitsize]["pid"].as<uint8_t>()));
-        pm->setTargetTemperature(_master[pitsize]["set"]);
-        pm->setType((PitmasterType)_master[pitsize]["act"].as<uint8_t>());
-        
-        if(_master[pitsize].asObject().containsKey("act_last"))
-          pm->setTypeLast((PitmasterType)_master[pitsize]["act_last"].as<uint8_t>());
+        int ch = entry["ch"].as<int>();
+        if (ch >= 0 && ch < (int)gSystem->temperatures.count())
+          pm->assignTemperature(gSystem->temperatures[ch]);
+        pm->assignProfile(gSystem->getPitmasterProfile(entry["pid"].as<uint8_t>()));
+        pm->setTargetTemperature(entry["set"].as<float>());
+        pm->setType((PitmasterType)entry["act"].as<uint8_t>());
+
+        if (entry["act_last"].is<uint8_t>())
+          pm->setTypeLast((PitmasterType)entry["act_last"].as<uint8_t>());
 
         if (pm->getType() == pm_manual)
-          pm->setValue(_master[pitsize]["val"].as<float>());
+          pm->setValue(entry["val"].as<float>());
 
-        if(_master[pitsize].asObject().containsKey("dCount"))
-          pm->setDCount(_master[pitsize]["dCount"].as<uint8_t>());
+        if (entry["dCount"].is<uint8_t>())
+          pm->setDCount(entry["dCount"].as<uint8_t>());
 
-        if(_master[pitsize].asObject().containsKey("servoDcMin"))
-          pm->setServoMinDutyCyle(_master[pitsize]["servoDcMin"].as<uint16_t>());        
-        if(_master[pitsize].asObject().containsKey("servoDcMax"))
-          pm->setServoMaxDutyCyle(_master[pitsize]["servoDcMax"].as<uint16_t>());
+        if (entry["servoDcMin"].is<uint16_t>())
+          pm->setServoMinDutyCyle(entry["servoDcMin"].as<uint16_t>());
+        if (entry["servoDcMax"].is<uint16_t>())
+          pm->setServoMaxDutyCyle(entry["servoDcMax"].as<uint16_t>());
       }
 
       pitsize++;
     }
 
-    JsonArray &_pid = json["pid"];
+    JsonArray _pid = json["pid"].as<JsonArray>();
 
     uint8_t pidsize = 0;
 
-    // Wie viele Pitmaster sind vorhanden
-    for (JsonArray::iterator it = _pid.begin(); it != _pid.end(); ++it)
+    for (JsonVariant pidEntry : _pid)
     {
       PitmasterProfile *profile = gSystem->getPitmasterProfile(pidsize);
       if (profile != NULL)
       {
-        profile->name = _pid[pidsize]["name"].asString();
-        profile->id = _pid[pidsize]["id"];
-        profile->actuator = _pid[pidsize]["aktor"];
-        profile->kp = _pid[pidsize]["Kp"];
-        profile->ki = _pid[pidsize]["Ki"];
-        profile->kd = _pid[pidsize]["Kd"];
-        profile->dcmin = _pid[pidsize]["DCmin"];
-        profile->dcmax = _pid[pidsize]["DCmax"];
-        profile->jumppw = _pid[pidsize]["jp"];
-        profile->spmin = _pid[pidsize]["SPmin"];
-        profile->spmax = _pid[pidsize]["SPmax"];
-        profile->link = _pid[pidsize]["link"];
-        profile->opl = _pid[pidsize]["ol"];
+        profile->name = pidEntry["name"].as<const char*>();
+        profile->id = pidEntry["id"];
+        profile->actuator = pidEntry["aktor"];
+        profile->kp = pidEntry["Kp"];
+        profile->ki = pidEntry["Ki"];
+        profile->kd = pidEntry["Kd"];
+        profile->dcmin = pidEntry["DCmin"];
+        profile->dcmax = pidEntry["DCmax"];
+        profile->jumppw = pidEntry["jp"];
+        profile->spmin = pidEntry["SPmin"];
+        profile->spmax = pidEntry["SPmax"];
+        profile->link = pidEntry["link"];
+        profile->opl = pidEntry["ol"];
       }
 
       pidsize++;
@@ -129,19 +130,19 @@ void PitmasterGrp::loadConfig()
 
 void PitmasterGrp::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject &json = jsonBuffer.createObject();
-  JsonArray &_master = json.createNestedArray("pm");
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
+  JsonArray _master = json["pm"].to<JsonArray>();
 
   for (int i = 0; i < MAX_PITMASTERS; i++)
   {
     Pitmaster *pm = gSystem->pitmasters[i];
     if (pm != NULL)
     {
-      JsonObject &_ma = _master.createNestedObject();
+      JsonObject _ma = _master.add<JsonObject>();
       _ma["ch"] = TemperatureGrp::getIndex(pm->getAssignedTemperature());
       _ma["pid"] = pm->getAssignedProfile()->id;
-      _ma["set"] = double_with_n_digits(pm->getTargetTemperature(), 1);
+      _ma["set"] = pm->getTargetTemperature();
       _ma["act"] = (uint8_t)pm->getType();
       _ma["act_last"] = (uint8_t)pm->getTypeLast();
       _ma["val"] = pm->getValue();
@@ -151,25 +152,25 @@ void PitmasterGrp::saveConfig()
     }
   }
 
-  JsonArray &_pit = json.createNestedArray("pid");
+  JsonArray _pit = json["pid"].to<JsonArray>();
 
   for (int i = 0; i < gSystem->getPitmasterProfileCount(); i++)
   {
     PitmasterProfile *profile = gSystem->getPitmasterProfile(i);
     if (profile != NULL)
     {
-      JsonObject &_pid = _pit.createNestedObject();
+      JsonObject _pid = _pit.add<JsonObject>();
       _pid["name"] = profile->name;
       _pid["id"] = profile->id;
       _pid["aktor"] = profile->actuator;
-      _pid["Kp"] = double_with_n_digits(profile->kp, 1);
-      _pid["Ki"] = double_with_n_digits(profile->ki, 3);
-      _pid["Kd"] = double_with_n_digits(profile->kd, 1);
-      _pid["DCmin"] = double_with_n_digits(profile->dcmin, 1);
-      _pid["DCmax"] = double_with_n_digits(profile->dcmax, 1);
+      _pid["Kp"] = profile->kp;
+      _pid["Ki"] = profile->ki;
+      _pid["Kd"] = profile->kd;
+      _pid["DCmin"] = profile->dcmin;
+      _pid["DCmax"] = profile->dcmax;
       _pid["jp"] = profile->jumppw;
-      _pid["SPmin"] = double_with_n_digits(profile->spmin, 1);
-      _pid["SPmax"] = double_with_n_digits(profile->spmax, 1);
+      _pid["SPmin"] = profile->spmin;
+      _pid["SPmax"] = profile->spmax;
       _pid["link"] = profile->link;
       _pid["ol"] = profile->opl;
     }

@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import Home from '../components/Home.vue'
 import Wlan from '../components/Wlan.vue'
 import System from '../components/System.vue'
@@ -11,64 +10,25 @@ import PushNotification from '../components/PushNotification'
 const Scan = require(process.env.VUE_APP_SCAN_COMPONENT).default;
 const Diagnosis = require(process.env.VUE_APP_DIAGNOSIS_COMPONENT).default;
 
-Vue.use(VueRouter)
-
 const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: Home
-  },
-  {
-    path: '/wlan',
-    name: 'wlan',
-    component: Wlan
-  },
-  {
-    path: '/system',
-    name: 'system',
-    component: System
-  },
-  {
-    path: '/bluetooth',
-    name: 'bluetooth',
-    component: Bluetooth
-  },
-  {
-    path: '/pitmaster',
-    name: 'pitmaster',
-    component: Pitmaster
-  },
-  {
-    path: '/about',
-    name: 'about',
-    component: About
-  },
-  {
-    path: '/diagnosis',
-    name: 'diagnosis',
-    component: Diagnosis
-  },
-  {
-    path: '/iot',
-    name: 'iot',
-    component: IoT
-  },
-  {
-    path: '/notification',
-    name: 'notification',
-    component: PushNotification
-  },
-  {
-    path: '/scan',
-    name: 'scan',
-    component: Scan
-  }
+  { path: '/', name: 'home', component: Home },
+  { path: '/wlan', name: 'wlan', component: Wlan },
+  { path: '/system', name: 'system', component: System },
+  { path: '/bluetooth', name: 'bluetooth', component: Bluetooth },
+  { path: '/pitmaster', name: 'pitmaster', component: Pitmaster },
+  { path: '/about', name: 'about', component: About },
+  { path: '/diagnosis', name: 'diagnosis', component: Diagnosis },
+  { path: '/iot', name: 'iot', component: IoT },
+  { path: '/notification', name: 'notification', component: PushNotification },
+  { path: '/scan', name: 'scan', component: Scan }
 ]
 
-const router = new VueRouter({
-  mode: process.env.VUE_APP_ROUTER_MODE,
-  base: process.env.VUE_APP_BASE_URL,
+const routerMode = process.env.VUE_APP_ROUTER_MODE
+
+const router = createRouter({
+  history: routerMode === 'history'
+    ? createWebHistory(process.env.VUE_APP_BASE_URL)
+    : createWebHashHistory(process.env.VUE_APP_BASE_URL),
   routes
 })
 

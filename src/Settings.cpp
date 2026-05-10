@@ -21,6 +21,7 @@
 #include "Settings.h"
 #include "nvs.h"
 #include "Preferences.h"
+#include "ArduinoLog.h"
 
 #define STRINGIFY(s) #s
 
@@ -38,7 +39,7 @@ static const NvsKeyConfig_t NvsKeyConfig[] = {
     {STRINGIFY(kSystem), true, true},
     {STRINGIFY(kChannels), true, false},
     {STRINGIFY(kPitmasters), true, true},
-    {STRINGIFY(kPush), false, true},
+    {STRINGIFY(kPush), true, true},
     {STRINGIFY(kDisplay), true, true},
     {STRINGIFY(kBattery), true, true},
     {STRINGIFY(kOtaUpdate), true, true},
@@ -48,46 +49,45 @@ static const NvsKeyConfig_t NvsKeyConfig[] = {
     {STRINGIFY(kPbGuard), true, true}};
 
 const char *Settings::nvsNamespace = "wlanthermo";
-const uint16_t Settings::jsonBufferSize = 3072u;
 std::vector<SettingsOnChangeCallback> Settings::registeredCallbacks;
 
 Settings::Settings()
 {
 }
 
-void Settings::write(SettingsNvsKeys key, JsonObject &json)
+void Settings::write(SettingsNvsKeys key, JsonObject json)
 {
   Preferences prefs;
   String jsonString;
-  json.printTo(jsonString);
+  serializeJson(json, jsonString);
   prefs.begin(nvsNamespace, false);
   prefs.putString(NvsKeyConfig[key].keyName, jsonString);
   prefs.end();
 
   if (NvsKeyConfig[key].debugPrint)
   {
-    Serial.printf("Settings::write: %s - %s\n", NvsKeyConfig[key].keyName, jsonString.c_str());
+    Log.notice("Settings::write: %s - %s" CR, NvsKeyConfig[key].keyName, jsonString.c_str());
   }
 
   for (std::vector<SettingsOnChangeCallback>::iterator it = registeredCallbacks.begin(); it != registeredCallbacks.end(); ++it)
     (*it)(key);
 }
 
-JsonObject &Settings::read(SettingsNvsKeys key, DynamicJsonBuffer *jsonBuffer)
+JsonObject Settings::read(SettingsNvsKeys key, JsonDocument &doc)
 {
   Preferences prefs;
   String jsonString;
   prefs.begin(nvsNamespace, true);
   jsonString = prefs.getString(NvsKeyConfig[key].keyName, "");
-  JsonObject &json = jsonBuffer->parseObject(jsonString);
+  deserializeJson(doc, jsonString);
   prefs.end();
 
   if (NvsKeyConfig[key].debugPrint)
   {
-    Serial.printf("Settings::read: %s (%d bytes) - %s\n", NvsKeyConfig[key].keyName, jsonString.length(), jsonString.c_str());
+    Log.verbose("Settings::read: %s (%d bytes) - %s" CR, NvsKeyConfig[key].keyName, jsonString.length(), jsonString.c_str());
   }
 
-  return json;
+  return doc.as<JsonObject>();
 }
 
 String Settings::exportFile()
@@ -124,7 +124,7 @@ void Settings::write(String key, String value)
 
       if (NvsKeyConfig[keyIndex].debugPrint)
       {
-        Serial.printf("Settings::write: %s - %s\n", key.c_str(), value.c_str());
+        Log.notice("Settings::write: %s - %s" CR, key.c_str(), value.c_str());
       }
 
       prefs.end();
@@ -138,7 +138,7 @@ void Settings::remove(SettingsNvsKeys key)
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.remove(NvsKeyConfig[key].keyName);
-  Serial.printf("Settings::remove: %s\n", NvsKeyConfig[key].keyName);
+  Log.notice("Settings::remove: %s" CR, NvsKeyConfig[key].keyName);
   prefs.end();
 }
 
@@ -147,7 +147,7 @@ void Settings::remove(String key)
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.remove(key.c_str());
-  Serial.printf("Settings::remove: %s\n", key.c_str());
+  Log.notice("Settings::remove: %s" CR, key.c_str());
   prefs.end();
 }
 
@@ -156,7 +156,7 @@ void Settings::clear()
   Preferences prefs;
   prefs.begin(nvsNamespace);
   prefs.clear();
-  Serial.printf("Settings::clear\n");
+  Log.notice("Settings::clear" CR);
   prefs.end();
 }
 

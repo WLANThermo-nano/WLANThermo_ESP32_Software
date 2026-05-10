@@ -62,6 +62,7 @@ private:
   static AsyncMqttClient pmqttClient;
   static MqttConfig config;
   static bool sendSettingsflag;
+  static bool saveConfigPending;
   static uint16_t intervalCounter;
   bool initDone;
 };

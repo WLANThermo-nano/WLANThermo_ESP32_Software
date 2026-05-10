@@ -1,7 +1,7 @@
-$nextionEditorUrl = "https://nextion.tech/download/nextion-setup-v1-60-2.zip"
+$nextionEditorUrl = "https://nextion.tech/download/nextion-setup-v1-68-1.zip"
 $nextionEditorZip = $PSScriptRoot + "\nextion.zip"
-$nextionEditorFolder = $PSScriptRoot + "\nextion"
-$nextionEditor = $PSScriptRoot + "\nextion\NextionEditor.exe"
+$nextionEditorFolder = $PSScriptRoot
+$nextionEditor = $PSScriptRoot + "\Nextion Editor.exe"
 $nextionHmiFile = $PSScriptRoot + "\miniVx.HMI"
 $nextionTftFile = $PSScriptRoot + "\miniVx.tft"
 $nextionArtifactsFolder = $PSScriptRoot + "\artifacts"
@@ -21,8 +21,9 @@ gci env:
 (New-Object System.Net.WebClient).DownloadFile($sikulixUrl, $sikulix)
 (New-Object System.Net.WebClient).DownloadFile($jythonUrl, $jython)
 Expand-Archive -LiteralPath $nextionEditorZip -DestinationPath $nextionEditorFolder -Force
+Get-ChildItem -Recurse $nextionEditorFolder | Select-Object FullName
 Start-Process -FilePath $nextionEditor -ArgumentList $nextionHmiFile
-#Start-Sleep -s 10
+Start-Sleep -s 15
 
 New-Item -ItemType Directory -Force -Path $nextionArtifactsFolder
 New-Item -ItemType Directory -Force -Path $nextionDataFolder

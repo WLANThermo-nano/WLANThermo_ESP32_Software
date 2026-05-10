@@ -28,7 +28,9 @@
 #include "Settings.h"
 #include "ArduinoLog.h"
 #include "TaskConfig.h"
+#include "Utils.h"
 #include <byteswap.h>
+#include <esp_task_wdt.h>
 
 #define BLE_BAUD 115200u
 
@@ -45,6 +47,7 @@
 
 HardwareSerial *Bluetooth::serialBle = NULL;
 std::vector<BleDeviceType *> Bluetooth::bleDevices;
+portMUX_TYPE Bluetooth::bleDevicesMux = portMUX_INITIALIZER_UNLOCKED;
 boolean Bluetooth::enabled = true;
 
 Bluetooth::Bluetooth(int8_t rxPin, int8_t txPin, uint8_t resetPin)
@@ -76,20 +79,20 @@ void Bluetooth::init()
     if (this->doDfu())
     {
         builtIn = true;
-        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 3000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
+        xTaskCreatePinnedToCore(Bluetooth::task, "Bluetooth::task", 6000, this, TASK_PRIORITY_BLUETOOTH_TASK, NULL, 1);
     }
 }
 
 void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = Settings::read(kBluetooth, &jsonBuffer);
+    JsonDocument doc;
+    JsonObject json = Settings::read(kBluetooth, doc);
 
-    if (json.success())
+    if (!json.isNull())
     {
         if (json.containsKey("enabled"))
         {
-            enabled = json["enabled"].as<boolean>();
+            enabled = json["enabled"].as<bool>();
         }
 
         for (uint8_t i = 0u; i < json["tname"].size(); i++)
@@ -106,8 +109,8 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
                     bleDevice->sensors[i] = INACTIVEVALUE;
                 }
 
-                strcpy(bleDevice->name, json["tname"][i]);
-                strcpy(bleDevice->address, json["taddress"][i]);
+                SAFE_STRNCPY(bleDevice->name,    json["tname"][i].as<const char*>());
+                SAFE_STRNCPY(bleDevice->address, json["taddress"][i].as<const char*>());
                 bleDevice->count = json["tcount"][i];
                 bleDevice->selected = json["tselected"][i];
 
@@ -126,14 +129,14 @@ void Bluetooth::loadConfig(TemperatureGrp *temperatureGrp)
 
 void Bluetooth::saveConfig()
 {
-    DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-    JsonObject &json = jsonBuffer.createObject();
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
 
     json["enabled"] = enabled;
-    JsonArray &_name = json.createNestedArray("tname");
-    JsonArray &_address = json.createNestedArray("taddress");
-    JsonArray &_count = json.createNestedArray("tcount");
-    JsonArray &_selected = json.createNestedArray("tselected");
+    JsonArray _name = json["tname"].to<JsonArray>();
+    JsonArray _address = json["taddress"].to<JsonArray>();
+    JsonArray _count = json["tcount"].to<JsonArray>();
+    JsonArray _selected = json["tselected"].to<JsonArray>();
 
     for (uint8_t i = 0u; i < bleDevices.size(); i++)
     {
@@ -187,53 +190,66 @@ void Bluetooth::enableChip(boolean enable)
 void Bluetooth::getDevices()
 {
     uint32_t requestedDevices = 0u;
+    bool needsDiscovery = false;
 
     for (uint8_t devIndex = 0u; devIndex < bleDevices.size(); devIndex++)
     {
         if (bleDevices[devIndex]->selected > 0u)
         {
-            requestedDevices |= (1u << bleDevices[devIndex]->remoteIndex);
+            if (bleDevices[devIndex]->remoteIndex != BLE_DEVICE_REMOTE_INDEX_INIT)
+            {
+                requestedDevices |= (1u << bleDevices[devIndex]->remoteIndex);
+            }
+            else
+            {
+                needsDiscovery = true;
+            }
         }
+    }
+
+    // When selected devices have unknown NRF index, send getDevices=0 so NRF
+    // returns all nearby probes — address matching then assigns the correct index.
+    if (needsDiscovery)
+    {
+        requestedDevices = 0u;
     }
 
     gSystem->wireLock();
     serialBle->printf("getDevices=%d\n", requestedDevices);
     String bleDeviceJson = serialBle->readStringUntil('\n');
     gSystem->wireRelease();
-    Serial.println(bleDeviceJson);
+    Log.verbose("BLE: %s\n", bleDeviceJson.c_str());
 
-    DynamicJsonBuffer jsonBuffer;
+    JsonDocument doc;
+    deserializeJson(doc, bleDeviceJson);
+    JsonObject json = doc.as<JsonObject>();
 
-    JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
-
-    if (!json.success())
+    if (json.isNull())
     {
-        Serial.println("Invalid JSON");
+        Log.error("BLE: invalid JSON\n");
         return;
     }
 
     if (json.containsKey(BLE_JSON_DEVICE) == false)
     {
-        Serial.println("Invalid JSON: devices missing");
+        Log.error("BLE: invalid JSON, devices missing\n");
         return;
     }
 
-    JsonArray &_devices = json[BLE_JSON_DEVICE].asArray();
+    JsonArray _devices = json[BLE_JSON_DEVICE].as<JsonArray>();
     uint8_t deviceIndex = 0u;
 
-    for (JsonArray::iterator itDevice = _devices.begin(); itDevice != _devices.end(); ++itDevice, deviceIndex++)
+    for (JsonObject _device : _devices)
     {
-
-        JsonObject &_device = itDevice->asObject();
-
         if (_device.containsKey(BLE_JSON_ADDRESS) == false)
         {
-            Serial.println("Invalid JSON: address missing");
+            Log.warning("BLE: invalid JSON, address missing\n");
+            deviceIndex++;
             continue;
         }
 
         // check if device is known
-        String deviceAddress = _device[BLE_JSON_ADDRESS];
+        String deviceAddress = _device[BLE_JSON_ADDRESS].as<const char*>();
         const auto isKnownDevice = [deviceAddress](BleDevice *d) {
             return (deviceAddress.equalsIgnoreCase(d->address));
         };
@@ -250,7 +266,7 @@ void Bluetooth::getDevices()
             bleDevice = new BleDeviceType();
             memset(bleDevice, 0, sizeof(BleDeviceType));
             bleDevice->remoteIndex = BLE_DEVICE_REMOTE_INDEX_INIT;
-            strcpy(bleDevice->address, deviceAddress.c_str());
+            SAFE_STRNCPY(bleDevice->address, deviceAddress.c_str());
             bleDevices.push_back(bleDevice);
         }
 
@@ -261,8 +277,10 @@ void Bluetooth::getDevices()
 
         if (_device.containsKey(BLE_JSON_NAME) == true)
         {
-            strcpy(bleDevice->name, _device[BLE_JSON_NAME]);
+            SAFE_STRNCPY(bleDevice->name, _device[BLE_JSON_NAME].as<const char*>());
         }
+
+        taskENTER_CRITICAL(&bleDevicesMux);
 
         if (_device.containsKey(BLE_JSON_STATUS) == true)
         {
@@ -283,12 +301,12 @@ void Bluetooth::getDevices()
 
         if (_device.containsKey(BLE_JSON_SENSORS) == true)
         {
-            JsonArray &_sensors = _device[BLE_JSON_SENSORS].asArray();
+            JsonArray _sensors = _device[BLE_JSON_SENSORS].as<JsonArray>();
             uint8_t sensorIndex = 0u;
 
-            for (JsonArray::iterator itSensor = _sensors.begin(); (itSensor != _sensors.end()) && (sensorIndex < BLE_SENSORS_MAX_COUNT); ++itSensor, sensorIndex++)
+            for (JsonObject _sensor : _sensors)
             {
-                JsonObject &_sensor = itSensor->asObject();
+                if (sensorIndex >= BLE_SENSORS_MAX_COUNT) break;
 
                 if (_sensor.containsKey(BLE_JSON_SENSORS_VALUE) == true)
                 {
@@ -297,10 +315,16 @@ void Bluetooth::getDevices()
 
                 if (_sensor.containsKey(BLE_JSON_SENSORS_UNIT) == true)
                 {
-                    memcpy(bleDevice->units[sensorIndex], _sensor[BLE_JSON_SENSORS_UNIT].asString(), BLE_SENSOR_UNIT_MAX_SIZE - 1u);
+                    memcpy(bleDevice->units[sensorIndex], _sensor[BLE_JSON_SENSORS_UNIT].as<const char*>(), BLE_SENSOR_UNIT_MAX_SIZE - 1u);
                 }
+
+                sensorIndex++;
             }
         }
+
+        taskEXIT_CRITICAL(&bleDevicesMux);
+
+        deviceIndex++;
     }
 }
 
@@ -343,6 +367,7 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if (it != bleDevices.end())
@@ -360,6 +385,7 @@ boolean Bluetooth::isDeviceConnected(String peerAddress)
             }
         }
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return isConnected;
 }
@@ -371,12 +397,14 @@ float Bluetooth::getSensorValue(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
     {
         value = (*it)->sensors[index];
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return value;
 }
@@ -388,12 +416,14 @@ String Bluetooth::getSensorUnit(String peerAddress, uint8_t index)
         return (peerAddress.equalsIgnoreCase(d->address));
     };
 
+    taskENTER_CRITICAL(&bleDevicesMux);
     auto it = std::find_if(bleDevices.begin(), bleDevices.end(), isKnownDevice);
 
     if ((it != bleDevices.end()) && (index < BLE_SENSORS_MAX_COUNT))
     {
         memcpy(unit, (*it)->units[index], BLE_SENSOR_UNIT_MAX_SIZE);
     }
+    taskEXIT_CRITICAL(&bleDevicesMux);
 
     return unit;
 }
@@ -405,7 +435,7 @@ void Bluetooth::task(void *parameter)
 
     while (1)
     {
-        //Serial.printf("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+        Log.verbose("Bluetooth::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
         if (gSystem->otaUpdate.isUpdateInProgress())
         {
@@ -417,6 +447,9 @@ void Bluetooth::task(void *parameter)
         if (bluetooth->enabled != bluetooth->chipEnabled)
         {
             bluetooth->enableChip(bluetooth->enabled);
+            // skip getDevices this cycle — chip needs time to initialize after reset
+            vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
+            continue;
         }
 
         // get devices only when bluetooth is enabled
@@ -427,7 +460,7 @@ void Bluetooth::task(void *parameter)
         vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
 
-    Serial.println("Delete Bluetooth task");
+    esp_task_wdt_delete(NULL);
     vTaskDelete(NULL);
 }
 
@@ -490,13 +523,12 @@ boolean Bluetooth::doDfu()
     enableChip(true);
 
     // Give the bootloader some time to start
-    delay(200);
+    delay(300);
 
     // check for startup string of bootloader
     if (waitForBootloader(500u))
     {
-        Serial.println("Hello from BLE bootloader");
-        Serial.println("Start flashing of BLE application");
+        Log.notice("BLE: bootloader detected, start flashing\n");
         uint32_t flashStart = millis();
 
         TFwu sFwu;
@@ -547,12 +579,10 @@ boolean Bluetooth::doDfu()
             {
                 if (FWU_RSP_OK_NO_UPDATE == sFwu.responseStatus)
                 {
-                    Serial.println("\nFlashing skipped, version already up to date");
                     Log.notice("BLE chip already up-to-date" CR);
                 }
                 else
                 {
-                    Serial.printf("\nFlashing successful (%d ms)\n", (millis() - flashStart));
                     Log.notice("BLE chip successfully flashed in %dms" CR, (millis() - flashStart));
                     flashed = true;
                 }
@@ -562,7 +592,6 @@ boolean Bluetooth::doDfu()
             }
             else if (status == FWU_STATUS_FAILURE)
             {
-                Serial.printf("\nFlashing failed = %d (%d ms)\n", sFwu.responseStatus, (millis() - flashStart));
                 Log.error("BLE chip flashing failed after %dms" CR, (millis() - flashStart));
                 break;
             }
@@ -574,7 +603,6 @@ boolean Bluetooth::doDfu()
     {
         if (waitForBootloader(5000u))
         {
-            Serial.println("Hello from BLE bootloader again");
             Log.notice("BLE chip detected after flashing" CR);
         }
         else
@@ -603,8 +631,7 @@ void Bluetooth::dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len)
         //Serial.printf("%02x ", c);
         if (++bytesSent % 1000 == 0)
         {
-            Serial.printf(".");
-            Serial.flush();
+            Log.verbose("BLE DFU: %d bytes sent\n", (int)bytesSent);
         }
     }
 

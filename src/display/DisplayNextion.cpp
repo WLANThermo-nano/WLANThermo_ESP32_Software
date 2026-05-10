@@ -300,8 +300,8 @@ void DisplayNextion::updateTemperaturePage(boolean forceUpdate)
   if (updatePage)
   {
     NexVariable(DONT_CARE, DONT_CARE, "temp_main.Count").setValue(visibleCount);
-
-    if (getCurrentPageNumber() == PAGE_TEMP_LOAD_ID)
+    
+    // Abfrage über getCurrentPageNumber() erzeugt teilweise Fehler
       sendCommand("page temp_main");
   }
 
@@ -759,7 +759,7 @@ void DisplayNextion::wifiConnect(void *ptr)
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Wifi").setText("");
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").getText(password, sizeof(password));
   NexText(DONT_CARE, DONT_CARE, "wifi_settings.Password").setText("");
-  Serial.printf("%s, %s\n", ssid, password);
+  Serial.printf("Nextion WiFi: ssid = %s, password = ***\n", ssid);
 
   if (strlen(ssid) && strlen(password))
   {
@@ -943,7 +943,7 @@ void DisplayNextion::setSymbols(boolean forceUpdate)
       if (delayApSymbol)
         break;
       NexButton(DONT_CARE, DONT_CARE, "temp_main.Wifi").setText("l");
-      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName().c_str());
+      NexVariable(DONT_CARE, DONT_CARE, "wifi_info.WifiName").setText(system->wlan.getAccessPointName());
       NexVariable(DONT_CARE, DONT_CARE, "wifi_info.CustomInfo").setText("12345678");
       break;
     case WifiState::SoftAPClientConnected:

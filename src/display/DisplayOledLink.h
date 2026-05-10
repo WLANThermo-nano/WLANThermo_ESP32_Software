@@ -34,7 +34,6 @@ public:
   DisplayOledLink();
   void init();
   void update();
-  void saveConfig();
   static void drawCharging();
 
 private:
@@ -64,7 +63,6 @@ private:
   static void handleMenuNavigation(int8_t add, MenuItem minMenu, MenuItem maxMenu);
   static void handleTemperatureNavigation(ButtonId buttonId);
 
-  void loadConfig();
   boolean initDisplay();
 
   /* Non UI draws */

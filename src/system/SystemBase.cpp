@@ -22,6 +22,7 @@
 #include <WiFi.h>
 #include <SPIFFS.h>
 #include <rom/rtc.h>
+#include <esp_timer.h>
 #include "SystemBase.h"
 #include "Constants.h"
 #include "RecoveryMode.h"
@@ -56,7 +57,7 @@ SystemBase::SystemBase()
   disableTypeK = false;
   disableReceiver = false;
   wireSemaHandle = xSemaphoreCreateMutex();
-  esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "NULL", &this->wirePmHandle);
+  esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, "NULL", &this->wirePmHandle);
 }
 
 void SystemBase::init()
@@ -69,7 +70,7 @@ void SystemBase::hwInit()
 
 void SystemBase::run()
 {
-  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 3000, this, TASK_PRIORITY_SYSTEM_TASK, NULL, 1);
+  xTaskCreatePinnedToCore(SystemBase::task, "SystemBase::task", 6000, this, TASK_PRIORITY_SYSTEM_TASK, NULL, 1);
 }
 
 void SystemBase::task(void *parameter)
@@ -79,7 +80,7 @@ void SystemBase::task(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("SystemBase::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("SystemBase::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     uint32_t time = esp_timer_get_time();
     system->update();
@@ -144,10 +145,14 @@ void SystemBase::update()
   temperatures.update();
   this->wireRelease();
 
+  // SSR time-proportional control needs to run every 200 ms (task cycle) to
+  // get enough samples within the 2 s period.  Full PID/pause logic is still
+  // gated inside Pitmaster::update() via checkPause().
+  pitmasters.update();
+
   if (CHECK_CYCLE(cycleCounter, ONCE_PER_SECOND_CYCLE))
   {
     temperatures.refresh();
-    pitmasters.update();
 
     for (uint8_t i = 0; i < temperatures.count(); i++)
     {
@@ -203,15 +208,17 @@ void SystemBase::resetConfig()
   temperatures.setUnit(TemperatureUnit::Celsius);
   gSystem->temperatures.saveConfig();
   
-  wlan.setHostName(DEFAULT_HOSTNAME + String(this->serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, this->serialNumber);
+  wlan.setHostName(defaultHostName);
   wlan.setAccessPointName(DEFAULT_APNAME);
   wlan.saveConfig();
 }
 
 void SystemBase::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["DisableTypeK"] = disableTypeK;
   json["DisableReceiver"] = disableReceiver;
   json["language"] = language;
@@ -219,24 +226,54 @@ void SystemBase::saveConfig()
   Settings::write(kSystem, json);
 }
 
+void SystemBase::processPendingSave()
+{
+  // One NVS write per call — ConnectTask calls this every 1s.
+  // Staggering prevents consecutive flash writes from blocking Core 1
+  // long enough to trigger the async_tcp task watchdog.
+  if (systemConfigSavePending) {
+    systemConfigSavePending = false;
+    saveConfig();
+  } else if (otaConfigSavePending) {
+    otaConfigSavePending = false;
+    otaUpdate.saveConfig();
+  } else if (wlanConfigSavePending) {
+    wlanConfigSavePending = false;
+    wlan.saveConfig();
+  } else if (tempConfigSavePending) {
+    tempConfigSavePending = false;
+    temperatures.saveConfig();
+  } else if (notificationConfigSavePending) {
+    notificationConfigSavePending = false;
+    notification.saveConfig();
+  } else if (pitmasterConfigSavePending) {
+    pitmasterConfigSavePending = false;
+    pitmasters.saveConfig();
+  }
+}
+
 void SystemBase::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kSystem, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kSystem, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
     if (json.containsKey("DisableTypeK"))
-      disableTypeK = json["DisableTypeK"].as<boolean>();
+      disableTypeK = json["DisableTypeK"].as<bool>();
     if (json.containsKey("DisableReceiver"))
-      disableReceiver = json["DisableReceiver"].as<boolean>();
-    if (json.containsKey("language"))
-      language = json["language"].asString();
+      disableReceiver = json["DisableReceiver"].as<bool>();
+    if (json.containsKey("language") && json["language"].is<const char*>()) {
+      const char *lang = json["language"].as<const char*>();
+      if (lang != nullptr)
+        language = lang;
+    }
     if (json.containsKey("CrashReport"))
-      crashReport = json["CrashReport"].as<boolean>();
+      crashReport = json["CrashReport"].as<bool>();
   }
 
-  SPIFFS.begin();
+  if (!SPIFFS.begin())
+    Log.error("SystemBase: SPIFFS mount failed\n");
   cloud.loadConfig();
   mqtt.loadConfig();
   notification.loadConfig();
@@ -256,6 +293,17 @@ void SystemBase::restart()
   ESP.restart();
 }
 
+void SystemBase::restartDeferred(uint32_t delayMs)
+{
+  esp_timer_handle_t handle;
+  esp_timer_create_args_t args = {};
+  args.callback = [](void *) { ESP.restart(); };
+  args.dispatch_method = ESP_TIMER_TASK;
+  args.name = "restart-deferred";
+  if (esp_timer_create(&args, &handle) == ESP_OK)
+    esp_timer_start_once(handle, (uint64_t)delayMs * 1000ULL);
+}
+
 void SystemBase::wireLock()
 {
   esp_pm_lock_acquire(this->wirePmHandle);
@@ -271,6 +319,11 @@ void SystemBase::wireRelease()
 String SystemBase::getDeviceName()
 {
   return this->deviceName;
+}
+
+String SystemBase::getDeviceID()
+{
+  return this->deviceID;
 }
 
 String SystemBase::getCpuName()
@@ -324,19 +377,19 @@ void SystemBase::setPowerSaveMode(boolean enable)
   if ((enable == powerSaveModeEnabled) || (false == powerSaveModeSupport))
     return;
 
-  // only enable PSM when every caller enables it
-  pm_config.light_sleep_enable = enable;
   pm_config.max_freq_mhz = 240;
-  pm_config.min_freq_mhz = 240;
+  pm_config.min_freq_mhz = 40; // XTAL freq — required for light sleep on ESP32
+  pm_config.light_sleep_enable = enable;
 
   if ((ret = esp_pm_configure(&pm_config)) != ESP_OK)
   {
-    Serial.printf("esp_pm_configure error %s\n", ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
+    powerSaveModeSupport = false;
+    Log.error("esp_pm_configure error %s" CR, ret == ESP_ERR_INVALID_ARG ? "ESP_ERR_INVALID_ARG" : "ESP_ERR_NOT_SUPPORTED");
   }
   else
   {
-      Log.notice("PSM: %s" CR, (enable == true) ? "enabled" : "disabled");
-      powerSaveModeEnabled = enable;
+    Log.notice("PSM: %s" CR, (enable == true) ? "enabled" : "disabled");
+    powerSaveModeEnabled = enable;
   }
 }
 

@@ -28,11 +28,12 @@
 #include "LogRingBuffer.h"
 #include "TaskConfig.h"
 #include "DeviceId.h"
+#include "esp_task_wdt.h"
 
 // Forward declaration
 void createTasks();
 
-void loggingPrefix(Print *p)
+void loggingPrefix(Print *p, int level)
 {
   time_t t = now();
 
@@ -86,13 +87,7 @@ void MainTask(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("MainTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-    if (gSystem->otaUpdate.isUpdateInProgress())
-    {
-      // exit task loop for better update performance
-      break;
-    }
+    Serial.printf("MainTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
@@ -121,7 +116,7 @@ void ConnectTask(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("ConnectTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("ConnectTask, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     if (gSystem->otaUpdate.isUpdateInProgress())
     {
@@ -153,7 +148,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       MainTask,                /* Task function. */
       "MainTask",              /* String with name of task. */
-      3000,                    /* Stack size in bytes. */
+      8000,                    /* Stack size in bytes. */
       NULL,                    /* Parameter passed as input of the task */
       TASK_PRIORITY_MAIN_TASK, /* Priority of the task. */
       NULL,                    /* Task handle. */
@@ -162,7 +157,7 @@ void createTasks()
   xTaskCreatePinnedToCore(
       ConnectTask,                /* Task function. */
       "ConnectTask",              /* String with name of task. */
-      3000,                       /* Stack size in bytes. */
+      12000,                      /* Stack size in bytes. */
       NULL,                       /* Parameter passed as input of the task */
       TASK_PRIORITY_CONNECT_TASK, /* Priority of the task. */
       NULL,                       /* Task handle. */
@@ -173,5 +168,6 @@ void createTasks()
 // LOOP
 void loop()
 {
+  esp_task_wdt_delete(NULL);
   vTaskDelete(NULL);
 }

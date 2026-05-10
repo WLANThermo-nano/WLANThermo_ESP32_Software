@@ -19,9 +19,11 @@
     
 ****************************************************/
 #include "Pitmaster.h"
+#include "PidFormula.h"
 #include "DbgPrint.h"
 #include "math.h"
 #include "ArduinoLog.h"
+#include <driver/dac.h>
 
 #define PIDKIMAX 95 // ANTI WINDUP LIMIT MAX
 #define PIDKIMIN 0  // ANTI WINDUP LIMIT MIN
@@ -30,8 +32,6 @@
 #define PITMASTERSETMIN 50
 #define PITMASTERSETMAX 200
 
-#define SSR_FREQUENCY 0.5
-#define SSR_BIT_RES 16
 #define SERVO_FREQUENCY 50
 #define SERVO_BIT_RES 16
 
@@ -89,7 +89,7 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
     this->channel1 = channel1;
     this->channel2 = channel2;
     this->initActuator = NOAR;
-    this->globalIndex = this->globalIndexTracker++;
+    this->globalIndex = __sync_fetch_and_add(&globalIndexTracker, 1u);
     this->registeredCb = NULL;
     this->settingsChanged = false;
     this->registeredCbUserData = NULL;
@@ -102,6 +102,10 @@ Pitmaster::Pitmaster(uint8_t ioPin1, uint8_t channel1, uint8_t ioPin2, uint8_t c
 
     this->servoDcMin = PM_DEFAULT_SERVO_MIN_DUTY_CYCLE;
     this->servoDcMax = PM_DEFAULT_SERVO_MAX_DUTY_CYCLE;
+
+    this->ssrPeriodStart = 0;
+    this->ssrDutyCycle   = -1.0f;
+    this->ssrActive      = false;
 
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
 
@@ -156,6 +160,8 @@ PitmasterProfile *Pitmaster::getAssignedProfile()
 
 void Pitmaster::assignTemperature(TemperatureBase *temperature)
 {
+    if (temperature == NULL)
+        return;
     // Skip BLE and Maverick Radio temperatures for assignment
     /*   if ((temperature->getType() != (uint8_t)SensorType::Ble) &&
         (temperature->getType() != (uint8_t)SensorType::MaverickRadio))*/
@@ -264,7 +270,7 @@ void Pitmaster::handleCallbacks()
 boolean Pitmaster::checkPause()
 {
     boolean pauseDone = false;
-    uint currentMillis = millis();
+    uint32_t currentMillis = millis();
 
     // Global Pitmaster Aktor from PID-Profil
     uint8_t actuator = this->profile->actuator;
@@ -630,6 +636,11 @@ float Pitmaster::getOPLTemperature()
 
 void Pitmaster::update()
 {
+    if (this->temperature == NULL)
+        return;
+    if (this->profile == NULL)
+        return;
+
     // Control Autotune
     //TODO
     /*if (this->autoTune->stop > 0) stopautotune(id);
@@ -639,6 +650,15 @@ void Pitmaster::update()
 
     if (false == this->checkDutyCycleTest())
         return;
+
+    // SSR: pin toggling runs on every update() for time-proportional control,
+    // independent of the 2 s PID gate in checkPause().
+    if (this->type != pm_off && this->profile != NULL && this->profile->actuator == SSR)
+    {
+        initActuators();
+        this->enableStepUp(true);
+        this->controlSSR(this->value, this->profile->dcmin, this->profile->dcmax);
+    }
 
     // Check Pitmaster Pause
     if (false == this->checkPause())
@@ -744,12 +764,16 @@ void Pitmaster::initActuators()
     case SSR:
         if (initActuator != SSR)
         {
-            dacWrite(this->ioPin1, 0u);
+            // dacWrite() enables the DAC which has priority over GPIO on GPIO 25/26
+            // in ESP-IDF 4.x — disable it before using the pin as digital output.
+            if (this->ioPin1 == 25u) dac_output_disable(DAC_CHANNEL_1);
+            else if (this->ioPin1 == 26u) dac_output_disable(DAC_CHANNEL_2);
             ledcDetachPin(this->ioPin1);
             ledcDetachPin(this->ioPin2);
-            ledcSetup(this->channel1, SSR_FREQUENCY, SSR_BIT_RES);
-            ledcAttachPin(this->ioPin1, this->channel1);
-            ledcWrite(this->channel1, 0u);
+            pinMode(this->ioPin1, OUTPUT);
+            digitalWrite(this->ioPin1, LOW);
+            ssrActive    = false;
+            ssrDutyCycle = -1.0f;
             initActuator = SSR;
         }
         break;
@@ -826,27 +850,44 @@ void Pitmaster::controlServo(float newValue, float newSPMin, float newSPMax)
 
 void Pitmaster::controlSSR(float newValue, float newDcMin, float newDcMax)
 {
-    static float prevValue = 0;
-    // limits from global actor
-    uint16_t dcmin = newDcMin * 10u; // 1. Nachkommastelle
-    uint16_t dcmax = newDcMax * 10u; // 1. Nachkommastelle
+    const uint32_t SSR_PERIOD_MS = 10000;
 
-    dcmin = map(dcmin, 0, 1000u, 0u, 0xFFFFu);
-    dcmax = map(dcmax, 0, 1000u, 0u, 0xFFFFu);
+    float newDC = (newDcMax <= newDcMin)
+        ? newDcMin
+        : newDcMin + (newValue / 100.0f) * (newDcMax - newDcMin);
+    newDC = constrain(newDC, 0.0f, 100.0f);
 
-    uint32_t newDc = map(newValue, 0, 100, dcmin, dcmax);
-    uint32_t prevDc = ledcRead(this->channel1);
-
-    prevValue = newValue;
-
-    if (0u == newValue)
+    if (newDC == 0.0f)
     {
-        ledcWrite(this->channel1, 0u);
+        digitalWrite(this->ioPin1, LOW);
+        ssrActive = false;
+        return;
     }
-    else if (newDc != prevDc)
+    if (newDC >= 100.0f)
     {
-        ledcWrite(this->channel1, newDc);
+        digitalWrite(this->ioPin1, HIGH);
+        ssrActive = false;
+        return;
     }
+
+    if (!ssrActive || ssrDutyCycle != newDC)
+    {
+        ssrPeriodStart = millis();
+        ssrActive      = true;
+        ssrDutyCycle   = newDC;
+        digitalWrite(this->ioPin1, HIGH);
+        return;
+    }
+
+    uint32_t elapsed = millis() - ssrPeriodStart;
+    if (elapsed >= SSR_PERIOD_MS)
+    {
+        ssrPeriodStart += SSR_PERIOD_MS;
+        elapsed = millis() - ssrPeriodStart;
+    }
+
+    uint32_t highTime = (uint32_t)((newDC / 100.0f) * SSR_PERIOD_MS);
+    digitalWrite(this->ioPin1, elapsed < highTime ? HIGH : LOW);
 }
 
 void Pitmaster::enableStepUp(boolean enable)
@@ -869,11 +910,14 @@ void Pitmaster::disableActuators(boolean allowdelay)
     {
         this->controlServo(0, this->profile->spmin, this->profile->spmax);
         initActuator = NOAR;
-        Serial.println("ServoOFF");
+        Log.verbose("Pitmaster: servo off\n");
         return;
     }
 
-    dacWrite(this->ioPin1, 0u);
+    // SSR uses plain GPIO (not DAC) — calling dacWrite would re-enable the DAC
+    // NOAR is the initial state (never initialized) — no actuator to disable
+    if (initActuator != SSR && initActuator != NOAR)
+        dacWrite(this->ioPin1, 0u);
     ledcDetachPin(this->ioPin1);
     ledcDetachPin(this->ioPin2);
     digitalWrite(this->ioPin1, LOW);
@@ -881,6 +925,7 @@ void Pitmaster::disableActuators(boolean allowdelay)
 
     this->enableStepUp(false);
     initActuator = NOAR;
+    ssrActive    = false;
 
     this->pidReset();
     memset((void *)&this->openLid, 0u, sizeof(this->openLid));
@@ -978,63 +1023,10 @@ float Pitmaster::pidCalc()
         this->jump = false;
     }*/
 
-    // Proportional-Anteil
-    float p_out = kp * e;
-
-    // Differential-Anteil (Intervall-Berechnung)
-    this->ecount++;
-    if (this->ecount >= this->dCount) {
-        this->edif = (e - this->elast) / (this->pause / 1000.0);
-        this->edif = this->edif / (float) this->dCount;
-        this->elast = e;
-        this->ecount = 0u;
-    }
-
-    float d_out = kd * edif;
-
-    // i-Anteil wechsl: https://github.com/WLANThermo/WLANThermo_v2/blob/b7bd6e1b56fe5659e8750c17c6dd1cd489872f6c/software/usr/sbin/wlt_2_pitmaster.py
-    // Integral-Anteil
-    float i_out;
-    if (ki != 0)
-    {
-
-        // Sprünge im Reglerausgangswert bei Anpassung von Ki vermeiden
-        if (ki != this->Ki_alt)
-        {
-            this->esum = (this->esum * this->Ki_alt) / ki;
-            this->Ki_alt = ki;
-        }
-
-        // Anti-Windup I-Anteil
-        // Keine Erhöhung I-Anteil wenn Regler bereits an der Grenze ist
-        if (p_out < PITMAX)
-        { //if ((p_out + d_out) < PITMAX) {
-            this->esum += e * (this->pause / 1000.0);
-        }
-
-        // Anti-Windup I-Anteil (Limits)
-        if (this->esum * ki > PIDKIMAX)
-            this->esum = PIDKIMAX / ki;
-        else if (this->esum * ki < PIDKIMIN)
-            this->esum = PIDKIMIN / ki;
-
-        i_out = ki * this->esum;
-    }
-    else
-    {
-        // Historie vergessen, da wir nach Ki = 0 von 0 aus anfangen
-        this->esum = 0;
-        i_out = 0;
-        this->Ki_alt = 0;
-    }
-
-    // PID-Regler berechnen
-    float y = p_out + i_out + d_out;
-    y = constrain(y, PITMIN, PITMAX); // Auflösung am Ausgang ist begrenzt
-
-    //PMPRINTLN("[PM]\tPID:" + String(y, 1) + "\tp:" + String(p_out, 1) + "\ti:" + String(i_out, 2) + "\td:" + String(d_out, 1));
-
-    return y;
+    return pidComputeOutput(e,
+                            this->esum, this->elast, this->Ki_alt, this->edif, this->ecount,
+                            kp, ki, kd,
+                            (float)this->pause, this->dCount);
 }
 
 void Pitmaster::pidReset()

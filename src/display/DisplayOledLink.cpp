@@ -106,8 +106,6 @@ void DisplayOledLink::init()
 
 boolean DisplayOledLink::initDisplay()
 {
-  this->loadConfig();
-
   ui.setTargetFPS(30);
   ui.setFrames(frames, (uint8_t)Frames::NumOfFrames);
   ui.setOverlays(overlays, 1u);
@@ -170,23 +168,6 @@ void DisplayOledLink::task(void *parameter)
   }
 }
 
-void DisplayOledLink::saveConfig()
-{
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
-  Settings::write(kDisplay, json);
-}
-
-void DisplayOledLink::loadConfig()
-{
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
-
-  if (json.success())
-  {
-  }
-}
-
 void DisplayOledLink::update()
 {
   // check global block
@@ -212,7 +193,9 @@ boolean DisplayOledLink::handlePopUp()
   if (gSystem->temperatures.hasAlarm(true))
   {
     displayPopUp = DisplayPopUpType::Alarm;
+    return true;
   }
+  return false;
 }
 
 void DisplayOledLink::handleButtons(ButtonId buttonId, ButtonEvent buttonEvent)

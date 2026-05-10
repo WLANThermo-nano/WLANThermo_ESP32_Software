@@ -97,7 +97,7 @@ export default {
       }
     },
     backToHome: function () {
-      EventBus.$emit("back-to-home")
+      EventBus.emit("back-to-home")
     },
     gotoForum: function() {
       if (this.isMobile) {

@@ -171,7 +171,7 @@ export default {
     }
   },
   mounted: function () {
-    EventBus.$emit("loading", true)
+    EventBus.emit("loading", true)
     this.isMobile = process.env.VUE_APP_PRODUCT_NAME === 'mobile'
 
     if (this.isMobile) {
@@ -185,7 +185,7 @@ export default {
       this.telegram = response.data.telegram
       this.pushover = response.data.pushover
       this.app = response.data.app
-      EventBus.$emit("loading", false)
+      EventBus.emit("loading", false)
     });
   },
   methods: {
@@ -193,7 +193,7 @@ export default {
       this.app.devices = this.app.devices.filter(d => d.id !== deviceId)
     },
     configuredCurrentPhone: async function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
 
       const {id,model} = await window.flutter_inappwebview.callHandler('getDeviceInfo')
 
@@ -203,7 +203,7 @@ export default {
       window.flutter_inappwebview
         .callHandler('getFCMToken')
         .then(async (tokenResponse) => {
-          EventBus.$emit("loading", false)
+          EventBus.emit("loading", false)
           this.app.devices.push({
             id: id,
             name: model,
@@ -213,14 +213,14 @@ export default {
         }).catch((error) => {
           console.log(`don't get got token`)
           console.log(error)
-          EventBus.$emit("loading", false)
+          EventBus.emit("loading", false)
         });
     },
     backToHome: function () {
-      EventBus.$emit("back-to-home");
+      EventBus.emit("back-to-home");
     },
     showHelpText: function () {
-      EventBus.$emit('show-help-dialog', {
+      EventBus.emit('show-help-dialog', {
         title: this.$t('help_notification_title'),
         content: this.$t('help_notification'),
         wikiLink: 'https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/wiki/Push-Notification',
@@ -228,7 +228,7 @@ export default {
       })
     },
     save: function() {
-      EventBus.$emit("loading", true)
+      EventBus.emit("loading", true)
       // Sets android_channel_id before sending to BE
       this.app.devices.forEach(device => {
         // see [soundOptions]
@@ -241,11 +241,11 @@ export default {
 
       const requestObj = Object.assign({}, { telegram: this.telegram, pushover: this.pushover, app: this.app })
       this.axios.post('/setpush', requestObj).then(() => {
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
         this.backToHome()
       }).catch(async (error) => {
         await window.flutter_inappwebview.callHandler('debug', error)
-        EventBus.$emit("loading", false)
+        EventBus.emit("loading", false)
       });
     },
     sendTestMessage: function(serviceName, serviceData) {

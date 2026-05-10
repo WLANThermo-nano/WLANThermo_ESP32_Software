@@ -25,6 +25,7 @@
 #include "temperature/TemperatureMcp3208.h"
 #include "temperature/TemperatureMavRadio.h"
 #include "Constants.h"
+#include "DeviceId.h"
 
 // TEMPERATURES
 #define CS_MCP3208 0u
@@ -65,8 +66,11 @@ SystemMiniV1::SystemMiniV1() : SystemBase()
 void SystemMiniV1::init()
 {
   deviceName = "mini";
+  deviceID = DeviceId::get();
   hardwareVersion = 1u;
-  wlan.setHostName(DEFAULT_HOSTNAME + String(serialNumber));
+  char defaultHostName[WLAN_HOSTNAME_MAX_LEN];
+  snprintf(defaultHostName, sizeof(defaultHostName), "%s%s", DEFAULT_HOSTNAME, serialNumber);
+  wlan.setHostName(defaultHostName);
 
   // configure PIN mode
   pinMode(CS_MCP3208, OUTPUT);

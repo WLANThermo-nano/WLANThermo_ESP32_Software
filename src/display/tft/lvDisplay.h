@@ -24,11 +24,11 @@
 
 typedef struct lvDisplay
 {
-
   lv_obj_t *screen;
-  lv_obj_t *btnClose;
-  lv_obj_t *labelBrightness;
+  lv_obj_t *tabview;
   lv_obj_t *sliderBrightness;
+  lv_obj_t *labelTimeout;
+  uint8_t timeoutIndex;
 } lvDisplayType;
 
 void lvDisplay_Create(void *userData);

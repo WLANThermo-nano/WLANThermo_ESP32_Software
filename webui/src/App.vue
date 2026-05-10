@@ -47,7 +47,9 @@
     <div id="main">
       <div class="page-content">
         <div class="content-body">
-          <router-view :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" />
+          <router-view v-slot="{ Component }">
+            <component :is="Component" :channels="channels" :pitmasterpm="pitmaster.pm" :unit="system.unit" :settings="settings" />
+          </router-view>
         </div>
       </div>
     </div>
@@ -346,7 +348,7 @@ export default {
   },
   mounted: function() {
     if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
-      EventBus.$emit('log', 'is mobile')
+      EventBus.emit('log', 'is mobile')
       this.$router.push('/scan')
       this.settings.system.host = this.$t('mobileAppHeader')
       this.menuItems = menuItems.filter(i => (i.id === 'scan') || (i.id === 'about'))
@@ -359,49 +361,57 @@ export default {
       this.getSettings()
       this.initGetDataPeriodically()
     }
-    EventBus.$on('show-help-dialog', (dialogData) => {
+    EventBus.on('show-help-dialog', (dialogData) => {
       this.dialogTitle = dialogData.title
       this.dialogBodyText = dialogData.content
       this.wikiLink = dialogData.wikiLink
       this.linkText = dialogData.linkText
       this.dialogActive = true
     })
-    EventBus.$on('back-to-home', () => {
-      this.toHome();
+    EventBus.on('back-to-home', () => {
+      if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
+        if(this.menuItems.filter(i => i.id === '/').length > 0 ) {
+          this.toPage('/')
+        } else {
+          this.toPage('scan')
+        }
+      } else {
+        this.toPage('/')
+      }
     })
-    EventBus.$on('debug-enabled', () => {
+    EventBus.on('debug-enabled', () => {
       this.fetchDebugModeAndUpdateMenu()
     })
-    EventBus.$on('device-selected', () => {
+    EventBus.on('device-selected', () => {
       this.clearGetDataInteval()
       this.toPage('/')
       this.menuItems = menuItems
       this.getSettings()
       this.initGetDataPeriodically()
     })
-    EventBus.$on('show-auth-popup', (axiosError) => {
+    EventBus.on('show-auth-popup', (axiosError) => {
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
         this.requestToRetry = axiosError.config
         this.authDialogActive = true
       }
     })
-    EventBus.$on('api-error', () => {
+    EventBus.on('api-error', () => {
       this.showSpinner = false
       if (process.env.VUE_APP_PRODUCT_NAME === 'mobile') {
         this.clearGetDataInteval()
         this.toPage('scan', { connectionLost: true })
       }
     })
-    EventBus.$on('loading', (value) => {
+    EventBus.on('loading', (value) => {
       this.showSpinner = value
     })
-    EventBus.$on('log', (logMessage) => {
+    EventBus.on('log', (logMessage) => {
       window.flutter_inappwebview.callHandler('log', logMessage)
     })
-    EventBus.$on('getData', () => {
+    EventBus.on('getData', () => {
       this.getData()
     })
-    EventBus.$on('getSettings', () => {
+    EventBus.on('getSettings', () => {
       this.getSettings()
     })
   }

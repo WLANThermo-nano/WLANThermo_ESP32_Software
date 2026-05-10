@@ -35,6 +35,7 @@ typedef enum class lvScreen
   Display,
   Temperature,
   Update,
+  Pitmaster,
   Max
 } lvScreenType;
 

@@ -29,6 +29,7 @@ DisplayBase::DisplayBase()
   this->system = gSystem;
   this->timeout = 0u;
   this->brightness = 100u;
+  this->timeoutbrightness = 5u;
 }
 
 void DisplayBase::init()
@@ -41,31 +42,34 @@ void DisplayBase::update()
 
 void DisplayBase::saveConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = jsonBuffer.createObject();
+  JsonDocument doc;
+  JsonObject json = doc.to<JsonObject>();
   json["disabled"] = this->disabled;
   json["orientation"] = (uint16_t)this->orientation;
   json["timeout"] = this->timeout;
   json["brightness"] = this->brightness;
+  json["timeoutbrightness"] = this->timeoutbrightness;
   Settings::write(kDisplay, json);
 }
 
 void DisplayBase::loadConfig()
 {
-  DynamicJsonBuffer jsonBuffer(Settings::jsonBufferSize);
-  JsonObject &json = Settings::read(kDisplay, &jsonBuffer);
+  JsonDocument doc;
+  JsonObject json = Settings::read(kDisplay, doc);
 
-  if (json.success())
+  if (!json.isNull())
   {
 
     if (json.containsKey("disabled"))
-      this->disabled = json["disabled"].as<boolean>();
+      this->disabled = json["disabled"].as<bool>();
     if (json.containsKey("orientation"))
       this->orientation = (DisplayOrientation)json["orientation"].as<uint16_t>();
     if (json.containsKey("timeout"))
-      this->timeout = json["timeout"].as<uint16_t>();
+      this->timeout = json["timeout"].as<uint32_t>();
     if (json.containsKey("brightness"))
       this->brightness = json["brightness"].as<uint8_t>();
+    if (json.containsKey("timeoutbrightness"))
+      this->timeoutbrightness = json["timeoutbrightness"].as<uint8_t>();
   }
 }
 
