@@ -35,17 +35,34 @@ public:
   void hwInit();
   void update();
   void calibrate();
-  void setBrightness(uint8_t brightness);
-  uint8_t getBrightness();
+  void setUserBrightness(uint8_t setBrightness);
+  void setTimeout(uint32_t newTimeout);
+  uint8_t getUserBrightness();
+  uint32_t getTimeout();
   static void drawCharging();
+  void onUserActivity();
+  void setTimeoutIndex(uint8_t index);
+  uint8_t getTimeoutIndex() const;
 
 private:
   boolean initDisplay();
   boolean isCalibrated();
   static void task(void *parameter);
+  void applyBrightness(uint8_t brightness);
+  void setTargetBrightness(uint8_t brightness);
+  void updateFade();
+  bool ignoreTouchUntilRelease = false;
+  uint8_t targetBrightness;
+  uint8_t currentBrightness;
+  uint32_t lastFadeMillis;
+  uint16_t fadeIntervalMs;
+  uint8_t fadeStep;
+  uint32_t lastActivityMillis;
+  bool isTimeout;
 
   static void displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
   static bool touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+  void handleDisplayTimeout();
 
   static TFT_eSPI tft;
   lv_disp_buf_t lvDispBuffer;

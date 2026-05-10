@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
     Copyright (C) 2020  Martin Koerner
 
     This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     HISTORY: Please refer Github History
-    
+
 ****************************************************/
 #include "DisplayTft.h"
 #include "Settings.h"
@@ -25,6 +25,7 @@
 #include "lvScreen.h"
 #include "lvTheme.h"
 #include "PCA9533.h"
+#include "ArduinoLog.h"
 
 #define TFT_TOUCH_CALIBRATION_ARRAY_SIZE 5u
 #define I2C_BRIGHTNESS_CONTROL_ADDRESS 0x0D
@@ -32,6 +33,36 @@
 extern const uint16_t DisplayTftCharged[];
 extern const uint16_t DisplayTftCharging[];
 extern const uint16_t DisplayTftStartScreenImg[25400];
+
+static const uint32_t TIMEOUT_VALUES[] = {
+    0,          // OFF
+    30000,      // 30 s
+    60000,      // 60 s
+    120000,     // 120 s
+    300000,     // 300 s
+};
+
+static constexpr uint8_t TIMEOUT_VALUE_COUNT =
+    sizeof(TIMEOUT_VALUES) / sizeof(TIMEOUT_VALUES[0]);
+
+void DisplayTft::setTimeoutIndex(uint8_t index)
+{
+  if (index >= TIMEOUT_VALUE_COUNT) return; // ungültiger Index
+  setTimeout(TIMEOUT_VALUES[index]);
+}
+
+uint8_t DisplayTft::getTimeoutIndex() const
+{
+  for (uint8_t i = 0; i < TIMEOUT_VALUE_COUNT; i++)
+  {
+    if (TIMEOUT_VALUES[i] == timeout)
+    {
+      return i;
+    }
+  }
+
+  return 0; // Fallback → AUS
+}
 
 TFT_eSPI DisplayTft::tft = TFT_eSPI();
 
@@ -43,7 +74,7 @@ DisplayTft::DisplayTft()
 
 void DisplayTft::hwInit()
 {
-  DisplayTft::setBrightness(0u);
+  DisplayTft::applyBrightness(0u);
 
   tft.init();
   tft.setRotation(1);
@@ -52,7 +83,7 @@ void DisplayTft::hwInit()
   tft.pushImage(33, 70, 254, 100, DisplayTftStartScreenImg);
 
   // configure dimming IC
-  this->setBrightness(100u);
+  this->applyBrightness(100u);
 
   // configure dimming IC (old TFT, aktuell noch in gebrauch)
   // arduino-esp32 2.x: ESP-IDF I2C driver has ~10ms overhead per failed transaction;
@@ -91,7 +122,7 @@ boolean DisplayTft::initDisplay()
 
   if (this->disabled)
   {
-    Serial.printf("DisplayTft::init: display disabled\n");
+    Log.notice("DisplayTft::init: display disabled" CR);
     return true;
   }
 
@@ -116,6 +147,7 @@ boolean DisplayTft::initDisplay()
   lv_indev_drv_init(&indev_drv);
   indev_drv.type = LV_INDEV_TYPE_POINTER;
   indev_drv.read_cb = DisplayTft::touchRead;
+  indev_drv.user_data = this;
   lv_indev_drv_register(&indev_drv);
 
   lv_theme_t *theme = lvTheme_Init(lv_color_hex(0x0aa5c4), lv_theme_get_color_secondary(),
@@ -126,7 +158,14 @@ boolean DisplayTft::initDisplay()
   lv_theme_set_act(theme);
 
   lvScreen_Open(lvScreenType::Home);
-  setBrightness(this->brightness);
+
+  isTimeout = false;
+  fadeStep = 1;
+  fadeIntervalMs = 20;
+  lastFadeMillis = 0;
+  targetBrightness = this->brightness;
+  applyBrightness(this->brightness);
+  onUserActivity();
 
   return true;
 }
@@ -168,19 +207,93 @@ void DisplayTft::calibrate()
   prefs.end();
 }
 
-void DisplayTft::setBrightness(uint8_t brightness)
+void DisplayTft::setTimeout(uint32_t newTimeout)
 {
-  this->brightness = brightness;
-  int value = (int)(this->brightness * 2.55);
+  this->timeout = newTimeout;
+
+  // Timeout komplett deaktiviert
+  if (timeout == 0)
+  {
+    isTimeout = false;
+
+    // Display sicher aktivieren
+    applyBrightness(this->brightness);
+    targetBrightness = this->brightness;
+
+    return;
+  }
+
+  // Timeout aktiv (neu gesetzt oder geändert)
+  lastActivityMillis = millis();
+
+  // Falls wir gerade im Timeout waren → aufwecken
+  if (isTimeout)
+  {
+    isTimeout = false;
+    applyBrightness(this->brightness);
+    targetBrightness = this->brightness;
+  }
+}
+
+uint32_t DisplayTft::getTimeout()
+{
+  return this->timeout;
+}
+
+void DisplayTft::setUserBrightness(uint8_t setBrightness)
+{
+  this->brightness = setBrightness;
+
+  // nur direkt anwenden, wenn wir NICHT im Timeout sind
+  if (!isTimeout)
+  {
+    applyBrightness(this->brightness);
+  }
+}
+
+uint8_t DisplayTft::getUserBrightness()
+{
+  return this->brightness;
+}
+
+void DisplayTft::applyBrightness(uint8_t brightness)
+{
+  currentBrightness = brightness;
+  int value = (int)(brightness * 2.55);
 
   Wire.beginTransmission(I2C_BRIGHTNESS_CONTROL_ADDRESS);
   Wire.write(value);
   Wire.endTransmission();
 }
 
-uint8_t DisplayTft::getBrightness()
+void DisplayTft::setTargetBrightness(uint8_t brightness)
 {
-  return this->brightness;
+  targetBrightness = brightness;
+}
+
+void DisplayTft::updateFade()
+{
+  if (currentBrightness == targetBrightness)
+  {
+    return; // nichts zu tun
+  }
+
+  uint32_t now = millis();
+  if (now - lastFadeMillis < fadeIntervalMs)
+  {
+    return;
+  }
+
+  lastFadeMillis = now;
+
+  if (currentBrightness < targetBrightness)
+  {
+    applyBrightness(currentBrightness + fadeStep);
+  }
+  else if (currentBrightness > targetBrightness)
+  { // wird aktuell nicht benoetigt, da direktes Aufwachen
+    applyBrightness(currentBrightness - fadeStep);
+  }
 }
 
 void DisplayTft::drawCharging()
@@ -228,7 +341,7 @@ void DisplayTft::task(void *parameter)
 
   for (;;)
   {
-    //Serial.printf("DisplayTft::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
+    // Serial.printf("DisplayTft::task, highWaterMark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
     display->update();
     // Wait for the next cycle.
@@ -250,6 +363,8 @@ void DisplayTft::update()
   }
 
   lvScreen_Update();
+  handleDisplayTimeout();
+  updateFade();
 
   currentMillis = millis();
   lv_tick_inc(currentMillis - lastMillis);
@@ -272,27 +387,86 @@ void DisplayTft::displayFlushing(lv_disp_drv_t *disp, const lv_area_t *area, lv_
 
 bool DisplayTft::touchRead(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
+  auto *self = static_cast<DisplayTft *>(indev_driver->user_data);
   uint16_t touchX, touchY;
+  bool touched = self->tft.getTouch(&touchX, &touchY);
 
-  bool touched = tft.getTouch(&touchX, &touchY);
-
+  // kein Touch gefunden
   if (!touched)
   {
+    data->state = LV_INDEV_STATE_REL;
+    self->ignoreTouchUntilRelease = false;
     return false;
   }
 
+  // Timeout aktiv? → nur aufwecken
+  if (self->isTimeout)
+  {
+    self->onUserActivity(); // Helligkeit zurücksetzen
+    self->ignoreTouchUntilRelease = true;
+    data->state = LV_INDEV_STATE_REL;
+    return false; // Touch NICHT an LVGL geben
+  }
+
+  // nach Wake-up: Touch noch gesperrt?
+  if (self->ignoreTouchUntilRelease)
+  {
+    data->state = LV_INDEV_STATE_REL;
+    return false;
+  }
+
+  // normaler Touch
+  self->onUserActivity();
+
   if (touchX > 320 || touchY > 240)
   {
-    Serial.printf("Touch coordinates issue: x: %d, y: %d\n", touchX, touchY);
+    Log.notice("Touch coordinates issue: x: %d, y: %d" CR, touchX, touchY);
+    data->state = LV_INDEV_STATE_REL;
+    return false;
   }
-  else
-  {
 
-    data->state = touched ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-
-    data->point.x = touchX;
-    data->point.y = touchY;
-  }
+  data->state = LV_INDEV_STATE_PR;
+  data->point.x = touchX;
+  data->point.y = touchY;
 
   return false;
+}
+
+void DisplayTft::handleDisplayTimeout()
+{
+  // Timeout deaktiviert
+  if (timeout == 0)
+  {
+    return;
+  }
+
+  uint32_t now = millis();
+
+  if (!isTimeout && (now - lastActivityMillis >= timeout))
+  {
+    setTargetBrightness(this->timeoutbrightness);
+    isTimeout = true;
+  }
+}
+
+void DisplayTft::onUserActivity()
+{
+  lastActivityMillis = millis();
+
+  // Timeout deaktiviert → sicherstellen, dass Display aktiv ist
+  if (timeout == 0)
+  {
+    isTimeout = false;
+    applyBrightness(this->brightness);
+    targetBrightness = this->brightness;
+    return;
+  }
+
+  if (isTimeout)
+  {
+    applyBrightness(this->brightness); // ZURÜCK ZUM USER-WERT
+    isTimeout = false;
+    // Zielwert anpassen, damit updateFade() nichts mehr tut
+    targetBrightness = this->brightness;
+  }
 }

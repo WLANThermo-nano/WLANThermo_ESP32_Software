@@ -452,7 +452,13 @@ void lvHome_UpdateBatterySymbol(boolean forceUpdate)
   }
   else
   {
-    long symbolIndex = map(gSystem->battery->percentage, 0, 100, 0, LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX);
+    constexpr int SEGMENTS = LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX;
+
+    int percentage = constrain(gSystem->battery->percentage, 0, 100);
+    int segmentSize = 100 / SEGMENTS;
+    int symbolIndex = constrain((percentage + segmentSize - 1) / segmentSize, 0, SEGMENTS);
+
+    //long symbolIndex = map(gSystem->battery->percentage, 0, 100, 0, LVHOME_SYMBOL_BATTERY_DISCHARGING_MAX_INDEX);
     newBatterySymbol = batterySymbolText[symbolIndex];
   }
 

@@ -29,6 +29,7 @@ DisplayBase::DisplayBase()
   this->system = gSystem;
   this->timeout = 0u;
   this->brightness = 100u;
+  this->timeoutbrightness = 5u;
 }
 
 void DisplayBase::init()
@@ -47,6 +48,7 @@ void DisplayBase::saveConfig()
   json["orientation"] = (uint16_t)this->orientation;
   json["timeout"] = this->timeout;
   json["brightness"] = this->brightness;
+  json["timeoutbrightness"] = this->timeoutbrightness;
   Settings::write(kDisplay, json);
 }
 
@@ -63,9 +65,11 @@ void DisplayBase::loadConfig()
     if (json.containsKey("orientation"))
       this->orientation = (DisplayOrientation)json["orientation"].as<uint16_t>();
     if (json.containsKey("timeout"))
-      this->timeout = json["timeout"].as<uint16_t>();
+      this->timeout = json["timeout"].as<uint32_t>();
     if (json.containsKey("brightness"))
       this->brightness = json["brightness"].as<uint8_t>();
+    if (json.containsKey("timeoutbrightness"))
+      this->timeoutbrightness = json["timeoutbrightness"].as<uint8_t>();
   }
 }
 
