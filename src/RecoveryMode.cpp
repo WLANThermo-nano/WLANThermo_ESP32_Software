@@ -34,7 +34,6 @@
 #include "webui/recoverymode.html.gz.h"
 #include "webui/restart.html.gz.h"
 
-#define RECOVERY_RESET_THRESHOLD 10u
 #define RECOVERY_PIN 14u
 #define RECOVERY_PIN_TIME 3000u // 3s
 #define RECOVERY_AP_NAME "WLANThermo-RecoveryMode"
@@ -62,9 +61,21 @@ RecoveryMode::RecoveryMode(void)
 
 void RecoveryMode::runFromApp(const char *paramWifiName, const char *paramWifiPassword)
 {
+  if (paramWifiName == nullptr || paramWifiPassword == nullptr)
+  {
+    Log.error("RecoveryMode::runFromApp: null credentials, abort" CR);
+    return;
+  }
+  if (strlen(paramWifiName) >= sizeof(wifiName) || strlen(paramWifiPassword) >= sizeof(wifiPassword))
+  {
+    Log.error("RecoveryMode::runFromApp: oversized credentials, abort" CR);
+    return;
+  }
   fromApp = true;
-  strcpy(wifiName, paramWifiName);
-  strcpy(wifiPassword, paramWifiPassword);
+  strncpy(wifiName, paramWifiName, sizeof(wifiName) - 1u);
+  wifiName[sizeof(wifiName) - 1u] = '\0';
+  strncpy(wifiPassword, paramWifiPassword, sizeof(wifiPassword) - 1u);
+  wifiPassword[sizeof(wifiPassword) - 1u] = '\0';
 
   delay(500);
   WiFi.disconnect();
@@ -105,13 +116,14 @@ void RecoveryMode::run()
   uint32_t startTime = millis();
   pinMode(RECOVERY_PIN, INPUT_PULLUP);
 
-  while (((millis() - startTime) < RECOVERY_PIN_TIME) && (!fromApp) /*&& (resetCounter < RECOVERY_RESET_THRESHOLD)*/)
+  while (((millis() - startTime) < RECOVERY_PIN_TIME) && (!fromApp))
   {
     if (digitalRead(RECOVERY_PIN) == 1u)
     {
       // No recovery mode
       return;
     }
+    delay(10);
   }
 
   // Welcome to recovery mode
@@ -119,6 +131,8 @@ void RecoveryMode::run()
 
   WiFi.persistent(false);
   WiFi.disconnect(true);
+
+  bool useAP = !fromApp;
 
   if (fromApp)
   {
@@ -128,17 +142,29 @@ void RecoveryMode::run()
     // Start STA
     WiFi.begin(wifiName, wifiPassword);
     WiFi.mode(WIFI_STA);
-    RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: %s\n", wifiName, wifiPassword);
+    RMPRINTF("Recovery Mode starting Wifi STA. SSID: %s, PW: ***\n", wifiName);
 
+    uint32_t waitStart = millis();
     while (WiFi.isConnected() == false)
     {
+      if (millis() - waitStart > 60000u)
+      {
+        RMPRINTLN("Recovery Mode: STA timeout, falling back to AP");
+        useAP = true;
+        WiFi.disconnect(true);
+        break;
+      }
       RMPRINTLN("Wifi not connected");
       delay(1000);
     }
 
-    RMPRINTF("IP address: %s\n", WiFi.localIP().toString().c_str());
+    if (!useAP)
+    {
+      RMPRINTF("IP address: %s\n", WiFi.localIP().toString().c_str());
+    }
   }
-  else
+
+  if (useAP)
   {
     // Start AP
     IPAddress local_IP(192, 168, 66, 1), gateway(192, 168, 66, 1), subnet(255, 255, 255, 0);
@@ -170,9 +196,12 @@ void RecoveryMode::run()
     response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
-    WiFi.disconnect();
-    delay(1000);
-    gSystem->restart();
+    esp_timer_handle_t timer;
+    esp_timer_create_args_t args = {};
+    args.callback = [](void *) { ESP.restart(); };
+    args.name = "rec_rst";
+    if (esp_timer_create(&args, &timer) == ESP_OK)
+      esp_timer_start_once(timer, 2000000);
   });
 
   webServer->on("/reset", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -211,19 +240,30 @@ void RecoveryMode::run()
     std::unique_ptr<char[]> s(new char[len + 1]);
     static size_t receivedBytes = 0u;
 
-    if(!index) settingsKey = request->header("xKey"); settingsValue = ""; receivedBytes = 0u;
+    if (!index) {
+      settingsKey   = request->header("xKey");
+      settingsValue = "";
+      receivedBytes = 0u;
+    }
     memset(s.get(), 0, len + 1u);
     memcpy(s.get(), data, len);
     settingsValue += s.get();
     receivedBytes += len;
-    if(receivedBytes == total) Settings::write(settingsKey, settingsValue); });
+    if (receivedBytes == total) {
+      Settings::write(settingsKey, settingsValue);
+    } });
 
   webServer->on(
       "/uploadfile", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (request->hasArg("usize"))
         {
-          String usize = request->arg("usize");
-          uploadFileSize = usize.toInt();
+          long parsedSize = request->arg("usize").toInt();
+          if (parsedSize < 1024 || parsedSize > 0x400000L)
+          {
+            request->send(400, TEXTPLAIN, "invalid size");
+            return;
+          }
+          uploadFileSize = (size_t)parsedSize;
         }
         else if (nexUpload)
         {
@@ -313,7 +353,7 @@ void RecoveryMode::run()
 
   while (true)
   {
-    delay(100);
+    vTaskDelay(pdMS_TO_TICKS(5000));
   }
 }
 
@@ -326,17 +366,24 @@ UploadFileType RecoveryMode::getFileType(String fileName)
 {
   UploadFileType retFileType = UploadFileType::None;
 
-  if ((fileName.indexOf("firmware") >= 0) && (fileName.indexOf(".bin") >= 0))
+  if (fileName.endsWith(".bin"))
   {
-    retFileType = UploadFileType::Firmware;
-    RMPRINTLN("FILETYPE: Firmware");
+    if (fileName.indexOf("spiffs") >= 0)
+    {
+      retFileType = UploadFileType::SPIFFS;
+      RMPRINTLN("FILETYPE: SPIFFS");
+    }
+    else if (fileName.indexOf("firmware") >= 0)
+    {
+      retFileType = UploadFileType::Firmware;
+      RMPRINTLN("FILETYPE: Firmware");
+    }
+    else
+    {
+      RMPRINTLN("FILETYPE: None");
+    }
   }
-  else if ((fileName.indexOf("spiffs") >= 0) && (fileName.indexOf(".bin") >= 0))
-  {
-    retFileType = UploadFileType::SPIFFS;
-    RMPRINTLN("FILETYPE: SPIFFS");
-  }
-  else if (fileName.indexOf(".tft") >= 0)
+  else if (fileName.endsWith(".tft"))
   {
     retFileType = UploadFileType::Nextion;
     RMPRINTLN("FILETYPE: Nextion");

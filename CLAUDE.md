@@ -76,7 +76,7 @@ After changing the web UI, rebuild firmware to embed the new assets — `extra_s
 
 **Flutter App (Android/iOS):**
 ```bash
-cd mobile_flutter/wlanthermo_flutter_app
+cd mobile/wlanthermo_flutter_app
 flutter pub get
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 flutter build apk --debug    # Debug-APK
@@ -141,7 +141,7 @@ flutter build apk --release  # Release-APK (key.properties + keystore erforderli
 
 ### Phase 0 — Stabilisierung (laufend)
 
-B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 offen (Low, siehe Known Issues). B39 gefixt (2026-04-27). B42–B51 gefixt (2026-04-28, P1-Review). B52–B60 gefixt (2026-04-28, P2-Review). B61–B63 gefixt (2026-04-28, P3-Review). SRAM-Optimierungen M2–M4 ausstehend.  
+B1–B35 gefixt (2026-04-22–25) — Details im git-Log. B36–B38 gefixt (2026-04-29, #190–#192). B39 gefixt (2026-04-27). B42–B51 gefixt (2026-04-28, P1-Review). B52–B60 gefixt (2026-04-28, P2-Review). B61–B63 gefixt (2026-04-28, P3-Review). SRAM-Optimierungen M2–M4 ausstehend.  
 nanoV3: Stabil nach B39-Fix + `WiFi.persistent(false)`. BLE-Discovery-Fix implementiert, Hardware-Test ausstehend.
 
 ### Phase 1 — Kernel Upgrade ✅ (2026-04-20)
@@ -197,9 +197,9 @@ Scope: 3922 Zeilen, ~60% betroffen. Kritisch: `lvTheme.cpp` nutzt interne LVGL-A
 | ID | Datei | Zeile | Severity | Problem |
 |----|-------|-------|----------|---------|
 | B1–B35 | — | — | — | **Alle gefixt** (2026-04-22–25) — Details im git-Log |
-| B36 | `src/display/DisplayOled.cpp` + `DisplayOledLink.cpp` | `initDisplay()` | Low | → [Issue #190](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/190) — kDisplay NVS double-read at boot |
-| B37 | `src/system/SystemBase.cpp` | `loadConfig()` Zeile 265 | Low | → [Issue #191](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/191) — SPIFFS.begin() result unchecked |
-| B38 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` | Low | → [Issue #192](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/192) — Invalid JSON on first boot cycle |
+| B36 | `src/display/DisplayOled.cpp` + `DisplayOledLink.cpp` | `initDisplay()` | Low | **Gefixt** ✅ → [Issue #190](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/190) — leere loadConfig/saveConfig-Overrides entfernt; `this->loadConfig()` in `initDisplay()` war Doppel-Read (commit `bdf3c7c`, `2ea4ab5`) |
+| B37 | `src/system/SystemBase.cpp` | `loadConfig()` Zeile 265 | Low | **Gefixt** ✅ → [Issue #191](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/191) — SPIFFS.begin() Rückgabewert wird jetzt geprüft (commit `bdf3c7c`) |
+| B38 | `src/bluetooth/Bluetooth.cpp` | `Bluetooth::task()` | Low | **Gefixt** ✅ → [Issue #192](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/192) — getDevices() wird nach enableChip() einen Zyklus übersprungen (commit `bdf3c7c`) |
 | B39 | `src/Wlan.cpp` | `onWifiConnect()` | High | **Gefixt** ✅ → [Issue #200](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/200) — TG1WDT_SYS_RESET nach WiFi-Connect auf nanoV3; `wifiModePsPending`-Flag + `WiFi.persistent(false)` |
 | B41 | `src/pitmaster/Pitmaster.cpp`, `src/system/SystemBase.cpp` | `controlSSR()`, `initActuators()`, `update()` | High | **Gefixt** ✅ → [Issue #201](https://github.com/WLANThermo-nano/WLANThermo_ESP32_Software/issues/201) — SSR kein Output auf miniV3 nach ESP-IDF 4.4 Upgrade; LEDC 0,5 Hz ersetzt durch millis()-basiertes time-proportional control; `pitmasters.update()` aus `ONCE_PER_SECOND_CYCLE`-Gate herausgezogen (SystemBase.cpp) → 200 ms Tick; `SSR_PERIOD_MS` = 10 000 ms → 50 Stufen à 2% Auflösung |
 | B42–B51 | — | — | — | **Alle gefixt** (2026-04-28) — Code Review P1 (#196) — Details unten |

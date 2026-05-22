@@ -53,6 +53,6 @@ private:
   static String settingsValue;
   static RTC_DATA_ATTR char wifiName[33];
   static RTC_DATA_ATTR char wifiPassword[64];
-  static RTC_DATA_ATTR boolean fromApp;
+  static RTC_DATA_ATTR bool fromApp;
   static RTC_NOINIT_ATTR ResetCounterType resetCounter;
 };

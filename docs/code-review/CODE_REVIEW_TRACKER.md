@@ -10,17 +10,17 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-05 (CR-003-012 gefixt) |
+| **Letztes Update** | 2026-05-22 (TASK-005 ✅, CR-005-002/003/006/007/009/010/014/015/016/017/018 gefixt) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
-| **Tasks abgeschlossen** | 4 / 34 (12 %) |
-| **Tasks offen (NEU + RE-REVIEW)** | 27 |
+| **Tasks abgeschlossen** | 5 / 34 (15 %) |
+| **Tasks offen (NEU + RE-REVIEW)** | 26 |
 | **Tasks deferred (Phase-5-Vorbehalt)** | 3 |
 | **LOC im Review-Scope** | ~21.034 |
-| **Offene Bugs (vor neuem Review)** | 3 (B36, B37, B38, alle Low) |
+| **Offene Bugs (vor neuem Review)** | 0 (B36–B38 gefixt 2026-04-29) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
-| **Im neuen Review gefundene Issues** | 66 (Critical: 8, High: 17, Medium: 16, Low: 25) |
-| **Im neuen Review gefixte Issues** | 16 |
+| **Im neuen Review gefundene Issues** | 85 (Critical: 12, High: 22, Medium: 20, Low: 31) |
+| **Im neuen Review gefixte Issues** | 27 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -40,7 +40,7 @@
 | TASK-002 | API | 591 | 🟠 HIGH | ✅ DONE | 0/3/4/6 | [reviews/REVIEW_TASK_002.md](./reviews/REVIEW_TASK_002.md) | 13 Findings; Plain-Text-Credentials (Pattern wie CR-001-005), 2× NULL-Deref-Pfade |
 | TASK-003 | WLAN | 562 | 🔴 CRITICAL | ✅ DONE | 2/4/4/6 | [reviews/REVIEW_TASK_003.md](./reviews/REVIEW_TASK_003.md) | B39 sauber gefixt; gleiches async_tcp-Pattern bei Setter-Pfaden offen (NVS + WiFi.begin), `String hostName` Heap-Race |
 | TASK-004 | WServer | 298 | 🟠 HIGH | 📝 NEU | – | – | Abh. TASK-001 |
-| TASK-005 | RecoveryMode | 407 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | async_tcp-Pattern beachten |
+| TASK-005 | RecoveryMode | 407 | 🟠 HIGH | ✅ DONE | 4/5/4/6 | [reviews/REVIEW_TASK_005.md](./reviews/REVIEW_TASK_005.md) | RCE-Hintertür (Auth-Bypass CR-005-001 offen); strcpy-Overflow + /import-Logikbug + /restart-Regression gefixt; Auth/AP-PW/Whitelist als M/L-Aufwand offen |
 | TASK-006 | Mqtt | 362 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | M2 offen |
 | TASK-007 | Cloud | 527 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | – |
 | TASK-008 | OtaUpdate | 396 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | M4 offen |
