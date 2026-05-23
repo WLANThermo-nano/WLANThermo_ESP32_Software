@@ -75,6 +75,7 @@ public:
   void update();
   void loadConfig();
   void saveConfig();
+  void requestSaveConfig() { saveConfigPending = true; }
   void saveUrl();
   CloudConfig getConfig();
   void setConfig(CloudConfig newConfig);

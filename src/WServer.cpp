@@ -28,13 +28,12 @@
 #include "system/SystemBase.h"
 #include "DbgPrint.h"
 #include "Settings.h"
+#include "ArduinoLog.h"
 #include "RecoveryMode.h"
 #include <SPIFFS.h>
 
 // include html files
 #include "webui/restart.html.gz.h"
-
-#define WEB_VUE_ROUTER_PATHS_MAX 8u
 
 #if defined(HW_MINI_V1) || defined(HW_MINI_V2) || defined(HW_MINI_V3) || defined(HW_CONNECT_V1)
 #define WEB_SUBFOLDER "mini"
@@ -51,11 +50,13 @@ extern const size_t index_html_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_inde
 extern const uint8_t favicon_ico_start[] asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_start");
 extern const size_t favicon_ico_size asm("_binary_webui_dist_"WEB_SUBFOLDER"_favicon_ico_gz_size");
 
-const char *vueRouterPaths[WEB_VUE_ROUTER_PATHS_MAX] = {
+const char *vueRouterPaths[] = {
     "/wlan", "/system", "/bluetooth", "/pitmaster", "/about", "/iot", "/notification", "/scan"};
+static constexpr size_t kVueRouterPaths = sizeof(vueRouterPaths) / sizeof(vueRouterPaths[0]);
 
 const char *WServer::username = "admin";
 String WServer::password = "";
+bool WServer::saveConfigPending = false;
 
 WServer::WServer() : webServer(80)
 {
@@ -71,45 +72,54 @@ void WServer::init()
            })
       .setFilter(ON_STA_FILTER);
 
-  webServer.on("/info", [](AsyncWebServerRequest *request) {
-    size_t usedBytes;
-    size_t totalBytes;
-    usedBytes = SPIFFS.usedBytes();
-    totalBytes = SPIFFS.totalBytes();
-    //TODO: print wifi SSIDs
-    /*for (int i = 0; i < wifi.savedlen; i++) {
-        ssidstr += " ";
-        ssidstr += String(i+1);
-        ssidstr += ": "; 
-        ssidstr += wifi.savedssid[i];
-    }*/
-
-    String info = "spiffs: " + String(usedBytes) + " | " + String(totalBytes) + "\n" + "heap: " + String(ESP.getFreeHeap()) + "\n" + "sn: " + gSystem->getSerialNumber() + "\n" + "pn: " + gSystem->item.read(ItemNvsKeys::kItem) + "\n";
-    if (gSystem->battery != NULL)
+  webServer.on("/info", HTTP_GET, [](AsyncWebServerRequest *request) {
+    char buf[512];
+    int len = snprintf(buf, sizeof(buf),
+        "spiffs: %u | %u\nheap: %u\nsn: %s\npn: %s\n",
+        (unsigned)SPIFFS.usedBytes(), (unsigned)SPIFFS.totalBytes(),
+        (unsigned)ESP.getFreeHeap(),
+        gSystem->getSerialNumber().c_str(),
+        gSystem->item.read(ItemNvsKeys::kItem).c_str());
+    if (gSystem->battery != NULL && len < (int)sizeof(buf))
     {
-      info += "batlimit: " + String(gSystem->battery->min) + " | " + String(gSystem->battery->max) + "\n" + "bat: " + String(gSystem->battery->adcvoltage) + " | " + String(gSystem->battery->voltage) + " | " + String(gSystem->battery->simc) + "\n" + "batstat: " + String(gSystem->battery->getPowerModeInt()) + " | " + String(gSystem->battery->setreference) + "\n";
+      len += snprintf(buf + len, sizeof(buf) - len,
+          "batlimit: %d | %d\nbat: %d | %d | %u\nbatstat: %d | %d\n",
+          gSystem->battery->min, gSystem->battery->max,
+          gSystem->battery->adcvoltage, gSystem->battery->voltage,
+          (unsigned)gSystem->battery->simc,
+          gSystem->battery->getPowerModeInt(), gSystem->battery->setreference);
     }
-    info += "ssid: " + WiFi.SSID() + "\n" + "wifimode: " + String(WiFi.getMode()) + "\n" + "mac:" + String(gSystem->wlan.getMacAddress()) + "\n" + "iS: " + String(gSystem->getFlashSize());
-    request->send(200, "", info);
+    if (len < (int)sizeof(buf))
+    {
+      snprintf(buf + len, sizeof(buf) - len,
+          "ssid: %s\nwifimode: %d\nmac:%s\niS: %u",
+          WiFi.SSID().c_str(), (int)WiFi.getMode(),
+          gSystem->wlan.getMacAddress().c_str(),
+          (unsigned)gSystem->getFlashSize());
+    }
+    request->send(200, "", buf);
   });
 
-  webServer.on("/setbattmin", [](AsyncWebServerRequest *request) {
+  webServer.on("/setbattmin", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (gSystem->battery)
     {
-      gSystem->battery->min -= 100;
-      gSystem->battery->saveConfig();
+      if (gSystem->battery->min - 100 >= 2800)
+      {
+        gSystem->battery->min -= 100;
+        gSystem->battery->saveConfigPending = true;
+      }
     }
     request->send(200, TEXTPLAIN, "Done");
   });
 
-  webServer.on("/settestmode", [](AsyncWebServerRequest *request) {
+  webServer.on("/settestmode", HTTP_GET, [](AsyncWebServerRequest *request) {
     CloudConfig cloudConfig = gSystem->cloud.getConfig();
     cloudConfig.cloudInterval = 3u;
     gSystem->cloud.setConfig(cloudConfig);
     request->send(200, TEXTPLAIN, "3 Sekunden");
   });
 
-  webServer.on("/stop", [](AsyncWebServerRequest *request) {
+  webServer.on("/stop", HTTP_GET, [](AsyncWebServerRequest *request) {
     for (uint8_t i = 0u; i < gSystem->pitmasters.count(); i++)
     {
       Pitmaster *pm = gSystem->pitmasters[i];
@@ -117,18 +127,18 @@ void WServer::init()
       if (pm != NULL)
         pm->setType(pm_off);
     }
-    gSystem->pitmasters.saveConfig();
+    gSystem->pitmasters.saveConfigPending = true;
     request->send(200, TEXTPLAIN, "Stop pitmaster");
   });
 
-  webServer.on("/clientlog", [](AsyncWebServerRequest *request) {
+  webServer.on("/clientlog", HTTP_GET, [](AsyncWebServerRequest *request) {
     Cloud::clientlog = true;
     gSystem->otaUpdate.resetUpdateInfo();
     gSystem->otaUpdate.askUpdateInfo();
     request->send(200, TEXTPLAIN, "aktiviert");
   });
 
-  webServer.on("/restart", [](AsyncWebServerRequest *request) {
+  webServer.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
              AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", restart_html_gz, sizeof(restart_html_gz));
              response->addHeader("Content-Disposition", "inline; filename=\"index.html\"");
              response->addHeader("Content-Encoding", "gzip");
@@ -141,12 +151,12 @@ void WServer::init()
     request->send(200, TEXTPLAIN, WiFi.localIP().toString().c_str());
   });
 
-  webServer.on("/newtoken", [](AsyncWebServerRequest *request) {
+  webServer.on("/newtoken", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, TEXTPLAIN, gSystem->cloud.newToken());
-    gSystem->cloud.saveConfig();
+    gSystem->cloud.requestSaveConfig();
   });
 
-  webServer.on("/rr", [](AsyncWebServerRequest *request) {
+  webServer.on("/rr", HTTP_GET, [](AsyncWebServerRequest *request) {
     String response = "\nCPU0: " + gSystem->getResetReason(0);
     response += "\nCPU1: " + gSystem->getResetReason(1);
     response += "\nResetCounter: " + String(RecoveryMode::getResetCounter());
@@ -178,7 +188,7 @@ void WServer::init()
     else
     {
       boolean isVueRouterUrl = false;
-      for(uint8_t index = 0u; index < WEB_VUE_ROUTER_PATHS_MAX; index++)
+      for(uint8_t index = 0u; index < kVueRouterPaths; index++)
       {
         if(request->url() == vueRouterPaths[index])
         {
@@ -209,15 +219,24 @@ void WServer::init()
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type, origin, authorization, accept, client-security-token, scan");
     
   webServer.begin();
-  IPRINTPLN("HTTP server started");
+  Log.notice("HTTP server started" CR);
+}
+
+void WServer::update()
+{
+  if (saveConfigPending)
+  {
+    JsonDocument doc;
+    JsonObject json = doc.to<JsonObject>();
+    json["password"] = password;
+    Settings::write(kServer, json);
+    saveConfigPending = false;
+  }
 }
 
 void WServer::saveConfig()
 {
-  JsonDocument doc;
-  JsonObject json = doc.to<JsonObject>();
-  json["password"] = password;
-  Settings::write(kServer, json);
+  saveConfigPending = true;
 }
 
 void WServer::loadConfig()
@@ -229,7 +248,13 @@ void WServer::loadConfig()
   {
 
     if (json.containsKey("password"))
-      this->password = json["password"].as<const char*>();
+    {
+      const char *pw = json["password"].as<const char *>();
+      if (pw != nullptr)
+        this->password = pw;
+      else
+        Log.error("WServer::loadConfig: password key has unexpected type" CR);
+    }
   }
 }
 

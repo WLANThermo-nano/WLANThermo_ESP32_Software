@@ -127,6 +127,9 @@ void ConnectTask(void *parameter)
     // WiFi - Monitoring
     gSystem->wlan.update();
 
+    // Web server config persistence (deferred from async_tcp context)
+    gWebServer.update();
+
     if (gSystem->wlan.isConnected())
     {
       gSystem->otaUpdate.update();

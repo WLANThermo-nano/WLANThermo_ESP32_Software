@@ -56,6 +56,7 @@ Battery::Battery()
   this->percentage = 0;
   this->standbyRequest = false;
   this->nobattery = false;
+  this->saveConfigPending = false;
   this->refvoltage = REF_VOLTAGE_DEFAULT;
   this->correction = 0;
   adcRawMedian = new MedianFilter<uint16_t>(MEDIAN_SIZE);
@@ -70,7 +71,13 @@ void Battery::update()
   updatePowerMode();
   setReference();
   updatePowerPercentage();
-  
+
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
+
   //char buffer[64];
   //sprintf(buffer, "U:%d,ADC:%d,M:%d", this->voltage, this->adcRawValue, this->powerMode);
   //gDisplay->debugString = buffer;

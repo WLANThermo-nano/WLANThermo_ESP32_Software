@@ -44,6 +44,8 @@ public:
   int getPowerModeInt(){return (int)this->powerMode;};
   void saveConfig();
 
+  bool saveConfigPending;
+
   int voltage;      // FILTERED VOLTAGE
   int adcvoltage;   // CURRENT VOLTAGE
   int percentage;   // BATTERY CHARGE STATE in %

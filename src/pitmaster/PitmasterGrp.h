@@ -37,6 +37,7 @@ public:
   void enable(boolean enabled);
   boolean isEnabled(void) { return this->enabled; };
   Pitmaster *getActivePitmaster(TemperatureBase *temperature);
+  bool saveConfigPending = false;
 
 private:
   Pitmaster *pitmasters[MAX_PITMASTERS];

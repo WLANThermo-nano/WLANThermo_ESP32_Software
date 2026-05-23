@@ -39,6 +39,12 @@ void PitmasterGrp::add(Pitmaster *pitmaster)
 
 void PitmasterGrp::update()
 {
+  if (saveConfigPending)
+  {
+    saveConfig();
+    saveConfigPending = false;
+  }
+
   if (this->enabled != true)
     return;
 

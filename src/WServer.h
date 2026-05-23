@@ -31,15 +31,17 @@ class WServer
 public:
     WServer();
     void init();
+    static void update();
     static void saveConfig();
     static String getUsername();
     static String getPassword();
     static const char *getRealm() { return "WLANThermo Device"; }
     static void setPassword(String newPassword);
-    static boolean requireAuth() { return password.length() > 0u; }
+    static bool requireAuth() { return password.length() > 0u; }
 
 private:
     void loadConfig();
+    static bool saveConfigPending;
     AsyncWebServer webServer;
     static const char *username;
     static String password;
