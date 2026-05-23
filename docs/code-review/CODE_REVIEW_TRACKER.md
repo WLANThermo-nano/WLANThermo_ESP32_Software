@@ -10,17 +10,17 @@
 | Metrik | Wert |
 |--------|------|
 | **Review-Start (neuer Workflow)** | 2026-04-29 |
-| **Letztes Update** | 2026-05-22 (TASK-005 ✅, CR-005-002/003/006/007/009/010/014/015/016/017/018 gefixt) |
+| **Letztes Update** | 2026-05-23 (TASK-004 ✅, CR-004-002/003/004/007/008/009/010/011/013/014/015/016 gefixt, #251) |
 | **Reviewer** | Claude Opus 4.7 |
 | **Tasks gesamt** | 34 |
-| **Tasks abgeschlossen** | 5 / 34 (15 %) |
-| **Tasks offen (NEU + RE-REVIEW)** | 26 |
+| **Tasks abgeschlossen** | 6 / 34 (18 %) |
+| **Tasks offen (NEU + RE-REVIEW)** | 25 |
 | **Tasks deferred (Phase-5-Vorbehalt)** | 3 |
 | **LOC im Review-Scope** | ~21.034 |
 | **Offene Bugs (vor neuem Review)** | 0 (B36–B38 gefixt 2026-04-29) |
 | **Offene SRAM-Optimierungen** | 3 (M2, M3, M4) |
-| **Im neuen Review gefundene Issues** | 85 (Critical: 12, High: 22, Medium: 20, Low: 31) |
-| **Im neuen Review gefixte Issues** | 27 |
+| **Im neuen Review gefundene Issues** | 102 (Critical: 13, High: 28, Medium: 23, Low: 38) |
+| **Im neuen Review gefixte Issues** | 39 |
 
 > **Hinweis:** Die Counts oben beziehen sich nur auf den **neuen Opus-Review-Workflow** (ab 2026-04-29).
 > Historische Findings aus den Sonnet-Reviews (B23–B63) sind unten in der Historie dokumentiert.
@@ -39,7 +39,7 @@
 | TASK-001b | WebHandler — Write/POST | 760 | 🔴 CRITICAL | ✅ DONE | 3/5/4/7 | [reviews/REVIEW_TASK_001b.md](./reviews/REVIEW_TASK_001b.md) | RCE-Vektor in `setServerAPI`; `setBluetooth` NVS direkt; durchgängig fehlender JSON-Error-Check |
 | TASK-002 | API | 591 | 🟠 HIGH | ✅ DONE | 0/3/4/6 | [reviews/REVIEW_TASK_002.md](./reviews/REVIEW_TASK_002.md) | 13 Findings; Plain-Text-Credentials (Pattern wie CR-001-005), 2× NULL-Deref-Pfade |
 | TASK-003 | WLAN | 562 | 🔴 CRITICAL | ✅ DONE | 2/4/4/6 | [reviews/REVIEW_TASK_003.md](./reviews/REVIEW_TASK_003.md) | B39 sauber gefixt; gleiches async_tcp-Pattern bei Setter-Pfaden offen (NVS + WiFi.begin), `String hostName` Heap-Race |
-| TASK-004 | WServer | 298 | 🟠 HIGH | 📝 NEU | – | – | Abh. TASK-001 |
+| TASK-004 | WServer | 298 | 🟠 HIGH | ✅ DONE | 1/6/3/7 | [reviews/REVIEW_TASK_004.md](./reviews/REVIEW_TASK_004.md) | Auth-Bypass CR-004-001 offen (M); 12 S-Findings gefixt #251; saveConfigPending auf Battery+PitmasterGrp+WServer ausgerollt |
 | TASK-005 | RecoveryMode | 407 | 🟠 HIGH | ✅ DONE | 4/5/4/6 | [reviews/REVIEW_TASK_005.md](./reviews/REVIEW_TASK_005.md) | RCE-Hintertür (Auth-Bypass CR-005-001 offen); strcpy-Overflow + /import-Logikbug + /restart-Regression gefixt; Auth/AP-PW/Whitelist als M/L-Aufwand offen |
 | TASK-006 | Mqtt | 362 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | M2 offen |
 | TASK-007 | Cloud | 527 | 🟠 HIGH | 🔄 RE-REVIEW | – | – | – |
@@ -218,6 +218,24 @@
   - **Status:** ✅ DONE — Commit `a1797e7`, Issue #244 (2026-05-04)
   - **Aufwand:** S
 - [ ] **CR-003-006** — `wifiState` Race zwischen async_tcp (`addCredentials`/`setStopRequest`) und ConnectTask (`update()`); löst sich mit CR-003-003-Fix mit auf (`Wlan.cpp:201, 459`)
+- [ ] **CR-004-001** — Auth-Middleware umgangen — destruktive Endpoints unauthentifiziert erreichbar (`/restart`, `/stop`, `/setbattmin`, `/newtoken` u.a.)
+  - **Datei:** `src/WServer.cpp:69-154`
+  - **Status:** ⏳ PENDING
+  - **Aufwand:** M (~1 PT) — `requireAuthOrFail`-Lambda zentralisieren, alle Endpoints umstellen
+- [x] **CR-004-002** — `/setbattmin` ruft `battery->saveConfig()` direkt aus async_tcp
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `saveConfigPending`-Flag in Battery eingeführt
+- [x] **CR-004-003** — `/stop` ruft `pitmasters.saveConfig()` direkt aus async_tcp
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `saveConfigPending`-Flag in PitmasterGrp eingeführt
+- [x] **CR-004-004** — `/newtoken` ruft `cloud.saveConfig()` direkt — Pending-Pattern existiert bereits
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `cloud.requestSaveConfig()` eingeführt
+- [ ] **CR-004-005** — `/info` exponiert SSID/MAC/Serial unauthentifiziert (`src/WServer.cpp:74-94`)
+  - **Status:** ⏳ PENDING (abhängig von CR-004-001)
+- [ ] **CR-004-006** — Heap-Race auf statischem `String password` (concurrent setPassword/requireAuth)
+  - **Datei:** `src/WServer.h:39, 45`
+  - **Status:** ⏳ PENDING
+  - **Aufwand:** M (~1 PT) — `String → char[]`+Mutex, mit CR-003-002-Cleanup koppeln
+- [x] **CR-004-007** — `WServer::saveConfig()` ruft `Settings::write` synchron aus async_tcp
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `saveConfigPending`+`update()` in WServer; `gWebServer.update()` in ConnectTask
 - [ ] **CR-002-001** — Plain-Text-Credentials in `iotObj()`+`notificationObj()` (MQTT-Pass, Cloud-Token, Telegram/Pushover/App-Tokens)
   - **Datei:** `src/API.cpp:215, 220, 287, 295–296, 312`
   - **Status:** ⏳ PENDING
@@ -258,6 +276,12 @@
 - [ ] **CR-002-005** — `pidAry()` Parameter `cc` wird ignoriert (Loop iteriert über `getPitmasterProfileCount()`) (`src/API.cpp:182–204`)
 - [ ] **CR-002-006** — `channelAry()` Underflow auf `i = -1` bei `cc == 0` und `count() > 0` (latent, kein realer Aufrufer) (`src/API.cpp:99–103`)
 - [ ] **CR-002-007** — Race zwischen async_tcp/ConnectTask und MainTask auf `temperatures`/`pitmasters`-Iteration (NULL-Check auf operator[]-Ebene, aber nested Pointer ungeschützt) (`src/API.cpp:103–119, 142–177`)
+- [x] **CR-004-008** — `/info` chained 8+ Arduino-`String`-Konkatenationen → Heap-Fragmentierung
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `snprintf` in 512-Byte-Stack-Buffer
+- [x] **CR-004-009** — `/setbattmin` ohne Range-Check — `min` kann ins Negative laufen
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — Floor-Check `min - 100 >= 2800` mV
+- [x] **CR-004-010** — `loadConfig()` schluckt JSON-Type-Mismatch silent → Passwort heimlich leer
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — Null-Check + `Log.error`
 
 ### 🟢 LOW
 
@@ -293,6 +317,20 @@
 - [ ] **CR-002-011** — Auskommentierter Code an mehreren Stellen (`src/API.cpp:313, 357–363, 378`)
 - [ ] **CR-002-012** — `pitAry()` switch ohne `default` für `getType()`/`getTypeLast()` → fehlendes `typ`-Feld bei zukünftigen Pitmaster-Types (`src/API.cpp:153–172`)
 - [ ] **CR-002-013** — Inkonsistenz `String("v")` (klein) vs. `String("V")` (groß) für hw_version-Felder (`src/API.cpp:55, 90, 404`)
+- [x] **CR-004-011** — `boolean` (Arduino-Typ) statt `bool` in `requireAuth()` (`src/WServer.h:39`)
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23)
+- [ ] **CR-004-012** — Hartkodierter `username = "admin"` (`src/WServer.cpp:57`)
+  - **Status:** ⏳ PENDING — mit Phase 3 (App-Store-Onboarding) koppeln; M-Aufwand
+- [x] **CR-004-013** — TODO-/auskommentierter Code in `/info`-Handler (`src/WServer.cpp:79-85`)
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23)
+- [x] **CR-004-014** — `IPRINTPLN` statt `Log.notice` für Server-Start (`src/WServer.cpp:212`)
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23)
+- [x] **CR-004-015** — `WEB_VUE_ROUTER_PATHS_MAX` ohne Compile-Time-Konsistenzcheck (`src/WServer.cpp:37`)
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `sizeof(vueRouterPaths)/sizeof([0])`
+- [x] **CR-004-016** — Kein HTTP-Method-Filter auf Endpoints (`src/WServer.cpp:74, 96, 105, 112, 124, 144, 149`)
+  - **Status:** ✅ DONE — Commit `795b3b0`, Issue #251 (2026-05-23) — `HTTP_GET` auf alle Maintenance-Endpoints
+- [ ] **CR-004-017** — Linearer O(n) Lookup `vueRouterPaths` in `onNotFound` (akzeptabel bei n=8)
+  - **Status:** ⏳ PENDING (akzeptabel — nur dokumentiert)
 
 ---
 
