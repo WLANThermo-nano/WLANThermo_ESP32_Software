@@ -60,15 +60,20 @@ public:
     boolean isEnabled() { return enabled; }
     uint8_t getDeviceCount();
     boolean getDevice(uint8_t index, BleDevice *device);
+    void update();
     void setDeviceSelected(String peerAddress, uint8_t selected);
     static boolean isDeviceConnected(String peerAddress);
     static float getSensorValue(String peerAddress, uint8_t index);
     static String getSensorUnit(String peerAddress, uint8_t index);
+    void setLogLevel(uint8_t level);
 
 private:
     static void dfuTxFunction(struct SFwu *fwu, uint8_t *buf, uint8_t len);
     uint8_t dfuRxFunction(uint8_t *data, int maxLen);
     void getDevices();
+    void handleDevicesJSON(const String &bleDeviceJson);
+    bool readLine(String &out);
+    String rxBuf;
     boolean waitForBootloader(uint32_t timeoutInMs);
     static void task(void *parameter);
     boolean doDfu();

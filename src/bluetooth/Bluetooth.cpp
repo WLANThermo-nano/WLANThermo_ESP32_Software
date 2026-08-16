@@ -184,6 +184,56 @@ void Bluetooth::enableChip(boolean enable)
     }
 }
 
+void Bluetooth::setLogLevel(uint8_t level)
+{
+    gSystem->wireLock();
+    serialBle->printf("setLogLevel=%d\n", level);
+    gSystem->wireRelease();
+    Serial.println("Set Log Level VERBOSE nRF");
+}
+
+bool Bluetooth::readLine(String &out)
+{
+    while (serialBle->available())
+    {
+        char c = serialBle->read();
+
+        if (c == '\n')
+        {
+            out = rxBuf;
+            out.trim();
+            rxBuf = "";
+            return out.length() > 0;
+        }
+
+        if (c != '\r')
+        {
+            if (rxBuf.length() < 1024u)
+                rxBuf += c;
+            else
+                rxBuf = "";        // Overflow: Zeile verwerfen
+        }
+    }
+    return false;
+}
+
+void Bluetooth::update()
+{
+    String line;
+
+    while (readLine(line))
+    {
+        if (line.startsWith("{\"d\":"))
+        {
+            handleDevicesJSON(line);
+        }
+        else
+        {
+            Serial.printf("BLE log: %s\n", line.c_str());
+        }
+    }
+}
+
 void Bluetooth::getDevices()
 {
     uint32_t requestedDevices = 0u;
@@ -198,10 +248,13 @@ void Bluetooth::getDevices()
 
     gSystem->wireLock();
     serialBle->printf("getDevices=%d\n", requestedDevices);
-    String bleDeviceJson = serialBle->readStringUntil('\n');
+    //String bleDeviceJson = serialBle->readStringUntil('\n');  //Ersetzt durch readLine und neuem Takt
     gSystem->wireRelease();
+    
+}
+void Bluetooth::handleDevicesJSON(const String &bleDeviceJson)
+{
     Serial.println(bleDeviceJson);
-
     DynamicJsonBuffer jsonBuffer;
 
     JsonObject &json = jsonBuffer.parseObject(bleDeviceJson);
@@ -402,6 +455,9 @@ void Bluetooth::task(void *parameter)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     Bluetooth *bluetooth = (Bluetooth *)parameter;
+    uint32_t lastRequest = 0u;
+    uint32_t taskStart = millis();
+    bool logLevelSet = false;
 
     while (1)
     {
@@ -422,9 +478,21 @@ void Bluetooth::task(void *parameter)
         // get devices only when bluetooth is enabled
         if (bluetooth->chipEnabled)
         {
-            bluetooth->getDevices();
+            bluetooth->update();                       // jeden Zyklus lesen
+
+            if ((false == logLevelSet) && ((millis() - taskStart) >= 5000u))
+            {
+                bluetooth->setLogLevel(1);  //1 -LOG_LEVEL_FATAL // 4 - LOG_LEVEL_NOTICE // 6 - LOG_LEVEL_VERBOSE
+                logLevelSet = true;
+            }
+
+            if ((millis() - lastRequest) >= 1000u)     // alle 1 s anfragen
+            {
+                bluetooth->getDevices();
+                lastRequest = millis();
+            }
         }
-        vTaskDelay(TASK_CYCLE_TIME_BLUETOOTH_TASK);
+        vTaskDelayUntil(&xLastWakeTime, TASK_CYCLE_TIME_BLUETOOTH_TASK);
     }
 
     Serial.println("Delete Bluetooth task");
