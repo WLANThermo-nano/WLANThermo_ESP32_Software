@@ -189,7 +189,7 @@ void Bluetooth::setLogLevel(uint8_t level)
     gSystem->wireLock();
     serialBle->printf("setLogLevel=%d\n", level);
     gSystem->wireRelease();
-    Serial.println("Set Log Level VERBOSE nRF");
+    Serial.printf("Set Log Level %d\n for nRF", level);
 }
 
 bool Bluetooth::readLine(String &out)
