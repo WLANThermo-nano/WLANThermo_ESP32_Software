@@ -1,63 +1,76 @@
-# Ooni Pizza Hub — BLE-Protokoll (Reverse Engineering)
+# Ooni Pizza Hub — BLE protocol (reverse engineered)
 
-Ermittelt am 2026-11-20 durch Mitschnitt am echten Gerät (Linux/BlueZ + bleak), ohne Ooni-App.
+Determined on 2026-11-20 by capturing a real device (Linux/BlueZ + bleak), without the Ooni app.
 
 ## Advertising
 
-| Feld | Wert |
-|------|------|
-| Local Name | `Ooni_DT_Hub` |
-| Adresstyp | random static (Beispiel `E8:24:BD:13:DC:3F`) |
-| Service-UUIDs im Advertising | **keine** → Erkennung muss über den Namen erfolgen |
-| Manufacturer Data | Company-ID `0xFFFF`, Payload = eigene MAC (`e824bd13dc3f`) |
+| Field | Value |
+|-------|-------|
+| Local name | `Ooni_DT_Hub` |
+| Address type | random static (example `E8:24:BD:13:DC:3F`) |
+| Service UUIDs in advertising | **none** → the hub has to be detected by its name |
+| Manufacturer data | company ID `0xFFFF`, payload = own MAC (`e824bd13dc3f`) |
 
 ## GATT
 
-| Service | Characteristic | Properties | Funktion |
-|---------|----------------|------------|----------|
-| `69400001-b5a3-f393-e0a9-e50e24dcca99` | `69400002-…` | notify | **Messdaten** (1 Hz) |
-| | `69400003-…` | write, write-without-response | unbenutzt (vermutl. Kommandos) |
-| `7f510004-b5a3-f393-e0a9-e50e24dcca9e` | `7f510005-…` | notify | bisher keine Daten beobachtet |
-| | `7f510006-…` | write, write-without-response | unbenutzt |
+| Service | Characteristic | Properties | Purpose |
+|---------|----------------|------------|---------|
+| `69400001-b5a3-f393-e0a9-e50e24dcca99` | `69400002-…` | notify | **measurement data** (1 Hz) |
+| | `69400003-…` | write, write-without-response | unused (probably commands) |
+| `7f510004-b5a3-f393-e0a9-e50e24dcca9e` | `7f510005-…` | notify | no data observed so far |
+| | `7f510006-…` | write, write-without-response | unused |
 
-Kein Pairing, kein Login, kein Startkommando nötig — nach Aktivieren der Notification auf `69400002` sendet der Hub sofort.
+No pairing, no login and no start command required — the hub starts sending as soon as notifications
+on `69400002` are enabled. `7f510005` does not need to be subscribed.
 
-**Eigenheit:** Das Aktivieren der Notification (CCCD-Write) auf `69400002` wird gelegentlich mit ATT-Fehler `0x0E` (Unlikely Error) abgelehnt; danach trennt der Hub die Verbindung. Ein erneuter Verbindungsversuch funktioniert in der Regel. In den erfolgreichen Läufen wurde vorher `7f510005` abonniert und ~1 s gewartet — ob das nötig ist, ist nicht abschließend geklärt.
+**Quirk:** If notifications (CCCD write) on `69400002` are enabled right after connecting, the hub
+often rejects the write with ATT error `0x0E` (Unlikely Error) and drops the connection.
+Waiting after the connection is established fixes this:
 
-## Datenpaket (`69400002`, 22 Byte, Little Endian)
+| Test (5 connects each) | Success |
+|------------------------|---------|
+| enable notifications immediately | 1/5 |
+| wait 1.5 s before enabling | 5/5 |
+
+The NRF52 driver (`BleTemperatureOoni`) waits 2 s.
+
+## Data frame (`69400002`, 22 bytes, little endian)
 
 ```
 Offset  0    1    2-3     4-5     6-7   8-9   10   11   12-17          18-19  20-21
-        flg  ??   Stein1  Stein2  P1    P2    bat  ??   MAC (reversed) ??     ??
-Beispiel:
+        flg  ??   stone1  stone2  P1    P2    bat  ??   MAC (reversed) ??     ??
+Example:
         18   00   00 00   00 00   00 00 16 00 64   01   3f dc 13 bd 24 e8 18 00 00 00
 ```
 
-| Offset | Typ | Bedeutung | Status |
-|--------|-----|-----------|--------|
-| 0 | uint8 | Bitmaske gesteckter Fühler: Bit0 = Stein 1, Bit1 = Stein 2, Bit2 = P1, Bit3 = P2; Bit4 immer gesetzt | Bit2/Bit3 verifiziert, Bit0/1 vermutet |
-| 1 | uint8 | immer `0x00` | unbekannt |
-| 2–3 | int16 | Temperatur Stein 1 in °C (ganzzahlig) | vermutet (Schema) |
-| 4–5 | int16 | Temperatur Stein 2 in °C | vermutet (Schema) |
-| 6–7 | int16 | Temperatur P1 (Fleisch, seitlich links) in °C | **verifiziert** |
-| 8–9 | int16 | Temperatur P2 (Fleisch, seitlich rechts) in °C | **verifiziert** |
-| 10 | uint8 | Akku in % (`0x64` = 100) | plausibel |
-| 11 | uint8 | immer `0x01` (evtl. Einheit °C?) | unbekannt |
-| 12–17 | 6 Byte | eigene MAC-Adresse, Byte-Reihenfolge umgekehrt | verifiziert |
-| 18–19 | uint16 | konstant 24 (evtl. Hub-Innentemperatur oder Version) | unbekannt |
-| 20–21 | — | immer `0x0000` | unbekannt |
+| Offset | Type | Meaning | Status |
+|--------|------|---------|--------|
+| 0 | uint8 | bitmask of plugged probes: bit0 = stone 1, bit1 = stone 2, bit2 = P1, bit3 = P2; bit4 always set | bit2/bit3 verified, bit0/1 assumed |
+| 1 | uint8 | always `0x00` | unknown |
+| 2–3 | int16 | temperature stone 1 in °C (whole degrees) | assumed (same scheme) |
+| 4–5 | int16 | temperature stone 2 in °C | assumed (same scheme) |
+| 6–7 | int16 | temperature P1 (meat, left side) in °C | **verified** |
+| 8–9 | int16 | temperature P2 (meat, right side) in °C | **verified** |
+| 10 | uint8 | battery in % (`0x64` = 100) | plausible |
+| 11 | uint8 | always `0x01` (unit °C?) | unknown |
+| 12–17 | 6 bytes | own MAC address, reversed byte order | verified |
+| 18–19 | uint16 | constant 24 (hub internal temperature or version?) | unknown |
+| 20–21 | — | always `0x0000` | unknown |
 
-Nicht gesteckter Fühler: Bit in Offset 0 gelöscht, Wert = 0.
+Probe not plugged: its bit in offset 0 is cleared, value = 0.
 
-## Verifikation
+## Verification
 
-Testreihe 17:54–18:02: Fühler an P2 zwischen 20 °C und 38 °C bewegt, abgezogen (`flg` 0x18 → 0x10, P2 → 0),
-an P1 gesteckt (`flg` → 0x14, P1 = 36 °C) und auf 20 °C abgekühlt. Alle dekodierten Werte stimmen mit der
-Anzeige überein.
+Test run 17:54–18:02: probe on P2 moved between 20 °C and 38 °C, unplugged (`flg` 0x18 → 0x10, P2 → 0),
+plugged into P1 (`flg` → 0x14, P1 = 36 °C) and cooled down to 20 °C. All decoded values match the
+temperatures shown by the hub.
 
-## Offen
+Afterwards verified end to end on a WLANThermo Nano V3: the hub shows up with 4 channels and P1/P2
+report correct values.
 
-- Steinfühler (Offset 2–5, Bit0/1) mit echten Fühlern bestätigen, inkl. hoher Temperaturen (>255 °C → High-Byte)
-- Verhalten bei °F-Umstellung (Offset 11?)
-- Negative Temperaturen (Vorzeichen)
-- Bedeutung von Offset 18–19
+## Open points
+
+- Confirm stone probes (offset 2–5, bit0/1) with real probes, including high temperatures (>255 °C → high byte)
+- Behaviour after switching the hub to °F (offset 11?)
+- Negative temperatures (sign)
+- Meaning of offset 18–19
